@@ -28,16 +28,16 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 
 | Faza | Sadržaj | Rezultat koji se može pokazati |
 | --- | --- | --- |
-| **F0 Auth i profil (minimum)** | register, login, `/api/me`, odabir 3–5 tema, teme i koncepti, dashboard | Korisnik se registrira i vidi dashboard s temama |
+| **F0 Auth i profil** | register, login, refresh (rotacija + opoziv obitelji), logout, `/api/me`, odabir 3–5 tema, teme i koncepti, dashboard | Korisnik se registrira i vidi dashboard s temama |
 | **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka |
-| **F0b Auth ostatak** | refresh + logout, forgot/reset lozinke, rate limit | Sesija preživi 15 min; zaboravljena lozinka radi |
+| **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja |
 | **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje |
 | **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog |
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — |
 
-F0b dolazi nakon F1 namjerno: prvi igrivi demo (bot duel) je najvažniji rizik, a 15-minutni access token se u razvoju jednostavno ponovno izda loginom. Frontend može ići paralelno od prvog dana: svi DTO-i su u §6, a redoslijed endpointa prati faze.
+F0b dolazi nakon F1 namjerno: prvi igrivi demo (bot duel) je najvažniji rizik. Refresh je ušao u F0 jer ga frontend treba od prvog ekrana. Frontend može ići paralelno od prvog dana: svi DTO-i su u §6, a redoslijed endpointa prati faze.
 
 ## 2. Arhitektura
 
@@ -68,11 +68,11 @@ App.Domain/
   Daily/        DailyChallenge, DailyChallengeAttempt, DailyTasks, UserDailyTask, ActivityDay, Streak
   Social/       Friendship, FriendChallenge
   Seasons/      Season, UserSeason, Title, UserTitle, AchievementRules, UserAchievement, WeeklyResult
-App.Application/
-  IAppDbContext.cs, IPasswordHasher.cs
-  Auth/         RegisterUser, LoginUser, RefreshSession, Logout, ForgotPassword, ResetPassword, ITokenService, IEmailSender, AuthDtos
-  Me/           GetMe, UpdateMe, SetActiveTopics, GetDashboard, GetKnowledgeMap, GetStats, GetMyMatches
-  Content/      ListTopics, ListConcepts, GetQuestion, ReportQuestion, RetireQuestion, GetExplanation, IExplanationGenerator, RecalibrateDifficulty
+App.Application/                   jedna servisna klasa po featureu (AuthService, MeService, ContentService, ...) s metodom po use caseu, kao starterov NoteService
+  IAppDbContext.cs, AppException.cs (ErrorCodes)
+  Auth/         AuthService (register, login, refresh, logout; F0b: forgot/reset), ITokenService + IPasswordHasher, IEmailSender, AuthDtos
+  Me/           MeService (get, update, topics, dashboard; kasnije knowledge map, stats, matches), MeDtos
+  Content/      ContentService (topics, concepts; kasnije: GetQuestion, ReportQuestion, RetireQuestion, GetExplanation, IExplanationGenerator, RecalibrateDifficulty
   Matches/      StartBotMatch, StartPracticeMatch, StartCalibration, GetMatchState, BanTopic, SubmitAnswer, NextQuestion, ResignMatch, AdvanceMatches, FinishMatch, GetMatchReview, RequestRematch, AcceptRematch, MatchStateMapper, MatchLock
   Matchmaking/  JoinQueue, GetQueueState, LeaveQueue, AcceptProposal, RunMatchmaking, AcceptGhostOffer, DeclineGhostOffer
   Lessons/      StartLesson, SubmitLessonCheck, GetLesson, ILessonGenerator
@@ -83,8 +83,10 @@ App.Application/
   Seasons/      CloseSeason, CloseWeek, RefreshGrandmasters
 App.Infrastructure/
   AppDbContext.cs, Configurations/*.cs (jedna klasa po entitetu), SnakeCaseEnumConverter.cs
-  Auth/JwtTokenService.cs + PasswordHasherAdapter.cs, Email/SmtpEmailSender.cs + LogEmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
+  Email/SmtpEmailSender.cs + LogEmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
   Seed/Seeder.cs (čita backend/seed/*.json), Background/GameTickService.cs
+App.Api/
+  Auth.cs (JWT izdavanje i validacija, PasswordHasher adapter, ClaimsPrincipal.UserId()), AppExceptionHandler.cs (AppException → Problem Details)
 App.Api/Endpoints/
   AuthEndpoints, MeEndpoints, ContentEndpoints, MatchEndpoints, QueueEndpoints, LessonEndpoints, EconomyEndpoints, DailyEndpoints, SocialEndpoints, LeaderboardEndpoints, HealthEndpoints
 backend/seed/
@@ -657,6 +659,7 @@ create table weekly_results (               -- snapshot ponedjeljkom 00:00
 
 ### 3.12 EF Core mapiranje
 
+- Tablica povijesti migracija je `__ef_migrations_history`: snake_case konvencija preimenuje i njezine stupce, pa stara `"__EFMigrationsHistory"` (`"MigrationId"`) iz startera nije čitljiva. Migracija `InitialSchema` briše staru tablicu i `"Notes"`; testna baza prije migracije dobiva staru starter shemu da svaki run provjeri nadogradnju.
 - `OnModelCreating` primjenjuje `ApplyConfigurationsFromAssembly`; jedna `IEntityTypeConfiguration<T>` klasa po entitetu u `Infrastructure/Configurations/`. `UseSnakeCaseNamingConvention()`; stringovi u `HasFilter("...")` se pišu ručno u snake_case (konvencija ih ne prepisuje).
 - `jsonb` stupci su `string` svojstva s `.HasColumnType("jsonb")`; (de)serijalizacija kroz `System.Text.Json` u Domainu. Konkretni record se bira `switch`-em po `questions.type` (`QuestionContent.Parse(type, json)`), ne polimorfnim diskriminatorom (jsonb ne čuva redoslijed ključeva pa `"type"` ne bi bio prvi).
 - Enumi: `SnakeCaseEnumConverter<T>` (`JsonNamingPolicy.SnakeCaseLower.ConvertName` ↔ `Enum.Parse` bez podvlaka) primijenjen u `ConfigureConventions`, + `t.HasCheckConstraint(...)` s istim vrijednostima. HTTP JSON: `JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower)`.
@@ -787,8 +790,8 @@ Finish(now)                                       §17: human s disconnected_at 
 
 | Sučelje (Application) | Implementacije (Infrastructure) | Napomena |
 | --- | --- | --- |
-| `ITokenService` | `JwtTokenService` | HS256, ključ iz `Auth:JwtSigningKey` (env `Auth__JwtSigningKey`, ≥ 32 bajta, u `.env`), issuer/audience iz konfiguracije; `JwtBearerOptions.TimeProvider` = isti `TimeProvider` (testovi pomiču sat) |
-| `IPasswordHasher` | `PasswordHasherAdapter` nad `PasswordHasher<User>` | PBKDF2 |
+| `ITokenService` | `JwtTokenService` (u `App.Api/Auth.cs`, uz JwtBearer paket) | HS256, ključ iz `Auth:JwtSigningKey` (env `Auth__JwtSigningKey`, ≥ 32 bajta, u `.env`), issuer/audience iz konfiguracije; `JwtBearerOptions.TimeProvider` = isti `TimeProvider` (testovi pomiču sat) |
+| `IPasswordHasher` | `PasswordHasherAdapter` nad `PasswordHasher<User>` (u `App.Api/Auth.cs`) | PBKDF2; nepoznati e-mail se provjerava protiv lažnog hasha da odgovor traje jednako |
 | `IEmailSender` | `LogEmailSender` (Development: logira link), `SmtpEmailSender` (`System.Net.Mail`, `Email:Smtp:*` iz env) | reset lozinke; slanje je fire-and-forget (`Task.Run` + log) da odgovor ne otkriva postoji li e-mail; testovi koriste `FakeEmailSender` |
 | `IExplanationGenerator` | `ClaudeExplanationGenerator`, `StaticExplanationGenerator` (vraća `remember`) | `Ai:TimeoutMs` → fallback; rezultat se kešira u `questions.explanation`; nikad se ne zove iz `GET /api/matches/{id}` ni iz `SubmitAnswer` |
 | `ILessonGenerator` | `ClaudeLessonGenerator`, `FallbackLessonGenerator` (kartice iz `concepts.description`) | keš u `concept_lesson_cards` po (koncept, band) |
