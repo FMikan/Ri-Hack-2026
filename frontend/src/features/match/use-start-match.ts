@@ -1,13 +1,27 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { api, ApiError } from '@/lib/api-client'
 import { useLocale } from '@/lib/i18n/locale-context'
 import type { MatchStateDto } from '@/types/api'
 
-// Starts a match (bot, practice, calibration) and opens it. When one is already running
-// (409 already-in-match, another tab or a reload mid-duel) it opens that one instead of failing.
-export function useStartMatch() {
+// Opens a match. The play dialog's ?play= entry is dropped first, so Back from the duel does not reopen the dialog
+// (for ranked that would join the queue again).
+export function useOpenMatch() {
   const navigate = useNavigate()
+  return useCallback(
+    (id: string) => {
+      if (new URLSearchParams(window.location.search).has('play')) navigate({ search: '' }, { replace: true })
+      navigate(`/match/${id}`)
+    },
+    [navigate],
+  )
+}
+
+// Starts a match (bot, practice, calibration, ghost, friend challenge) and opens it. When one is already running
+// (409 already-in-match, another tab or a reload mid-duel) it opens that one instead of failing.
+// `describe` turns the caller's own error codes into words; anything it leaves out gets the server's message.
+export function useStartMatch(describe?: (error: ApiError) => string | undefined) {
+  const openMatch = useOpenMatch()
   const { t } = useLocale()
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string>()
@@ -17,13 +31,17 @@ export function useStartMatch() {
     setStarting(true)
     setError(undefined)
     try {
-      navigate(`/match/${(await run()).id}`)
+      openMatch((await run()).id)
     } catch (caught) {
       if (caught instanceof ApiError && caught.code === 'urn:app:match/already-in-match') {
         const me = await api.me().catch(() => undefined)
-        if (me?.activeMatchId) return navigate(`/match/${me.activeMatchId}`)
+        if (me?.activeMatchId) return openMatch(me.activeMatchId)
       }
-      setError(caught instanceof ApiError && caught.status === 0 ? t.common.serverUnreachable : String((caught as Error).message))
+      setError(
+        caught instanceof ApiError
+          ? (describe?.(caught) ?? (caught.status === 0 ? t.common.serverUnreachable : caught.message))
+          : String((caught as Error).message),
+      )
       setStarting(false)
     }
   }

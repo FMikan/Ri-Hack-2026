@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from 'lucide-react'
+import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PLACEMENT_MATCHES } from '@/lib/game'
@@ -24,11 +24,8 @@ export function RatingCard({ me, history, className }: { me: MeDto; history: Das
         <div className="grid gap-1.5">
           <p className="flex flex-wrap items-center gap-3">
             <span className="font-heading text-4xl font-semibold tracking-tight">{me.rating}</span>
-            {change !== undefined && change !== 0 ? (
-              <Badge variant={change > 0 ? 'success' : 'destructive'}>
-                {change > 0 ? <ArrowUp aria-hidden="true" /> : <ArrowDown aria-hidden="true" />}
-                {Math.abs(change)}
-              </Badge>
+            {change ? (
+              <DeltaBadge value={change} />
             ) : (
               me.isProvisional && <Badge variant="outline">{copy.provisional}</Badge>
             )}

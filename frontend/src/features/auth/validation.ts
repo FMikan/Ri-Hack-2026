@@ -23,6 +23,12 @@ export function validateLogin({ email, password }: Record<'email' | 'password', 
   return { email: checkEmail(email, m), password: password ? undefined : m.passwordRequired }
 }
 
+export const validateEmail = ({ email }: Record<'email', string>, m: ErrorMessages): FieldErrors => ({ email: checkEmail(email, m) })
+
+export const validateNewPassword = ({ password }: Record<'password', string>, m: ErrorMessages): FieldErrors => ({
+  password: password.length < PASSWORD_MIN || password.length > PASSWORD_MAX ? m.passwordLength : undefined,
+})
+
 export function validateRegister({ username, email, password }: Record<AuthField, string>, m: ErrorMessages): FieldErrors {
   return {
     username:
@@ -50,6 +56,8 @@ export function toAuthErrors(error: unknown, t: Messages): { fields: FieldErrors
       return { fields: { email: m.emailTaken } }
     case 'urn:app:auth/username-taken':
       return { fields: { username: m.usernameTaken } }
+    case 'urn:app:auth/reset-token-invalid':
+      return { fields: {}, form: m.resetTokenInvalid }
   }
 
   // Validation keys are C# property names ("Password") and the messages are English only; the checks above

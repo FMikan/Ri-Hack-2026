@@ -14,6 +14,8 @@ export interface AuthState {
   register: (body: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
   updateMe: (body: UpdateMeRequest) => Promise<void>
+  setUser: (user: MeDto) => void // a fresh MeDto from a purchase, the equipment or the dashboard
+  refreshUser: () => Promise<void> // after something changed coins, XP or rating on the server
 }
 
 export const AuthContext = createContext<AuthState | null>(null)

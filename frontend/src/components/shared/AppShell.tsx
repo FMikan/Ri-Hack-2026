@@ -4,9 +4,11 @@ import {
   LogOut,
   Menu,
   Settings,
+  Store,
   Target,
   Trophy,
   UserRound,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
 import { useState, type MouseEvent } from 'react'
@@ -30,17 +32,18 @@ import {
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
 import { AvatarDialog } from '@/features/profile/AvatarDialog'
-import { demoMe } from '@/lib/fixtures/demo'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'friends' | 'shop' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
   { key: 'practice', icon: Target, to: '/practice' },
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
+  { key: 'friends', icon: Users, to: '/friends' },
+  { key: 'shop', icon: Store, to: '/shop' },
   { key: 'profile', icon: UserRound, to: '/profile' },
 ]
 
@@ -145,7 +148,7 @@ function TopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
   if (session.status !== 'authenticated') return null
-  const user = demoMe(session.user)
+  const user = session.user
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (
