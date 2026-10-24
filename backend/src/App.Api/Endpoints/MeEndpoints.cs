@@ -27,6 +27,10 @@ public static class MeEndpoints
 
         group.MapGet("/dashboard", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetDashboardAsync(user.UserId(), ct));
 
+        // The ledger, newest first: what paid how many coins, XP and SP, and for what (referenceId = match, lesson, ...).
+        group.MapGet("/rewards", (ClaimsPrincipal user, MeService me, CancellationToken ct, int limit = 50) =>
+            me.GetRewardsAsync(user.UserId(), limit, ct));
+
         group.MapGet("/knowledge-map", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetKnowledgeMapAsync(user.UserId(), ct));
 
         // "Due for review: n" with the concepts, most overdue first; practice them with POST /api/matches/practice { conceptIds }.

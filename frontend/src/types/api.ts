@@ -440,6 +440,23 @@ export interface RematchDto {
   matchId?: Uuid | null // the new match once accepted
 }
 
+// ---- Economy (F4, docs §6.8) ----
+
+export type RewardType =
+  | 'match_win' | 'match_loss' | 'match_draw' | 'rating_upset' | 'lesson_passed' | 'concept_patched' | 'daily_challenge'
+  | 'daily_task' | 'daily_task_bonus' | 'streak_milestone' | 'weekly_xp_goal' | 'level_up' | 'friend_match' | 'answer_xp'
+  | 'match_xp' | 'shop_purchase' | 'streak_freeze' | 'season_reset' | 'season_drop'
+
+// GET /api/me/rewards?limit=50, newest first. coins is negative for a purchase.
+export interface RewardEventDto {
+  type: RewardType
+  coins: number
+  xp: number
+  sp: number
+  at: Iso
+  referenceId?: Uuid | null // the match, lesson or item the reward belongs to
+}
+
 export interface StartCalibrationRequest {
   topicId: Uuid // 409 urn:app:match/nothing-to-calibrate when every concept already has answers
 }

@@ -1,5 +1,7 @@
 using App.Application;
 using App.Domain.Content;
+using App.Domain.Daily;
+using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Matchmaking;
@@ -29,6 +31,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
     public DbSet<MatchProposal> MatchProposals => Set<MatchProposal>();
     public DbSet<GhostOffer> GhostOffers => Set<GhostOffer>();
+    public DbSet<RewardEvent> RewardEvents => Set<RewardEvent>();
+    public DbSet<ActivityDay> ActivityDays => Set<ActivityDay>();
     public DbSet<ConceptLessonCards> ConceptLessonCards => Set<ConceptLessonCards>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
@@ -53,6 +57,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<QueueStatus>().HaveConversion<SnakeCaseEnumConverter<QueueStatus>>();
         builder.Properties<ProposalStatus>().HaveConversion<SnakeCaseEnumConverter<ProposalStatus>>();
         builder.Properties<RematchStatus>().HaveConversion<SnakeCaseEnumConverter<RematchStatus>>();
+        builder.Properties<RewardType>().HaveConversion<SnakeCaseEnumConverter<RewardType>>();
         builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
     }
 }

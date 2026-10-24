@@ -7,6 +7,10 @@ public static class Clock
 
     public static DateOnly Today(DateTimeOffset now) => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, Zone).DateTime);
 
+    // The instant a local day begins (midnight in GameRules.DayTimeZone), for "today" and "this week" queries.
+    public static DateTimeOffset StartOf(DateOnly day) =>
+        new(TimeZoneInfo.ConvertTimeToUtc(day.ToDateTime(TimeOnly.MinValue), Zone), TimeSpan.Zero);
+
     public static DateOnly WeekStart(DateTimeOffset now)
     {
         var today = Today(now);

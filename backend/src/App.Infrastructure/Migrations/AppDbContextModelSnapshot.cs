@@ -231,6 +231,85 @@ namespace App.Infrastructure.Migrations
                     b.ToTable("topics", (string)null);
                 });
 
+            modelBuilder.Entity("App.Domain.Daily.ActivityDay", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.HasKey("UserId", "Day")
+                        .HasName("pk_activity_days");
+
+                    b.ToTable("activity_days", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Economy.RewardEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Coins")
+                        .HasColumnType("integer")
+                        .HasColumnName("coins");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DedupeKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("dedupe_key");
+
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reference_id");
+
+                    b.Property<int>("Sp")
+                        .HasColumnType("integer")
+                        .HasColumnName("sp");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("Xp")
+                        .HasColumnType("integer")
+                        .HasColumnName("xp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reward_events");
+
+                    b.HasIndex("DedupeKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reward_events_dedupe_key");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_reward_events_user_id_created_at");
+
+                    b.HasIndex("UserId", "Type", "CreatedAt")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("ix_reward_events_user_id_type_created_at");
+
+                    b.ToTable("reward_events", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reward_events_type", "type in ('match_win', 'match_loss', 'match_draw', 'rating_upset', 'lesson_passed', 'concept_patched', 'daily_challenge', 'daily_task', 'daily_task_bonus', 'streak_milestone', 'weekly_xp_goal', 'level_up', 'friend_match', 'answer_xp', 'match_xp', 'shop_purchase', 'streak_freeze', 'season_reset', 'season_drop')");
+                        });
+                });
+
             modelBuilder.Entity("App.Domain.Lessons.ConceptLessonCards", b =>
                 {
                     b.Property<Guid>("ConceptId")
@@ -1301,6 +1380,26 @@ namespace App.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_question_reports_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Daily.ActivityDay", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_activity_days_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Economy.RewardEvent", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reward_events_users_user_id");
                 });
 
             modelBuilder.Entity("App.Domain.Lessons.ConceptLessonCards", b =>

@@ -149,7 +149,7 @@ public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService
         await db.SaveChangesAsync(cancellationToken);
 
         var (accessToken, expiresAt) = tokens.CreateAccessToken(user);
-        return new AuthResponse(accessToken, expiresAt, refreshToken, me.ToDto(user));
+        return new AuthResponse(accessToken, expiresAt, refreshToken, await me.ToDtoAsync(user, cancellationToken));
     }
 
     private Task RevokeFamilyAsync(Guid familyId, DateTimeOffset now, CancellationToken cancellationToken) =>

@@ -1,4 +1,6 @@
 using App.Domain.Content;
+using App.Domain.Daily;
+using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Matchmaking;
@@ -30,6 +32,8 @@ public interface IAppDbContext
     DbSet<QueueEntry> QueueEntries { get; }
     DbSet<MatchProposal> MatchProposals { get; }
     DbSet<GhostOffer> GhostOffers { get; }
+    DbSet<RewardEvent> RewardEvents { get; }
+    DbSet<ActivityDay> ActivityDays { get; }
     DbSet<ConceptLessonCards> ConceptLessonCards { get; }
 
     DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)

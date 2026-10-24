@@ -1,7 +1,9 @@
 using System.Text.Json;
 using App.Application.Content;
+using App.Application.Economy;
 using App.Domain;
 using App.Domain.Content;
+using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Progress;
@@ -11,7 +13,7 @@ using Microsoft.Extensions.Logging;
 namespace App.Application.Lessons;
 
 // The lesson after a match (idea §10): cards for the missed and chronic concepts, then three check questions.
-public class LessonService(IAppDbContext db, ILessonGenerator generator, AiOptions ai, ILogger<LessonService> logger, TimeProvider time)
+public class LessonService(IAppDbContext db, ILessonGenerator generator, AiOptions ai, Rewarder rewarder, ILogger<LessonService> logger, TimeProvider time)
 {
     private record StoredResult(Guid QuestionId, JsonElement? Payload, bool IsCorrect);
 
@@ -111,13 +113,15 @@ public class LessonService(IAppDbContext db, ILessonGenerator generator, AiOptio
         lesson.LastAttemptAt = now;
         lesson.CheckResults = JsonSerializer.Serialize(graded.Select(g => new StoredResult(g.Question.Id, g.Payload, g.Fraction >= 1)), JsonSerializerOptions.Web);
         var patched = new List<ConceptDto>();
+        var rewards = new RewardsDto(0, 0, 0);
         if (passed)
         {
             lesson.Status = LessonStatus.Passed;
             lesson.FinishedAt = now;
             lesson.RetryAfter = null;
-            // ponytail: coins (50), XP and SP (2 per concept, 7-day rule) are credited with the economy in F4; F2 marks the reward as used.
             lesson.Rewarded = rewardEligible;
+            // A concept pays at most once in 7 days, so lessons cannot be farmed (idea §9).
+            var eligible = new List<Guid>();
             foreach (var conceptId in lesson.ConceptIds)
             {
                 var concept = await db.ConceptMastery.FindAsync([userId, conceptId], ct);
@@ -127,7 +131,17 @@ public class LessonService(IAppDbContext db, ILessonGenerator generator, AiOptio
                     db.ConceptMastery.Add(concept);
                 }
                 ReviewSchedule.Patch(concept, now);
+                if (rewardEligible && (concept.PatchedAt is null || concept.PatchedAt < now.AddDays(-GameRules.PatchRewardCooldownDays)))
+                {
+                    concept.PatchedAt = now;
+                    eligible.Add(conceptId);
+                }
             }
+            var spFromLearning = await rewarder.SpTodayAsync(userId, [RewardType.ConceptPatched], ct);
+            foreach (var grant in Rewards.ForLesson(userId, lesson.Id, eligible, spFromLearning))
+                if (await rewarder.GrantAsync(userId, grant, ct))
+                    rewards = new RewardsDto(rewards.Coins + grant.Coins, rewards.Sp + grant.Sp, rewards.Xp + grant.Xp);
+            await rewarder.RecordActivityAsync(await db.Users.FirstAsync(u => u.Id == userId, ct), ct);
             patched = await ConceptsAsync(lesson.ConceptIds, ct);
         }
         else
@@ -146,7 +160,7 @@ public class LessonService(IAppDbContext db, ILessonGenerator generator, AiOptio
         return new LessonResultDto(
             passed,
             graded.Select((g, i) => new LessonCheckResultDto(g.Question.Id, g.Fraction >= 1, QuestionView.Key(g.Question), i == 0)).ToArray(),
-            [.. patched], new RewardsDto(0, 0, 0), lesson.RetryAfter);
+            [.. patched], rewards, lesson.RetryAfter);
     }
 
     // The variant first, then two more from the lesson concepts; never a question listed in `exclude`.

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using App.Application.Content;
+using App.Application.Economy;
 using App.Domain.Matches;
 using App.Domain.Progress;
 using App.Domain;
@@ -11,7 +12,14 @@ namespace App.Application.Me;
 public class MeService(IAppDbContext db, ContentService content, TimeProvider time)
 {
     public async Task<MeDto> GetAsync(Guid userId, CancellationToken cancellationToken) =>
-        ToDto(await LoadAsync(userId, cancellationToken), await InQueueAsync(userId, cancellationToken));
+        await ToDtoAsync(await LoadAsync(userId, cancellationToken), cancellationToken);
+
+    public async Task<List<RewardEventDto>> GetRewardsAsync(Guid userId, int limit, CancellationToken cancellationToken) =>
+        await db.RewardEvents.Where(e => e.UserId == userId)
+            .OrderByDescending(e => e.CreatedAt).ThenByDescending(e => e.Id)
+            .Take(Math.Clamp(limit, 1, 100))
+            .Select(e => new RewardEventDto(e.Type, e.Coins, e.Xp, e.Sp, e.CreatedAt, e.ReferenceId))
+            .ToListAsync(cancellationToken);
 
     public async Task<MeDto> UpdateAsync(Guid userId, UpdateMeRequest request, CancellationToken cancellationToken)
     {
@@ -35,7 +43,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             user.NotificationsJson = JsonSerializer.Serialize(notifications);
         }
         await db.SaveChangesAsync(cancellationToken);
-        return ToDto(user);
+        return await ToDtoAsync(user, cancellationToken);
     }
 
     public async Task SetTopicsAsync(Guid userId, Guid[] topicIds, CancellationToken cancellationToken)
@@ -57,7 +65,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
 
     public async Task<DashboardDto> GetDashboardAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var me = ToDto(await LoadAsync(userId, cancellationToken), await InQueueAsync(userId, cancellationToken));
+        var me = await ToDtoAsync(await LoadAsync(userId, cancellationToken), cancellationToken);
         var topics = await content.ListTopicsAsync(cancellationToken);
         var progress = await TopicProgressAsync(userId, cancellationToken);
         var due = await DueQuery(userId).Select(m => new { m.ConceptId, m.TopicId }).ToListAsync(cancellationToken);
@@ -175,15 +183,18 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
 
     private static double Completion(int graduated, int concepts) => concepts == 0 ? 0 : 100.0 * graduated / concepts;
 
-    public MeDto ToDto(User user, bool inQueue = false)
+    // ponytail: season points are the ledger's SP sum until seasons (F5) give them a season_id and a reset.
+    public async Task<MeDto> ToDtoAsync(User user, CancellationToken cancellationToken)
     {
         var self = UserRefDto.From(user);
+        var today = Clock.Today(time.GetUtcNow());
+        var seasonPoints = await db.RewardEvents.Where(e => e.UserId == user.Id).SumAsync(e => e.Sp, cancellationToken);
         return new(
             self.Id, self.Username, self.Avatar, self.Tier, self.Rating, self.IsProvisional, self.Title, self.Equipment,
             user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
-            user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), 0,
-            new StreakDto(user.StreakCount, user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == Clock.Today(time.GetUtcNow())),
-            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, inQueue, user.CreatedAt);
+            user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), seasonPoints,
+            new StreakDto(Streaks.Current(user, today), user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == today),
+            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt);
     }
 
     private Task<bool> InQueueAsync(Guid userId, CancellationToken cancellationToken) =>

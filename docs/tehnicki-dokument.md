@@ -32,8 +32,8 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka | gotovo, u `development` |
 | **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, u `development` |
 | **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, u `development` (nagrade poduke se knjiže u F4) |
-| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | F3a gotov, u `development` (red, prihvat, veto, živi duel, Elo, tierovi, odustajanje, prekid veze); F3b gotov, PR `feature/f3b-rematch-ghost` (revanš, ghost duel); SP se knjiži u F4 |
-| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | nije počelo |
+| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | gotovo, u `development` (F3a red, veto, živi duel, Elo, tierovi; F3b revanš, ghost duel) |
+| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | F4a gotov, PR `feature/f4a-ledger` (ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak); F4b sljedeće (dnevni zadaci, dnevni izazov, shop, oprema) |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
@@ -1079,12 +1079,18 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - `find_bug`: linije koda broje se od 1 (`split('\n')`); ključ može imati `acceptLines` (druge linije iste naredbe) za isticanje.
 - `409 urn:app:match/already-in-match`: `me.activeMatchId` vodi natrag u partiju (i nakon reloada).
 - Trening bez vremena nema `phaseDeadline`; nakon međuekrana klijent zove `POST .../next`. Objašnjenje (`/api/questions/{id}/explanation`) dolazi tek u F2.
-- `result.cards` (blunder, brilliant, koncept za vježbu) je popunjen; rating, coins, XP i SP su 0 do F3/F4, a `rematchAvailable` je `false` do F3.
+- `result.cards` (blunder, brilliant, koncept za vježbu) je popunjen; bot partija i trening daju samo XP (F4a).
 
 **F0b: reset lozinke i rate limit**
 - `/forgot-password` uvijek vraća 202: ekran uvijek kaže "ako račun postoji, poslali smo link", bez obzira na e-mail.
 - Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
+
+**F4a: nagrade i streak**
+- `result.mine.coins`, `xp`, `sp` sada imaju prave vrijednosti (rangirano: 15/5/10 coina za pobjedu/poraz/remi, 10 SP za pobjedu + 5 za upset protiv 100+ višeg, najviše 100 SP dnevno iz pobjeda; svaka partija osim kalibracije: 50 XP + 5 XP po odgovoru). `streakSecured` kaže je li ova partija osigurala današnji dan.
+- Poduka: `LessonResultDto.rewards` je 50 coina + 100 XP + 2 SP po konceptu kad je nagrada podobna (isti koncept najviše jednom u 7 dana; najviše 10 SP dnevno iz učenja).
+- `me.coins`, `me.xp`, `me.level`, `me.xpToNextLevel`, `me.seasonPoints` (zbroj SP do sezona u F5) i `me.streak` (`count` je 0 kad je niz prekinut; `securedToday`) dolaze iz ledgera. Level-up donosi 50 × level coina, tjedni cilj od 500 XP 100 coina, streak od 7/30/100 dana 100/500/2000 coina.
+- Povijest nagrada: `GET /api/me/rewards?limit=50` (najnovije prvo) za animacije "+15" i ekran povijesti.
 
 **F3b: revanš i ghost duel**
 - Revanš: na ekranu rezultata gumb kad je `result.rematchAvailable` (rangirana partija, protivnik viđen u zadnje 2 min). `POST /api/matches/{id}/rematch` vraća `RematchDto` (`pending`, `expiresAt` = +20 s); ekran polla `GET /api/matches/{id}/rematch` svake 2 s. Protivnik zahtjev vidi u `dashboard.inbox.rematch` (i na svom ekranu rezultata kroz isti GET) i prihvaća s `POST .../rematch/accept`, koji vraća novu partiju u `veto_coin`; kod onoga koji je pitao GET vrati `accepted` + `matchId`. Ako oba pritisnu revanš, drugi pritisak ga odmah pokreće. Istek: `expired`, gumb "Nova partija".
@@ -1362,7 +1368,9 @@ F3 Rangirano (F3a: do Tie_resolves..., F3b: revanš i ghost; SP i tjedni bodovi 
   Same_recording_is_offered_once / Recordings_older_than_30_days_not_offered / Declined_ghost_offers_bot
   Sp_win_cap_100_per_day / Upset_bonus_5_sp
   Weekly_points_only_from_ranked_and_ghost
-F4 Ekonomija
+F4 Ekonomija (F4a: ledger, partije, poduke, level, tjedni cilj, streak; F4b: zadaci, izazov, shop)
+  Ranked_match_pays_both_players_and_the_ledger_matches_the_balance / Upset_bonus_and_the_daily_win_sp_cap
+  Bot_match_grants_xp_but_not_coins_or_sp_and_counts_for_the_streak
   Lesson_pass_rewards_50_coins_100_xp_and_2_sp_per_eligible_concept
   Same_concept_rewards_at_most_once_in_7_days                           dan 6 → ne, dan 8 → da
   Ledger_sum_equals_cached_balance                       invarijanta nakon niza nagrada
