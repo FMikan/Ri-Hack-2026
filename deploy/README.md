@@ -1,6 +1,6 @@
 # Deployment
 
-Live at **https://hack.fmikan.me**, served from the VPS by the `hack` user.
+Live at **https://stackoff.tech**, served from the VPS by the `hack` user.
 
 ## Branches
 
@@ -32,7 +32,7 @@ Runs on the same branch queue instead of overlapping, so `main` always deploys i
 ## How it fits on a shared server
 
 The VPS already runs other sites behind a host-level Caddy on ports 80/443. This stack never touches those
-ports. It listens only on `127.0.0.1:8081`, and the host Caddy proxies `hack.fmikan.me` to it and handles HTTPS.
+ports. It listens only on `127.0.0.1:8081`, and the host Caddy proxies `stackoff.tech` to it and handles HTTPS.
 
 ```text
 browser --HTTPS--> host Caddy (80/443) --> 127.0.0.1:8081 (web: Caddy in Docker, frontend files)
@@ -97,7 +97,7 @@ fi
 - **Verify** from your machine, with no password prompt:
   `ssh -i ~/.ssh/ri-hack-deploy -o IdentitiesOnly=yes hack@hack.fmikan.me docker ps`
 
-**4. DNS.** Create an A record `hack.fmikan.me` pointing at the server IP. If you use Cloudflare, set it to
+**4. DNS.** Create an A record `stackoff.tech` pointing at the server IP. If you use Cloudflare, set it to
 "DNS only".
 
 **5. Reverse proxy in the host web server.**
@@ -106,7 +106,7 @@ Caddy (this server): add this to the host Caddyfile (usually `/etc/caddy/Caddyfi
 reload; existing sites keep running. HTTPS is automatic.
 
 ```caddy
-hack.fmikan.me {
+stackoff.tech {
 	reverse_proxy 127.0.0.1:8081
 }
 ```
@@ -119,13 +119,13 @@ nginx (other servers):
 
 - Create `/etc/nginx/sites-available/ri-hack` with the block below.
 - Symlink it into `sites-enabled`. nginx.org packages only read `conf.d/`, so put the file there instead.
-- Run `nginx -t && systemctl reload nginx && certbot --nginx -d hack.fmikan.me`. This needs certbot with
+- Run `nginx -t && systemctl reload nginx && certbot --nginx -d stackoff.tech`. This needs certbot with
   `python3-certbot-nginx`.
 
 ```nginx
 server {
     listen 80;
-    server_name hack.fmikan.me;
+    server_name stackoff.tech;
     location / {
         proxy_pass http://127.0.0.1:8081;
         proxy_set_header Host $host;
