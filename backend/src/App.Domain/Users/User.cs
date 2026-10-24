@@ -14,6 +14,7 @@ public class User
     public int Rating { get; set; } = GameRules.StartRating;
     public int RankedMatches { get; set; }
     public Tier Tier { get; set; } = Tier.Bronze;
+    public bool IsGrandmaster { get; set; } // global top 100 (Housekeeping); shown instead of the tier
     public int Coins { get; set; }
     public int Xp { get; set; }
     public int StreakCount { get; set; }

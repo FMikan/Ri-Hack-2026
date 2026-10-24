@@ -7,6 +7,7 @@ using App.Application.Content;
 using App.Application.Lessons;
 using App.Application.Matches;
 using App.Application.Queue;
+using App.Application.Seasons;
 using App.Domain.Content;
 using App.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -29,7 +30,9 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine").Build();
 
-    public FakeTimeProvider Clock { get; } = new(DateTimeOffset.UtcNow);
+    // Today 10:00 UTC (midday in Europe/Zagreb), not the real time: the run moves the clock by hours in total, and tests
+    // about "the same day" must not cross a local midnight just because the suite started late in the evening.
+    public FakeTimeProvider Clock { get; } = new(new DateTimeOffset(DateTime.UtcNow.Date.AddHours(10), TimeSpan.Zero));
 
     public FakeEmailSender Emails { get; } = new();
 
@@ -116,6 +119,13 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
     {
         using var scope = Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<QueueService>().RunMatchmakingAsync(default);
+    }
+
+    // What GameTickService does every minute: grandmasters, the weekly and seasonal snapshots, titles, cleanup.
+    public async Task HousekeepAsync()
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<HousekeepingService>().RunAsync(default);
     }
 
     public async Task AdvanceAsync(TimeSpan by)

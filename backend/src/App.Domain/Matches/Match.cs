@@ -121,7 +121,7 @@ public class MatchAnswer
     public required AnswerLabel Label { get; init; }
 }
 
-// A rematch after a ranked match (idea §10): 20 s to accept, and only while the opponent is still around.
+// A rematch after a ranked or friend match (idea §10): 20 s to accept, and only while the opponent is still around.
 public static class Rematch
 {
     public static RematchStatus StatusOf(Match match, DateTimeOffset now) => match.RematchStatus switch
@@ -131,13 +131,13 @@ public static class Rematch
         var status => status.Value,
     };
 
-    // Ranked only (a ghost cannot rematch), finished with a result, the opponent seen in the last 2 minutes,
+    // Ranked or friend (a ghost cannot rematch), finished with a result, the opponent seen in the last 2 minutes,
     // and nothing asked yet (or the other player asked and is waiting for this one).
     public static bool Available(Match match, int seat, DateTimeOffset now)
     {
         var opponent = match.Players.FirstOrDefault(p => p.Seat != seat);
         var status = StatusOf(match, now);
-        return match is { Kind: MatchKind.Ranked, Phase: MatchPhase.Done } && match.ResultReason != MatchResultReason.Aborted
+        return match is { Kind: MatchKind.Ranked or MatchKind.Friend, Phase: MatchPhase.Done } && match.ResultReason != MatchResultReason.Aborted
             && opponent is { Kind: SeatKind.Human } && opponent.LastSeenAt >= now.AddMinutes(-GameRules.RematchOpponentSeenMinutes)
             && (status == RematchStatus.None || (status == RematchStatus.Pending && match.RematchRequestedBySeat != seat));
     }

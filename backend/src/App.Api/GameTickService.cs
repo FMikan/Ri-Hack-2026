@@ -1,10 +1,12 @@
 using App.Application.Matches;
 using App.Application.Queue;
+using App.Application.Seasons;
 
 namespace App.Api;
 
 // Every second: advance matches whose phase deadline passed (veto turns, timeouts, interstitials, the next question).
-// Every second tick: the ranked matchmaker. One failing match is logged and skipped; nothing stops the loop or the host.
+// Every second tick: the ranked matchmaker. Every minute: housekeeping (Grandmasters, weekly and seasonal snapshots).
+// One failing match is logged and skipped; nothing stops the loop or the host.
 // ponytail: single API instance; add a leader lock (pg_advisory_lock) if a second instance ever appears.
 public class GameTickService(IServiceScopeFactory scopes, TimeProvider time, ILogger<GameTickService> logger) : BackgroundService
 {
@@ -13,6 +15,19 @@ public class GameTickService(IServiceScopeFactory scopes, TimeProvider time, ILo
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1), time);
         for (var tick = 0L; await timer.WaitForNextTickAsync(stoppingToken); tick++)
         {
+            if (tick % 60 == 0)
+            {
+                try
+                {
+                    using var scope = scopes.CreateScope();
+                    await scope.ServiceProvider.GetRequiredService<HousekeepingService>().RunAsync(stoppingToken);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    logger.LogError(e, "Housekeeping failed");
+                }
+            }
+
             if (tick % 2 == 0)
             {
                 try

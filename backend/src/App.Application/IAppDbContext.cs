@@ -5,6 +5,7 @@ using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Matchmaking;
 using App.Domain.Progress;
+using App.Domain.Social;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -40,6 +41,8 @@ public interface IAppDbContext
     DbSet<ShopItem> ShopItems { get; }
     DbSet<UserItem> UserItems { get; }
     DbSet<ConceptLessonCards> ConceptLessonCards { get; }
+    DbSet<Friendship> Friendships { get; }
+    DbSet<FriendChallenge> FriendChallenges { get; }
 
     DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)
 

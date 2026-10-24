@@ -39,6 +39,9 @@ public static class MeEndpoints
             me.SetEquipmentAsync(user.UserId(), slots, ct))
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        // Win rate, accuracy and time per question type, the most common blunder type, rating history.
+        group.MapGet("/stats", (ClaimsPrincipal user, ProfileService profiles, CancellationToken ct) => profiles.GetStatsAsync(user.UserId(), ct));
+
         group.MapGet("/knowledge-map", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetKnowledgeMapAsync(user.UserId(), ct));
 
         // "Due for review: n" with the concepts, most overdue first; practice them with POST /api/matches/practice { conceptIds }.

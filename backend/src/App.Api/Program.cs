@@ -7,10 +7,13 @@ using App.Application.Auth;
 using App.Application.Content;
 using App.Application.Daily;
 using App.Application.Economy;
+using App.Application.Leaderboards;
 using App.Application.Lessons;
 using App.Application.Matches;
 using App.Application.Me;
 using App.Application.Queue;
+using App.Application.Seasons;
+using App.Application.Social;
 using App.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +65,10 @@ builder.Services.AddScoped<QueueService>();
 builder.Services.AddScoped<Rewarder>();
 builder.Services.AddScoped<DailyService>();
 builder.Services.AddScoped<ShopService>();
+builder.Services.AddScoped<SocialService>();
+builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<LeaderboardService>();
+builder.Services.AddScoped<HousekeepingService>();
 // Live AI calls (explanations, lesson cards) give up after this and fall back (idea §16: 8 s).
 builder.Services.AddSingleton(new AiOptions(TimeSpan.FromMilliseconds(builder.Configuration.GetValue("Ai:TimeoutMs", 8000))));
 // Tests turn the tick off and advance matches themselves with a fake clock.
@@ -111,6 +118,8 @@ app.MapMatchEndpoints();
 app.MapLessonEndpoints();
 app.MapQueueEndpoints();
 app.MapEconomyEndpoints();
+app.MapSocialEndpoints();
+app.MapLeaderboardEndpoints();
 
 app.Run();
 

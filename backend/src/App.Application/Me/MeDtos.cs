@@ -11,9 +11,9 @@ namespace App.Application.Me;
 // Mirrors docs/tehnicki-dokument.md §6.3. Keep frontend/src/types/api.ts in sync.
 public record UserRefDto(Guid Id, string Username, string Avatar, string Tier, int Rating, bool IsProvisional, string? Title, Dictionary<string, string> Equipment)
 {
-    // Equipment is stored as slot → assetKey (PUT /api/me/equipment). ponytail: Title stays null until titles (F5).
+    // Equipment is stored as slot → assetKey (PUT /api/me/equipment). A Grandmaster shows that instead of the tier.
     public static UserRefDto From(User user) =>
-        new(user.Id, user.Username, user.Avatar, user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, null,
+        new(user.Id, user.Username, user.Avatar, user.IsGrandmaster ? "grandmaster" : user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, null,
             JsonSerializer.Deserialize<Dictionary<string, string>>(user.EquipmentJson) ?? []);
 }
 
@@ -72,3 +72,16 @@ public record KnowledgeTopicDto(TopicDto Topic, bool Active, double? Mastery, do
 
 public record KnowledgeMapDto(KnowledgeTopicDto[] Topics);
 
+
+// Accuracy (0–100 %) and average time of timed answers per question type, only for types the player has answered.
+// winRate is 0–100 % of finished matches against an opponent (ranked, ghost, bot, friend).
+public record StatsDto(
+    int Matches, int Wins, int Losses, int Draws, double WinRate, Dictionary<string, double> AccuracyByType, Dictionary<string, int> AvgTimeMsByType,
+    QuestionType? MostCommonBlunderType, int BrilliantCount, int ConceptsPatched, int ConceptsGraduated, RatingPointDto[] RatingHistory);
+
+public record PublicTopicDto(TopicDto Topic, double? Mastery, double Completion);
+
+public record PublicStatsDto(int Matches, double WinRate, int ConceptsGraduated);
+
+// What anyone (or only friends, by profile_visibility) sees: topic-level progress, never concept mastery.
+public record PublicProfileDto(UserRefDto User, PublicTopicDto[] Topics, string[] Titles, string[] Achievements, PublicStatsDto Stats);

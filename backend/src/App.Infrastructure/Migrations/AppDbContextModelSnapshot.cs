@@ -1274,6 +1274,106 @@ namespace App.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("App.Domain.Social.FriendChallenge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid?>("GuestUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("guest_user_id");
+
+                    b.Property<Guid>("HostUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("host_user_id");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<Guid?>("TargetUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_friend_challenges");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_friend_challenges_code");
+
+                    b.HasIndex("GuestUserId")
+                        .HasDatabaseName("ix_friend_challenges_guest_user_id");
+
+                    b.HasIndex("HostUserId")
+                        .HasDatabaseName("ix_friend_challenges_host_user_id");
+
+                    b.HasIndex("MatchId")
+                        .HasDatabaseName("ix_friend_challenges_match_id");
+
+                    b.HasIndex("TargetUserId")
+                        .HasDatabaseName("ix_friend_challenges_target_user_id")
+                        .HasFilter("match_id is null");
+
+                    b.ToTable("friend_challenges", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Social.Friendship", b =>
+                {
+                    b.Property<Guid>("UserLow")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_low");
+
+                    b.Property<Guid>("UserHigh")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_high");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("RequestedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("UserLow", "UserHigh")
+                        .HasName("pk_friendships");
+
+                    b.HasIndex("RequestedBy")
+                        .HasDatabaseName("ix_friendships_requested_by");
+
+                    b.HasIndex("UserHigh", "Status")
+                        .HasDatabaseName("ix_friendships_user_high_status");
+
+                    b.ToTable("friendships", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_friendships_order", "user_low < user_high");
+
+                            t.HasCheckConstraint("ck_friendships_status", "status in ('pending', 'accepted')");
+                        });
+                });
+
             modelBuilder.Entity("App.Domain.Users.PasswordResetToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1404,6 +1504,10 @@ namespace App.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("equipment");
+
+                    b.Property<bool>("IsGrandmaster")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_grandmaster");
 
                     b.Property<DateTimeOffset?>("LastSeenAt")
                         .HasColumnType("timestamp with time zone")
@@ -1878,6 +1982,58 @@ namespace App.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_concept_mastery_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Social.FriendChallenge", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("GuestUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_friend_challenges_users_guest_user_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("HostUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friend_challenges_users_host_user_id");
+
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_friend_challenges_matches_match_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("TargetUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_friend_challenges_users_target_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Social.Friendship", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedBy")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friendships_users_requested_by");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserHigh")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friendships_users_user_high");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserLow")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friendships_users_user_low");
                 });
 
             modelBuilder.Entity("App.Domain.Users.PasswordResetToken", b =>

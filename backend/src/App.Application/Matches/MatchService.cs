@@ -142,12 +142,12 @@ public class MatchService(IAppDbContext db, Rewarder rewarder, TimeProvider time
         return await MapAsync(rematch, Seat(rematch, userId).Seat, now, ct);
     }
 
-    // Skips the queue (and the same-opponent rule) and goes straight to a new veto.
+    // Skips the queue (and the same-opponent rule) and goes straight to a new veto of the same kind (ranked or friend).
     private async Task<Guid> StartRematchAsync(Match match, int seat, DateTimeOffset now, CancellationToken ct)
     {
         Rematch.Accept(match, seat, now);
         foreach (var player in match.Players) await db.LeaveQueueAsync(player.UserId!.Value, ct);
-        match.RematchMatchId = await CreateRankedAsync(match.Players[0].UserId!.Value, match.Players[1].UserId!.Value, now, ct, rematchOf: match.Id);
+        match.RematchMatchId = await CreateDuelAsync(match.Players[0].UserId!.Value, match.Players[1].UserId!.Value, match.Kind, now, ct, rematchOf: match.Id);
         return match.RematchMatchId.Value;
     }
 
@@ -161,7 +161,8 @@ public class MatchService(IAppDbContext db, Rewarder rewarder, TimeProvider time
         return await LoadAsync(matchId, ct);
     }
 
-    public async Task<Guid> CreateRankedAsync(Guid userA, Guid userB, DateTimeOffset now, CancellationToken ct, Guid? rematchOf = null)
+    // A ranked (queue, rematch) or friend (challenge code) duel: both players claim their active-match slot; the veto starts.
+    public async Task<Guid> CreateDuelAsync(Guid userA, Guid userB, MatchKind kind, DateTimeOffset now, CancellationToken ct, Guid? rematchOf = null)
     {
         var users = await db.Users.Include(u => u.Topics).Where(u => u.Id == userA || u.Id == userB).ToListAsync(ct);
         var playable = (await db.Topics.Where(t => t.IsActive).Select(t => t.Id).ToListAsync(ct)).ToHashSet();
@@ -169,7 +170,7 @@ public class MatchService(IAppDbContext db, Rewarder rewarder, TimeProvider time
         List<Guid> Topics(User user) => [.. user.Topics.Select(t => t.TopicId).Where(playable.Contains)];
 
         var seed = Random.Shared.Next();
-        var match = MatchEngine.CreateRanked([Human(a, 0), Human(b, 1)], Veto.Start(Topics(a), Topics(b), new Random(seed)), seed, now);
+        var match = MatchEngine.CreateRanked([Human(a, 0), Human(b, 1)], Veto.Start(Topics(a), Topics(b), new Random(seed)), seed, now, kind);
         match.RematchOfMatchId = rematchOf;
         db.Matches.Add(match);
         await db.SaveChangesAsync(ct);

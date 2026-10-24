@@ -38,6 +38,9 @@ public static class Rewards
             new(RewardType.MatchXp, 0, GameRules.XpMatch, 0, match.Id, Key(RewardType.MatchXp, match.Id, user)),
             new(RewardType.AnswerXp, 0, GameRules.XpAnswer * answered, 0, match.Id, Key(RewardType.AnswerXp, match.Id, user)),
         ];
+        // A friend duel is unranked: 5 coins for both whatever the result, no SP (idea §12).
+        if (match.Kind == MatchKind.Friend)
+            grants.Add(new Grant(RewardType.FriendMatch, GameRules.CoinsFriendMatch, 0, 0, match.Id, Key(RewardType.FriendMatch, match.Id, user)));
         if (match.Kind is not (MatchKind.Ranked or MatchKind.Ghost)) return grants;
 
         var opponent = match.Players.First(p => p.Seat != seat.Seat);

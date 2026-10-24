@@ -100,7 +100,6 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
         var suggestion = dueTopic is not null
             ? new SuggestionDto("review_due", dueTopic.Key, dueTopic.Select(d => d.ConceptId).Take(GameRules.QuestionsPerMatch).ToArray())
             : me.ActiveTopicIds.Length >= GameRules.MinTopics ? new SuggestionDto("play", null, null) : null;
-        // ponytail: the rating history and the friend challenge inbox stay empty until F5.
         return new DashboardDto(
             me,
             topics.Select(t =>
@@ -108,12 +107,12 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
                 var p = progress.GetValueOrDefault(t.Id);
                 return new DashboardTopicDto(t, me.ActiveTopicIds.Contains(t.Id), p?.Mastery, Completion(p?.Graduated ?? 0, t.ConceptCount));
             }).ToArray(),
-            [],
+            await RatingHistoryAsync(userId, cancellationToken),
             due.Count,
             (await daily.TasksAsync(userId, cancellationToken)).Tasks,
             await daily.ChallengeAttemptedTodayAsync(userId, cancellationToken),
             suggestion,
-            new InboxDto(await RematchInboxAsync(userId, cancellationToken), null),
+            new InboxDto(await RematchInboxAsync(userId, cancellationToken), await FriendChallengeInboxAsync(userId, cancellationToken)),
             me.InQueue);
     }
 
@@ -187,10 +186,31 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
         return request is null ? null : new RematchInboxDto(request.Id, UserRefDto.From(request.From), request.At.AddSeconds(GameRules.RematchSeconds));
     }
 
-    private record TopicProgress(double? Mastery, int Graduated);
+    // The newest challenge a friend sent me that nobody has joined yet.
+    private async Task<FriendChallengeInboxDto?> FriendChallengeInboxAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        var challenge = await db.FriendChallenges.AsNoTracking()
+            .Where(c => c.TargetUserId == userId && c.MatchId == null && c.ExpiresAt > now)
+            .OrderByDescending(c => c.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        return challenge is null ? null
+            : new FriendChallengeInboxDto(challenge.Code, UserRefDto.From(await db.Users.FirstAsync(u => u.Id == challenge.HostUserId, cancellationToken)), challenge.ExpiresAt);
+    }
+
+    // Rating after each of the last 30 ranked and ghost matches, oldest first.
+    public async Task<RatingPointDto[]> RatingHistoryAsync(Guid userId, CancellationToken cancellationToken) =>
+        (await db.MatchPlayers.Where(p => p.UserId == userId && p.Kind == SeatKind.Human && p.RatingAfter != null)
+            .Join(db.Matches, p => p.MatchId, m => m.Id, (p, m) => new { At = m.FinishedAt!.Value, Rating = p.RatingAfter!.Value })
+            .OrderByDescending(x => x.At)
+            .Take(30)
+            .ToListAsync(cancellationToken))
+        .OrderBy(x => x.At).Select(x => new RatingPointDto(x.At, x.Rating)).ToArray();
+
+    public record TopicProgress(double? Mastery, int Graduated);
 
     // Topic mastery averages the answered concepts only: an unknown concept is not a weak one.
-    private async Task<Dictionary<Guid, TopicProgress>> TopicProgressAsync(Guid userId, CancellationToken cancellationToken) =>
+    public async Task<Dictionary<Guid, TopicProgress>> TopicProgressAsync(Guid userId, CancellationToken cancellationToken) =>
         await db.ConceptMastery.Where(m => m.UserId == userId)
             .GroupBy(m => m.TopicId)
             .Select(g => new
@@ -207,7 +227,7 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
         return db.ConceptMastery.Where(m => m.UserId == userId && !m.IsGraduated && m.ReviewDueAt <= now).OrderBy(m => m.ReviewDueAt);
     }
 
-    private static double Completion(int graduated, int concepts) => concepts == 0 ? 0 : 100.0 * graduated / concepts;
+    public static double Completion(int graduated, int concepts) => concepts == 0 ? 0 : 100.0 * graduated / concepts;
 
     // ponytail: season points are the ledger's SP sum until seasons (F5) give them a season_id and a reset.
     public async Task<MeDto> ToDtoAsync(User user, CancellationToken cancellationToken)

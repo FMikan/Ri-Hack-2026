@@ -55,6 +55,16 @@ export type AppErrorCode =
   | 'urn:app:daily/already-attempted'
   | 'urn:app:daily/too-late' // the attempt is recorded as a timeout (5 coins); refetch the challenge
   | 'urn:app:daily/not-found'
+  | 'urn:app:users/not-found'
+  | 'urn:app:users/profile-private' // 403: the profile is for friends only
+  | 'urn:app:friends/already' // already friends, or my request is still waiting
+  | 'urn:app:friends/self'
+  | 'urn:app:friends/not-friends' // a targeted challenge needs an accepted friend
+  | 'urn:app:friends/request-not-found'
+  | 'urn:app:challenge/not-found'
+  | 'urn:app:challenge/expired' // older than 10 minutes, or someone already joined
+  | 'urn:app:challenge/own'
+  | 'urn:app:leaderboards/not-found'
 
 export type Uuid = string
 export type Iso = string
@@ -612,4 +622,86 @@ export interface KnowledgeMapDto {
       lastAnswers: { questionId: Uuid; type: QuestionType; prompt: string; isCorrect: boolean; at: Iso }[] // newest first, up to 3
     }[]
   }[]
+}
+
+// ---- Social, profile and leaderboards (F5, docs §6.3 and §6.9) ----
+
+// Requests to me first, then friends (online first), then my own open requests. online = seen in the last 2 minutes.
+export type FriendStatus = 'pending_in' | 'accepted' | 'pending_out'
+
+export interface FriendDto {
+  user: UserRefDto
+  status: FriendStatus
+  online: boolean
+}
+
+// POST /api/friends/requests → 201 FriendDto (404 users/not-found; 409 friends/already, friends/self). Asking someone
+// who already asked me accepts their request. POST /api/friends/requests/{userId}/accept → FriendDto.
+// DELETE /api/friends/{userId} → 204 (unfriend, withdraw or decline).
+export interface FriendRequest {
+  username: string
+}
+
+// POST /api/friend-challenges → 201 FriendChallengeCreatedDto. With friendUserId the challenge shows in that friend's
+// dashboard.inbox.friendChallenge (409 friends/not-friends otherwise); the code works for anyone for 10 minutes.
+export interface CreateFriendChallengeRequest {
+  friendUserId?: Uuid | null
+}
+
+export interface FriendChallengeCreatedDto {
+  code: string // 6 characters A–Z, 2–9; share as https://<domain>/challenge/{code}
+  expiresAt: Iso
+}
+
+// GET /api/friend-challenges/{code}: the host polls it; matchId appears once a guest joined.
+// POST /api/friend-challenges/{code}/join → 201 MatchStateDto (kind 'friend', veto_coin; 409 challenge/expired, challenge/own).
+export interface FriendChallengeDto {
+  code: string
+  host: UserRefDto
+  matchId?: Uuid | null
+  expiresAt: Iso
+}
+
+// GET /api/me/stats. Percentages are 0–100. The per-type maps only hold types the player has answered.
+export interface StatsDto {
+  matches: number // finished matches against an opponent (ranked, ghost, bot, friend)
+  wins: number
+  losses: number
+  draws: number
+  winRate: number
+  accuracyByType: Partial<Record<QuestionType, number>>
+  avgTimeMsByType: Partial<Record<QuestionType, number>> // timed answers only
+  mostCommonBlunderType?: QuestionType | null
+  brilliantCount: number
+  conceptsPatched: number
+  conceptsGraduated: number
+  ratingHistory: { at: Iso; rating: number }[] // last 30 ranked and ghost matches, oldest first
+}
+
+// GET /api/users/{username} (403 users/profile-private for a friends-only profile; 404 users/not-found).
+// Topic-level progress only (active topics and topics with answers); concept mastery stays private.
+export interface PublicProfileDto {
+  user: UserRefDto
+  topics: { topic: TopicDto; mastery?: number | null; completion: number }[]
+  titles: string[] // names of active titles
+  achievements: string[] // keys of earned achievements
+  stats: Pick<StatsDto, 'matches' | 'winRate' | 'conceptsGraduated'>
+}
+
+// GET /api/leaderboards/{board} (topic needs ?topic=<slug>). Top 100 plus my row with up to 2 players above and below.
+// value: Elo (global, friends), season points (season), points from this week's ranked and ghost matches (weekly),
+// graduated concepts (topic; topic mastery breaks ties). The global board leaves out provisional players.
+export type Board = 'global' | 'season' | 'weekly' | 'topic' | 'friends'
+
+export interface LeaderboardEntryDto {
+  rank: number
+  user: UserRefDto
+  value: number
+}
+
+export interface LeaderboardDto {
+  board: Board
+  entries: LeaderboardEntryDto[]
+  me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] } | null // around includes my own row
+  resetsAt?: Iso | null // weekly: next Monday 00:00 (Europe/Zagreb); season: the season's end
 }

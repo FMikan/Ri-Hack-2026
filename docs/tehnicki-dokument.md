@@ -34,7 +34,7 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, u `development` (nagrade poduke se knjiže u F4) |
 | **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | gotovo, u `development` (F3a red, veto, živi duel, Elo, tierovi; F3b revanš, ghost duel) |
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | gotovo, PR `feature/f4a-ledger` (F4a ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak; F4b dnevni zadaci, dnevni izazov, shop, oprema) |
-| **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
+| **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | u tijeku, PR `feature/f5-social` (F5a prijatelji, izazov prijatelja, javni profil, statistika, rang-liste, Grandmaster) |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
 Stupac "Stanje backenda" se ažurira u PR-u svake faze; što frontend može spojiti po fazama je u §6.11.
@@ -824,6 +824,9 @@ urn:app:question/not-answered (403)  urn:app:question/not-found (404)  urn:app:l
 urn:app:shop/insufficient-coins urn:app:shop/already-owned           urn:app:shop/freeze-limit         urn:app:shop/not-owned
 urn:app:auth/invalid-credentials urn:app:auth/email-taken            urn:app:auth/username-taken       urn:app:auth/reset-token-invalid
 urn:app:friends/already         urn:app:challenge/expired            urn:app:daily/already-attempted   urn:app:daily/too-late
+urn:app:friends/self            urn:app:friends/not-friends          urn:app:challenge/own
+urn:app:users/not-found (404)   urn:app:users/profile-private (403)  urn:app:friends/request-not-found (404)
+urn:app:challenge/not-found (404)  urn:app:leaderboards/not-found (404)
 ```
 
 Za `409 match/already-answered|wrong-phase|wrong-index` klijent ne prikazuje grešku: refetcha stanje i nastavlja (zakašnjeli klik ili dupli zahtjev).
@@ -1038,18 +1041,18 @@ GET /api/leaderboards/{board}?topic={slug}   board: 'global'|'season'|'weekly'|'
 GET /api/seasons/current                     → { id; number; startsAt; endsAt; doubleLearningSp: boolean }
 GET /api/me/achievements                     → { key: string; name: string; earnedAt?: Iso; progress?: number; target?: number }[]
 GET /api/me/titles                           → { id: Uuid; key: string; name: string; kind: string; count: number; active: boolean }[]
-GET    /api/friends                          → FriendDto[]
-POST   /api/friends/requests  { username }   → 201 FriendDto     (409 friends/already)
-POST   /api/friends/requests/{userId}/accept → FriendDto
-DELETE /api/friends/{userId}                 → 204
-POST   /api/friend-challenges { friendUserId?: Uuid }  → 201 { code: string; expiresAt: Iso }   // s friendUserId: pojavi se u njegovom DashboardDto.inbox
-GET    /api/friend-challenges/{code}         → { code; host: UserRefDto; matchId?: Uuid; expiresAt: Iso }
-POST   /api/friend-challenges/{code}/join    → 201 MatchStateDto  (veto; 409 challenge/expired)
+GET    /api/friends                          → FriendDto[]       (zahtjevi meni, pa prijatelji (online prvi), pa moji zahtjevi)
+POST   /api/friends/requests  { username }   → 201 FriendDto     (409 friends/already, friends/self; 404 users/not-found; zahtjev onome tko je već pitao mene = prihvat)
+POST   /api/friends/requests/{userId}/accept → FriendDto         (404 friends/request-not-found)
+DELETE /api/friends/{userId}                 → 204               (makni prijatelja, povuci ili odbij zahtjev)
+POST   /api/friend-challenges { friendUserId?: Uuid }  → 201 { code: string; expiresAt: Iso }   // s friendUserId (samo prihvaćeni prijatelj, inače 409 friends/not-friends): pojavi se u njegovom DashboardDto.inbox
+GET    /api/friend-challenges/{code}         → { code; host: UserRefDto; matchId?: Uuid; expiresAt: Iso }   (host polla dok ne dobije matchId)
+POST   /api/friend-challenges/{code}/join    → 201 MatchStateDto  (kind 'friend', veto; 409 challenge/expired, challenge/own, topics/count, match/already-in-match)
 
-interface LeaderboardDto { board: string; entries: LeaderboardEntryDto[]; me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] } ; resetsAt?: Iso }
+interface LeaderboardDto { board: 'global'|'season'|'weekly'|'topic'|'friends'; entries: LeaderboardEntryDto[]; me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] /* uključuje moj red */ } ; resetsAt?: Iso }
 interface LeaderboardEntryDto { rank: number; user: UserRefDto; value: number }    // value = Elo | SP | tjedni bodovi | graduirani koncepti
-interface FriendDto { user: UserRefDto; status: 'pending_in'|'pending_out'|'accepted'; online: boolean }
-interface StatsDto { matches: number; wins: number; losses: number; draws: number; winRate: number; accuracyByType: Record<QuestionType, number>; avgTimeMsByType: Record<QuestionType, number>; mostCommonBlunderType?: QuestionType; brilliantCount: number; conceptsPatched: number; conceptsGraduated: number; ratingHistory: { at: Iso; rating: number }[] }
+interface FriendDto { user: UserRefDto; status: 'pending_in'|'accepted'|'pending_out'; online: boolean }
+interface StatsDto { matches: number; wins: number; losses: number; draws: number; winRate: number; accuracyByType: Partial<Record<QuestionType, number>>; avgTimeMsByType: Partial<Record<QuestionType, number>>; mostCommonBlunderType?: QuestionType; brilliantCount: number; conceptsPatched: number; conceptsGraduated: number; ratingHistory: { at: Iso; rating: number }[] }   // postoci 0–100
 interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; mastery?: number; completion: number }[]; titles: string[]; achievements: string[]; stats: Pick<StatsDto, 'matches'|'winRate'|'conceptsGraduated'> }
 ```
 
@@ -1065,6 +1068,14 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 ### 6.11 Stanje po fazama: što frontend može spojiti sada
 
 Što backend već poslužuje (u `development`) i što ekrani trebaju znati, a ne piše u tipovima. Svaka faza dodaje svoj odlomak.
+
+**F5a: prijatelji, izazov prijatelja, javni profil, statistika, rang-liste**
+- Prijatelji: `GET /api/friends` (`pending_in` prvi, pa prihvaćeni s `online` (viđen u zadnje 2 min), pa `pending_out`), `POST /api/friends/requests { username }`, `POST /api/friends/requests/{userId}/accept`, `DELETE /api/friends/{userId}`. Zahtjev prema nekome tko je već poslao zahtjev meni odmah je prihvaćen. Online status puni svaki autentificirani zahtjev (`users.last_seen_at`, najviše jednom u 30 s), pa ga polling partije i dashboarda drže svježim.
+- Izazov prijatelja: `POST /api/friend-challenges {}` (otvoreni kod) ili `{ friendUserId }` (gumb "Izazovi" uz prijatelja; on ga vidi u `dashboard.inbox.friendChallenge`). Kod je 6 znakova (A–Z, 2–9), vrijedi 10 min; link `https://<domena>/challenge/{code}`. Host polla `GET /api/friend-challenges/{code}` dok ne dobije `matchId`; gost zove `POST .../{code}/join` i dobiva `MatchStateDto` u `veto_coin`. Oba igrača trebaju 3–5 tema. Partija je kao rangirana (veto, isti tok), ali `kind: 'friend'`: bez Elo-a i SP-a, 5 coina oboma, XP i streak kao inače, revanš radi (novi friend duel).
+- `GET /api/users/{username}` (javni profil): teme (aktivne i one s odgovorima) s `mastery`/`completion`, statistika (`matches`, `winRate`, `conceptsGraduated`); nikad mastery po konceptu. Profil `friends` je `403 urn:app:users/profile-private` za ne-prijatelje.
+- `GET /api/me/stats`: `winRate` i točnost su postoci 0–100; `accuracyByType`/`avgTimeMsByType` imaju samo tipove koje je igrač odgovarao (prosjek vremena samo za odgovore s vremenom). `dashboard.ratingHistory` i `stats.ratingHistory` su zadnjih 30 rangiranih/ghost partija, najstarija prva.
+- Rang-liste: `GET /api/leaderboards/global|weekly|friends` i `topic?topic=<slug>`. Top 100 + `me` (moj red s do 2 iznad i ispod, `around` uključuje moj red; `me` je `null` kad nisam na listi). Globalna: Elo, bez provizornih (< 10 rangiranih). Tjedna: zbroj bodova iz rangiranih i ghost partija od ponedjeljka 00:00 (Zagreb), `resetsAt` = idući ponedjeljak. Po temi: broj graduiranih koncepata, izjednačenje po masteryju teme; na listi je svatko tko je u temi nešto odgovorio. Prijatelji: ja + prihvaćeni prijatelji po Elo-u.
+- Grandmaster: top 100 globalne liste (≥ 10 partija) osvježava se svake minute; `UserRefDto.tier` je tada `'grandmaster'`.
 
 **F0: auth, onboarding, dashboard**
 - `register`, `login`, `refresh`, `logout`, `GET/PATCH /api/me`, `PUT /api/me/topics`, `GET /api/me/dashboard`, `GET /api/topics`, `GET /api/topics/{slug}/concepts`.
@@ -1147,7 +1158,7 @@ svake 60 s  Housekeeping(now)     istekli friend_challenges i refresh tokeni; Re
 | Projekt | Što | Infrastruktura |
 | --- | --- | --- |
 | `tests/App.Domain.Tests` (novi, dodaje se u `App.slnx`) | čiste funkcije iz §4; `MatchEngine` nad in-memory agregatom | xUnit, bez baze, paralelno, < 1 s |
-| `tests/App.Api.Tests` (postojeći, proširen) | HTTP ugovor + use caseovi + baza; jedan test = jedan scenarij kroz API | `WebApplicationFactory<Program>` + `Testcontainers.PostgreSql` (collection fixture, jedan kontejner po runu, `TRUNCATE` svih tablica prije svakog testa, seed minimalnog sadržaja), `[assembly: CollectionBehavior(DisableTestParallelization = true)]`, `FakeTimeProvider` (start = `UtcNow`, isti instance u `JwtBearerOptions.TimeProvider`), `FakeEmailSender`, fake AI generatori, `Game:TickEnabled=false`, `RateLimit:Enabled=false` (jedan test ga uključuje vlastitom factoryjem), `Ai:TimeoutMs=50` |
+| `tests/App.Api.Tests` (postojeći, proširen) | HTTP ugovor + use caseovi + baza; jedan test = jedan scenarij kroz API | `WebApplicationFactory<Program>` + `Testcontainers.PostgreSql` (collection fixture, jedan kontejner po runu, `TRUNCATE` svih tablica prije svakog testa, seed minimalnog sadržaja), `[assembly: CollectionBehavior(DisableTestParallelization = true)]`, `FakeTimeProvider` (start = današnji dan u 10:00 UTC, da testovi "istog dana" ne prijeđu lokalnu ponoć kad se suite pokrene navečer; testovi sat pomiču naprijed, za "idući tjedan" cijelim danima, isti instance u `JwtBearerOptions.TimeProvider`), `FakeEmailSender`, fake AI generatori, `Game:TickEnabled=false`, `RateLimit:Enabled=false` (jedan test ga uključuje vlastitom factoryjem), `Ai:TimeoutMs=50` |
 
 Pomoćnici u Api testovima: `TestApp.RegisterAsync("ana") → AuthedClient` (klijent s tokenom; nakon `Clock.Advance` iznad 15 min sam ponovno logira), `Seed.Topic("sql", concepts: 10, questionsPerConcept: 8)`, `Clock.Advance(seconds)`, `Tick()` (zove `AdvanceMatches` + `RunMatchmaking`), `PlayThrough(match, answers)`.
 
@@ -1280,6 +1291,9 @@ Level / Streak / DailyTasks / AchievementRules
   Three_tasks_per_day_deterministic_per_user
   Review_all_due_task_not_offered_when_nothing_due
   First_win_achievement_fires_once
+Social
+  Friendship_pair_is_the_same_in_both_directions / Friend_challenge_code_is_6_characters_from_the_alphabet
+  Friend_match_pays_5_coins_to_both_whatever_the_result_and_no_sp / Friend_match_can_be_rematched
 ```
 
 ### 9.3 API testovi po fazama
@@ -1404,7 +1418,7 @@ F5 Društveno i rang-liste
   Friend_request_accept_remove / Friend_request_in_both_directions_is_one_row / Online_status_from_last_seen
   Friend_challenge_code_joins_veto_unranked_5_coins_each / Targeted_friend_challenge_appears_in_inbox
   Public_profile_hides_concept_mastery / Friends_only_profile_is_403_for_strangers
-  Stats_accuracy_by_type_and_most_common_blunder
+  Stats_accuracy_by_type_and_most_common_blunder / Stats_and_dashboard_show_results_and_rating_history
   Retiring_question_reverts_its_mastery_deltas_and_keeps_match_result
   Question_moves_down_a_band_when_too_easy
 ```

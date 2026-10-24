@@ -6,6 +6,7 @@ using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Matchmaking;
 using App.Domain.Progress;
+using App.Domain.Social;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +40,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ShopItem> ShopItems => Set<ShopItem>();
     public DbSet<UserItem> UserItems => Set<UserItem>();
     public DbSet<ConceptLessonCards> ConceptLessonCards => Set<ConceptLessonCards>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+    public DbSet<FriendChallenge> FriendChallenges => Set<FriendChallenge>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
@@ -65,5 +68,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<RewardType>().HaveConversion<SnakeCaseEnumConverter<RewardType>>();
         builder.Properties<ShopItemKind>().HaveConversion<SnakeCaseEnumConverter<ShopItemKind>>();
         builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
+        builder.Properties<FriendshipStatus>().HaveConversion<SnakeCaseEnumConverter<FriendshipStatus>>();
     }
 }
