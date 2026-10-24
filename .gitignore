@@ -1,0 +1,28 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# IDE / OS
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+
+# Logs and local database artifacts
+*.log
+*.db
+*.sqlite

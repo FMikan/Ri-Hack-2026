@@ -1,0 +1,18 @@
+@baseUrl = http://localhost:5080
+
+GET {{baseUrl}}/health
+
+###
+
+GET {{baseUrl}}/health/ready
+
+###
+
+GET {{baseUrl}}/api/notes
+
+###
+
+POST {{baseUrl}}/api/notes
+Content-Type: application/json
+
+{ "text": "Hello from App.Api.http" }
