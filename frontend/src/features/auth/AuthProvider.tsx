@@ -37,6 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await api.logout()
         setSession({ status: 'anonymous' })
       },
+      updateMe: async (body) => {
+        const user = await api.updateMe(body)
+        setSession({ status: 'authenticated', user })
+      },
     }),
     [session, restore],
   )

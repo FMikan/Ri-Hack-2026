@@ -25,7 +25,7 @@ export function PlayDialog() {
     <Dialog open={mode === 'bot' || mode === 'ranked'} onOpenChange={(open) => !open && setMode()}>
       <DialogContent
         showCloseButton={false}
-        className="max-h-[calc(100svh-2rem)] gap-5 overflow-y-auto bg-card p-5 sm:max-w-2xl sm:p-6"
+        className="gap-5 bg-card p-5 sm:max-w-2xl sm:p-6"
       >
         {mode === 'ranked' ? <RankedQueue onPlayBot={() => setMode('bot')} /> : mode === 'bot' && <BotPicker />}
       </DialogContent>

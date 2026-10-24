@@ -9,11 +9,12 @@ import {
   UserRound,
   type LucideIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import coin from '@/assets/brand/stackoff-coin-on-dark.svg'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
 import wordmark from '@/assets/brand/stackoff-wordmark-on-dark.svg'
+import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Wordmark } from '@/components/shared/Wordmark'
 import {
   DropdownMenu,
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
+import { AvatarDialog } from '@/features/profile/AvatarDialog'
 import { demoMe } from '@/lib/fixtures/demo'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
@@ -43,6 +45,12 @@ const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
 ]
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+
+// A mouse click leaves focus on the link, which would keep the rail wide (focus-within) until a click elsewhere.
+// Keyboard activation has detail 0 and keeps focus, so tabbing through the rail still works.
+function releaseFocus(event: MouseEvent<HTMLElement>) {
+  if (event.detail > 0) event.currentTarget.blur()
+}
 
 // Signed-in layout: icon rail on desktop, top bar with coins and the menu. On phones the menu carries the navigation.
 export function AppShell() {
@@ -67,7 +75,12 @@ function SideRail() {
   return (
     <aside className="group/rail sticky top-0 z-40 hidden h-svh lg:block">
       <div className="absolute inset-y-0 left-0 flex w-20 flex-col gap-8 overflow-hidden border-r border-border bg-sidebar py-5 shadow-black/50 transition-[width,box-shadow] duration-200 ease-out group-focus-within/rail:w-60 group-focus-within/rail:shadow-2xl group-hover/rail:w-60 group-hover/rail:shadow-2xl motion-reduce:transition-none">
-        <NavLink to="/" aria-label="StackOff" className={cn('relative mx-5 flex h-10 items-center rounded-sm', focusRing)}>
+        <NavLink
+          to="/"
+          aria-label="StackOff"
+          onClick={releaseFocus}
+          className={cn('relative mx-5 flex h-10 items-center rounded-sm', focusRing)}
+        >
           <img
             src={coin}
             alt=""
@@ -93,6 +106,7 @@ function SideRail() {
                     <NavLink
                       to={item.to}
                       end
+                      onClick={releaseFocus}
                       className={cn(
                         base,
                         'transition-colors',
@@ -108,6 +122,7 @@ function SideRail() {
                     <button
                       type="button"
                       aria-disabled="true"
+                      onClick={releaseFocus}
                       className={cn(base, 'w-full cursor-not-allowed text-muted-foreground/60', focusRing)}
                     >
                       {inner}
@@ -128,6 +143,7 @@ function TopBar() {
   const { t, locale, setLocale } = useLocale()
   const { pathname } = useLocation()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
   if (session.status !== 'authenticated') return null
   const user = demoMe(session.user)
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
@@ -157,9 +173,7 @@ function TopBar() {
             )}
           >
             <Menu aria-hidden="true" className="size-6 lg:hidden" />
-            <span className="hidden size-8 place-items-center rounded-full bg-primary font-heading text-sm font-semibold text-primary-foreground lg:grid">
-              {user.username.charAt(0).toUpperCase()}
-            </span>
+            <UserAvatar user={user} className="hidden size-8 lg:block" />
             <span className="hidden max-w-32 truncate text-sm font-medium lg:block">{user.username}</span>
             <ChevronDown aria-hidden="true" className="hidden size-4 text-muted-foreground lg:block" />
           </DropdownMenuTrigger>
@@ -207,6 +221,10 @@ function TopBar() {
             </DropdownMenuItem>
             {settingsOpen && (
               <>
+                <DropdownMenuItem inset className={touch} onSelect={() => setAvatarOpen(true)}>
+                  {t.avatar.menu}
+                  <UserAvatar user={user} className="ml-auto size-5" />
+                </DropdownMenuItem>
                 <DropdownMenuLabel inset className="font-normal">
                   {t.common.language}
                 </DropdownMenuLabel>
@@ -226,6 +244,7 @@ function TopBar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <AvatarDialog user={user} open={avatarOpen} onOpenChange={setAvatarOpen} />
       </div>
     </header>
   )

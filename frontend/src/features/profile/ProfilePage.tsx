@@ -1,3 +1,4 @@
+import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -80,12 +81,7 @@ function ProfileCard({ me, history, className }: { me: MeDto; history: MatchSumm
     <Card className={className}>
       <CardContent className="grid gap-6">
         <div className="flex flex-wrap items-center gap-4">
-          <span
-            aria-hidden="true"
-            className="grid size-16 shrink-0 place-items-center rounded-full bg-primary font-heading text-2xl font-semibold text-primary-foreground"
-          >
-            {me.username.charAt(0).toUpperCase()}
-          </span>
+          <UserAvatar user={me} className="size-16" />
           <div className="grid min-w-0 gap-1">
             <h1 className="truncate font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{me.username}</h1>
             {me.title && <p className="text-sm font-medium text-primary">{me.title}</p>}

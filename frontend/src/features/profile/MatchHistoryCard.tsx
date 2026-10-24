@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { Link } from 'react-router'
 import { BotAvatar } from '@/components/shared/BotAvatar'
+import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { relativeTime } from '@/lib/format'
@@ -76,18 +77,12 @@ export function MatchHistoryCard({ history, className }: { history: MatchSummary
   )
 }
 
-// The bot's portrait, a person's initial, or the topic for practice (no opponent).
+// The bot's or the player's portrait, or the topic for practice (no opponent).
 function OpponentAvatar({ match }: { match: MatchSummaryDto }) {
-  const avatar = 'grid size-10 shrink-0 place-items-center rounded-full'
   if (match.opponent?.persona) return <BotAvatar persona={match.opponent.persona} className="size-10" />
-  if (match.opponent)
-    return (
-      <span aria-hidden="true" className={cn(avatar, 'bg-secondary font-heading font-semibold ring-1 ring-border')}>
-        {match.opponent.user?.username.charAt(0).toUpperCase()}
-      </span>
-    )
+  if (match.opponent?.user) return <UserAvatar user={match.opponent.user} className="size-10" />
   return (
-    <span aria-hidden="true" className={cn(avatar, 'bg-primary/15 text-primary')}>
+    <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
       {createElement(topicIcon(match.topic?.slug ?? ''), { className: 'size-5' })}
     </span>
   )

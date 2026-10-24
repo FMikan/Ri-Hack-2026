@@ -81,6 +81,15 @@ export const hr: Messages = {
     logOut: 'Odjava',
     greeting: (name: string) => `Bok, ${name}!`,
   },
+  avatar: {
+    menu: 'Profilna slika',
+    title: 'Profilna slika',
+    subtitle: 'Odaberi portret koji drugi igrači vide uz tvoje ime.',
+    option: (n: number) => `Portret ${n}`,
+    cancel: 'Odustani',
+    save: 'Spremi',
+    saving: 'Spremam…',
+  },
   dashboard: {
     documentTitle: 'Početna',
     loadFailed: 'Početna stranica se nije učitala.',

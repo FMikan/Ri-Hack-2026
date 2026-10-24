@@ -77,6 +77,15 @@ export const en = {
     logOut: 'Log out',
     greeting: (name: string) => `Welcome back, ${name}!`,
   },
+  avatar: {
+    menu: 'Profile picture',
+    title: 'Profile picture',
+    subtitle: 'Pick the portrait other players see next to your name.',
+    option: (n: number) => `Portrait ${n}`,
+    cancel: 'Cancel',
+    save: 'Save',
+    saving: 'Saving…',
+  },
   dashboard: {
     documentTitle: 'Dashboard',
     loadFailed: 'Could not load the dashboard.',

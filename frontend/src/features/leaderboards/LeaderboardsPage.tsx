@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
+import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/auth-context'
@@ -75,7 +76,7 @@ export function LeaderboardsPage() {
                 >
                   {entry.rank}
                 </span>
-                <Avatar username={entry.user.username} me={entry.user.id === me.id} className="size-12 text-lg sm:size-14" />
+                <UserAvatar user={entry.user} className="size-12 sm:size-14" />
                 <p className="line-clamp-2 w-full text-xs font-medium [overflow-wrap:anywhere] sm:text-sm">{entry.user.username}</p>
                 <p className="hidden text-xs text-muted-foreground sm:block">{t.dashboard.tiers[entry.user.tier]}</p>
                 <p className="font-heading text-xl font-semibold tabular-nums sm:text-3xl">{entry.value}</p>
@@ -115,21 +116,6 @@ export function LeaderboardsPage() {
   )
 }
 
-function Avatar({ username, me, className }: { username: string; me: boolean; className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'grid shrink-0 place-items-center rounded-full font-heading font-semibold',
-        me ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground ring-1 ring-border',
-        className,
-      )}
-    >
-      {username.charAt(0).toUpperCase()}
-    </span>
-  )
-}
-
 function Rows({ entries, meId, valueLabel }: { entries: LeaderboardEntryDto[]; meId: string; valueLabel: string }) {
   const { t, locale } = useLocale()
 
@@ -144,7 +130,7 @@ function Rows({ entries, meId, valueLabel }: { entries: LeaderboardEntryDto[]; m
             className={cn('flex items-center gap-3 rounded-lg px-3 py-2.5', 'ring-1 ring-inset', isMe ? 'bg-primary/10 ring-primary/40' : 'ring-border')}
           >
             <span className="w-12 shrink-0 font-mono text-sm text-muted-foreground tabular-nums">{entry.rank.toLocaleString(locale)}</span>
-            <Avatar username={entry.user.username} me={isMe} className="size-8 text-sm" />
+            <UserAvatar user={entry.user} className="size-10" />
             <span className="grid min-w-0 flex-1">
               <span className="flex min-w-0 items-center gap-2">
                 <span className="truncate text-sm font-medium">{entry.user.username}</span>

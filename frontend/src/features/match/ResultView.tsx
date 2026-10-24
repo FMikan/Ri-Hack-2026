@@ -36,7 +36,7 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
 
   const side = (name: string, score: number, correct: number | undefined, player?: PlayerDto) => (
     <div className="grid justify-items-center gap-1 text-center">
-      <PlayerAvatar player={player} className="mb-1 size-14 text-xl" />
+      <PlayerAvatar player={player} className="mb-1 size-14" />
       <p className="max-w-full truncate text-sm font-medium">{name}</p>
       <p className="font-heading text-4xl font-semibold tabular-nums sm:text-5xl">{score}</p>
       {correct !== undefined && <p className="text-xs text-muted-foreground">{copy.correct(correct, match.question?.total ?? QUESTIONS_PER_MATCH)}</p>}

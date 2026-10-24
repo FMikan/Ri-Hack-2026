@@ -19,6 +19,7 @@ import type {
   StartPracticeRequest,
   SubmitAnswerRequest,
   TopicDto,
+  UpdateMeRequest,
 } from '@/types/api'
 
 // The client always calls the API by its full origin (no Vite proxy); the backend allows this origin via CORS.
@@ -159,6 +160,7 @@ export const api = {
   },
 
   me: (signal?: AbortSignal) => request<MeDto>('/api/me', { signal }),
+  updateMe: (body: UpdateMeRequest) => request<MeDto>('/api/me', { method: 'PATCH', body: JSON.stringify(body) }),
   dashboard: (signal?: AbortSignal) => request<DashboardDto>('/api/me/dashboard', { signal }),
   setTopics: (body: SetTopicsRequest) =>
     request<void>('/api/me/topics', { method: 'PUT', body: JSON.stringify(body) }),

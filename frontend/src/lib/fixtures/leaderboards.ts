@@ -1,3 +1,4 @@
+import { AVATARS } from '@/lib/avatars'
 import { tierFor } from '@/lib/game'
 import type { Iso, MeDto, UserRefDto } from '@/types/api'
 
@@ -35,10 +36,14 @@ function random(seed: string) {
   }
 }
 
+// Each mock player gets its own portrait in a shuffled order that stays the same on every visit.
+const shuffle = random('avatars')
+const PORTRAITS = [...AVATARS].sort(() => shuffle() - 0.5)
+
 const user = (username: string, rating: number, grandmaster = false): UserRefDto => ({
   id: `demo-${username}`,
   username,
-  avatar: 'default',
+  avatar: PORTRAITS[NAMES.indexOf(username.replace('.', '_'))]?.key ?? 'default',
   tier: grandmaster ? 'grandmaster' : tierFor(rating),
   rating,
   isProvisional: false,

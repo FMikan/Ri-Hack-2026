@@ -149,7 +149,7 @@ function Lobby({ snapshot, me, opponent, opponentName }: LobbyProps) {
   const seconds = Math.max(0, Math.ceil(msToDeadline(snapshot, now) / 1000))
   const side = (player: PlayerDto | undefined, name: string) => (
     <div className="grid w-36 justify-items-center gap-2 sm:w-44">
-      <PlayerAvatar player={player} className="size-16 text-2xl sm:size-20" />
+      <PlayerAvatar player={player} className="size-16 sm:size-20" />
       <p className="font-heading text-lg leading-tight font-semibold text-balance">{name}</p>
       <p className="font-mono text-xs text-muted-foreground">{player?.displayRating}</p>
     </div>
@@ -184,7 +184,7 @@ function Scoreboard({ me, opponent, opponentName, opponentAnswered }: Scoreboard
   const { t } = useLocale()
   const side = (player: PlayerDto | undefined, name: string, answered: boolean, end?: boolean) => (
     <div className={cn('flex min-w-0 items-center gap-3', end && 'flex-row-reverse text-right')}>
-      <PlayerAvatar player={player} className="hidden size-10 text-base sm:grid" />
+      <PlayerAvatar player={player} className="hidden size-10 sm:block" />
       <div className="grid min-w-0">
         <p className="truncate text-sm font-medium">{name}</p>
         <p className={cn('font-mono text-xs', answered ? 'text-success' : 'text-muted-foreground')}>
