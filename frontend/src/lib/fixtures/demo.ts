@@ -18,7 +18,7 @@ const MASTERY: Record<string, number> = {
   networking: 41,
   security: 33,
   algorithms: 57,
-  'how-ai-works': 69,
+  git: 69,
 }
 const DAY = 86_400_000
 

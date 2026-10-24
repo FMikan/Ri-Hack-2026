@@ -1,0 +1,1888 @@
+[
+  {
+    "key": "sd.requirements.tf.01",
+    "concept": "sd.requirements",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A target such as \"the API answers 99 % of requests within 200 ms\" is a non-functional requirement.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Functional requirements say what the system does; non-functional ones set measurable targets such as latency, availability and cost."
+  },
+  {
+    "key": "sd.requirements.mc.01",
+    "concept": "sd.requirements",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A product owner says the new search \"must be fast\". What is the most useful thing to ask next?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Which database should the search use?"
+        },
+        {
+          "id": "b",
+          "text": "Which programming language is fastest for search?"
+        },
+        {
+          "id": "c",
+          "text": "How fast, and for what share of requests? For example, 95 % within 300 ms"
+        },
+        {
+          "id": "d",
+          "text": "Should we put a cache in front of the search?"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Turn vague wishes like \"fast\" into numbers (95 % within 300 ms) before choosing any technology."
+  },
+  {
+    "key": "sd.requirements.odd.01",
+    "concept": "sd.requirements",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these are non-functional requirements. Which one is a functional requirement?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Users can reset their password by email"
+        },
+        {
+          "id": "b",
+          "text": "Search results appear within 1 second for 95 % of queries"
+        },
+        {
+          "id": "c",
+          "text": "The service is available 99.9 % of each month"
+        },
+        {
+          "id": "d",
+          "text": "No confirmed order is lost if one server dies"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "A functional requirement is something the user can do; non-functional ones describe how well the system must do it."
+  },
+  {
+    "key": "sd.requirements.match.01",
+    "concept": "sd.requirements",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each requirement with the quality it describes.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "p99 response time under 500 ms"
+        },
+        {
+          "id": "l2",
+          "text": "Reachable 99.95 % of the month"
+        },
+        {
+          "id": "l3",
+          "text": "A confirmed payment is never lost"
+        },
+        {
+          "id": "l4",
+          "text": "Handles ten times the usual traffic by adding servers"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Durability"
+        },
+        {
+          "id": "r2",
+          "text": "Scalability"
+        },
+        {
+          "id": "r3",
+          "text": "Latency"
+        },
+        {
+          "id": "r4",
+          "text": "Availability"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Latency is speed, availability is uptime, durability is not losing data, and scalability is growing with load."
+  },
+  {
+    "key": "sd.requirements.order.01",
+    "concept": "sd.requirements",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Put the usual steps of designing a new system in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Draw the high-level design"
+        },
+        {
+          "id": "s2",
+          "text": "Estimate traffic and storage"
+        },
+        {
+          "id": "s3",
+          "text": "Deep-dive into the bottlenecks"
+        },
+        {
+          "id": "s4",
+          "text": "Clarify functional and non-functional requirements"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Requirements first, then rough numbers, then the big picture, then the details where the numbers say it will hurt."
+  },
+  {
+    "key": "sd.estimation.tf.01",
+    "concept": "sd.estimation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "For a peak-traffic estimate, you can assume a day's requests are spread evenly over all 24 hours.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Traffic is uneven over the day; size the system for the peak, often a few times the daily average."
+  },
+  {
+    "key": "sd.estimation.mc.01",
+    "concept": "sd.estimation",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "1 million daily users each make 20 requests a day, and the peak hour has 3 times the average rate. About how many requests per second must the system handle at peak?",
+      "options": [
+        {
+          "id": "a",
+          "text": "About 230"
+        },
+        {
+          "id": "b",
+          "text": "About 2,300"
+        },
+        {
+          "id": "c",
+          "text": "About 40,000"
+        },
+        {
+          "id": "d",
+          "text": "About 700"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "1 million requests a day is about 12 per second; multiply by the peak factor before sizing servers."
+  },
+  {
+    "key": "sd.estimation.out.01",
+    "concept": "sd.estimation",
+    "type": "output",
+    "difficulty": 1,
+    "language": "py",
+    "content": {
+      "prompt": "A quick traffic estimate. What does this print?",
+      "code": "requests_per_day = 10_000_000\nseconds_per_day = 24 * 60 * 60\nprint(int(requests_per_day / seconds_per_day))",
+      "options": [
+        {
+          "id": "a",
+          "text": "416666"
+        },
+        {
+          "id": "b",
+          "text": "6944"
+        },
+        {
+          "id": "c",
+          "text": "1157"
+        },
+        {
+          "id": "d",
+          "text": "115"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A day has 86,400 seconds, so 10 million requests a day is only about 115 per second on average."
+  },
+  {
+    "key": "sd.estimation.bug.01",
+    "concept": "sd.estimation",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "The estimate prints 7,300,000 TB of photos over 5 years, far more than a sanity check gives. Find the bug.",
+      "code": "photos_per_day = 2_000_000\navg_photo_mb = 2\ndays = 5 * 365\n\ntotal_mb = photos_per_day * avg_photo_mb * days\ntotal_tb = total_mb / 1000\nprint(f\"{total_tb:,.0f} TB over 5 years\")",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Divide total_mb by 1024 instead of 1000"
+        },
+        {
+          "id": "f2",
+          "text": "Divide total_mb by 1,000,000"
+        },
+        {
+          "id": "f3",
+          "text": "Divide total_mb by 8 to turn bits into bytes"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f2"
+      }
+    },
+    "remember": "1 TB is a million MB; check the units at every step, because an estimate a thousand times off is usually one wrong conversion."
+  },
+  {
+    "key": "sd.estimation.order.01",
+    "concept": "sd.estimation",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Order these operations from fastest to slowest.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Random read from an SSD"
+        },
+        {
+          "id": "s2",
+          "text": "Network round trip between Europe and the US"
+        },
+        {
+          "id": "s3",
+          "text": "Read a value from main memory (RAM)"
+        },
+        {
+          "id": "s4",
+          "text": "Disk seek on a spinning hard drive"
+        },
+        {
+          "id": "s5",
+          "text": "Read from the CPU's L1 cache"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s5",
+          "s3",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Rough orders of magnitude: L1 cache 1 ns, RAM 100 ns, SSD read 100 µs, disk seek 10 ms, an intercontinental round trip 100 ms or more."
+  },
+  {
+    "key": "sd.stateless-scaling.tf.01",
+    "concept": "sd.stateless-scaling",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A stateless service can handle a user's next request on any of its instances.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "When no instance keeps client state between requests, the load balancer may send each request anywhere."
+  },
+  {
+    "key": "sd.stateless-scaling.mc.01",
+    "concept": "sd.stateless-scaling",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What makes a web service stateless?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It keeps no client data in its own memory between requests"
+        },
+        {
+          "id": "b",
+          "text": "It never writes anything to a database"
+        },
+        {
+          "id": "c",
+          "text": "It does not use cookies or tokens"
+        },
+        {
+          "id": "d",
+          "text": "It restarts after every request it serves"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Stateless means no client data stays in the instance between requests; state lives in the request, a token or a shared store."
+  },
+  {
+    "key": "sd.stateless-scaling.bug.01",
+    "concept": "sd.stateless-scaling",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The app runs on 3 instances behind a round-robin load balancer. Login succeeds, but /me then often answers 401. Find the bug.",
+      "code": "const sessions = new Map(); // sid -> user\n\napp.post(\"/login\", async (req, res) => {\n  const user = await checkPassword(req.body);\n  if (!user) return res.sendStatus(401);\n  const sid = crypto.randomUUID();\n  sessions.set(sid, user);\n  res.cookie(\"sid\", sid, { httpOnly: true });\n  res.sendStatus(204);\n});\n\napp.get(\"/me\", (req, res) => {\n  const user = sessions.get(req.cookies.sid);\n  if (!user) return res.sendStatus(401);\n  res.json(user);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Give the cookie a maxAge so it lasts longer"
+        },
+        {
+          "id": "f2",
+          "text": "Keep sessions in a shared store such as Redis"
+        },
+        {
+          "id": "f3",
+          "text": "Make the /me handler async and await sessions.get"
+        }
+      ],
+      "answer": {
+        "line": 1,
+        "fixId": "f2",
+        "acceptLines": [
+          7,
+          13
+        ]
+      }
+    },
+    "remember": "Session state in one instance's memory is invisible to the others; keep it in a shared store or a signed token."
+  },
+  {
+    "key": "sd.stateless-scaling.cloze.01",
+    "concept": "sd.stateless-scaling",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The API runs on 3 instances that are replaced on every deploy. Uploaded avatars must be kept for good and be readable from every instance. Fill the blank.",
+      "code": "app.post(\"/avatar\", async (req, res) => {\n  const key = `avatars/${req.user.id}.png`;\n  await ____(key, req.body);\n  res.status(201).json({ key });\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "localDisk.write"
+        },
+        {
+          "id": "b",
+          "text": "processMemory.set"
+        },
+        {
+          "id": "c",
+          "text": "cacheWithOneHourTtl.set"
+        },
+        {
+          "id": "d",
+          "text": "objectStorage.put"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Files on an instance's disk vanish with it and are invisible to the other instances; put uploads in shared object storage."
+  },
+  {
+    "key": "sd.stateless-scaling.odd.01",
+    "concept": "sd.stateless-scaling",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these stop you from adding instances freely behind a load balancer. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Per-user rate-limit counters kept in each instance's memory"
+        },
+        {
+          "id": "b",
+          "text": "Settings read from environment variables at startup"
+        },
+        {
+          "id": "c",
+          "text": "Shopping carts kept in a global variable"
+        },
+        {
+          "id": "d",
+          "text": "Background jobs queued in an array in process memory"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Read-only config is the same on every instance; anything a request changes must live outside the process."
+  },
+  {
+    "key": "sd.load-balancing.tf.01",
+    "concept": "sd.load-balancing",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A load balancer keeps sending requests to a server that fails its health checks until someone removes it by hand.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Health checks let a load balancer take a failing server out of rotation on its own and add it back when it recovers."
+  },
+  {
+    "key": "sd.load-balancing.mc.01",
+    "concept": "sd.load-balancing",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Why put a load balancer in front of three identical app servers?",
+      "options": [
+        {
+          "id": "a",
+          "text": "To cache database query results for the servers"
+        },
+        {
+          "id": "b",
+          "text": "To spread requests over them and skip any server that is down"
+        },
+        {
+          "id": "c",
+          "text": "To keep the code on the three servers in sync"
+        },
+        {
+          "id": "d",
+          "text": "To let the three servers share one block of memory"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A load balancer spreads traffic over servers and routes around the ones that fail."
+  },
+  {
+    "key": "sd.load-balancing.match.01",
+    "concept": "sd.load-balancing",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each load-balancing algorithm with how it picks a server.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Round robin"
+        },
+        {
+          "id": "l2",
+          "text": "Least connections"
+        },
+        {
+          "id": "l3",
+          "text": "IP hash"
+        },
+        {
+          "id": "l4",
+          "text": "Weighted round robin"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Sends the same client address to the same server"
+        },
+        {
+          "id": "r2",
+          "text": "Takes turns, but bigger servers get more turns"
+        },
+        {
+          "id": "r3",
+          "text": "Takes turns: 1, 2, 3, 1, 2, 3"
+        },
+        {
+          "id": "r4",
+          "text": "Picks the server with the fewest open connections"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Round robin takes turns, weights favour bigger servers, least connections follows current load, and hashing keeps a client on one server."
+  },
+  {
+    "key": "sd.load-balancing.out.01",
+    "concept": "sd.load-balancing",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "A round-robin balancer skips unhealthy servers. What does this print?",
+      "code": "servers = [\"a\", \"b\", \"c\"]\nhealthy = {\"a\": True, \"b\": False, \"c\": True}\ni = 0\n\ndef next_server():\n    global i\n    while True:\n        s = servers[i % len(servers)]\n        i += 1\n        if healthy[s]:\n            return s\n\nprint([next_server() for _ in range(5)])",
+      "options": [
+        {
+          "id": "a",
+          "text": "['a', 'c', 'a', 'c', 'a']"
+        },
+        {
+          "id": "b",
+          "text": "['a', 'b', 'c', 'a', 'b']"
+        },
+        {
+          "id": "c",
+          "text": "['a', 'c', 'c', 'a', 'c']"
+        },
+        {
+          "id": "d",
+          "text": "['a', 'c', 'a', 'b', 'c']"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Round robin cycles over the healthy servers only: an unhealthy server's turn passes to the next healthy one."
+  },
+  {
+    "key": "sd.load-balancing.order.01",
+    "concept": "sd.load-balancing",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "You deploy a new version to server b, one of three behind a load balancer, without failing a single request. Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Wait until b passes its health checks"
+        },
+        {
+          "id": "s2",
+          "text": "Take b out of the pool so it gets no new requests"
+        },
+        {
+          "id": "s3",
+          "text": "Put b back into the pool"
+        },
+        {
+          "id": "s4",
+          "text": "Let b finish the requests it is already handling"
+        },
+        {
+          "id": "s5",
+          "text": "Install and start the new version on b"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Drain before you stop: remove the server, let in-flight requests finish, upgrade, wait until it is healthy, then add it back."
+  },
+  {
+    "key": "sd.caching.tf.01",
+    "concept": "sd.caching",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A cache helps most with data that changes on every request and is rarely read twice.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Caching pays off for data that is read often and changes rarely."
+  },
+  {
+    "key": "sd.caching.mc.01",
+    "concept": "sd.caching",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which description matches write-through caching?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Each write deletes the cache entry, and the next read reloads it"
+        },
+        {
+          "id": "b",
+          "text": "Each write goes to the cache first and reaches the database later"
+        },
+        {
+          "id": "c",
+          "text": "Each write skips the cache, and old entries expire by TTL"
+        },
+        {
+          "id": "d",
+          "text": "Each write updates the cache and the database in the same operation"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Write-through writes the cache and the database together; write-back delays the database write; cache-aside deletes and reloads on the next read."
+  },
+  {
+    "key": "sd.caching.cloze.01",
+    "concept": "sd.caching",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "A cache-aside read. Fill the blank.",
+      "code": "def get_user(user_id):\n    key = f\"user:{user_id}\"\n    user = cache.get(key)\n    if user is None:\n        user = db.load_user(user_id)\n        ____\n    return user",
+      "options": [
+        {
+          "id": "a",
+          "text": "cache.delete(key)"
+        },
+        {
+          "id": "b",
+          "text": "cache.set(key, user, ttl=300)"
+        },
+        {
+          "id": "c",
+          "text": "db.save_user(user)"
+        },
+        {
+          "id": "d",
+          "text": "return cache.get(key)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "In cache-aside the application reads the cache, loads from the database on a miss and stores the result with a TTL."
+  },
+  {
+    "key": "sd.caching.out.01",
+    "concept": "sd.caching",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "The price changes in the database, but nothing invalidates the cache. What does this print?",
+      "code": "TTL = 60\ndb = {\"price\": 10}\ncache = {}  # key -> (value, expires_at)\n\ndef read(key, now):\n    hit = cache.get(key)\n    if hit and now < hit[1]:\n        return hit[0]\n    cache[key] = (db[key], now + TTL)\n    return db[key]\n\na = read(\"price\", now=0)\ndb[\"price\"] = 12\nb = read(\"price\", now=30)\nc = read(\"price\", now=61)\nprint(a, b, c)",
+      "options": [
+        {
+          "id": "a",
+          "text": "10 10 12"
+        },
+        {
+          "id": "b",
+          "text": "10 12 12"
+        },
+        {
+          "id": "c",
+          "text": "10 10 10"
+        },
+        {
+          "id": "d",
+          "text": "12 12 12"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Without invalidation a cached value can stay stale for up to the full TTL after the database changes."
+  },
+  {
+    "key": "sd.caching.bug.01",
+    "concept": "sd.caching",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "After a user changes their email, the profile keeps showing the old one for about 10 more minutes. Find the bug.",
+      "code": "TTL = 600\n\ndef get_user(user_id):\n    key = f\"user:{user_id}\"\n    user = cache.get(key)\n    if user is None:\n        user = db.fetch_user(user_id)\n        cache.set(key, user, ttl=TTL)\n    return user\n\ndef update_email(user_id, email):\n    db.update_user(user_id, email=email)\n    # refresh the cached copy\n    cache.set(f\"user:{user_id}\", get_user(user_id),\n              ttl=TTL)",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Lower TTL to 60 so stale entries expire sooner"
+        },
+        {
+          "id": "f2",
+          "text": "Move the cache.set call above db.update_user"
+        },
+        {
+          "id": "f3",
+          "text": "Replace it with cache.delete(f\"user:{user_id}\")"
+        }
+      ],
+      "answer": {
+        "line": 14,
+        "fixId": "f3",
+        "acceptLines": [
+          15
+        ]
+      }
+    },
+    "remember": "On a write, delete the cache key or fill it from the database; refreshing through the cached read path just saves the stale copy again."
+  },
+  {
+    "key": "sd.cdn.tf.01",
+    "concept": "sd.cdn",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A CDN keeps copies of static files on servers near users, so fewer requests reach the origin server.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A CDN answers from edge servers close to users and only goes to the origin on a miss."
+  },
+  {
+    "key": "sd.cdn.mc.01",
+    "concept": "sd.cdn",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "The site's images are served from one server in Germany. Users in Australia say they load slowly. What helps them most?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Give the German server more CPU and RAM"
+        },
+        {
+          "id": "b",
+          "text": "Add a second server next to the first one in Germany"
+        },
+        {
+          "id": "c",
+          "text": "Serve the images through a CDN"
+        },
+        {
+          "id": "d",
+          "text": "Add an index to the images table"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Distance adds latency that more CPU cannot remove; a CDN serves static files from near the user."
+  },
+  {
+    "key": "sd.cdn.match.01",
+    "concept": "sd.cdn",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each CDN term with its meaning.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Origin"
+        },
+        {
+          "id": "l2",
+          "text": "Edge server"
+        },
+        {
+          "id": "l3",
+          "text": "Cache hit ratio"
+        },
+        {
+          "id": "l4",
+          "text": "Purge"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "A CDN server near users that keeps copies"
+        },
+        {
+          "id": "r2",
+          "text": "Removing a file from every edge cache before its TTL ends"
+        },
+        {
+          "id": "r3",
+          "text": "Share of requests answered without asking the origin"
+        },
+        {
+          "id": "r4",
+          "text": "The server that holds the original content"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "The origin holds the content, edges keep copies near users, the hit ratio says how often edges suffice, and a purge removes copies early."
+  },
+  {
+    "key": "sd.cdn.odd.01",
+    "concept": "sd.cdn",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A CDN caches responses and serves each cached copy to every visitor. Three of these are safe to cache that way. Which one is not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "GET /api/cart, which finds the user through a session cookie"
+        },
+        {
+          "id": "b",
+          "text": "GET /assets/app.3f9a1c.js, named by its content hash"
+        },
+        {
+          "id": "c",
+          "text": "GET /images/logo.png"
+        },
+        {
+          "id": "d",
+          "text": "GET /api/products?page=2, the same for every visitor"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Only share cached copies of responses that are identical for every visitor; per-user responses must be private or not cached."
+  },
+  {
+    "key": "sd.cdn.cloze.01",
+    "concept": "sd.cdn",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "http",
+    "content": {
+      "prompt": "Hashed bundles are cached for a year. After a deploy, users must get the new index.html at once, yet an unchanged index.html should not be downloaded again. Fill the header.",
+      "code": "GET /index.html HTTP/1.1\nHost: shop.example.com\n\nHTTP/1.1 200 OK\nContent-Type: text/html\nETag: \"v42\"\nCache-Control: ____",
+      "options": [
+        {
+          "id": "a",
+          "text": "no-cache"
+        },
+        {
+          "id": "b",
+          "text": "max-age=31536000, immutable"
+        },
+        {
+          "id": "c",
+          "text": "no-store"
+        },
+        {
+          "id": "d",
+          "text": "max-age=86400"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "no-cache still stores a copy but checks with the server before each use (a cheap 304 if unchanged); no-store never keeps one."
+  },
+  {
+    "key": "sd.replication.tf.01",
+    "concept": "sd.replication",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Right after a write to the primary, a read replica may still return the old value.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Replicas apply changes a little later than the primary, so a read right after a write can be stale."
+  },
+  {
+    "key": "sd.replication.mc.01",
+    "concept": "sd.replication",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which workload gains the most from adding read replicas?",
+      "options": [
+        {
+          "id": "a",
+          "text": "An event log that inserts 20,000 rows per second and is rarely read"
+        },
+        {
+          "id": "b",
+          "text": "A product catalog that is read about 1,000 times for every write"
+        },
+        {
+          "id": "c",
+          "text": "A counter that every request increments"
+        },
+        {
+          "id": "d",
+          "text": "A database whose disk is almost full"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Every replica copies every write and only shares the reads, so replicas help read-heavy workloads, not write-heavy ones or full disks."
+  },
+  {
+    "key": "sd.replication.out.01",
+    "concept": "sd.replication",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "The replica applies each write 2 seconds after the primary. What does this print?",
+      "code": "LAG = 2\nlog = []  # (time, key, value) written on the primary\n\ndef write(t, key, value):\n    log.append((t, key, value))\n\ndef read_replica(t, key):\n    value = None\n    for wt, k, v in log:\n        if k == key and wt + LAG <= t:\n            value = v\n    return value\n\nwrite(0, \"bio\", \"old\")\nwrite(10, \"bio\", \"new\")\nprint(read_replica(1, \"bio\"), read_replica(11, \"bio\"),\n      read_replica(12, \"bio\"))",
+      "options": [
+        {
+          "id": "a",
+          "text": "old new new"
+        },
+        {
+          "id": "b",
+          "text": "None old new"
+        },
+        {
+          "id": "c",
+          "text": "old old new"
+        },
+        {
+          "id": "d",
+          "text": "None new new"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "With replication lag a replica shows what the primary had a moment ago, which can even be \"not there yet\"."
+  },
+  {
+    "key": "sd.replication.bug.01",
+    "concept": "sd.replication",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Users save a new bio and the confirmation page often shows the old one; a refresh a moment later shows the new bio. Find the bug.",
+      "code": "def save_bio(user_id, bio):\n    primary.execute(\n        \"UPDATE users SET bio = %s WHERE id = %s\",\n        (bio, user_id))\n    return load_profile(user_id)\n\ndef load_profile(user_id):\n    return replica.query_one(\n        \"SELECT id, name, bio FROM users WHERE id = %s\",\n        (user_id,))",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Read the profile from the primary right after the write"
+        },
+        {
+          "id": "f2",
+          "text": "Run the UPDATE inside an explicit transaction"
+        },
+        {
+          "id": "f3",
+          "text": "Add an index on users.id on the replica"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Read your own writes: right after a user changes data, read it from the primary, not from a replica that may lag."
+  },
+  {
+    "key": "sd.replication.odd.01",
+    "concept": "sd.replication",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Replicas lag a few seconds behind the primary. Three of these reads can safely go to a replica. Which one should go to the primary?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Last month's sales report"
+        },
+        {
+          "id": "b",
+          "text": "A public product page"
+        },
+        {
+          "id": "c",
+          "text": "Search results for \"red shoes\""
+        },
+        {
+          "id": "d",
+          "text": "The account balance checked right before approving a withdrawal"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Send reads that must see the latest write, like a balance before a withdrawal, to the primary; the rest can tolerate lag."
+  },
+  {
+    "key": "sd.sharding.tf.01",
+    "concept": "sd.sharding",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a sharded database, every shard holds a full copy of all the data.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Shards split the data so each holds only its part; full copies are replicas."
+  },
+  {
+    "key": "sd.sharding.mc.01",
+    "concept": "sd.sharding",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "An orders table is sharded by customer_id. Which query is the most expensive?",
+      "options": [
+        {
+          "id": "a",
+          "text": "All orders of customer 42"
+        },
+        {
+          "id": "b",
+          "text": "Order 9001 of customer 42, with both ids known"
+        },
+        {
+          "id": "c",
+          "text": "The 10 newest orders of customer 42"
+        },
+        {
+          "id": "d",
+          "text": "Total revenue per product across all orders"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A query that includes the shard key hits one shard; a query across all keys must ask every shard and merge the results."
+  },
+  {
+    "key": "sd.sharding.out.01",
+    "concept": "sd.sharding",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "Users are placed on shards with user_id % n. The cluster grows from 3 to 4 shards. What does this print?",
+      "code": "def shard(user_id, n):\n    return user_id % n\n\nusers = range(12)\nmoved = [u for u in users if shard(u, 3) != shard(u, 4)]\nprint(len(moved), moved[:3])",
+      "options": [
+        {
+          "id": "a",
+          "text": "3 [3, 7, 11]"
+        },
+        {
+          "id": "b",
+          "text": "6 [3, 4, 5]"
+        },
+        {
+          "id": "c",
+          "text": "9 [3, 4, 5]"
+        },
+        {
+          "id": "d",
+          "text": "12 [0, 1, 2]"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "With hash mod N, changing N moves most keys; consistent hashing moves only about 1/N of them."
+  },
+  {
+    "key": "sd.sharding.bug.01",
+    "concept": "sd.sharding",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Events are spread over 8 databases, yet all of today's inserts go to one database at 100 % CPU while the other 7 sit idle. Find the bug.",
+      "code": "SHARDS = 8\n\ndef shard_for(event):\n    # event: {\"id\", \"user_id\", \"created_at\", \"type\"}\n    day = event[\"created_at\"].date().isoformat()\n    return stable_hash(day) % SHARDS\n\ndef save(event):\n    db = databases[shard_for(event)]\n    db.insert(\"events\", event)",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Raise SHARDS to 32"
+        },
+        {
+          "id": "f2",
+          "text": "Hash event[\"user_id\"] instead of the day"
+        },
+        {
+          "id": "f3",
+          "text": "Use SHA-256 of the day instead of stable_hash"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f2",
+        "acceptLines": [
+          6
+        ]
+      }
+    },
+    "remember": "A shard key that all current writes share, like today's date, makes a hot shard; pick a key with many values in use at once."
+  },
+  {
+    "key": "sd.sharding.match.01",
+    "concept": "sd.sharding",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each way of assigning rows to shards with its trade-off.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Ranges of created_at"
+        },
+        {
+          "id": "l2",
+          "text": "hash(user_id) % N"
+        },
+        {
+          "id": "l3",
+          "text": "Consistent hashing ring"
+        },
+        {
+          "id": "l4",
+          "text": "Lookup table from tenant to shard"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Any tenant can be moved alone, but every query first needs the mapping"
+        },
+        {
+          "id": "r2",
+          "text": "Date-range queries hit one shard, but all new rows land on the newest"
+        },
+        {
+          "id": "r3",
+          "text": "Even spread, and adding a shard moves only a small share of rows"
+        },
+        {
+          "id": "r4",
+          "text": "Even spread, but changing N moves most rows"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Ranges keep related rows together but create hot spots, hashing spreads load, consistent hashing eases resharding, and a lookup table adds flexibility and a hop."
+  },
+  {
+    "key": "sd.queues.tf.01",
+    "concept": "sd.queues",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "With at-least-once delivery, a consumer never receives the same message twice.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "At-least-once means a message can arrive more than once, so consumers must handle duplicates."
+  },
+  {
+    "key": "sd.queues.mc.01",
+    "concept": "sd.queues",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Signup sends a welcome email through a slow mail API. Why put the email on a queue instead of calling the API during the request?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Signup returns at once, and the email can be retried if the mail API is down"
+        },
+        {
+          "id": "b",
+          "text": "The email reaches the user sooner than with a direct call"
+        },
+        {
+          "id": "c",
+          "text": "A queue guarantees the email is never sent twice"
+        },
+        {
+          "id": "d",
+          "text": "The queue makes the mail API itself respond faster"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A queue lets the request finish now and the slow or flaky work happen later, with retries."
+  },
+  {
+    "key": "sd.queues.bug.01",
+    "concept": "sd.queues",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "If the worker crashes in the middle of charge_card, that order is never charged, although the broker redelivers unacknowledged messages. Find the bug.",
+      "code": "def on_message(msg):\n    order = json.loads(msg.body)\n    msg.ack()\n    charge_card(order)\n    send_receipt(order)",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Wrap charge_card in try/except and log the error"
+        },
+        {
+          "id": "f2",
+          "text": "Move msg.ack() above json.loads"
+        },
+        {
+          "id": "f3",
+          "text": "Move msg.ack() below send_receipt(order)"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Acknowledge a message only after the work is done; acking first turns a crash into a lost message."
+  },
+  {
+    "key": "sd.queues.order.01",
+    "concept": "sd.queues",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "An order service must save each order and publish an OrderCreated event, losing neither if it crashes. Put the transactional outbox steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "A relay process reads unsent rows from the outbox table"
+        },
+        {
+          "id": "s2",
+          "text": "Commit the transaction"
+        },
+        {
+          "id": "s3",
+          "text": "Mark the outbox row as sent"
+        },
+        {
+          "id": "s4",
+          "text": "Insert the order and the event row in one transaction"
+        },
+        {
+          "id": "s5",
+          "text": "Publish the event to the message broker"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s1",
+          "s5",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Save the event in the same transaction as the data, publish it, and only then mark it sent; a crash causes a resend, never a loss."
+  },
+  {
+    "key": "sd.queues.cloze.01",
+    "concept": "sd.queues",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "The broker delivers each message at least once. tx is the open transaction; a call on db commits on its own at once. Fill the blank so each payment is applied exactly once.",
+      "code": "def handle(msg):\n    key = msg.body[\"payment_id\"]\n    with db.transaction() as tx:\n        if tx.exists(\"processed\", key):\n            return msg.ack()\n        apply_payment(tx, msg.body)\n        ____\n    msg.ack()",
+      "options": [
+        {
+          "id": "a",
+          "text": "msg.ack()"
+        },
+        {
+          "id": "b",
+          "text": "cache.set(key, True)"
+        },
+        {
+          "id": "c",
+          "text": "db.insert(\"processed\", key)"
+        },
+        {
+          "id": "d",
+          "text": "tx.insert(\"processed\", key)"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Record a message as processed in the same transaction as its effect, so both happen or neither does."
+  },
+  {
+    "key": "sd.consistency.tf.01",
+    "concept": "sd.consistency",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "During a network partition, a system can answer on every node and still guarantee that each read sees the latest write.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "CAP: when the network splits, a system must either refuse some requests (consistency) or risk stale answers (availability)."
+  },
+  {
+    "key": "sd.consistency.mc.01",
+    "concept": "sd.consistency",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A network partition cuts a database cluster in two. The smaller side refuses writes until the network heals. What did the system choose?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Availability over consistency"
+        },
+        {
+          "id": "b",
+          "text": "Consistency over availability"
+        },
+        {
+          "id": "c",
+          "text": "Low latency over durability"
+        },
+        {
+          "id": "d",
+          "text": "Neither: it gave up partition tolerance"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Refusing requests to avoid conflicting data during a partition is choosing consistency (CP); answering anyway is choosing availability (AP)."
+  },
+  {
+    "key": "sd.consistency.cloze.01",
+    "concept": "sd.consistency",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "A leaderless store keeps n copies of each key. A write waits for w replicas, a read asks r replicas. Fill the blank so every read reaches at least one replica with the latest acknowledged write.",
+      "code": "def read_sees_latest_write(n, w, r):\n    return w + r ____ n",
+      "options": [
+        {
+          "id": "a",
+          "text": ">="
+        },
+        {
+          "id": "b",
+          "text": "=="
+        },
+        {
+          "id": "c",
+          "text": ">"
+        },
+        {
+          "id": "d",
+          "text": "<="
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Read and write quorums are sure to overlap only when w + r > n; with n = 3, w = 2 and r = 2 every read meets the latest write."
+  },
+  {
+    "key": "sd.consistency.out.01",
+    "concept": "sd.consistency",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "Two replicas accepted writes during a partition. On merge, the higher timestamp wins. Node A's clock runs 5 seconds fast. What does this print?",
+      "code": "store = {}\n\ndef merge(key, value, ts):\n    old = store.get(key)\n    if old is None or ts > old[1]:\n        store[key] = (value, ts)\n\n# real time 1000 s, written on node A\nmerge(\"cart\", \"1 item\", ts=1005)\n# real time 1002 s, written on node B\nmerge(\"cart\", \"2 items\", ts=1002)\nprint(store[\"cart\"][0])",
+      "options": [
+        {
+          "id": "a",
+          "text": "2 items"
+        },
+        {
+          "id": "b",
+          "text": "1 item"
+        },
+        {
+          "id": "c",
+          "text": "('1 item', 1005)"
+        },
+        {
+          "id": "d",
+          "text": "('2 items', 1002)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Last-write-wins trusts clocks; with clock skew it silently drops the write that really happened later."
+  },
+  {
+    "key": "sd.consistency.mc.02",
+    "concept": "sd.consistency",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "CAP only covers what happens during a network partition. With no partition, what must a geo-replicated database still trade off on each request?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Latency against consistency: waiting for distant replicas makes requests slower"
+        },
+        {
+          "id": "b",
+          "text": "Availability against partition tolerance"
+        },
+        {
+          "id": "c",
+          "text": "Durability against the size of the data set"
+        },
+        {
+          "id": "d",
+          "text": "Consistency against partition tolerance"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "PACELC: during a partition choose availability or consistency; otherwise choose between low latency and consistency."
+  },
+  {
+    "key": "sd.availability.tf.01",
+    "concept": "sd.availability",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "An uptime of 99.9 % still allows almost nine hours of downtime a year.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Each extra nine cuts downtime tenfold: 99.9 % is about 8.8 hours a year, 99.99 % under an hour."
+  },
+  {
+    "key": "sd.availability.mc.01",
+    "concept": "sd.availability",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Two app servers sit behind one load balancer and share one database. Which change removes a single point of failure?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Give the database server twice the RAM"
+        },
+        {
+          "id": "b",
+          "text": "Add a third app server"
+        },
+        {
+          "id": "c",
+          "text": "Add a standby database that takes over if the first one fails"
+        },
+        {
+          "id": "d",
+          "text": "Log every request in more detail"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A single point of failure is any one part whose loss stops the system; remove it with a redundant copy that can take over."
+  },
+  {
+    "key": "sd.availability.out.01",
+    "concept": "sd.availability",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "An SLA promises uptime per 30-day month. What does this print?",
+      "code": "minutes_per_month = 30 * 24 * 60\nallowed = [round(minutes_per_month * (100 - sla) / 100, 1)\n           for sla in (99.95, 99.99)]\nprint(allowed)",
+      "options": [
+        {
+          "id": "a",
+          "text": "[2.2, 0.4]"
+        },
+        {
+          "id": "b",
+          "text": "[216.0, 43.2]"
+        },
+        {
+          "id": "c",
+          "text": "[21.6, 4.3]"
+        },
+        {
+          "id": "d",
+          "text": "[21.6, 0.4]"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Allowed downtime is the period times (1 - availability): 99.95 % of a month is about 22 minutes, 99.99 % about 4."
+  },
+  {
+    "key": "sd.availability.bug.01",
+    "concept": "sd.availability",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "When the payment API is slow, some customers are charged two or three times for one order. Find the bug.",
+      "code": "import time\nimport uuid\n\ndef pay(order_id, amount):\n    for attempt in range(3):\n        key = str(uuid.uuid4())\n        try:\n            return api.charge(amount=amount,\n                              idempotency_key=key,\n                              timeout=5)\n        except TimeoutError:\n            time.sleep(2 ** attempt)\n    raise RuntimeError(\"payment failed\")",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Create one key per order, such as f\"order-{order_id}\", before the loop"
+        },
+        {
+          "id": "f2",
+          "text": "Raise the timeout to 30 seconds"
+        },
+        {
+          "id": "f3",
+          "text": "Sleep a fixed 1 second instead of 2 ** attempt"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f1"
+      }
+    },
+    "remember": "A retry must reuse the same idempotency key; a new key per attempt makes every retry look like a new payment."
+  },
+  {
+    "key": "sd.availability.match.01",
+    "concept": "sd.availability",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each resilience pattern with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Timeout"
+        },
+        {
+          "id": "l2",
+          "text": "Retry with backoff and jitter"
+        },
+        {
+          "id": "l3",
+          "text": "Circuit breaker"
+        },
+        {
+          "id": "l4",
+          "text": "Bulkhead"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Gives each dependency its own small pool of threads or connections"
+        },
+        {
+          "id": "r2",
+          "text": "Stops waiting for a slow call after a set time"
+        },
+        {
+          "id": "r3",
+          "text": "After many failures, fails calls at once for a while without trying"
+        },
+        {
+          "id": "r4",
+          "text": "Repeats a failed call after growing, randomized pauses"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Timeouts bound waiting, jittered retries ride out blips, circuit breakers stop hammering a failing service, and bulkheads keep one slow dependency from starving the rest."
+  },
+  {
+    "key": "sd.monolith-microservices.tf.01",
+    "concept": "sd.monolith-microservices",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Splitting a monolith into microservices turns in-process function calls into network calls that can time out or fail.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Every service boundary is a network call: slower, and able to fail in ways a function call cannot."
+  },
+  {
+    "key": "sd.monolith-microservices.mc.01",
+    "concept": "sd.monolith-microservices",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is the main benefit teams expect from splitting a large monolith into microservices?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Each call between parts of the system gets faster"
+        },
+        {
+          "id": "b",
+          "text": "Debugging gets easier because there is less code in one place"
+        },
+        {
+          "id": "c",
+          "text": "Teams can deploy and scale their parts independently"
+        },
+        {
+          "id": "d",
+          "text": "The system needs fewer servers in total"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Microservices buy independent deploys and scaling per team, paid for with network calls and operational complexity."
+  },
+  {
+    "key": "sd.monolith-microservices.mc.02",
+    "concept": "sd.monolith-microservices",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "The orders and billing services read and write each other's tables in one shared database. What is the biggest problem with this?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The database cannot serve two services' connections at once"
+        },
+        {
+          "id": "b",
+          "text": "A schema change for one service can break the other, so they cannot be deployed independently"
+        },
+        {
+          "id": "c",
+          "text": "Reads between the two services become eventually consistent"
+        },
+        {
+          "id": "d",
+          "text": "Both services must be written in the same programming language"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Services that share tables are coupled through the schema; give each service its own data and talk through APIs or events."
+  },
+  {
+    "key": "sd.monolith-microservices.order.01",
+    "concept": "sd.monolith-microservices",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You move billing out of a monolith step by step (the strangler fig approach). Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Send all billing traffic to the new service"
+        },
+        {
+          "id": "s2",
+          "text": "Delete the billing code from the monolith"
+        },
+        {
+          "id": "s3",
+          "text": "Build the billing service next to the monolith"
+        },
+        {
+          "id": "s4",
+          "text": "Send a small share of billing traffic to the new service"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s4",
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Strangle a monolith gradually: build alongside it, shift a little traffic, then all of it, and delete the old code last."
+  },
+  {
+    "key": "sd.monolith-microservices.odd.01",
+    "concept": "sd.monolith-microservices",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these keep data in step across microservices without one transaction spanning several services' databases. Which is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "A saga with compensating steps"
+        },
+        {
+          "id": "b",
+          "text": "A transactional outbox that publishes events"
+        },
+        {
+          "id": "c",
+          "text": "Two-phase commit across the services' databases"
+        },
+        {
+          "id": "d",
+          "text": "Services updating their own copies from published events"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Microservices usually avoid two-phase commit and use sagas, outboxes and events instead, accepting eventual consistency."
+  }
+]

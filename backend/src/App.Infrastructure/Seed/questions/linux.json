@@ -1,0 +1,1889 @@
+[
+  {
+    "key": "os.processes.tf.01",
+    "concept": "os.processes",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "When you run a program such as ls from a shell, it runs as a child process of that shell.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Every command you start from a shell is a child process with its own PID, and the shell is its parent."
+  },
+  {
+    "key": "os.processes.mc.01",
+    "concept": "os.processes",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "You run ./server & in a terminal. What does the & do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Starts the server in the background, so the prompt returns at once"
+        },
+        {
+          "id": "b",
+          "text": "Runs the server only if the previous command succeeded"
+        },
+        {
+          "id": "c",
+          "text": "Runs the server at a lower CPU priority"
+        },
+        {
+          "id": "d",
+          "text": "Runs the server with root rights"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A trailing & runs a command in the background; it is still the shell's child and can die when you log out."
+  },
+  {
+    "key": "os.processes.bug.01",
+    "concept": "os.processes",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "Both imports always succeed, but the report is sometimes built from incomplete data. Find the bug.",
+      "code": "#!/bin/bash\n./import.sh users.csv &\n./import.sh orders.csv &\nwait $!\n./build-report.sh",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Replace it with wait $$"
+        },
+        {
+          "id": "f2",
+          "text": "Replace it with a plain wait"
+        },
+        {
+          "id": "f3",
+          "text": "Move it between lines 2 and 3"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "wait $! waits only for the last background job; a plain wait waits for all of the shell's children."
+  },
+  {
+    "key": "os.processes.order.01",
+    "concept": "os.processes",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "You type ls in bash and press Enter. Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "ls runs, prints the listing and exits with status 0"
+        },
+        {
+          "id": "s2",
+          "text": "The shell prints the next prompt"
+        },
+        {
+          "id": "s3",
+          "text": "bash calls fork(), creating a copy of itself"
+        },
+        {
+          "id": "s4",
+          "text": "The shell's wait() returns the child's exit status"
+        },
+        {
+          "id": "s5",
+          "text": "The child calls exec(), replacing its program with ls"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Unix starts a program with fork, then exec in the child; the parent's wait collects the exit status."
+  },
+  {
+    "key": "os.processes.mc.02",
+    "concept": "os.processes",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "ps shows a worker in state Z, marked <defunct>. Its parent is still running. What removes the zombie?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Sending SIGKILL to the zombie's PID"
+        },
+        {
+          "id": "b",
+          "text": "Sending SIGCONT so it can finish exiting"
+        },
+        {
+          "id": "c",
+          "text": "Nothing: the kernel frees it when PIDs run low"
+        },
+        {
+          "id": "d",
+          "text": "The parent calling wait() on it, or the parent exiting"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A zombie has already exited; it stays in the process table until its parent reaps it with wait(), or until init adopts and reaps it."
+  },
+  {
+    "key": "os.threads.tf.01",
+    "concept": "os.threads",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Threads of the same process share its heap memory, so one thread can read objects another thread created.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Threads share their process's memory; separate processes do not, unless they set up shared memory explicitly."
+  },
+  {
+    "key": "os.threads.mc.01",
+    "concept": "os.threads",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In Java, two threads each run counter++ one million times on a shared int field, with no lock. What is the typical result?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Exactly 2,000,000, because ++ is one operation"
+        },
+        {
+          "id": "b",
+          "text": "Often below 2,000,000, and different on each run"
+        },
+        {
+          "id": "c",
+          "text": "Exactly 1,000,000, because the threads overwrite each other"
+        },
+        {
+          "id": "d",
+          "text": "Above 2,000,000, because some increments run twice"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "counter++ is a read, an add and a write; without a lock two threads interleave them and lose updates."
+  },
+  {
+    "key": "os.threads.out.01",
+    "concept": "os.threads",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "import threading\nimport multiprocessing as mp\n\nitems = []\n\ndef work():\n    items.append(\"x\")\n\nif __name__ == \"__main__\":\n    t = threading.Thread(target=work)\n    t.start()\n    t.join()\n    p = mp.Process(target=work)\n    p.start()\n    p.join()\n    print(len(items))",
+      "options": [
+        {
+          "id": "a",
+          "text": "2"
+        },
+        {
+          "id": "b",
+          "text": "1"
+        },
+        {
+          "id": "c",
+          "text": "0"
+        },
+        {
+          "id": "d",
+          "text": "It varies between runs"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A thread appends to the list its process shares; a child process changes only its own copy of memory."
+  },
+  {
+    "key": "os.threads.bug.01",
+    "concept": "os.threads",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Under load, two customers sometimes both buy the last lamp and the stock drops to -1. Find the bug.",
+      "code": "import threading\n\nlock = threading.Lock()\nstock = {\"lamp\": 1}\n\ndef buy(item):\n    if stock[item] > 0:\n        with lock:\n            stock[item] -= 1\n        return True\n    return False",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use threading.RLock() instead of threading.Lock()"
+        },
+        {
+          "id": "f2",
+          "text": "Take the lock before the check, so check and update run together"
+        },
+        {
+          "id": "f3",
+          "text": "Write stock[item] = stock[item] - 1 instead of -="
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f2",
+        "acceptLines": [
+          8
+        ]
+      }
+    },
+    "remember": "Check-then-act must run under one lock; a check made before taking the lock can be stale by the time you act."
+  },
+  {
+    "key": "os.threads.cloze.01",
+    "concept": "os.threads",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "Several worker threads wait for jobs, and producers call cond.notify_all() after adding one. Fill the blank so a worker never pops from an empty list.",
+      "code": "import threading\n\ncond = threading.Condition()\njobs = []\n\ndef worker():\n    with cond:\n        ____\n            cond.wait()\n        job = jobs.pop(0)\n    run(job)",
+      "options": [
+        {
+          "id": "a",
+          "text": "if jobs is None:"
+        },
+        {
+          "id": "b",
+          "text": "while jobs:"
+        },
+        {
+          "id": "c",
+          "text": "if not jobs:"
+        },
+        {
+          "id": "d",
+          "text": "while not jobs:"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Wait on a condition in a while loop: when you wake up, another thread may already have taken the item."
+  },
+  {
+    "key": "os.memory.tf.01",
+    "concept": "os.memory",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In C, memory allocated with malloc is freed automatically when the function that called malloc returns.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A stack frame disappears when its function returns, but heap memory from malloc lives until free is called."
+  },
+  {
+    "key": "os.memory.mc.01",
+    "concept": "os.memory",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A recursive function with a missing base case crashes after thousands of nested calls. Which memory ran out?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The heap, because each call allocates its arguments there"
+        },
+        {
+          "id": "b",
+          "text": "The CPU cache, because each call is stored there"
+        },
+        {
+          "id": "c",
+          "text": "The stack, because each call adds a frame until the limit is hit"
+        },
+        {
+          "id": "d",
+          "text": "Swap space, because old frames are written to disk"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Every call pushes a frame onto a fixed-size stack, so unbounded recursion overflows it."
+  },
+  {
+    "key": "os.memory.odd.01",
+    "concept": "os.memory",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Inside a C function, three of these live on the stack. Which one lives on the heap?",
+      "items": [
+        {
+          "id": "a",
+          "text": "A local variable int count = 0;"
+        },
+        {
+          "id": "b",
+          "text": "A local array char name[32];"
+        },
+        {
+          "id": "c",
+          "text": "The return address saved by the call"
+        },
+        {
+          "id": "d",
+          "text": "The 1024 bytes that malloc(1024) allocates"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Locals and return addresses live in the call's stack frame; malloc hands out heap memory that outlives the call."
+  },
+  {
+    "key": "os.memory.mc.02",
+    "concept": "os.memory",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "After fork(), the child sets the global x to 99. Both processes then print &x and x: the addresses match, but the parent prints 0 and the child 99. Why?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The parent read x before the child's write reached memory"
+        },
+        {
+          "id": "b",
+          "text": "Each process has its own virtual address space, mapped to different physical memory"
+        },
+        {
+          "id": "c",
+          "text": "printf prints an offset in the program file, not a memory address"
+        },
+        {
+          "id": "d",
+          "text": "The kernel blocks writes to globals in the child until the parent exits"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Addresses a program sees are virtual: the same address in two processes can map to different physical memory."
+  },
+  {
+    "key": "os.memory.order.01",
+    "concept": "os.memory",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A program reads an address whose page is on disk, not in RAM. Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The kernel reads the page from disk into a free frame"
+        },
+        {
+          "id": "s2",
+          "text": "The CPU retries the instruction, which now succeeds"
+        },
+        {
+          "id": "s3",
+          "text": "The MMU finds no valid mapping and raises a page fault"
+        },
+        {
+          "id": "s4",
+          "text": "The program's load instruction uses the virtual address"
+        },
+        {
+          "id": "s5",
+          "text": "The kernel updates the page table to point at that frame"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s3",
+          "s1",
+          "s5",
+          "s2"
+        ]
+      }
+    },
+    "remember": "A page fault traps into the kernel, which loads the page, fixes the page table and lets the instruction run again."
+  },
+  {
+    "key": "os.filesystem.tf.01",
+    "concept": "os.filesystem",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "On a typical Linux filesystem such as ext4, Report.txt and report.txt in the same directory are the same file.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Linux file names are case-sensitive: Report.txt and report.txt are two different files."
+  },
+  {
+    "key": "os.filesystem.mc.01",
+    "concept": "os.filesystem",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "The current directory is /home/ana/project. Which path points to /home/ana/notes.txt?",
+      "options": [
+        {
+          "id": "a",
+          "text": "./notes.txt"
+        },
+        {
+          "id": "b",
+          "text": "/notes.txt"
+        },
+        {
+          "id": "c",
+          "text": "~/project/notes.txt"
+        },
+        {
+          "id": "d",
+          "text": "../notes.txt"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": ". is the current directory and .. its parent; only a path that starts with / starts at the root."
+  },
+  {
+    "key": "os.filesystem.out.01",
+    "concept": "os.filesystem",
+    "type": "output",
+    "difficulty": 1,
+    "language": "sh",
+    "content": {
+      "prompt": "What does ls print?",
+      "code": "mkdir demo\ncd demo\ntouch .env app.js notes.txt\nls",
+      "options": [
+        {
+          "id": "a",
+          "text": ".env app.js notes.txt"
+        },
+        {
+          "id": "b",
+          "text": ". .. .env app.js notes.txt"
+        },
+        {
+          "id": "c",
+          "text": "app.js notes.txt .env"
+        },
+        {
+          "id": "d",
+          "text": "app.js notes.txt"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Names that start with a dot are hidden from ls; ls -a shows them."
+  },
+  {
+    "key": "os.filesystem.match.01",
+    "concept": "os.filesystem",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each directory with what it holds on a typical Linux system.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "/etc"
+        },
+        {
+          "id": "l2",
+          "text": "/var/log"
+        },
+        {
+          "id": "l3",
+          "text": "/proc"
+        },
+        {
+          "id": "l4",
+          "text": "/tmp"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Scratch files any user may write, not kept for long"
+        },
+        {
+          "id": "r2",
+          "text": "System-wide configuration files"
+        },
+        {
+          "id": "r3",
+          "text": "Virtual files the kernel generates about processes"
+        },
+        {
+          "id": "r4",
+          "text": "Log files written by services"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "/etc holds configuration, /var/log logs, /tmp temporary files, and /proc is a virtual view of the processes."
+  },
+  {
+    "key": "os.filesystem.odd.01",
+    "concept": "os.filesystem",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "data.txt has a hard link hard.txt and a symbolic link soft.txt. After rm data.txt, three of these commands still succeed. Which one fails?",
+      "items": [
+        {
+          "id": "a",
+          "text": "cat hard.txt"
+        },
+        {
+          "id": "b",
+          "text": "cat soft.txt"
+        },
+        {
+          "id": "c",
+          "text": "ls -l soft.txt"
+        },
+        {
+          "id": "d",
+          "text": "stat hard.txt"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "A hard link is another name for the same inode, so the data survives rm; a symlink stores only a path, which now points nowhere."
+  },
+  {
+    "key": "os.permissions.tf.01",
+    "concept": "os.permissions",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "After chmod 644 file.txt, the owner can read and write the file, and everyone else can only read it.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Each octal digit is owner, group, others; 4 is read, 2 write and 1 execute, so 644 is rw-r--r--."
+  },
+  {
+    "key": "os.permissions.mc.01",
+    "concept": "os.permissions",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "ls -l shows -rwxr-x--- for deploy.sh. What may members of the file's group do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Read and execute it, but not change it"
+        },
+        {
+          "id": "b",
+          "text": "Read, change and execute it"
+        },
+        {
+          "id": "c",
+          "text": "Only read it"
+        },
+        {
+          "id": "d",
+          "text": "Nothing: the group has no rights"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "After the file type come three triplets for owner, group and others; r-x means read and execute, no write."
+  },
+  {
+    "key": "os.permissions.out.01",
+    "concept": "os.permissions",
+    "type": "output",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "touch run.sh\nchmod 600 run.sh\nchmod u+x,go+r run.sh\nstat -c '%a' run.sh",
+      "options": [
+        {
+          "id": "a",
+          "text": "744"
+        },
+        {
+          "id": "b",
+          "text": "755"
+        },
+        {
+          "id": "c",
+          "text": "700"
+        },
+        {
+          "id": "d",
+          "text": "644"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Symbolic chmod adds or removes bits on top of the current mode: 600 plus u+x and go+r gives 744."
+  },
+  {
+    "key": "os.permissions.cloze.01",
+    "concept": "os.permissions",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "Fill the blank so new files get mode 640 and new directories 750.",
+      "code": "umask ____\ntouch report.txt\nmkdir archive",
+      "options": [
+        {
+          "id": "a",
+          "text": "750"
+        },
+        {
+          "id": "b",
+          "text": "640"
+        },
+        {
+          "id": "c",
+          "text": "027"
+        },
+        {
+          "id": "d",
+          "text": "137"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "umask lists the bits to remove from 666 for files and 777 for directories, so 027 gives 640 and 750."
+  },
+  {
+    "key": "os.permissions.match.01",
+    "concept": "os.permissions",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each ls -l mode with what it means.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "-rwsr-xr-x on a program"
+        },
+        {
+          "id": "l2",
+          "text": "drwxrwxrwt on a directory"
+        },
+        {
+          "id": "l3",
+          "text": "drwxrwsr-x on a directory"
+        },
+        {
+          "id": "l4",
+          "text": "drwx--x--x on a directory"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "New files inside get the directory's group"
+        },
+        {
+          "id": "r2",
+          "text": "Others can open files whose names they know, but cannot list it"
+        },
+        {
+          "id": "r3",
+          "text": "Runs with the rights of the file's owner, not of the caller"
+        },
+        {
+          "id": "r4",
+          "text": "Anyone can create files, but users can delete only their own"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "s in the owner triplet is setuid, s in a directory's group triplet is setgid, and t is the sticky bit, as on /tmp."
+  },
+  {
+    "key": "os.users-sudo.tf.01",
+    "concept": "os.users-sudo",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "The root account has user ID 0.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "The kernel treats UID 0 as the superuser; root is just the usual name for that account."
+  },
+  {
+    "key": "os.users-sudo.mc.01",
+    "concept": "os.users-sudo",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Why do admins run sudo apt update instead of working in a root shell all day?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Commands run through sudo are faster than in a root shell"
+        },
+        {
+          "id": "b",
+          "text": "root cannot install packages; only sudo can"
+        },
+        {
+          "id": "c",
+          "text": "Only that one command gets root rights, and sudo logs who ran it"
+        },
+        {
+          "id": "d",
+          "text": "sudo needs no password and no permission setup"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "sudo grants root rights one command at a time and logs it, so ordinary work cannot break the system by accident."
+  },
+  {
+    "key": "os.users-sudo.bug.01",
+    "concept": "os.users-sudo",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "The script prints \"Permission denied\" and /etc/hosts stays unchanged, although the user may use sudo. Find the bug.",
+      "code": "#!/bin/bash\n# add local host names for development\nsudo mkdir -p /etc/myapp\nsudo cp app.conf /etc/myapp/\nsudo echo \"127.0.0.1 api.local\" >> /etc/hosts\necho \"done\"",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Run sudo -E echo so the environment is kept"
+        },
+        {
+          "id": "f2",
+          "text": "Use > instead of >>"
+        },
+        {
+          "id": "f3",
+          "text": "Pipe the echo into sudo tee -a /etc/hosts instead"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Your own shell opens the >> file before sudo starts; write root-owned files with sudo tee or sudo sh -c."
+  },
+  {
+    "key": "os.users-sudo.match.01",
+    "concept": "os.users-sudo",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each file with what it stores.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "/etc/passwd"
+        },
+        {
+          "id": "l2",
+          "text": "/etc/shadow"
+        },
+        {
+          "id": "l3",
+          "text": "/etc/group"
+        },
+        {
+          "id": "l4",
+          "text": "/etc/sudoers"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Groups and their members"
+        },
+        {
+          "id": "r2",
+          "text": "Who may run which commands as root"
+        },
+        {
+          "id": "r3",
+          "text": "Password hashes, hidden from normal users"
+        },
+        {
+          "id": "r4",
+          "text": "Accounts with their UID, home directory and shell"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "/etc/passwd lists accounts, /etc/shadow holds password hashes, /etc/group lists groups, and /etc/sudoers says who may use sudo."
+  },
+  {
+    "key": "os.users-sudo.cloze.01",
+    "concept": "os.users-sudo",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "Fill the blank to add ana to the docker group without removing her from her other groups.",
+      "code": "sudo usermod ____ docker ana",
+      "options": [
+        {
+          "id": "a",
+          "text": "-aG"
+        },
+        {
+          "id": "b",
+          "text": "-G"
+        },
+        {
+          "id": "c",
+          "text": "-g"
+        },
+        {
+          "id": "d",
+          "text": "-a"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "usermod -aG appends a group; -G alone replaces all supplementary groups, and the change applies at the next login."
+  },
+  {
+    "key": "os.shell-pipes.tf.01",
+    "concept": "os.shell-pipes",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In bash, command > out.txt adds the output to the end of out.txt and keeps what was already there.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "> empties the file before writing; >> appends to it."
+  },
+  {
+    "key": "os.shell-pipes.mc.01",
+    "concept": "os.shell-pipes",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which command saves only the error messages of make into errors.log?",
+      "options": [
+        {
+          "id": "a",
+          "text": "make > errors.log"
+        },
+        {
+          "id": "b",
+          "text": "make 2> errors.log"
+        },
+        {
+          "id": "c",
+          "text": "make | errors.log"
+        },
+        {
+          "id": "d",
+          "text": "make >> errors.log"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "File descriptor 1 is stdout and 2 is stderr, so 2> redirects only the errors."
+  },
+  {
+    "key": "os.shell-pipes.cloze.01",
+    "concept": "os.shell-pipes",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "Fill the blank so the build output shows in the terminal and is also saved to build.log.",
+      "code": "npm run build 2>&1 | ____ build.log",
+      "options": [
+        {
+          "id": "a",
+          "text": "cat >"
+        },
+        {
+          "id": "b",
+          "text": "tail -f"
+        },
+        {
+          "id": "c",
+          "text": "cp"
+        },
+        {
+          "id": "d",
+          "text": "tee"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "tee copies its input both to a file and to stdout, so you can watch output and keep it."
+  },
+  {
+    "key": "os.shell-pipes.out.01",
+    "concept": "os.shell-pipes",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "What appears in the terminal?",
+      "code": "log() {\n  echo \"info\"\n  echo \"warn\" >&2\n}\nlog > a.log 2>&1\nlog 2>&1 > b.log",
+      "options": [
+        {
+          "id": "a",
+          "text": "Nothing"
+        },
+        {
+          "id": "b",
+          "text": "info warn"
+        },
+        {
+          "id": "c",
+          "text": "warn warn"
+        },
+        {
+          "id": "d",
+          "text": "warn"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Redirections run left to right: 2>&1 > file points stderr at the old stdout, then moves only stdout to the file."
+  },
+  {
+    "key": "os.shell-pipes.bug.01",
+    "concept": "os.shell-pipes",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "The script lists the files with errors, but always reports \"0 files with errors\" and exits 0. Find the bug.",
+      "code": "#!/bin/bash\nfailed=0\ngrep -l ERROR logs/*.log | while read -r file; do\n  echo \"errors in $file\"\n  failed=$((failed + 1))\ndone\necho \"$failed files with errors\"\nif [ \"$failed\" -gt 0 ]; then exit 1; fi",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Declare failed with export so the loop can update it"
+        },
+        {
+          "id": "f2",
+          "text": "Drop the pipe and end the loop with done < <(grep -l ERROR logs/*.log)"
+        },
+        {
+          "id": "f3",
+          "text": "Use ((failed++)) instead of failed=$((failed + 1))"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f2",
+        "acceptLines": [
+          6
+        ]
+      }
+    },
+    "remember": "Each part of a bash pipeline runs in a subshell, so variables set in a piped while loop are lost; use process substitution."
+  },
+  {
+    "key": "os.text-tools.tf.01",
+    "concept": "os.text-tools",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "grep -v ERROR app.log prints only the lines that do not contain ERROR.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "grep -v inverts the match and prints the lines that do not match."
+  },
+  {
+    "key": "os.text-tools.mc.01",
+    "concept": "os.text-tools",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which command prints how many lines of app.log contain ERROR?",
+      "options": [
+        {
+          "id": "a",
+          "text": "grep -n ERROR app.log"
+        },
+        {
+          "id": "b",
+          "text": "wc -l app.log"
+        },
+        {
+          "id": "c",
+          "text": "grep -c ERROR app.log"
+        },
+        {
+          "id": "d",
+          "text": "grep -v ERROR app.log | wc -l"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "grep -c counts the matching lines; grep ... | wc -l gives the same number."
+  },
+  {
+    "key": "os.text-tools.out.01",
+    "concept": "os.text-tools",
+    "type": "output",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "cat > visits.txt <<'EOF'\nana\nben\nana\nana\nEOF\nuniq visits.txt | wc -l",
+      "options": [
+        {
+          "id": "a",
+          "text": "2"
+        },
+        {
+          "id": "b",
+          "text": "4"
+        },
+        {
+          "id": "c",
+          "text": "3"
+        },
+        {
+          "id": "d",
+          "text": "1"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "uniq removes only adjacent duplicates, so sort first: sort | uniq."
+  },
+  {
+    "key": "os.text-tools.order.01",
+    "concept": "os.text-tools",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order the stages of a pipeline that prints the 3 IP addresses with the most requests in access.log, where the IP is the first field.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "sort -rn"
+        },
+        {
+          "id": "s2",
+          "text": "awk '{print $1}' access.log"
+        },
+        {
+          "id": "s3",
+          "text": "head -3"
+        },
+        {
+          "id": "s4",
+          "text": "uniq -c"
+        },
+        {
+          "id": "s5",
+          "text": "sort"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Extract the field, sort so duplicates touch, count them with uniq -c, sort by count with sort -rn, then take the top with head."
+  },
+  {
+    "key": "os.text-tools.bug.01",
+    "concept": "os.text-tools",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "Some nights the job fails with \"find: paths must precede expression\"; on others it removes only old files named app.log. Find the bug.",
+      "code": "#!/bin/bash\n# nightly cleanup of old logs\nset -euo pipefail\ncd /srv/app/logs\nfind . -type f -name *.log -mtime +7 -delete\necho \"cleanup done\"",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Quote the pattern: -name '*.log'"
+        },
+        {
+          "id": "f2",
+          "text": "Use -iname instead of -name"
+        },
+        {
+          "id": "f3",
+          "text": "Move -delete before -name"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Quote find patterns such as '*.log'; unquoted, the shell first expands them to matching names in the current directory."
+  },
+  {
+    "key": "os.env-vars.tf.01",
+    "concept": "os.env-vars",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If API_KEY is not set yet, running API_KEY=abc123 without export makes it visible to programs started later from that shell.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A plain assignment creates a shell variable; only export puts it into the environment that child processes get."
+  },
+  {
+    "key": "os.env-vars.mc.01",
+    "concept": "os.env-vars",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "What does PORT=4000 npm start do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Sets PORT for the rest of the shell session, then runs npm start"
+        },
+        {
+          "id": "b",
+          "text": "Saves PORT=4000 permanently in the user's profile"
+        },
+        {
+          "id": "c",
+          "text": "Passes 4000 to npm start as a command-line argument"
+        },
+        {
+          "id": "d",
+          "text": "Runs npm start with PORT=4000 in its environment only"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "VAR=value command sets the variable only in that command's environment; the shell itself is unchanged."
+  },
+  {
+    "key": "os.env-vars.odd.01",
+    "concept": "os.env-vars",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these print your home directory. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "echo '$HOME'"
+        },
+        {
+          "id": "b",
+          "text": "echo \"$HOME\""
+        },
+        {
+          "id": "c",
+          "text": "printenv HOME"
+        },
+        {
+          "id": "d",
+          "text": "echo ${HOME}"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Single quotes stop expansion, so '$HOME' prints literally; double quotes expand it and still protect spaces."
+  },
+  {
+    "key": "os.env-vars.cloze.01",
+    "concept": "os.env-vars",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "Fill the blank so the script uses 8080 whenever PORT is unset or empty.",
+      "code": "PORT=\"${PORT____8080}\"\necho \"listening on $PORT\"",
+      "options": [
+        {
+          "id": "a",
+          "text": ":-"
+        },
+        {
+          "id": "b",
+          "text": "-"
+        },
+        {
+          "id": "c",
+          "text": ":+"
+        },
+        {
+          "id": "d",
+          "text": ":?"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "${VAR:-default} uses the default when VAR is unset or empty; ${VAR-default} only when it is unset."
+  },
+  {
+    "key": "os.env-vars.out.01",
+    "concept": "os.env-vars",
+    "type": "output",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "A=1\nexport A\nA=2\nB=3 bash -c 'echo \"child: $A $B\"'\necho \"parent: $A [$B]\"",
+      "options": [
+        {
+          "id": "a",
+          "text": "child: 1 3 / parent: 2 []"
+        },
+        {
+          "id": "b",
+          "text": "child: 2 3 / parent: 2 [3]"
+        },
+        {
+          "id": "c",
+          "text": "child: 2 3 / parent: 2 []"
+        },
+        {
+          "id": "d",
+          "text": "child: 1 3 / parent: 2 [3]"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "export marks the name, so later assignments are exported too; a VAR=value prefix sets the variable for that one command only."
+  },
+  {
+    "key": "os.signals.tf.01",
+    "concept": "os.signals",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A program can install a handler for SIGKILL to save its work before it stops.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "SIGKILL and SIGSTOP cannot be caught or ignored; send SIGTERM to give a program a chance to clean up."
+  },
+  {
+    "key": "os.signals.mc.01",
+    "concept": "os.signals",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which signal does kill 1234 send when no signal is named?",
+      "options": [
+        {
+          "id": "a",
+          "text": "SIGTERM"
+        },
+        {
+          "id": "b",
+          "text": "SIGKILL"
+        },
+        {
+          "id": "c",
+          "text": "SIGINT"
+        },
+        {
+          "id": "d",
+          "text": "SIGHUP"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "kill sends SIGTERM by default, a polite request to stop that the program can handle."
+  },
+  {
+    "key": "os.signals.match.01",
+    "concept": "os.signals",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each action with the signal the program receives.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Ctrl+C in the terminal"
+        },
+        {
+          "id": "l2",
+          "text": "Ctrl+Z in the terminal"
+        },
+        {
+          "id": "l3",
+          "text": "kill -9 1234"
+        },
+        {
+          "id": "l4",
+          "text": "Closing the terminal window"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "SIGHUP"
+        },
+        {
+          "id": "r2",
+          "text": "SIGKILL"
+        },
+        {
+          "id": "r3",
+          "text": "SIGINT"
+        },
+        {
+          "id": "r4",
+          "text": "SIGTSTP"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Ctrl+C sends SIGINT, Ctrl+Z SIGTSTP, a closed terminal SIGHUP, and kill -9 SIGKILL."
+  },
+  {
+    "key": "os.signals.order.01",
+    "concept": "os.signals",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "docker stop hits an app that handles SIGTERM but then hangs while closing its database connection. Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The grace period runs out"
+        },
+        {
+          "id": "s2",
+          "text": "The app's handler stops accepting new requests"
+        },
+        {
+          "id": "s3",
+          "text": "Docker sends SIGKILL and the process ends at once"
+        },
+        {
+          "id": "s4",
+          "text": "Docker sends SIGTERM to the container's main process"
+        },
+        {
+          "id": "s5",
+          "text": "The app hangs waiting for the database to close"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Stopping a service sends SIGTERM, waits a grace period, then sends SIGKILL, so shutdown handlers must finish in time."
+  },
+  {
+    "key": "os.signals.bug.01",
+    "concept": "os.signals",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "On docker stop, the server's SIGTERM handler never runs and every stop takes the full timeout. Find the bug.",
+      "code": "#!/bin/sh\n# entrypoint.sh, the container's ENTRYPOINT\nset -e\necho \"running migrations\"\nnode migrate.js\necho \"starting server\"\nnode server.js",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add trap '' TERM at the top of the script"
+        },
+        {
+          "id": "f2",
+          "text": "Start the server in the background: node server.js &"
+        },
+        {
+          "id": "f3",
+          "text": "Start the server with exec node server.js"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f3"
+      }
+    },
+    "remember": "End an entrypoint script with exec so the app replaces the shell as PID 1 and receives the signals itself."
+  },
+  {
+    "key": "os.exit-codes.tf.01",
+    "concept": "os.exit-codes",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "By convention, a program that exits with status 0 succeeded.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Exit status 0 means success and 1 to 255 mean failure; $? holds the status of the last command."
+  },
+  {
+    "key": "os.exit-codes.mc.01",
+    "concept": "os.exit-codes",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A deploy script runs npm test && ./deploy.sh. When does ./deploy.sh run?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Always, after npm test finishes"
+        },
+        {
+          "id": "b",
+          "text": "Only when npm test exits with status 0"
+        },
+        {
+          "id": "c",
+          "text": "Only when npm test exits with a non-zero status"
+        },
+        {
+          "id": "d",
+          "text": "At the same time as npm test"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "a && b runs b only if a succeeded; a || b runs b only if a failed."
+  },
+  {
+    "key": "os.exit-codes.odd.01",
+    "concept": "os.exit-codes",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "In a directory without a file named missing.txt, three of these commands exit with status 0. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "echo hello"
+        },
+        {
+          "id": "b",
+          "text": "cat missing.txt"
+        },
+        {
+          "id": "c",
+          "text": "true"
+        },
+        {
+          "id": "d",
+          "text": "ls ."
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "A command that cannot do its job, like cat on a missing file, exits with a non-zero status."
+  },
+  {
+    "key": "os.exit-codes.bug.01",
+    "concept": "os.exit-codes",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "The script deploys even when the tests fail. Find the bug.",
+      "code": "#!/bin/bash\nnpm test\nstatus=$?\necho \"tests finished with status $status\"\nif [ $? -ne 0 ]; then\n  echo \"tests failed, not deploying\"\n  exit 1\nfi\n./deploy.sh",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Test $status instead of $?"
+        },
+        {
+          "id": "f2",
+          "text": "Use -gt instead of -ne"
+        },
+        {
+          "id": "f3",
+          "text": "Quote it as \"$?\""
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f1"
+      }
+    },
+    "remember": "$? changes after every command, so save it right away and test the saved variable."
+  },
+  {
+    "key": "os.exit-codes.out.01",
+    "concept": "os.exit-codes",
+    "type": "output",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "What does this bash script print?",
+      "code": "set -e\ncheck() {\n  false\n  echo \"after false\"\n}\ncheck || echo \"check failed\"\necho \"end\"",
+      "options": [
+        {
+          "id": "a",
+          "text": "after false / end"
+        },
+        {
+          "id": "b",
+          "text": "check failed / end"
+        },
+        {
+          "id": "c",
+          "text": "Nothing: set -e stops the script at false"
+        },
+        {
+          "id": "d",
+          "text": "after false / check failed / end"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "set -e is ignored inside anything tested by ||, &&, if or while, including the whole body of a function called there."
+  },
+  {
+    "key": "os.services.tf.01",
+    "concept": "os.services",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "systemctl enable nginx starts nginx right away.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "enable makes a service start at boot; start runs it now, and enable --now does both."
+  },
+  {
+    "key": "os.services.mc.01",
+    "concept": "os.services",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "app.service keeps failing. Which command follows its log live?",
+      "options": [
+        {
+          "id": "a",
+          "text": "systemctl logs app -f"
+        },
+        {
+          "id": "b",
+          "text": "tail -f /etc/systemd/system/app.service"
+        },
+        {
+          "id": "c",
+          "text": "journalctl -u app -f"
+        },
+        {
+          "id": "d",
+          "text": "systemctl status app"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "systemd collects service output in the journal; journalctl -u <unit> -f follows one unit's log."
+  },
+  {
+    "key": "os.services.order.01",
+    "concept": "os.services",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You wrote app.service for a new app. Order the steps to start it now and at every boot.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Run systemctl enable --now app"
+        },
+        {
+          "id": "s2",
+          "text": "Check systemctl status app"
+        },
+        {
+          "id": "s3",
+          "text": "Copy app.service to /etc/systemd/system/"
+        },
+        {
+          "id": "s4",
+          "text": "Run systemctl daemon-reload"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s4",
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    "remember": "After adding or editing a unit file, run systemctl daemon-reload before starting or enabling it."
+  },
+  {
+    "key": "os.services.match.01",
+    "concept": "os.services",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each unit file line with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "ExecStart=/usr/bin/node /srv/app/server.js"
+        },
+        {
+          "id": "l2",
+          "text": "User=app"
+        },
+        {
+          "id": "l3",
+          "text": "After=postgresql.service"
+        },
+        {
+          "id": "l4",
+          "text": "WantedBy=multi-user.target"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "If both start, start this unit after PostgreSQL"
+        },
+        {
+          "id": "r2",
+          "text": "Lets systemctl enable start the unit at boot"
+        },
+        {
+          "id": "r3",
+          "text": "The account the service process runs as"
+        },
+        {
+          "id": "r4",
+          "text": "The command systemd runs to start the service"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "ExecStart is the command, User the account, After only orders startup, and WantedBy is what enable hooks into."
+  },
+  {
+    "key": "os.services.odd.01",
+    "concept": "os.services",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "app.service has Restart=on-failure. Three of these make systemd start it again. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The app exits with status 1"
+        },
+        {
+          "id": "b",
+          "text": "Someone runs kill -9 on the app's PID"
+        },
+        {
+          "id": "c",
+          "text": "The app finishes and exits with status 0"
+        },
+        {
+          "id": "d",
+          "text": "The app crashes with a segmentation fault"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Restart=on-failure restarts after a non-zero exit or an unclean signal such as SIGKILL or SIGSEGV, but not after exit status 0."
+  }
+]

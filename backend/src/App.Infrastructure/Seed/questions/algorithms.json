@@ -1,0 +1,1878 @@
+[
+  {
+    "key": "alg.complexity.tf.01",
+    "concept": "alg.complexity",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "An O(n) algorithm is faster than an O(n²) algorithm for every input size.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Big O describes how work grows, not exact speed; on small inputs constant factors can make O(n²) code faster."
+  },
+  {
+    "key": "alg.complexity.mc.01",
+    "concept": "alg.complexity",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "language": "py",
+    "content": {
+      "prompt": "What is the worst-case time complexity of has_duplicate for a list of n items?",
+      "code": "def has_duplicate(items):\n    for i in range(len(items)):\n        for j in range(len(items)):\n            if i != j and items[i] == items[j]:\n                return True\n    return False",
+      "options": [
+        {
+          "id": "a",
+          "text": "O(n)"
+        },
+        {
+          "id": "b",
+          "text": "O(2n)"
+        },
+        {
+          "id": "c",
+          "text": "O(n²)"
+        },
+        {
+          "id": "d",
+          "text": "O(n log n)"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Two nested loops over the same n items do about n × n steps, so the work is O(n²)."
+  },
+  {
+    "key": "alg.complexity.match.01",
+    "concept": "alg.complexity",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each operation on a list of n items with its time complexity.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Reading the first item"
+        },
+        {
+          "id": "l2",
+          "text": "Adding up every item once"
+        },
+        {
+          "id": "l3",
+          "text": "Halving the search range until one item is left"
+        },
+        {
+          "id": "l4",
+          "text": "Comparing every item with every other item"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "O(n²)"
+        },
+        {
+          "id": "r2",
+          "text": "O(1)"
+        },
+        {
+          "id": "r3",
+          "text": "O(n)"
+        },
+        {
+          "id": "r4",
+          "text": "O(log n)"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "One step is O(1), halving is O(log n), one pass is O(n), and a pass inside a pass is O(n²)."
+  },
+  {
+    "key": "alg.complexity.odd.01",
+    "concept": "alg.complexity",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "items is a Python list of n elements. Which task is the odd one out because it is NOT O(n)?",
+      "items": [
+        {
+          "id": "a",
+          "text": "For each item x, checking x in items"
+        },
+        {
+          "id": "b",
+          "text": "Building a set from all the items"
+        },
+        {
+          "id": "c",
+          "text": "Summing the items, then dividing by their count"
+        },
+        {
+          "id": "d",
+          "text": "Two separate loops over the items, one after the other"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Loops one after another add up and stay O(n); a hidden linear search inside a loop multiplies to O(n²)."
+  },
+  {
+    "key": "alg.complexity.mc.02",
+    "concept": "alg.complexity",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A dynamic array doubles its capacity and copies its items whenever it is full. What is the total cost of appending n items to an empty array, one at a time?",
+      "options": [
+        {
+          "id": "a",
+          "text": "O(n²), because each resize copies every item"
+        },
+        {
+          "id": "b",
+          "text": "O(n log n), because there are log n resizes"
+        },
+        {
+          "id": "c",
+          "text": "O(log n), because the capacity doubles each time"
+        },
+        {
+          "id": "d",
+          "text": "O(n), so each append is O(1) amortized"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Doubling makes all the copies add up to less than 2n, so appending is O(1) amortized and n appends cost O(n)."
+  },
+  {
+    "key": "alg.hashmap-vs-list.tf.01",
+    "concept": "alg.hashmap-vs-list",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Looking up a key in a hash map takes about the same time on average whether it holds a hundred keys or a million.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A hash map jumps straight to the key's bucket, so average lookups stay O(1) as it grows; a list must be scanned."
+  },
+  {
+    "key": "alg.hashmap-vs-list.mc.01",
+    "concept": "alg.hashmap-vs-list",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A service looks up products by SKU thousands of times per second. Which structure gives O(1) lookups on average?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A list of products, scanned until the SKU matches"
+        },
+        {
+          "id": "b",
+          "text": "A dict that maps each SKU to its product"
+        },
+        {
+          "id": "c",
+          "text": "A list of products sorted by SKU, with binary search"
+        },
+        {
+          "id": "d",
+          "text": "Two parallel lists, finding the SKU with index()"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Key a dict (hash map) by the field you look things up by; a list needs a scan, or at best a binary search."
+  },
+  {
+    "key": "alg.hashmap-vs-list.bug.01",
+    "concept": "alg.hashmap-vs-list",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "With 500,000 orders and 50,000 banned ids, this filter runs for many minutes. Find the bug.",
+      "code": "def visible_orders(orders, banned_ids):\n    banned = list(banned_ids)\n    result = []\n    for order in orders:\n        if order[\"user_id\"] not in banned:\n            result.append(order)\n    return result",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "banned = sorted(banned_ids)"
+        },
+        {
+          "id": "f2",
+          "text": "banned = set(banned_ids)"
+        },
+        {
+          "id": "f3",
+          "text": "banned = tuple(banned_ids)"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "x in some_list scans the list; inside a loop that is O(n·m), so turn the lookup collection into a set first."
+  },
+  {
+    "key": "alg.hashmap-vs-list.odd.01",
+    "concept": "alg.hashmap-vs-list",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which task is the odd one out because a hash map does NOT make it faster than a plain list?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Checking whether an email is already registered"
+        },
+        {
+          "id": "b",
+          "text": "Finding a user by id"
+        },
+        {
+          "id": "c",
+          "text": "Counting how many times each word appears"
+        },
+        {
+          "id": "d",
+          "text": "Listing all prices from lowest to highest"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Hash maps answer exact-key questions fast; anything about order, like lowest to highest, still needs a sort."
+  },
+  {
+    "key": "alg.hashmap-vs-list.out.01",
+    "concept": "alg.hashmap-vs-list",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const a = { id: 1 };\nconst b = { id: 2 };\nconst obj = {};\nconst map = new Map();\nobj[a] = \"A\";\nobj[b] = \"B\";\nmap.set(a, \"A\");\nmap.set(b, \"B\");\nconsole.log(obj[a], map.get(a), Object.keys(obj).length);",
+      "options": [
+        {
+          "id": "a",
+          "text": "B A 1"
+        },
+        {
+          "id": "b",
+          "text": "A A 2"
+        },
+        {
+          "id": "c",
+          "text": "undefined A 2"
+        },
+        {
+          "id": "d",
+          "text": "B B 1"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A plain object turns every key into a string, so two objects collide as \"[object Object]\"; a Map keys by identity."
+  },
+  {
+    "key": "alg.stack-queue.tf.01",
+    "concept": "alg.stack-queue",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a queue, the next item removed is the one that was added most recently.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A queue is first in, first out: the oldest item leaves first; most-recent-first is a stack."
+  },
+  {
+    "key": "alg.stack-queue.mc.01",
+    "concept": "alg.stack-queue",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which structure fits an undo feature, where each undo reverts the most recent change?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A queue, because changes are undone in the order they were made"
+        },
+        {
+          "id": "b",
+          "text": "A stack, because the latest change is undone first"
+        },
+        {
+          "id": "c",
+          "text": "A set, because each change is stored only once"
+        },
+        {
+          "id": "d",
+          "text": "A sorted list, because changes must be ordered by size"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Undo, the Back button and nested calls all reverse the latest action first, so they use a stack."
+  },
+  {
+    "key": "alg.stack-queue.out.01",
+    "concept": "alg.stack-queue",
+    "type": "output",
+    "difficulty": 1,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "stack = []\nstack.append(\"a\")\nstack.append(\"b\")\nstack.append(\"c\")\nstack.pop()\nstack.append(\"d\")\nprint(stack.pop(), stack.pop())",
+      "options": [
+        {
+          "id": "a",
+          "text": "d c"
+        },
+        {
+          "id": "b",
+          "text": "a b"
+        },
+        {
+          "id": "c",
+          "text": "d b"
+        },
+        {
+          "id": "d",
+          "text": "b d"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "append and pop() both work at the end of a Python list, so it behaves as a stack: last in, first out."
+  },
+  {
+    "key": "alg.stack-queue.bug.01",
+    "concept": "alg.stack-queue",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "balanced(\"([])\") returns False, although the brackets are balanced. Find the bug.",
+      "code": "def balanced(text):\n    pairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    stack = []\n    for ch in text:\n        if ch in \"([{\":\n            stack.append(ch)\n        elif ch in pairs:\n            if not stack:\n                return False\n            if stack.pop(0) != pairs[ch]:\n                return False\n    return not stack",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "if stack.pop() != pairs[ch]:"
+        },
+        {
+          "id": "f2",
+          "text": "if stack[-1] != pairs[ch]:"
+        },
+        {
+          "id": "f3",
+          "text": "Make stack a deque and call stack.popleft()"
+        }
+      ],
+      "answer": {
+        "line": 10,
+        "fixId": "f1"
+      }
+    },
+    "remember": "A closing bracket must match the most recent opener, so take it from the top of the stack with pop(), not from the front."
+  },
+  {
+    "key": "alg.stack-queue.match.01",
+    "concept": "alg.stack-queue",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each task with the structure that fits it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Undo the last edit in a text editor"
+        },
+        {
+          "id": "l2",
+          "text": "Serve support tickets in the order they arrived"
+        },
+        {
+          "id": "l3",
+          "text": "Always handle the most urgent incident next"
+        },
+        {
+          "id": "l4",
+          "text": "Remember which URLs a crawler has already visited"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Priority queue"
+        },
+        {
+          "id": "r2",
+          "text": "Hash set"
+        },
+        {
+          "id": "r3",
+          "text": "Stack"
+        },
+        {
+          "id": "r4",
+          "text": "Queue"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Latest first is a stack, oldest first is a queue, most important first is a priority queue, and \"seen it?\" is a set."
+  },
+  {
+    "key": "alg.linked-lists.tf.01",
+    "concept": "alg.linked-lists",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Inserting a new node at the head of a singly linked list takes longer the longer the list is.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Inserting at the head only creates a node and repoints head, so it is O(1) at any length."
+  },
+  {
+    "key": "alg.linked-lists.mc.01",
+    "concept": "alg.linked-lists",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Why is reading the element at index 5,000 slower in a linked list than in an array?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The list must follow next pointers from the head, one node at a time"
+        },
+        {
+          "id": "b",
+          "text": "Linked lists keep their elements sorted, so the read must search"
+        },
+        {
+          "id": "c",
+          "text": "Each node is copied into a temporary array before it is read"
+        },
+        {
+          "id": "d",
+          "text": "The list must first count its length to check the index"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "An array computes an element's address directly; a linked list walks node by node, so index access is O(n)."
+  },
+  {
+    "key": "alg.linked-lists.odd.01",
+    "concept": "alg.linked-lists",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "You hold a reference to the head of a singly linked list with n nodes. Which operation is the odd one out because it is NOT O(1)?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Insert a new node at the head"
+        },
+        {
+          "id": "b",
+          "text": "Remove the head node"
+        },
+        {
+          "id": "c",
+          "text": "Insert a new node right after the head"
+        },
+        {
+          "id": "d",
+          "text": "Find the node whose value is 42"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Changing links next to a node you already hold is O(1); finding a node by value means walking the list, O(n)."
+  },
+  {
+    "key": "alg.linked-lists.order.01",
+    "concept": "alg.linked-lists",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "One loop iteration of reversing a singly linked list in place (prev starts as None, cur as head). Order the statements so no node is lost.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "prev = cur"
+        },
+        {
+          "id": "s2",
+          "text": "cur = nxt"
+        },
+        {
+          "id": "s3",
+          "text": "nxt = cur.next"
+        },
+        {
+          "id": "s4",
+          "text": "cur.next = prev"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s4",
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Save cur.next before you overwrite it; once that link changes, the rest of the list is reachable only through the saved pointer."
+  },
+  {
+    "key": "alg.linked-lists.bug.01",
+    "concept": "alg.linked-lists",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Node(val, next) is a singly linked list node. Removing 2 from 1 -> 2 -> 2 -> 3 returns 1 -> 2 -> 3, and removing a value that sits at the end of the list crashes. Find the bug.",
+      "code": "def remove_all(head, val):\n    dummy = Node(0, head)\n    cur = dummy\n    while cur.next:\n        if cur.next.val == val:\n            cur.next = cur.next.next\n        cur = cur.next\n    return dummy.next",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Start with cur = head instead of the dummy node"
+        },
+        {
+          "id": "f2",
+          "text": "Advance only when nothing was removed: put cur = cur.next in an else branch"
+        },
+        {
+          "id": "f3",
+          "text": "Loop with while cur and cur.next: instead"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f2"
+      }
+    },
+    "remember": "After unlinking a node, check the new next node before moving on; advancing every time skips neighbours."
+  },
+  {
+    "key": "alg.recursion.tf.01",
+    "concept": "alg.recursion",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A recursive function needs a path that returns without calling itself again, or it keeps calling itself until the stack runs out.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "The base case is the exit: if it is missing or never reached, recursion ends in a stack overflow."
+  },
+  {
+    "key": "alg.recursion.mc.01",
+    "concept": "alg.recursion",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A recursive function that goes 100,000 calls deep crashes, while a loop doing the same work runs fine. Why?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Recursive calls are slower, so the runtime stops them after a time limit"
+        },
+        {
+          "id": "b",
+          "text": "Each recursive call runs on a new thread, and threads are limited"
+        },
+        {
+          "id": "c",
+          "text": "The runtime limits how many times one function may be called in total"
+        },
+        {
+          "id": "d",
+          "text": "Each pending call keeps a frame on the call stack, which has a limited size"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Every call that has not returned yet holds a stack frame, so recursion depth is limited by the stack size."
+  },
+  {
+    "key": "alg.recursion.out.01",
+    "concept": "alg.recursion",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "def countdown(n):\n    if n == 0:\n        return\n    print(n, end=\" \")\n    countdown(n - 1)\n    print(n, end=\" \")\n\ncountdown(3)",
+      "options": [
+        {
+          "id": "a",
+          "text": "3 2 1 3 2 1"
+        },
+        {
+          "id": "b",
+          "text": "3 2 1 1 2 3"
+        },
+        {
+          "id": "c",
+          "text": "3 3 2 2 1 1"
+        },
+        {
+          "id": "d",
+          "text": "1 2 3 3 2 1"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Code after the recursive call runs as the calls return, so it executes in reverse order."
+  },
+  {
+    "key": "alg.recursion.cloze.01",
+    "concept": "alg.recursion",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "Fill the blank so total_bytes counts a folder and everything inside it, at any depth.",
+      "code": "def total_bytes(folder):\n    size = folder.file_bytes\n    for child in folder.subfolders:\n        size += ____\n    return size",
+      "options": [
+        {
+          "id": "a",
+          "text": "total_bytes(folder)"
+        },
+        {
+          "id": "b",
+          "text": "child.file_bytes"
+        },
+        {
+          "id": "c",
+          "text": "total_bytes(child)"
+        },
+        {
+          "id": "d",
+          "text": "total_bytes(folder.subfolders)"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Recurse on the smaller piece (each child), never on the same input, and combine the results."
+  },
+  {
+    "key": "alg.recursion.bug.01",
+    "concept": "alg.recursion",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "power(5, 3) returns 125, but power(5, 0) crashes with RecursionError instead of returning 1. Find the bug.",
+      "code": "def power(base, exp):\n    if exp == 1:\n        return base\n    return base * power(base, exp - 1)",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Make the base case if exp <= 1: return base"
+        },
+        {
+          "id": "f2",
+          "text": "Raise the limit with sys.setrecursionlimit(10_000)"
+        },
+        {
+          "id": "f3",
+          "text": "Make the base case if exp == 0: return 1"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f3",
+        "acceptLines": [
+          3
+        ]
+      }
+    },
+    "remember": "The base case must cover the smallest valid input; any input that skips it recurses until the stack runs out."
+  },
+  {
+    "key": "alg.sorting.tf.01",
+    "concept": "alg.sorting",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "When a stable sort orders names by length, names of the same length stay in their original order.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Stable means ties keep their original order, which lets you sort by several keys in separate passes."
+  },
+  {
+    "key": "alg.sorting.mc.01",
+    "concept": "alg.sorting",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is the time complexity of a good general-purpose comparison sort, like merge sort, on n items?",
+      "options": [
+        {
+          "id": "a",
+          "text": "O(n log n)"
+        },
+        {
+          "id": "b",
+          "text": "O(n)"
+        },
+        {
+          "id": "c",
+          "text": "O(n²)"
+        },
+        {
+          "id": "d",
+          "text": "O(log n)"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Good general-purpose comparison sorts are O(n log n); no comparison sort can beat that in general."
+  },
+  {
+    "key": "alg.sorting.out.01",
+    "concept": "alg.sorting",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Python's sort is stable. What does this print?",
+      "code": "people = [(\"Cid\", 30), (\"Ana\", 25),\n          (\"Ben\", 30), (\"Dan\", 25)]\npeople.sort(key=lambda p: p[0])\npeople.sort(key=lambda p: -p[1])\nprint([name for name, age in people])",
+      "options": [
+        {
+          "id": "a",
+          "text": "['Cid', 'Ben', 'Ana', 'Dan']"
+        },
+        {
+          "id": "b",
+          "text": "['Ana', 'Dan', 'Ben', 'Cid']"
+        },
+        {
+          "id": "c",
+          "text": "['Ana', 'Ben', 'Cid', 'Dan']"
+        },
+        {
+          "id": "d",
+          "text": "['Ben', 'Cid', 'Ana', 'Dan']"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Sorting by the secondary key first and the primary key last works because a stable sort keeps the earlier order among ties."
+  },
+  {
+    "key": "alg.sorting.cloze.01",
+    "concept": "alg.sorting",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Fill the blank so the sort is ascending and stable.",
+      "code": "def insertion_sort(a):\n    for i in range(1, len(a)):\n        x = a[i]\n        j = i - 1\n        while j >= 0 and ____:\n            a[j + 1] = a[j]\n            j -= 1\n        a[j + 1] = x",
+      "options": [
+        {
+          "id": "a",
+          "text": "a[j] > x"
+        },
+        {
+          "id": "b",
+          "text": "a[j] >= x"
+        },
+        {
+          "id": "c",
+          "text": "a[j] < x"
+        },
+        {
+          "id": "d",
+          "text": "a[j + 1] > x"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Shift only elements strictly greater than the one you insert; shifting equal ones too makes the sort unstable."
+  },
+  {
+    "key": "alg.sorting.match.01",
+    "concept": "alg.sorting",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each sorting algorithm with the property it is known for.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Merge sort"
+        },
+        {
+          "id": "l2",
+          "text": "Quicksort"
+        },
+        {
+          "id": "l3",
+          "text": "Insertion sort"
+        },
+        {
+          "id": "l4",
+          "text": "Heap sort"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "O(n log n) in the worst case and in place, but not stable"
+        },
+        {
+          "id": "r2",
+          "text": "Close to O(n) on input that is already almost sorted"
+        },
+        {
+          "id": "r3",
+          "text": "O(n log n) even in the worst case and stable, but needs O(n) extra memory"
+        },
+        {
+          "id": "r4",
+          "text": "Fast in practice, but O(n²) in the worst case with bad pivots"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Merge sort is stable and predictable, quicksort is fast with a bad worst case, insertion sort shines on nearly sorted data, and heap sort sorts in place."
+  },
+  {
+    "key": "alg.binary-search.tf.01",
+    "concept": "alg.binary-search",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Binary search also works on an unsorted list; it is just slower.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Binary search throws away half the range after each comparison, which is only correct when the data is sorted."
+  },
+  {
+    "key": "alg.binary-search.mc.01",
+    "concept": "alg.binary-search",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "About how many comparisons does binary search need, at most, to find an item in a sorted list of 1,000,000 items?",
+      "options": [
+        {
+          "id": "a",
+          "text": "About 1,000"
+        },
+        {
+          "id": "b",
+          "text": "About 500,000"
+        },
+        {
+          "id": "c",
+          "text": "About 20"
+        },
+        {
+          "id": "d",
+          "text": "About 1,000,000"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Each step halves the range, so a million items need only about 20 steps (2^20 is about 1,000,000)."
+  },
+  {
+    "key": "alg.binary-search.cloze.01",
+    "concept": "alg.binary-search",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "Fill the blank in this binary search over a sorted list.",
+      "code": "def find(items, target):\n    lo, hi = 0, len(items) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if items[mid] == target:\n            return mid\n        if items[mid] < target:\n            ____\n        else:\n            hi = mid - 1\n    return -1",
+      "options": [
+        {
+          "id": "a",
+          "text": "lo = mid"
+        },
+        {
+          "id": "b",
+          "text": "lo = mid + 1"
+        },
+        {
+          "id": "c",
+          "text": "hi = mid + 1"
+        },
+        {
+          "id": "d",
+          "text": "lo = mid - 1"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "With an inclusive range lo..hi, step past mid (mid + 1 or mid - 1); keeping mid in the range can loop forever."
+  },
+  {
+    "key": "alg.binary-search.order.01",
+    "concept": "alg.binary-search",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Binary search looks for 91 in [2, 5, 8, 12, 16, 23, 38, 56, 72, 91], with mid = (lo + hi) // 2 over indexes 0 to 9. Order the values it compares with 91.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "72"
+        },
+        {
+          "id": "s2",
+          "text": "16"
+        },
+        {
+          "id": "s3",
+          "text": "91"
+        },
+        {
+          "id": "s4",
+          "text": "56"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Binary search checks the middle of the remaining range and drops the half that cannot hold the target."
+  },
+  {
+    "key": "alg.binary-search.bug.01",
+    "concept": "alg.binary-search",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "first_at_least([1, 3, 5], 0) returns 0, but first_at_least([1, 3, 5], 4) never returns. Find the bug.",
+      "code": "def first_at_least(items, target):\n    # index of the first item >= target\n    lo, hi = 0, len(items)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if items[mid] < target:\n            lo = mid\n        else:\n            hi = mid\n    return lo",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "while lo <= hi:"
+        },
+        {
+          "id": "f2",
+          "text": "mid = (lo + hi + 1) // 2"
+        },
+        {
+          "id": "f3",
+          "text": "lo = mid + 1"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f3"
+      }
+    },
+    "remember": "When mid can equal lo, lo = mid stops shrinking the range; use lo = mid + 1 so every step makes progress."
+  },
+  {
+    "key": "alg.two-pointers.tf.01",
+    "concept": "alg.two-pointers",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "On a sorted array, two indexes moving inward from both ends can find a pair with a given sum in one pass.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "On sorted data, move the left index right when the sum is too small and the right index left when it is too big: O(n)."
+  },
+  {
+    "key": "alg.two-pointers.mc.01",
+    "concept": "alg.two-pointers",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You need the largest sum of k consecutive elements in an array of n numbers. What does a sliding window do at each step?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Adds the element entering the window and subtracts the one leaving it"
+        },
+        {
+          "id": "b",
+          "text": "Re-adds all k elements of the new window"
+        },
+        {
+          "id": "c",
+          "text": "Sorts the window and keeps its k largest elements"
+        },
+        {
+          "id": "d",
+          "text": "Doubles the window size until it covers the array"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A sliding window updates a running total with the item that enters and the item that leaves, so each step is O(1)."
+  },
+  {
+    "key": "alg.two-pointers.cloze.01",
+    "concept": "alg.two-pointers",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Fill the blank so the function returns the length of the longest substring without repeated characters.",
+      "code": "def longest_unique(s):\n    seen = set()\n    left = best = 0\n    for right, ch in enumerate(s):\n        while ch in seen:\n            ____\n            left += 1\n        seen.add(ch)\n        best = max(best, right - left + 1)\n    return best",
+      "options": [
+        {
+          "id": "a",
+          "text": "seen.remove(ch)"
+        },
+        {
+          "id": "b",
+          "text": "seen.clear()"
+        },
+        {
+          "id": "c",
+          "text": "seen.remove(s[left])"
+        },
+        {
+          "id": "d",
+          "text": "seen.pop()"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "When the window breaks its rule, shrink it from the left and remove each item that leaves from the window's state."
+  },
+  {
+    "key": "alg.two-pointers.odd.01",
+    "concept": "alg.two-pointers",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Which problem is the odd one out because a single two-pointer or sliding-window pass cannot solve it as given?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The longest substring without repeated characters"
+        },
+        {
+          "id": "b",
+          "text": "A pair that sums to a target in an unsorted array"
+        },
+        {
+          "id": "c",
+          "text": "A pair that sums to a target in a sorted array"
+        },
+        {
+          "id": "d",
+          "text": "Merging two sorted arrays into one sorted array"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Inward two pointers rely on sorted order; on unsorted data, sort first (O(n log n)) or use a hash set (O(n))."
+  },
+  {
+    "key": "alg.two-pointers.bug.01",
+    "concept": "alg.two-pointers",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "min_len([1, 1, 1, 10], 10) returns 4, but the single 10 already reaches the target, so it should be 1. Find the bug.",
+      "code": "def min_len(nums, target):\n    # shortest run of positive nums with sum >= target\n    best = float(\"inf\")\n    left = total = 0\n    for right, x in enumerate(nums):\n        total += x\n        if total >= target:\n            best = min(best, right - left + 1)\n            total -= nums[left]\n            left += 1\n    return 0 if best == float(\"inf\") else best",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "while total >= target:"
+        },
+        {
+          "id": "f2",
+          "text": "if total > target:"
+        },
+        {
+          "id": "f3",
+          "text": "best = min(best, right - left)"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f1"
+      }
+    },
+    "remember": "A window that must shrink to its smallest valid size needs a while loop; an if moves left only once per new item."
+  },
+  {
+    "key": "alg.trees.tf.01",
+    "concept": "alg.trees",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a binary search tree, every key in a node's left subtree is smaller than that node's key.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "BST rule: smaller keys go left and larger keys go right, at every node and through every level below it."
+  },
+  {
+    "key": "alg.trees.mc.01",
+    "concept": "alg.trees",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You insert the keys 1, 2, 3, ..., 10,000 in that order into a plain binary search tree with no rebalancing. How many nodes does a search for 10,000 visit?",
+      "options": [
+        {
+          "id": "a",
+          "text": "About 14, because BST search is O(log n)"
+        },
+        {
+          "id": "b",
+          "text": "10,000, because the tree is one long chain"
+        },
+        {
+          "id": "c",
+          "text": "1, because the newest key sits at the root"
+        },
+        {
+          "id": "d",
+          "text": "About 5,000, because the search starts in the middle"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Sorted inserts turn an unbalanced BST into a linked list; self-balancing trees (AVL, red-black) keep the height near log n."
+  },
+  {
+    "key": "alg.trees.match.01",
+    "concept": "alg.trees",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each binary tree traversal with the order in which it visits nodes.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Pre-order"
+        },
+        {
+          "id": "l2",
+          "text": "In-order"
+        },
+        {
+          "id": "l3",
+          "text": "Post-order"
+        },
+        {
+          "id": "l4",
+          "text": "Level-order"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "The left subtree, then the node, then the right subtree"
+        },
+        {
+          "id": "r2",
+          "text": "All nodes at depth 0, then all at depth 1, and so on"
+        },
+        {
+          "id": "r3",
+          "text": "The node, then its left subtree, then its right subtree"
+        },
+        {
+          "id": "r4",
+          "text": "The left subtree, then the right subtree, then the node"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Pre, in and post say when the node is visited relative to its subtrees; level-order goes row by row."
+  },
+  {
+    "key": "alg.trees.order.01",
+    "concept": "alg.trees",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "The keys 50, 30, 70, 20, 40 are inserted in that order into an empty binary search tree. Order the keys as a post-order traversal visits them.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "40"
+        },
+        {
+          "id": "s2",
+          "text": "70"
+        },
+        {
+          "id": "s3",
+          "text": "20"
+        },
+        {
+          "id": "s4",
+          "text": "50"
+        },
+        {
+          "id": "s5",
+          "text": "30"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s1",
+          "s5",
+          "s2",
+          "s4"
+        ]
+      }
+    },
+    "remember": "Post-order visits both subtrees before the node, so the root always comes last."
+  },
+  {
+    "key": "alg.trees.out.01",
+    "concept": "alg.trees",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "class Node:\n    def __init__(self, key, left=None, right=None):\n        self.key, self.left, self.right = key, left, right\n\ndef is_bst(n):\n    if n is None:\n        return True\n    if n.left and n.left.key > n.key:\n        return False\n    if n.right and n.right.key < n.key:\n        return False\n    return is_bst(n.left) and is_bst(n.right)\n\nroot = Node(10, Node(5, None, Node(12)), Node(15))\nprint(is_bst(root))",
+      "options": [
+        {
+          "id": "a",
+          "text": "True"
+        },
+        {
+          "id": "b",
+          "text": "False"
+        },
+        {
+          "id": "c",
+          "text": "None"
+        },
+        {
+          "id": "d",
+          "text": "AttributeError"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Comparing a node only with its direct children is not enough; every key must fit the range set by all its ancestors."
+  },
+  {
+    "key": "alg.heaps.tf.01",
+    "concept": "alg.heaps",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A min-heap keeps its items fully sorted, so walking its array returns them in order.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A heap only guarantees that each parent is no larger than its children: the smallest is on top, the rest are only partly ordered."
+  },
+  {
+    "key": "alg.heaps.mc.01",
+    "concept": "alg.heaps",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Jobs arrive all the time, and a scheduler must always run the pending job with the earliest deadline next. Which structure does this efficiently?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A list that is re-sorted after every new job"
+        },
+        {
+          "id": "b",
+          "text": "A queue that keeps jobs in arrival order"
+        },
+        {
+          "id": "c",
+          "text": "A hash map keyed by deadline"
+        },
+        {
+          "id": "d",
+          "text": "A min-heap keyed by deadline"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A heap-backed priority queue gives O(log n) inserts and removals of the smallest item, with no full re-sort."
+  },
+  {
+    "key": "alg.heaps.out.01",
+    "concept": "alg.heaps",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "import heapq\n\ntasks = []\nheapq.heappush(tasks, (3, \"email\"))\nheapq.heappush(tasks, (1, \"deploy\"))\nheapq.heappush(tasks, (2, \"review\"))\nheapq.heappush(tasks, (1, \"backup\"))\nprint([heapq.heappop(tasks)[1] for _ in range(3)])",
+      "options": [
+        {
+          "id": "a",
+          "text": "['deploy', 'backup', 'review']"
+        },
+        {
+          "id": "b",
+          "text": "['email', 'review', 'deploy']"
+        },
+        {
+          "id": "c",
+          "text": "['backup', 'deploy', 'review']"
+        },
+        {
+          "id": "d",
+          "text": "['email', 'deploy', 'review']"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Python's heapq is a min-heap and compares whole tuples, so ties on priority are broken by the next field."
+  },
+  {
+    "key": "alg.heaps.mc.02",
+    "concept": "alg.heaps",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "You keep the k largest values from a stream of n numbers in a min-heap: push each number, and pop the smallest whenever the heap holds more than k. What is the total running time?",
+      "options": [
+        {
+          "id": "a",
+          "text": "O(n log k)"
+        },
+        {
+          "id": "b",
+          "text": "O(n log n)"
+        },
+        {
+          "id": "c",
+          "text": "O(k log n)"
+        },
+        {
+          "id": "d",
+          "text": "O(n · k)"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A size-k heap makes each push and pop O(log k), so the whole stream costs O(n log k) time and O(k) memory."
+  },
+  {
+    "key": "alg.heaps.order.01",
+    "concept": "alg.heaps",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "On a binary heap, order these operations from cheapest to most expensive as n grows.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Pop all n items one by one"
+        },
+        {
+          "id": "s2",
+          "text": "Peek at the smallest item"
+        },
+        {
+          "id": "s3",
+          "text": "Turn an unsorted list of n items into a heap (heapify)"
+        },
+        {
+          "id": "s4",
+          "text": "Push one item onto a heap of n items"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s3",
+          "s1"
+        ]
+      }
+    },
+    "remember": "Peek is O(1), push and pop are O(log n), heapify builds a heap in O(n), and popping everything is O(n log n)."
+  },
+  {
+    "key": "alg.bfs-dfs.tf.01",
+    "concept": "alg.bfs-dfs",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Depth-first search can be written as a recursive function, with the call stack acting as its stack.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "DFS needs a stack, and recursion provides one for free; BFS needs an explicit queue."
+  },
+  {
+    "key": "alg.bfs-dfs.mc.01",
+    "concept": "alg.bfs-dfs",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Every move in a grid maze costs the same. Which search finds the fewest moves to the exit?",
+      "options": [
+        {
+          "id": "a",
+          "text": "DFS, because going deep reaches the exit with fewer moves"
+        },
+        {
+          "id": "b",
+          "text": "Either one, because both visit every reachable cell"
+        },
+        {
+          "id": "c",
+          "text": "BFS, because it explores cells in order of distance from the start"
+        },
+        {
+          "id": "d",
+          "text": "Either one, as long as it keeps a visited set"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "In an unweighted graph BFS reaches nodes in order of distance, so the first time it finds the target is via a shortest path."
+  },
+  {
+    "key": "alg.bfs-dfs.order.01",
+    "concept": "alg.bfs-dfs",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "BFS starts at A and visits neighbours in the listed order: A -> D, B; D -> C; B -> E, C; C and E have no neighbours. Order the nodes as BFS visits them.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "B"
+        },
+        {
+          "id": "s2",
+          "text": "C"
+        },
+        {
+          "id": "s3",
+          "text": "E"
+        },
+        {
+          "id": "s4",
+          "text": "A"
+        },
+        {
+          "id": "s5",
+          "text": "D"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s5",
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    },
+    "remember": "BFS finishes every node at distance 1 before any node at distance 2, and never queues a node twice."
+  },
+  {
+    "key": "alg.bfs-dfs.match.01",
+    "concept": "alg.bfs-dfs",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each graph task with the technique that fits it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Fewest hops between two users in a social network"
+        },
+        {
+          "id": "l2",
+          "text": "Detect a cycle in a directed dependency graph"
+        },
+        {
+          "id": "l3",
+          "text": "Cheapest route when roads have different lengths"
+        },
+        {
+          "id": "l4",
+          "text": "Count the separate groups of connected computers"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "A BFS or DFS from each node not yet visited"
+        },
+        {
+          "id": "r2",
+          "text": "Dijkstra's algorithm with a min-heap"
+        },
+        {
+          "id": "r3",
+          "text": "DFS that tracks the nodes on the current path"
+        },
+        {
+          "id": "r4",
+          "text": "BFS from the start node"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "BFS for unweighted shortest paths, DFS with an on-path mark for directed cycles, Dijkstra for weighted paths, one search per unvisited node for components."
+  },
+  {
+    "key": "alg.bfs-dfs.odd.01",
+    "concept": "alg.bfs-dfs",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Which traversal is the odd one out because it finishes correctly WITHOUT a visited set?",
+      "items": [
+        {
+          "id": "a",
+          "text": "DFS over a tree, starting at the root and following child links"
+        },
+        {
+          "id": "b",
+          "text": "DFS over a directed graph that has cycles"
+        },
+        {
+          "id": "c",
+          "text": "BFS over an undirected graph"
+        },
+        {
+          "id": "d",
+          "text": "BFS over web pages that all link back to the home page"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "A visited set is what stops a search from looping; every undirected edge leads back to the parent, while a tree walked from its root never revisits a node."
+  },
+  {
+    "key": "alg.dynamic-programming.tf.01",
+    "concept": "alg.dynamic-programming",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Caching a recursive function's results speeds it up even when no subproblem is ever computed twice.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Memoization pays off only when the same subproblems come up again; without repeats it just uses memory."
+  },
+  {
+    "key": "alg.dynamic-programming.mc.01",
+    "concept": "alg.dynamic-programming",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A naive recursive fib(n) calls fib(n - 1) and fib(n - 2). What happens to its running time when you memoize it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It stays exponential, but each call gets faster"
+        },
+        {
+          "id": "b",
+          "text": "It drops from O(n²) to O(n)"
+        },
+        {
+          "id": "c",
+          "text": "It drops from exponential to O(log n)"
+        },
+        {
+          "id": "d",
+          "text": "It drops from exponential to O(n)"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Naive fib recomputes the same values exponentially often; computing each fib(k) once makes it O(n)."
+  },
+  {
+    "key": "alg.dynamic-programming.out.01",
+    "concept": "alg.dynamic-programming",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "from functools import cache\n\ncalls = 0\n\n@cache\ndef fib(n):\n    global calls\n    calls += 1\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n\nfib(30)\nfib(25)\nprint(calls)",
+      "options": [
+        {
+          "id": "a",
+          "text": "30"
+        },
+        {
+          "id": "b",
+          "text": "31"
+        },
+        {
+          "id": "c",
+          "text": "57"
+        },
+        {
+          "id": "d",
+          "text": "2935322"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "With memoization the body runs once per distinct argument, and the cache keeps those results for later calls too."
+  },
+  {
+    "key": "alg.dynamic-programming.bug.01",
+    "concept": "alg.dynamic-programming",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "lcs returns the length of the longest common subsequence. lcs(\"abc\", \"aabbcc\") returns 6, longer than \"abc\" itself; it should be 3. Find the bug.",
+      "code": "def lcs(a, b):\n    n, m = len(a), len(b)\n    dp = [[0] * (m + 1)] * (n + 1)\n    for i in range(1, n + 1):\n        for j in range(1, m + 1):\n            if a[i - 1] == b[j - 1]:\n                dp[i][j] = dp[i - 1][j - 1] + 1\n            else:\n                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])\n    return dp[n][m]",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "dp = [[0 for _ in range(m + 1)]] * (n + 1)"
+        },
+        {
+          "id": "f2",
+          "text": "dp = list([[0] * (m + 1)] * (n + 1))"
+        },
+        {
+          "id": "f3",
+          "text": "dp = [[0] * (m + 1) for _ in range(n + 1)]"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f3"
+      }
+    },
+    "remember": "[[0] * m] * n repeats one inner list n times; build a DP table with a comprehension so each row is its own list."
+  },
+  {
+    "key": "alg.dynamic-programming.cloze.01",
+    "concept": "alg.dynamic-programming",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "best_value returns the highest total value that fits in capacity cap. Fill the blank so each item is used at most once.",
+      "code": "def best_value(items, cap):\n    # items: (weight, value) pairs\n    dp = [0] * (cap + 1)\n    for w, v in items:\n        for c in ____:\n            dp[c] = max(dp[c], dp[c - w] + v)\n    return dp[cap]",
+      "options": [
+        {
+          "id": "a",
+          "text": "range(w, cap + 1)"
+        },
+        {
+          "id": "b",
+          "text": "range(cap + 1)"
+        },
+        {
+          "id": "c",
+          "text": "range(cap, -1, -1)"
+        },
+        {
+          "id": "d",
+          "text": "range(cap, w - 1, -1)"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "In a one-row 0/1 knapsack, loop capacity downward so dp[c - w] still holds the value from before this item; looping upward reuses the item."
+  }
+]

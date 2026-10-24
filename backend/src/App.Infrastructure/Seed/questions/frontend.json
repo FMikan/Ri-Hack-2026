@@ -1,0 +1,1896 @@
+[
+  {
+    "key": "fe.semantic-html.tf.01",
+    "concept": "fe.semantic-html",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Styling a <div> with a large, bold font makes screen readers announce it as a heading.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Meaning comes from the element, not its looks: use h1 to h6 for headings so screen readers and search engines see them."
+  },
+  {
+    "key": "fe.semantic-html.mc.01",
+    "concept": "fe.semantic-html",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A \"View profile\" control takes the user to the page /users/42. Which element fits best?",
+      "options": [
+        {
+          "id": "a",
+          "text": "<button onclick=\"location = '/users/42'\">View profile</button>"
+        },
+        {
+          "id": "b",
+          "text": "<div class=\"link\" onclick=\"go(42)\">View profile</div>"
+        },
+        {
+          "id": "c",
+          "text": "<a href=\"/users/42\">View profile</a>"
+        },
+        {
+          "id": "d",
+          "text": "<span tabindex=\"0\" onclick=\"go(42)\">View profile</span>"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Use a link (<a href>) for navigation to another page and a <button> for an action on the current page."
+  },
+  {
+    "key": "fe.semantic-html.odd.01",
+    "concept": "fe.semantic-html",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these elements tell browsers and screen readers what their content is. Which one carries no meaning of its own?",
+      "items": [
+        {
+          "id": "a",
+          "text": "<div>"
+        },
+        {
+          "id": "b",
+          "text": "<nav>"
+        },
+        {
+          "id": "c",
+          "text": "<header>"
+        },
+        {
+          "id": "d",
+          "text": "<button>"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "<div> and <span> are generic boxes; reach for a semantic element first and use them only when nothing fits."
+  },
+  {
+    "key": "fe.semantic-html.match.01",
+    "concept": "fe.semantic-html",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each element with the content it is meant for.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "<main>"
+        },
+        {
+          "id": "l2",
+          "text": "<nav>"
+        },
+        {
+          "id": "l3",
+          "text": "<article>"
+        },
+        {
+          "id": "l4",
+          "text": "<aside>"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Content only loosely related to what is around it, such as a sidebar"
+        },
+        {
+          "id": "r2",
+          "text": "The primary content of the page, once per page"
+        },
+        {
+          "id": "r3",
+          "text": "A block of major navigation links"
+        },
+        {
+          "id": "r4",
+          "text": "A self-contained piece that makes sense on its own, such as a blog post"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "main, nav, article and aside describe the role of a region, so assistive technology can list and jump between them."
+  },
+  {
+    "key": "fe.semantic-html.bug.01",
+    "concept": "fe.semantic-html",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "html",
+    "content": {
+      "prompt": "Clicking Cancel closes the dialog, but the profile is saved anyway. Find the bug.",
+      "code": "<form action=\"/profile\" method=\"post\">\n  <label for=\"name\">Name</label>\n  <input id=\"name\" name=\"name\">\n  <button>Save</button>\n  <button onclick=\"closeDialog()\">Cancel</button>\n</form>",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add type=\"button\" to the Cancel button"
+        },
+        {
+          "id": "f2",
+          "text": "Add type=\"submit\" to the Save button"
+        },
+        {
+          "id": "f3",
+          "text": "Change onclick to onsubmit on the Cancel button"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f1"
+      }
+    },
+    "remember": "A <button> inside a form defaults to type=\"submit\"; give buttons that should not submit type=\"button\"."
+  },
+  {
+    "key": "fe.box-model.tf.01",
+    "concept": "fe.box-model",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "With the default box-sizing: content-box, padding and border are added on top of the width you set.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "content-box sizes only the content; the box on screen is width plus padding plus border."
+  },
+  {
+    "key": "fe.box-model.mc.01",
+    "concept": "fe.box-model",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "You want more space inside a button, between its text and its border, filled with the button's background color. Which property do you change?",
+      "options": [
+        {
+          "id": "a",
+          "text": "padding"
+        },
+        {
+          "id": "b",
+          "text": "margin"
+        },
+        {
+          "id": "c",
+          "text": "border-spacing"
+        },
+        {
+          "id": "d",
+          "text": "outline-offset"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Padding is space inside the border and shows the background; margin is transparent space outside it."
+  },
+  {
+    "key": "fe.box-model.out.01",
+    "concept": "fe.box-model",
+    "type": "output",
+    "difficulty": 1,
+    "language": "css",
+    "content": {
+      "prompt": "box-sizing is left at its default. How wide is .card from the outer edge of its left border to the outer edge of its right border?",
+      "code": ".card {\n  width: 200px;\n  padding: 20px;\n  border: 5px solid black;\n  margin: 10px;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "250px"
+        },
+        {
+          "id": "b",
+          "text": "200px"
+        },
+        {
+          "id": "c",
+          "text": "270px"
+        },
+        {
+          "id": "d",
+          "text": "240px"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "With content-box the visible width is width + left and right padding + left and right border; margin lies outside."
+  },
+  {
+    "key": "fe.box-model.cloze.01",
+    "concept": "fe.box-model",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "css",
+    "content": {
+      "prompt": "Fill the blank so two .col elements fit side by side in one .row, each exactly half of it, padding included.",
+      "code": ".row {\n  display: flex;\n  flex-wrap: wrap;\n}\n.col {\n  box-sizing: ____;\n  width: 50%;\n  padding: 16px;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "content-box"
+        },
+        {
+          "id": "b",
+          "text": "border-box"
+        },
+        {
+          "id": "c",
+          "text": "margin-box"
+        },
+        {
+          "id": "d",
+          "text": "inherit"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "box-sizing: border-box makes width include padding and border, so width: 50% stays half even with padding."
+  },
+  {
+    "key": "fe.box-model.mc.02",
+    "concept": "fe.box-model",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "html",
+    "content": {
+      "prompt": "Two paragraphs sit one above the other in normal block flow. How much vertical space is between them?",
+      "code": "<p style=\"margin-bottom: 20px\">First</p>\n<p style=\"margin-top: 30px\">Second</p>",
+      "options": [
+        {
+          "id": "a",
+          "text": "50px"
+        },
+        {
+          "id": "b",
+          "text": "20px"
+        },
+        {
+          "id": "c",
+          "text": "30px"
+        },
+        {
+          "id": "d",
+          "text": "25px"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Vertical margins of adjacent blocks collapse to the larger of the two; margins of flex and grid items do not collapse."
+  },
+  {
+    "key": "fe.css-specificity.tf.01",
+    "concept": "fe.css-specificity",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A class selector beats an ID selector as long as the class rule comes later in the stylesheet.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Source order only breaks ties; a higher specificity wins wherever it appears in the file."
+  },
+  {
+    "key": "fe.css-specificity.mc.01",
+    "concept": "fe.css-specificity",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which selector has the highest specificity?",
+      "options": [
+        {
+          "id": "a",
+          "text": ".nav .link.active"
+        },
+        {
+          "id": "b",
+          "text": "#header"
+        },
+        {
+          "id": "c",
+          "text": "body div ul li a"
+        },
+        {
+          "id": "d",
+          "text": ".menu:hover"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "One ID outweighs any number of classes, and one class outweighs any number of element selectors."
+  },
+  {
+    "key": "fe.css-specificity.out.01",
+    "concept": "fe.css-specificity",
+    "type": "output",
+    "difficulty": 2,
+    "language": "html",
+    "content": {
+      "prompt": "What color is the text of the paragraph?",
+      "code": "<style>\n  #intro { color: red; }\n  .lead.big { color: green; }\n  p.lead { color: blue; }\n</style>\n<p id=\"intro\" class=\"lead big\">Hello</p>",
+      "options": [
+        {
+          "id": "a",
+          "text": "green"
+        },
+        {
+          "id": "b",
+          "text": "blue"
+        },
+        {
+          "id": "c",
+          "text": "black"
+        },
+        {
+          "id": "d",
+          "text": "red"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "An ID selector beats any number of classes, regardless of which rule comes last."
+  },
+  {
+    "key": "fe.css-specificity.bug.01",
+    "concept": "fe.css-specificity",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "css",
+    "content": {
+      "prompt": "Inside <nav id=\"sidebar\">, the link with class=\"active\" turns bold but stays gray instead of crimson. Find the bug.",
+      "code": "#sidebar a {\n  color: gray;\n}\n\n.active {\n  color: crimson;\n  font-weight: bold;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change .active to a.active"
+        },
+        {
+          "id": "f2",
+          "text": "Change .active to #sidebar a.active"
+        },
+        {
+          "id": "f3",
+          "text": "Move the .active rule above #sidebar a"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A lone class cannot beat a selector with an ID; raise the override to at least the same specificity, such as #sidebar a.active."
+  },
+  {
+    "key": "fe.css-specificity.match.01",
+    "concept": "fe.css-specificity",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each selector with its specificity, written as (IDs, classes, elements).",
+      "left": [
+        {
+          "id": "l1",
+          "text": "#nav .item"
+        },
+        {
+          "id": "l2",
+          "text": ":is(#nav, .menu) a"
+        },
+        {
+          "id": "l3",
+          "text": ":where(#nav) .item a"
+        },
+        {
+          "id": "l4",
+          "text": "ul li::before"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "(0, 1, 1)"
+        },
+        {
+          "id": "r2",
+          "text": "(1, 1, 0)"
+        },
+        {
+          "id": "r3",
+          "text": "(0, 0, 3)"
+        },
+        {
+          "id": "r4",
+          "text": "(1, 0, 1)"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": ":is() counts as its most specific argument, :where() always counts zero, and a pseudo-element counts like an element."
+  },
+  {
+    "key": "fe.flex-grid.tf.01",
+    "concept": "fe.flex-grid",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Flexbox is designed to place items in rows and columns at the same time, like a table.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Flexbox lays items out along one axis at a time; grid controls rows and columns together."
+  },
+  {
+    "key": "fe.flex-grid.mc.01",
+    "concept": "fe.flex-grid",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "You are building a photo gallery whose rows and columns must line up in both directions. Which layout fits best?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Flexbox with flex-direction: row"
+        },
+        {
+          "id": "b",
+          "text": "float: left on every photo"
+        },
+        {
+          "id": "c",
+          "text": "A <table> element"
+        },
+        {
+          "id": "d",
+          "text": "CSS grid"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Use grid when items must align in two dimensions; flexbox is for a single row or column."
+  },
+  {
+    "key": "fe.flex-grid.match.01",
+    "concept": "fe.flex-grid",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In a flex container with flex-direction: row, match each declaration with its effect.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "justify-content: center"
+        },
+        {
+          "id": "l2",
+          "text": "align-items: center"
+        },
+        {
+          "id": "l3",
+          "text": "flex-wrap: wrap"
+        },
+        {
+          "id": "l4",
+          "text": "gap: 1rem"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Lets items move onto a new line when they do not fit"
+        },
+        {
+          "id": "r2",
+          "text": "Adds space between items, but not at the outer edges"
+        },
+        {
+          "id": "r3",
+          "text": "Centers the items horizontally, along the main axis"
+        },
+        {
+          "id": "r4",
+          "text": "Centers the items vertically, along the cross axis"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "justify-content works along the main axis, align-items across it; wrap allows new lines and gap spaces items apart."
+  },
+  {
+    "key": "fe.flex-grid.out.01",
+    "concept": "fe.flex-grid",
+    "type": "output",
+    "difficulty": 3,
+    "language": "css",
+    "content": {
+      "prompt": ".row contains .a, .b and .c, each with a single short word and no padding, border or margin. How wide is .c?",
+      "code": ".row {\n  display: flex;\n  width: 600px;\n}\n.a,\n.b {\n  flex: 1 1 100px;\n}\n.c {\n  flex: 2 1 100px;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "300px"
+        },
+        {
+          "id": "b",
+          "text": "200px"
+        },
+        {
+          "id": "c",
+          "text": "250px"
+        },
+        {
+          "id": "d",
+          "text": "150px"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "flex-grow shares out only the leftover space: here 300px split 1:1:2 on top of each 100px basis."
+  },
+  {
+    "key": "fe.flex-grid.bug.01",
+    "concept": "fe.flex-grid",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "css",
+    "content": {
+      "prompt": "The long line of code in the <pre> should scroll inside .main. Instead .main grows and the whole page scrolls sideways. Find the bug.",
+      "code": ".layout {\n  display: flex;\n}\n.sidebar {\n  flex: 0 0 240px;\n}\n.main {\n  flex: 1;\n}\n.main pre {\n  overflow-x: auto;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add flex-shrink: 1 to .main"
+        },
+        {
+          "id": "f2",
+          "text": "Add min-width: 0 to .main"
+        },
+        {
+          "id": "f3",
+          "text": "Change .sidebar to flex: 0 1 240px"
+        }
+      ],
+      "answer": {
+        "line": 8,
+        "fixId": "f2",
+        "acceptLines": [
+          7,
+          9
+        ]
+      }
+    },
+    "remember": "Flex items default to min-width: auto and will not shrink below their content; min-width: 0 lets the overflow happen inside them."
+  },
+  {
+    "key": "fe.responsive.tf.01",
+    "concept": "fe.responsive",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a mobile-first stylesheet, the base styles target small screens and min-width media queries add changes for wider ones.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Mobile-first starts with the smallest layout and layers on wider ones with min-width queries."
+  },
+  {
+    "key": "fe.responsive.mc.01",
+    "concept": "fe.responsive",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A page has media queries for phones, but on a real phone it shows a tiny, zoomed-out desktop layout and none of the phone styles apply. What is most likely missing?",
+      "options": [
+        {
+          "id": "a",
+          "text": "An @media screen block wrapped around all the styles"
+        },
+        {
+          "id": "b",
+          "text": "rem units instead of px in the media queries"
+        },
+        {
+          "id": "c",
+          "text": "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+        },
+        {
+          "id": "d",
+          "text": "A <!doctype html> line at the top of the page"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Without the viewport meta tag, mobile browsers lay the page out at a wide desktop width and shrink it, so phone media queries never match."
+  },
+  {
+    "key": "fe.responsive.odd.01",
+    "concept": "fe.responsive",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "An element is a direct child of <body>. Three of these widths shrink when the browser window gets narrower. Which one stays the same?",
+      "items": [
+        {
+          "id": "a",
+          "text": "width: 20rem"
+        },
+        {
+          "id": "b",
+          "text": "width: 50vw"
+        },
+        {
+          "id": "c",
+          "text": "width: 50%"
+        },
+        {
+          "id": "d",
+          "text": "width: calc(100% - 2rem)"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "% and vw follow the container and the viewport; rem follows the root font size, not the window."
+  },
+  {
+    "key": "fe.responsive.out.01",
+    "concept": "fe.responsive",
+    "type": "output",
+    "difficulty": 3,
+    "language": "css",
+    "content": {
+      "prompt": "The viewport is 1200px wide. What font-size does the h1 get?",
+      "code": "h1 {\n  font-size: 24px;\n}\n\n@media (min-width: 1000px) {\n  h1 { font-size: 40px; }\n}\n\n@media (min-width: 600px) {\n  h1 { font-size: 32px; }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "40px"
+        },
+        {
+          "id": "b",
+          "text": "24px"
+        },
+        {
+          "id": "c",
+          "text": "32px"
+        },
+        {
+          "id": "d",
+          "text": "36px"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Media queries add no specificity; when several match, the later rule wins, so min-width queries must go from small to large."
+  },
+  {
+    "key": "fe.responsive.cloze.01",
+    "concept": "fe.responsive",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "css",
+    "content": {
+      "prompt": "Fill the blank so the action buttons stay hidden until hover only on devices whose main input can hover; on touch screens they are always visible.",
+      "code": ".card .actions {\n  opacity: 1;\n}\n@media (____) {\n  .card .actions {\n    opacity: 0;\n  }\n  .card:hover .actions,\n  .card:focus-within .actions {\n    opacity: 1;\n  }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "min-width: 1024px"
+        },
+        {
+          "id": "b",
+          "text": "pointer: coarse"
+        },
+        {
+          "id": "c",
+          "text": "orientation: landscape"
+        },
+        {
+          "id": "d",
+          "text": "hover: hover"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Screen size says nothing about the input device; wrap hover-only effects in @media (hover: hover)."
+  },
+  {
+    "key": "fe.dom-reflow.tf.01",
+    "concept": "fe.dom-reflow",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Reading el.offsetHeight right after changing an element's style can force the browser to calculate layout immediately.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Layout reads such as offsetHeight need up-to-date geometry, so after a style change the browser must lay out the page on the spot."
+  },
+  {
+    "key": "fe.dom-reflow.mc.01",
+    "concept": "fe.dom-reflow",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What does the browser do during layout, also called reflow?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Draws the pixels: text, colors, borders and shadows"
+        },
+        {
+          "id": "b",
+          "text": "Calculates the size and position of each affected element"
+        },
+        {
+          "id": "c",
+          "text": "Parses the HTML into the DOM tree"
+        },
+        {
+          "id": "d",
+          "text": "Downloads and runs the page's scripts"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Layout works out geometry; painting draws pixels afterwards."
+  },
+  {
+    "key": "fe.dom-reflow.order.01",
+    "concept": "fe.dom-reflow",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "JavaScript adds a class that changes an element's width. Put the browser's work for the next frame in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Recalculate styles"
+        },
+        {
+          "id": "s2",
+          "text": "Paint: draw the pixels into layers"
+        },
+        {
+          "id": "s3",
+          "text": "Composite the layers onto the screen"
+        },
+        {
+          "id": "s4",
+          "text": "JavaScript changes the class"
+        },
+        {
+          "id": "s5",
+          "text": "Layout: compute sizes and positions"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s1",
+          "s5",
+          "s2",
+          "s3"
+        ]
+      }
+    },
+    "remember": "A frame goes style, layout, paint, composite; a change that skips layout, such as transform, is cheaper."
+  },
+  {
+    "key": "fe.dom-reflow.odd.01",
+    "concept": "fe.dom-reflow",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A script has just changed el.style.height. Three of these reads force the browser to run layout right away. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "el.clientWidth"
+        },
+        {
+          "id": "b",
+          "text": "el.style.width"
+        },
+        {
+          "id": "c",
+          "text": "el.scrollHeight"
+        },
+        {
+          "id": "d",
+          "text": "el.getBoundingClientRect()"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "el.style only returns the inline style string; client*, offset*, scroll* and getBoundingClientRect() need fresh layout."
+  },
+  {
+    "key": "fe.dom-reflow.bug.01",
+    "concept": "fe.dom-reflow",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "With 1,000 cards, resizeCards freezes the page, and the profiler shows a forced layout for every card. Find the bug.",
+      "code": "function resizeCards(cards, extra) {\n  const header = document.querySelector(\"header\");\n  header.classList.add(\"compact\");\n\n  for (const card of cards) {\n    const w = card.offsetWidth;\n    card.style.width = w + extra + \"px\";\n  }\n\n  requestAnimationFrame(() => {\n    header.classList.add(\"ready\");\n  });\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use card.clientWidth instead of card.offsetWidth"
+        },
+        {
+          "id": "f2",
+          "text": "Run the for loop inside requestAnimationFrame"
+        },
+        {
+          "id": "f3",
+          "text": "Read every width in one loop, then set the widths in a second loop"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f3",
+        "acceptLines": [
+          5,
+          7
+        ]
+      }
+    },
+    "remember": "Alternating style writes and layout reads forces a layout per iteration; batch all reads first, then all writes."
+  },
+  {
+    "key": "fe.events.tf.01",
+    "concept": "fe.events",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A click on a <button> inside a <div> also triggers a click listener on the <div>, unless propagation is stopped.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Events bubble from the target up through every ancestor, which is what makes delegation possible."
+  },
+  {
+    "key": "fe.events.mc.01",
+    "concept": "fe.events",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is event delegation?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Passing an event from one listener to another with dispatchEvent"
+        },
+        {
+          "id": "b",
+          "text": "One listener on a parent handles events from many children, using event.target"
+        },
+        {
+          "id": "c",
+          "text": "Adding a separate listener to every child element"
+        },
+        {
+          "id": "d",
+          "text": "Letting the browser decide which listener runs first"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Delegation puts one listener on a common ancestor; it also works for children added later."
+  },
+  {
+    "key": "fe.events.order.01",
+    "concept": "fe.events",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A user clicks a submit button inside a form, and no listener calls preventDefault(). Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Listeners on the button itself run"
+        },
+        {
+          "id": "s2",
+          "text": "The browser submits the form (the default action)"
+        },
+        {
+          "id": "s3",
+          "text": "Capture listeners on the button's ancestors run, from window down"
+        },
+        {
+          "id": "s4",
+          "text": "Bubbling listeners on the ancestors run, from the form up to window"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "An event goes down in the capture phase, hits the target, bubbles up, and only then the default action runs, which is why preventDefault() can cancel it."
+  },
+  {
+    "key": "fe.events.cloze.01",
+    "concept": "fe.events",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so a click anywhere inside a row, including on the <b> or <i>, opens that user.",
+      "code": "// <li data-id=\"7\"><b>Ana</b> <i>admin</i></li>\nlist.addEventListener(\"click\", (event) => {\n  const item = event.target.____(\"li\");\n  if (!item) return;\n  openUser(item.dataset.id);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "closest"
+        },
+        {
+          "id": "b",
+          "text": "querySelector"
+        },
+        {
+          "id": "c",
+          "text": "matches"
+        },
+        {
+          "id": "d",
+          "text": "getElementsByTagName"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "event.target is the innermost element clicked; target.closest(selector) walks up to the item the click belongs to."
+  },
+  {
+    "key": "fe.events.mc.02",
+    "concept": "fe.events",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Why does registering a touchstart or wheel listener with { passive: true } make scrolling smoother?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Passive listeners run in a Web Worker, off the main thread"
+        },
+        {
+          "id": "b",
+          "text": "Passive listeners are called at most once per animation frame"
+        },
+        {
+          "id": "c",
+          "text": "Passive listeners skip the bubbling phase, so fewer listeners run"
+        },
+        {
+          "id": "d",
+          "text": "The browser can scroll at once instead of waiting to see whether the listener calls preventDefault()"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A passive listener promises not to call preventDefault(), so scrolling does not have to wait for JavaScript."
+  },
+  {
+    "key": "fe.state-rerender.tf.01",
+    "concept": "fe.state-rerender",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Changing a plain local variable (let count = 0) inside a React component makes the component re-render.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Only state and props changes trigger a re-render; a local variable is also reset on every render."
+  },
+  {
+    "key": "fe.state-rerender.mc.01",
+    "concept": "fe.state-rerender",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A component keeps firstName and lastName in state and needs fullName for display. What is the best approach?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Keep fullName in its own useState and update it in a useEffect"
+        },
+        {
+          "id": "b",
+          "text": "Keep fullName in a useRef and update it in the change handlers"
+        },
+        {
+          "id": "c",
+          "text": "Keep fullName in a module-level variable outside the component"
+        },
+        {
+          "id": "d",
+          "text": "Compute it while rendering: const fullName = firstName + \" \" + lastName"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "If a value can be computed from props or state, compute it during render instead of storing a second copy."
+  },
+  {
+    "key": "fe.state-rerender.out.01",
+    "concept": "fe.state-rerender",
+    "type": "output",
+    "difficulty": 2,
+    "language": "jsx",
+    "content": {
+      "prompt": "The button shows 0. What does it show after one click?",
+      "code": "function Counter() {\n  const [count, setCount] = useState(0);\n\n  function handleClick() {\n    setCount(count + 1);\n    setCount(count + 1);\n    setCount(count + 1);\n  }\n\n  return <button onClick={handleClick}>{count}</button>;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "1"
+        },
+        {
+          "id": "b",
+          "text": "3"
+        },
+        {
+          "id": "c",
+          "text": "0"
+        },
+        {
+          "id": "d",
+          "text": "2"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "count is a snapshot of this render; to apply several updates in a row, use the updater form setCount(c => c + 1)."
+  },
+  {
+    "key": "fe.state-rerender.bug.01",
+    "concept": "fe.state-rerender",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "jsx",
+    "content": {
+      "prompt": "Clicking \"Sort by name\" does not change the order on screen, although logging users shows them sorted. Find the bug.",
+      "code": "const byName = (a, b) => a.name.localeCompare(b.name);\n\nfunction UserList({ initial }) {\n  const [users, setUsers] = useState(initial);\n\n  function sortByName() {\n    const sorted = users.sort(byName);\n    setUsers(sorted);\n  }\n\n  return (\n    <>\n      <button onClick={sortByName}>Sort by name</button>\n      <ul>\n        {users.map((u) => <li key={u.id}>{u.name}</li>)}\n      </ul>\n    </>\n  );\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Sort a copy: const sorted = [...users].sort(byName);"
+        },
+        {
+          "id": "f2",
+          "text": "Pass an updater instead: setUsers(() => sorted);"
+        },
+        {
+          "id": "f3",
+          "text": "Compare with a.name > b.name in byName"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f1"
+      }
+    },
+    "remember": "sort() changes the array in place and returns the same reference, so React sees no change; sort a copy and set that."
+  },
+  {
+    "key": "fe.state-rerender.order.01",
+    "concept": "fe.state-rerender",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A click handler calls setCount(1) and then logs \"done\". Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "React calls the component function again with count = 1"
+        },
+        {
+          "id": "s2",
+          "text": "The handler logs \"done\" and finishes"
+        },
+        {
+          "id": "s3",
+          "text": "React updates only the DOM nodes that changed"
+        },
+        {
+          "id": "s4",
+          "text": "React queues the state update"
+        },
+        {
+          "id": "s5",
+          "text": "React compares the new JSX with the previous output"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s1",
+          "s5",
+          "s3"
+        ]
+      }
+    },
+    "remember": "setState only queues an update; React re-renders after the handler, compares the result and then commits the changes to the DOM."
+  },
+  {
+    "key": "fe.effects.tf.01",
+    "concept": "fe.effects",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A useEffect callback runs after React has rendered the component and updated the DOM.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Effects run after the commit, so they can safely touch the DOM or start subscriptions."
+  },
+  {
+    "key": "fe.effects.mc.01",
+    "concept": "fe.effects",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "When does an effect run if you pass no dependency array at all?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only after the first render"
+        },
+        {
+          "id": "b",
+          "text": "Only when one of the props changes"
+        },
+        {
+          "id": "c",
+          "text": "After every render"
+        },
+        {
+          "id": "d",
+          "text": "Never: the array is required"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "No array means after every render, [] means after mount only, and [a, b] means whenever a or b changes."
+  },
+  {
+    "key": "fe.effects.cloze.01",
+    "concept": "fe.effects",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "jsx",
+    "content": {
+      "prompt": "Fill the blank so the timer stops when the component unmounts.",
+      "code": "useEffect(() => {\n  const id = setInterval(() => {\n    setSeconds((s) => s + 1);\n  }, 1000);\n  ____\n}, []);",
+      "options": [
+        {
+          "id": "a",
+          "text": "return () => clearInterval(id);"
+        },
+        {
+          "id": "b",
+          "text": "clearInterval(id);"
+        },
+        {
+          "id": "c",
+          "text": "return clearInterval(id);"
+        },
+        {
+          "id": "d",
+          "text": "return id;"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Return a cleanup function from the effect; React calls it before the effect runs again and when the component unmounts."
+  },
+  {
+    "key": "fe.effects.order.01",
+    "concept": "fe.effects",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Chat logs \"render\" in its body and has an effect with [roomId] that logs \"connect\" and returns a cleanup that logs \"disconnect\". It mounts with room a, then re-renders with room b (no Strict Mode). Put the logs in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "connect b"
+        },
+        {
+          "id": "s2",
+          "text": "render a"
+        },
+        {
+          "id": "s3",
+          "text": "disconnect a"
+        },
+        {
+          "id": "s4",
+          "text": "render b"
+        },
+        {
+          "id": "s5",
+          "text": "connect a"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s4",
+          "s3",
+          "s1"
+        ]
+      }
+    },
+    "remember": "When a dependency changes, React renders first, then runs the old effect's cleanup, then the new effect."
+  },
+  {
+    "key": "fe.effects.bug.01",
+    "concept": "fe.effects",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "Switching the roomId prop from \"general\" to \"random\" changes nothing: the chat stays connected to \"general\". Find the bug.",
+      "code": "function ChatRoom({ roomId }) {\n  const [messages, setMessages] = useState([]);\n\n  useEffect(() => {\n    const conn = createConnection(roomId);\n    conn.on(\"message\", (m) => {\n      setMessages((prev) => [...prev, m]);\n    });\n    conn.connect();\n    return () => conn.disconnect();\n  }, []);\n\n  return <MessageList items={messages} />;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Call conn.connect() before conn.on(...)"
+        },
+        {
+          "id": "f2",
+          "text": "Remove the cleanup on line 10"
+        },
+        {
+          "id": "f3",
+          "text": "Change [] to [roomId]"
+        }
+      ],
+      "answer": {
+        "line": 11,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Every prop or state value an effect reads belongs in its dependency array, or the effect keeps using the first value."
+  },
+  {
+    "key": "fe.list-keys.tf.01",
+    "concept": "fe.list-keys",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A key only has to be unique among the siblings in the same list, not across the whole page.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Keys are compared only within one list, so two different lists may reuse the same ids."
+  },
+  {
+    "key": "fe.list-keys.mc.01",
+    "concept": "fe.list-keys",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Why does React ask for a key on each element rendered from an array?",
+      "options": [
+        {
+          "id": "a",
+          "text": "To set the HTML id attribute of each element"
+        },
+        {
+          "id": "b",
+          "text": "To sort the items in the order of their keys"
+        },
+        {
+          "id": "c",
+          "text": "To match each item with its previous render when the list changes"
+        },
+        {
+          "id": "d",
+          "text": "To let CSS select items by their key"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Keys tell React which item is which between renders, so it keeps, moves or removes the right elements."
+  },
+  {
+    "key": "fe.list-keys.odd.01",
+    "concept": "fe.list-keys",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Products from the API are rendered with products.map(...). Three of these are good keys. Which one is not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "product.id"
+        },
+        {
+          "id": "b",
+          "text": "product.sku (unique per product)"
+        },
+        {
+          "id": "c",
+          "text": "`${product.shopId}-${product.id}`"
+        },
+        {
+          "id": "d",
+          "text": "Math.random()"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "A key must stay the same between renders; Math.random() gives every item a new identity, so React remounts all of them."
+  },
+  {
+    "key": "fe.list-keys.cloze.01",
+    "concept": "fe.list-keys",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "EditForm keeps the typed draft in its own state. Fill the blank so the form starts fresh whenever a different user is shown.",
+      "code": "function UserPage({ user }) {\n  return (\n    <EditForm\n      ____\n      user={user}\n    />\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "id={user.id}"
+        },
+        {
+          "id": "b",
+          "text": "key={user.id}"
+        },
+        {
+          "id": "c",
+          "text": "ref={user.id}"
+        },
+        {
+          "id": "d",
+          "text": "defaultValue={user.id}"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Changing a component's key makes React treat it as a new component, which resets all its state."
+  },
+  {
+    "key": "fe.list-keys.out.01",
+    "concept": "fe.list-keys",
+    "type": "output",
+    "difficulty": 4,
+    "language": "jsx",
+    "content": {
+      "prompt": "The user types \"a\" in the Milk row's input and \"b\" in the Eggs row's input, then clicks x in the Milk row. What is on screen?",
+      "code": "function List() {\n  const [items, setItems] = useState([\"Milk\", \"Eggs\"]);\n  return (\n    <ul>\n      {items.map((name, i) => (\n        <li key={i}>\n          {name} <input />\n          <button onClick={() =>\n            setItems(items.filter((_, j) => j !== i))\n          }>x</button>\n        </li>\n      ))}\n    </ul>\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "One row: Eggs, with \"b\" in its input"
+        },
+        {
+          "id": "b",
+          "text": "One row: Eggs, with \"a\" in its input"
+        },
+        {
+          "id": "c",
+          "text": "One row: Milk, with \"a\" in its input"
+        },
+        {
+          "id": "d",
+          "text": "One row: Eggs, with an empty input"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "With index keys, removing an item shifts identities, so DOM state such as typed text stays with the wrong row; key by a stable id."
+  },
+  {
+    "key": "fe.memo-lazy.tf.01",
+    "concept": "fe.memo-lazy",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Wrapping every component in React.memo always makes an app faster.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "memo adds a props comparison to every render; it only pays off when re-rendering is costly and the props usually stay equal."
+  },
+  {
+    "key": "fe.memo-lazy.mc.01",
+    "concept": "fe.memo-lazy",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "When does a component wrapped in React.memo skip re-rendering after its parent re-renders?",
+      "options": [
+        {
+          "id": "a",
+          "text": "When the props have the same JSON content as before (a deep comparison)"
+        },
+        {
+          "id": "b",
+          "text": "When its own state has not changed, whatever the props are"
+        },
+        {
+          "id": "c",
+          "text": "When every prop is equal to its previous value by Object.is (a shallow comparison)"
+        },
+        {
+          "id": "d",
+          "text": "Never: memo only caches the component's code"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "memo compares each prop shallowly; a new object, array or function created during the parent's render counts as changed."
+  },
+  {
+    "key": "fe.memo-lazy.match.01",
+    "concept": "fe.memo-lazy",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each React API with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "React.memo(Component)"
+        },
+        {
+          "id": "l2",
+          "text": "useMemo"
+        },
+        {
+          "id": "l3",
+          "text": "useCallback"
+        },
+        {
+          "id": "l4",
+          "text": "React.lazy"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Caches a computed value until a dependency changes"
+        },
+        {
+          "id": "r2",
+          "text": "Keeps the same function between renders until a dependency changes"
+        },
+        {
+          "id": "r3",
+          "text": "Loads a component's code on its first render, from a dynamic import"
+        },
+        {
+          "id": "r4",
+          "text": "Skips re-rendering a component when its props are unchanged"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "memo skips renders, useMemo caches values, useCallback caches functions, and lazy defers loading code."
+  },
+  {
+    "key": "fe.memo-lazy.out.01",
+    "concept": "fe.memo-lazy",
+    "type": "output",
+    "difficulty": 4,
+    "language": "jsx",
+    "content": {
+      "prompt": "Not in Strict Mode. After the first render, the user clicks the button once. What is logged by the click?",
+      "code": "const Row = memo(function Row({ label, style }) {\n  console.log(\"render\", label);\n  return <p style={style}>{label}</p>;\n});\nconst red = { color: \"red\" };\n\nfunction App() {\n  const [n, setN] = useState(0);\n  const blue = useMemo(() => ({ color: \"blue\" }), []);\n  return (\n    <>\n      <button onClick={() => setN(n + 1)}>{n}</button>\n      <Row label=\"A\" style={red} />\n      <Row label=\"B\" style={blue} />\n      <Row label=\"C\" style={{ color: \"green\" }} />\n    </>\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "render A, render B, render C"
+        },
+        {
+          "id": "b",
+          "text": "render B, render C"
+        },
+        {
+          "id": "c",
+          "text": "Nothing"
+        },
+        {
+          "id": "d",
+          "text": "render C"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "An object literal in JSX is a new object on every render, which defeats memo; keep it outside the component or in useMemo."
+  },
+  {
+    "key": "fe.memo-lazy.order.01",
+    "concept": "fe.memo-lazy",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Chart is defined as lazy(() => import(\"./Chart\")) and rendered inside <Suspense fallback={<Spinner />}> once showChart is true. Its code has not been loaded yet. Put what happens after the user clicks Show chart in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The Spinner fallback appears on screen"
+        },
+        {
+          "id": "s2",
+          "text": "setShowChart(true) queues a re-render"
+        },
+        {
+          "id": "s3",
+          "text": "Chart replaces the Spinner on screen"
+        },
+        {
+          "id": "s4",
+          "text": "The Chart code arrives and its module is evaluated"
+        },
+        {
+          "id": "s5",
+          "text": "React renders Chart for the first time, which starts the import()"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s1",
+          "s4",
+          "s3"
+        ]
+      }
+    },
+    "remember": "lazy() starts the download on the first render, Suspense shows the fallback while it loads, then React renders the real component."
+  },
+  {
+    "key": "fe.accessibility.tf.01",
+    "concept": "fe.accessibility",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A placeholder inside an input is a good replacement for a visible <label>.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Placeholders disappear while typing and are not a reliable accessible name; give every input a real label."
+  },
+  {
+    "key": "fe.accessibility.mc.01",
+    "concept": "fe.accessibility",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What should the alt attribute of an informative image contain?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The image's file name, such as hero-banner.jpg"
+        },
+        {
+          "id": "b",
+          "text": "A short description of what the image shows or does, for people who cannot see it"
+        },
+        {
+          "id": "c",
+          "text": "Keywords that help search engines rank the page"
+        },
+        {
+          "id": "d",
+          "text": "A tooltip that appears when the mouse hovers over it"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "alt text replaces the image for screen reader users; describe its purpose, and use alt=\"\" for purely decorative images."
+  },
+  {
+    "key": "fe.accessibility.match.01",
+    "concept": "fe.accessibility",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each piece of markup with what it is for.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "alt=\"...\" on <img>"
+        },
+        {
+          "id": "l2",
+          "text": "<label for=\"email\">"
+        },
+        {
+          "id": "l3",
+          "text": "aria-label=\"Close\""
+        },
+        {
+          "id": "l4",
+          "text": "lang=\"hr\" on <html>"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Tells screen readers which language to pronounce the page in"
+        },
+        {
+          "id": "r2",
+          "text": "Text read instead of the image"
+        },
+        {
+          "id": "r3",
+          "text": "Ties visible text to a form field; clicking it focuses the field"
+        },
+        {
+          "id": "r4",
+          "text": "Names a control that has no visible text, such as an icon button"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "alt describes images, label names form fields, aria-label names icon-only controls, and lang sets the pronunciation."
+  },
+  {
+    "key": "fe.accessibility.bug.01",
+    "concept": "fe.accessibility",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "css",
+    "content": {
+      "prompt": "Keyboard users report that they cannot see which button is selected when they press Tab. Find the bug.",
+      "code": "button {\n  padding: 8px 16px;\n  border: 1px solid #333;\n  background: white;\n}\nbutton:hover {\n  background: #eee;\n}\nbutton:focus {\n  outline: none;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add outline-offset: 2px to the rule"
+        },
+        {
+          "id": "f2",
+          "text": "Replace outline: none with a visible outline, such as 2px solid"
+        },
+        {
+          "id": "f3",
+          "text": "Add tabindex=\"0\" to every button"
+        }
+      ],
+      "answer": {
+        "line": 10,
+        "fixId": "f2",
+        "acceptLines": [
+          9
+        ]
+      }
+    },
+    "remember": "Never remove the focus outline without a visible replacement; keyboard users rely on it to know where they are."
+  },
+  {
+    "key": "fe.accessibility.odd.01",
+    "concept": "fe.accessibility",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these can be reached with the Tab key without any extra attributes. Which one cannot?",
+      "items": [
+        {
+          "id": "a",
+          "text": "<a onclick=\"openHelp()\">Help</a>"
+        },
+        {
+          "id": "b",
+          "text": "<button>Save</button>"
+        },
+        {
+          "id": "c",
+          "text": "<a href=\"/help\">Help</a>"
+        },
+        {
+          "id": "d",
+          "text": "<input type=\"text\">"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "An <a> without href is neither focusable nor announced as a link; use <a href> to navigate and <button> for actions."
+  }
+]

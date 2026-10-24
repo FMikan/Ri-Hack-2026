@@ -1426,5 +1426,1100 @@
       }
     },
     "remember": "Inside try, return await: a promise returned without await settles after the try has ended, so catch never runs."
+  },
+  {
+    "key": "js.event-loop.bug.01",
+    "concept": "js.event-loop",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "processAll runs over 10,000 items in a browser tab. The progress bar never moves and clicks are ignored until the whole loop has finished. Find the bug.",
+      "code": "async function processAll(items) {\n  for (let i = 0; i < items.length; i++) {\n    heavyWork(items[i]);\n    if (i % 100 === 0) {\n      progressBar.value = i;\n      await Promise.resolve();\n    }\n  }\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Mark heavyWork as async so it runs in the background"
+        },
+        {
+          "id": "f2",
+          "text": "Replace it with: await queueMicrotask(() => {});"
+        },
+        {
+          "id": "f3",
+          "text": "Replace it with: await new Promise((r) => setTimeout(r, 0));"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Awaiting a resolved promise only yields to the microtask queue; yield to a macrotask such as setTimeout so the browser can render and handle input."
+  },
+  {
+    "key": "js.promises.out.01",
+    "concept": "js.promises",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "Promise.resolve(\"ok\")\n  .then(\n    (value) => {\n      throw new Error(value);\n    },\n    () => console.log(\"A\")\n  )\n  .catch(() => console.log(\"B\"))\n  .then(() => console.log(\"C\"));",
+      "options": [
+        {
+          "id": "a",
+          "text": "A C"
+        },
+        {
+          "id": "b",
+          "text": "B C"
+        },
+        {
+          "id": "c",
+          "text": "A B C"
+        },
+        {
+          "id": "d",
+          "text": "C"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "The second argument of then only handles rejections from earlier in the chain, not errors thrown by the first argument; a catch further down does."
+  },
+  {
+    "key": "js.async-await.cloze.01",
+    "concept": "js.async-await",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "fetchUser(id) returns a promise of a user. Fill the blank so loadUsers resolves to an array of users, loaded in parallel.",
+      "code": "async function loadUsers(ids) {\n  const users = await Promise.all(\n    ids.map(____)\n  );\n  return users;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "async (id) => { await fetchUser(id); }"
+        },
+        {
+          "id": "b",
+          "text": "(id) => { fetchUser(id); }"
+        },
+        {
+          "id": "c",
+          "text": "(id) => fetchUser(id)"
+        },
+        {
+          "id": "d",
+          "text": "(id) => await fetchUser(id)"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Promise.all needs the promises themselves: a map callback with braces and no return gives undefined, even when it is async."
+  },
+  {
+    "key": "js.closures.match.01",
+    "concept": "js.closures",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Each helper returns a new function that keeps private state alive in its closure. Match each helper with the state it keeps.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "once(fn)"
+        },
+        {
+          "id": "l2",
+          "text": "debounce(fn, ms)"
+        },
+        {
+          "id": "l3",
+          "text": "memoize(fn)"
+        },
+        {
+          "id": "l4",
+          "text": "createIdGenerator()"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "The last number it handed out"
+        },
+        {
+          "id": "r2",
+          "text": "Earlier results, keyed by argument"
+        },
+        {
+          "id": "r3",
+          "text": "Whether fn has run, and its result"
+        },
+        {
+          "id": "r4",
+          "text": "The id of the pending timer"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "A closure gives each returned function private state that survives between calls: a flag, a timer id, a cache or a counter."
+  },
+  {
+    "key": "js.this.odd.01",
+    "concept": "js.this",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Given function getId() { return this.id; }, a = { id: 1 } and b = { id: 2 }, three of these return 1. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "getId.bind(a).call(b)"
+        },
+        {
+          "id": "b",
+          "text": "getId.bind(a).bind(b)()"
+        },
+        {
+          "id": "c",
+          "text": "[b].map(getId, a)[0]"
+        },
+        {
+          "id": "d",
+          "text": "getId.bind(b).apply(a)"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "bind fixes this for good: call, apply and a second bind cannot change it, so the first bind wins."
+  },
+  {
+    "key": "js.equality.out.01",
+    "concept": "js.equality",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const selected = new Set();\nselected.add({ id: 7 });\nselected.add({ id: 7 });\nselected.add(\"7\");\nselected.add(7);\nconsole.log(selected.size, selected.has({ id: 7 }));",
+      "options": [
+        {
+          "id": "a",
+          "text": "4 false"
+        },
+        {
+          "id": "b",
+          "text": "3 true"
+        },
+        {
+          "id": "c",
+          "text": "2 true"
+        },
+        {
+          "id": "d",
+          "text": "3 false"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Set and Map compare keys by identity, like ===: two equal-looking objects are two entries, and \"7\" is not 7."
+  },
+  {
+    "key": "js.mutation.cloze.01",
+    "concept": "js.mutation",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so every row of the board is its own array and the last line logs null.",
+      "code": "const board = ____;\nboard[0][0] = \"X\";\nconsole.log(board[1][0]);",
+      "options": [
+        {
+          "id": "a",
+          "text": "Array(3).fill(Array(3).fill(null))"
+        },
+        {
+          "id": "b",
+          "text": "[...Array(3).fill(Array(3).fill(null))]"
+        },
+        {
+          "id": "c",
+          "text": "structuredClone(Array(3).fill(Array(3).fill(null)))"
+        },
+        {
+          "id": "d",
+          "text": "Array.from({ length: 3 }, () => Array(3).fill(null))"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "fill puts the same object in every slot, and copies, even structuredClone, keep that sharing; create each row in an Array.from callback."
+  },
+  {
+    "key": "js.hoisting.out.02",
+    "concept": "js.hoisting",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "var currentUser = \"ana\";\n\nfunction label() {\n  if (!currentUser) {\n    var currentUser = \"guest\";\n  }\n  return currentUser;\n}\n\nconsole.log(label());",
+      "options": [
+        {
+          "id": "a",
+          "text": "ana"
+        },
+        {
+          "id": "b",
+          "text": "guest"
+        },
+        {
+          "id": "c",
+          "text": "undefined"
+        },
+        {
+          "id": "d",
+          "text": "ReferenceError"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A var anywhere in a function is hoisted to the top of that function, so it shadows the outer variable and starts as undefined."
+  },
+  {
+    "key": "js.scope.bug.02",
+    "concept": "js.scope",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "The module does not load at all: the browser reports a SyntaxError. Find the bug.",
+      "code": "function describe(event) {\n  switch (event.kind) {\n    case \"login\":\n      const msg = `${event.user} signed in`;\n      return msg;\n    case \"logout\":\n      const msg = `${event.user} signed out`;\n      return msg;\n    default:\n      return \"unknown event\";\n  }\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Wrap the statements of this case in their own { } block"
+        },
+        {
+          "id": "f2",
+          "text": "Declare it with let instead of const"
+        },
+        {
+          "id": "f3",
+          "text": "Add break; after each return"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f1",
+        "acceptLines": [
+          4
+        ]
+      }
+    },
+    "remember": "All case clauses share the switch's block, so a let or const name can be declared there only once; give each case its own { } block."
+  },
+  {
+    "key": "js.array-methods.out.01",
+    "concept": "js.array-methods",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const tasks = [\n  { title: \"a\", done: true },\n  { title: \"b\", done: true },\n  { title: \"c\", done: false },\n];\nfor (let i = 0; i < tasks.length; i++) {\n  if (tasks[i].done) tasks.splice(i, 1);\n}\nconsole.log(tasks.map((t) => t.title).join(\",\"));",
+      "options": [
+        {
+          "id": "a",
+          "text": "c"
+        },
+        {
+          "id": "b",
+          "text": "a,b,c"
+        },
+        {
+          "id": "c",
+          "text": "b,c"
+        },
+        {
+          "id": "d",
+          "text": "a,c"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "splice shifts later elements down, so removing items while looping forward skips the next one; use filter to build a new array."
+  },
+  {
+    "key": "js.coercion.order.01",
+    "concept": "js.coercion",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "obj is a plain object. In what order does JavaScript go through these steps when it evaluates obj * 2?",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Call obj.toString(), since valueOf gave no primitive"
+        },
+        {
+          "id": "s2",
+          "text": "Multiply the two numbers"
+        },
+        {
+          "id": "s3",
+          "text": "Check whether obj has a Symbol.toPrimitive method"
+        },
+        {
+          "id": "s4",
+          "text": "Convert the primitive it got to a number"
+        },
+        {
+          "id": "s5",
+          "text": "Call obj.valueOf()"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "To turn an object into a number, JavaScript tries Symbol.toPrimitive, then valueOf, then toString, and converts the primitive it gets to a number."
+  },
+  {
+    "key": "js.errors.out.01",
+    "concept": "js.errors",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "function save() {\n  try {\n    throw new Error(\"disk full\");\n  } catch (err) {\n    console.log(\"caught\");\n    throw err;\n  } finally {\n    console.log(\"cleanup\");\n    return \"ok\";\n  }\n}\n\ntry {\n  console.log(save());\n} catch (err) {\n  console.log(\"outer\", err.message);\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "caught cleanup ok"
+        },
+        {
+          "id": "b",
+          "text": "caught cleanup outer disk full"
+        },
+        {
+          "id": "c",
+          "text": "caught outer disk full cleanup"
+        },
+        {
+          "id": "d",
+          "text": "caught cleanup ok outer disk full"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A return inside finally replaces whatever try or catch did, including a thrown error, so the error is silently lost."
+  },
+  {
+    "key": "ts.types-interfaces.tf.01",
+    "concept": "ts.types-interfaces",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Interfaces and type annotations are removed when TypeScript is compiled to JavaScript.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "TypeScript types exist only at compile time; the JavaScript that runs has no trace of them."
+  },
+  {
+    "key": "ts.types-interfaces.mc.01",
+    "concept": "ts.types-interfaces",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which of these can a type alias describe, but an interface cannot?",
+      "options": [
+        {
+          "id": "a",
+          "text": "An object with optional properties"
+        },
+        {
+          "id": "b",
+          "text": "A shape that other types extend"
+        },
+        {
+          "id": "c",
+          "text": "The signature of a method"
+        },
+        {
+          "id": "d",
+          "text": "A union such as string | number"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Interfaces and type aliases both describe object shapes; only a type alias can name a union or a primitive type."
+  },
+  {
+    "key": "ts.types-interfaces.cloze.01",
+    "concept": "ts.types-interfaces",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "Fill the blank so Admin has every property of User plus permissions, and the code compiles.",
+      "code": "type User = { id: number; name: string };\ntype Admin = User ____ { permissions: string[] };\n\nfunction describe(admin: Admin) {\n  return `${admin.name}: ${admin.permissions.length}`;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "|"
+        },
+        {
+          "id": "b",
+          "text": "&"
+        },
+        {
+          "id": "c",
+          "text": "extends"
+        },
+        {
+          "id": "d",
+          "text": "+"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "An intersection A & B has every property of both types; a union A | B is only one or the other."
+  },
+  {
+    "key": "ts.types-interfaces.out.01",
+    "concept": "ts.types-interfaces",
+    "type": "output",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "This compiles under strict mode. What does it print?",
+      "code": "class Cat {\n  name = \"Tom\";\n}\nclass Dog {\n  name = \"Rex\";\n}\n\nconst pet: Cat = new Dog();\nconsole.log(pet instanceof Cat, pet.name);",
+      "options": [
+        {
+          "id": "a",
+          "text": "true Rex"
+        },
+        {
+          "id": "b",
+          "text": "true Tom"
+        },
+        {
+          "id": "c",
+          "text": "false Rex"
+        },
+        {
+          "id": "d",
+          "text": "false Tom"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "TypeScript compares shapes, not class names: a Dog fits the Cat type when it has the same members, but at runtime it is still a Dog."
+  },
+  {
+    "key": "ts.types-interfaces.odd.01",
+    "concept": "ts.types-interfaces",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "interface Point { x: number; y: number }. Three of these compile under strict mode. Which one is a compile error?",
+      "items": [
+        {
+          "id": "a",
+          "text": "const p: Point = { x: 1, y: 2, z: 3 };"
+        },
+        {
+          "id": "b",
+          "text": "const t = { x: 1, y: 2, z: 3 }; const p: Point = t;"
+        },
+        {
+          "id": "c",
+          "text": "const p = { x: 1, y: 2, z: 3 } as Point;"
+        },
+        {
+          "id": "d",
+          "text": "const p: Point & { z: number } = { x: 1, y: 2, z: 3 };"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Excess property checks apply only to an object literal written straight into a typed spot; the same object passed through a variable is checked by shape alone."
+  },
+  {
+    "key": "ts.narrowing.tf.01",
+    "concept": "ts.narrowing",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "With id: string | number, after if (typeof id === \"number\") return; TypeScript treats id as a string.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Narrowing follows control flow: after an early return, TypeScript removes that type from the variable below it."
+  },
+  {
+    "key": "ts.narrowing.mc.01",
+    "concept": "ts.narrowing",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Cat and Dog are interfaces, and only Cat has a meow() method. Which check narrows pet: Cat | Dog to Cat?",
+      "options": [
+        {
+          "id": "a",
+          "text": "pet instanceof Cat"
+        },
+        {
+          "id": "b",
+          "text": "\"meow\" in pet"
+        },
+        {
+          "id": "c",
+          "text": "typeof pet === \"Cat\""
+        },
+        {
+          "id": "d",
+          "text": "pet.meow !== undefined"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Interfaces do not exist at runtime, so narrow with a runtime check such as \"meow\" in pet or a shared kind field."
+  },
+  {
+    "key": "ts.narrowing.bug.01",
+    "concept": "ts.narrowing",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "label(0) should return \"0 items\", but it returns \"no count\". Find the bug.",
+      "code": "function label(count?: number): string {\n  if (count) {\n    return `${count} items`;\n  }\n  return \"no count\";\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change it to: if (Boolean(count)) {"
+        },
+        {
+          "id": "f2",
+          "text": "Change it to: if (count !== undefined) {"
+        },
+        {
+          "id": "f3",
+          "text": "Change it to: if (count as number) {"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A truthiness check removes undefined but also 0, \"\" and NaN; compare with undefined when those values are valid."
+  },
+  {
+    "key": "ts.narrowing.match.01",
+    "concept": "ts.narrowing",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "value has the type string | number | Date | null. Match each check with the type of value inside its if block.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "typeof value === \"object\""
+        },
+        {
+          "id": "l2",
+          "text": "value instanceof Date"
+        },
+        {
+          "id": "l3",
+          "text": "!value"
+        },
+        {
+          "id": "l4",
+          "text": "typeof value !== \"object\""
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Date"
+        },
+        {
+          "id": "r2",
+          "text": "string | number"
+        },
+        {
+          "id": "r3",
+          "text": "Date | null"
+        },
+        {
+          "id": "r4",
+          "text": "string | number | null"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "typeof x === \"object\" is also true for null, and a falsy check keeps \"\", 0 and null; TypeScript narrows in exactly the same way."
+  },
+  {
+    "key": "ts.narrowing.out.01",
+    "concept": "ts.narrowing",
+    "type": "output",
+    "difficulty": 4,
+    "language": "ts",
+    "content": {
+      "prompt": "This compiles under strict mode. What happens when it runs?",
+      "code": "type Job = { result: string | null };\nconst job: Job = { result: \"done\" };\n\nfunction reset() {\n  job.result = null;\n}\n\nif (job.result !== null) {\n  reset();\n  console.log(job.result.length);\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "It prints 4"
+        },
+        {
+          "id": "b",
+          "text": "It prints 0"
+        },
+        {
+          "id": "c",
+          "text": "It prints undefined"
+        },
+        {
+          "id": "d",
+          "text": "It throws a TypeError"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "TypeScript assumes a function call does not undo a narrowing, so code that changes the value behind its back can still crash at runtime."
+  },
+  {
+    "key": "ts.generics.tf.01",
+    "concept": "ts.generics",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Given function first<T>(items: T[]): T, the call first([1, 2, 3]) has the type number.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "TypeScript infers T from the arguments, so the return type follows the type you pass in."
+  },
+  {
+    "key": "ts.generics.mc.01",
+    "concept": "ts.generics",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Why write function first<T>(items: T[]): T instead of function first(items: any[]): any?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The generic version checks the array's contents at runtime"
+        },
+        {
+          "id": "b",
+          "text": "The generic version compiles to faster JavaScript"
+        },
+        {
+          "id": "c",
+          "text": "The result keeps the element type, so first([\"a\"]) is a string"
+        },
+        {
+          "id": "d",
+          "text": "any[] does not accept arrays of objects"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A generic links the output type to the input type; any throws that information away."
+  },
+  {
+    "key": "ts.generics.match.01",
+    "concept": "ts.generics",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "User is { id: number; name: string; email: string }. Match each utility type with the type it produces.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Partial<User>"
+        },
+        {
+          "id": "l2",
+          "text": "Pick<User, \"id\" | \"name\">"
+        },
+        {
+          "id": "l3",
+          "text": "Readonly<User>"
+        },
+        {
+          "id": "l4",
+          "text": "Record<string, User>"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "User, but no property can be reassigned"
+        },
+        {
+          "id": "r2",
+          "text": "An object with string keys and User values"
+        },
+        {
+          "id": "r3",
+          "text": "User with every property optional"
+        },
+        {
+          "id": "r4",
+          "text": "Only the id and name properties"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Utility types are generic types that build a new type from an existing one, so you never copy User by hand."
+  },
+  {
+    "key": "ts.generics.bug.01",
+    "concept": "ts.generics",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "This does not compile: TypeScript reports that length does not exist on type T. Find the bug.",
+      "code": "function longest<T>(a: T, b: T): T {\n  return a.length >= b.length ? a : b;\n}\n\nlongest(\"apple\", \"fig\");\nlongest([1, 2], [3]);",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Give T a default: function longest<T = string>(a: T, b: T): T {"
+        },
+        {
+          "id": "f2",
+          "text": "Remove the return type: function longest<T>(a: T, b: T) {"
+        },
+        {
+          "id": "f3",
+          "text": "Constrain T: function longest<T extends { length: number }>(a: T, b: T): T {"
+        }
+      ],
+      "answer": {
+        "line": 1,
+        "fixId": "f3",
+        "acceptLines": [
+          2
+        ]
+      }
+    },
+    "remember": "Inside a generic, T could be anything, so you can only use members you require with a constraint such as T extends { length: number }."
+  },
+  {
+    "key": "ts.generics.out.01",
+    "concept": "ts.generics",
+    "type": "output",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "This compiles under strict mode. What does it print?",
+      "code": "function parse<T>(json: string): T {\n  return JSON.parse(json);\n}\n\nconst port = parse<number>('\"8080\"');\nconsole.log(port + 1);",
+      "options": [
+        {
+          "id": "a",
+          "text": "80801"
+        },
+        {
+          "id": "b",
+          "text": "8081"
+        },
+        {
+          "id": "c",
+          "text": "NaN"
+        },
+        {
+          "id": "d",
+          "text": "TypeError"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A type argument such as parse<number> is an unchecked promise: nothing converts or validates the data at runtime."
+  },
+  {
+    "key": "ts.any-unknown.tf.01",
+    "concept": "ts.any-unknown",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A value of type unknown can be passed to a function that expects a string, without any check.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "unknown accepts any value, but you can use it only after a check tells TypeScript what it is."
+  },
+  {
+    "key": "ts.any-unknown.mc.01",
+    "concept": "ts.any-unknown",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "You store the result of JSON.parse in data and do not trust its shape yet. Which type for data makes the compiler insist on a check before you read data.name?",
+      "options": [
+        {
+          "id": "a",
+          "text": "unknown"
+        },
+        {
+          "id": "b",
+          "text": "any"
+        },
+        {
+          "id": "c",
+          "text": "Record<string, string>"
+        },
+        {
+          "id": "d",
+          "text": "{ name: string }"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Use unknown for untrusted data: it accepts anything, but you must narrow it before reading properties; any skips that check."
+  },
+  {
+    "key": "ts.any-unknown.cloze.01",
+    "concept": "ts.any-unknown",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "Fill the blank so the function compiles under strict mode, without a type assertion.",
+      "code": "function parsePort(raw: unknown): number {\n  if (____) {\n    return raw;\n  }\n  throw new Error(\"port must be a number\");\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "raw !== undefined"
+        },
+        {
+          "id": "b",
+          "text": "raw instanceof Number"
+        },
+        {
+          "id": "c",
+          "text": "typeof raw === \"number\""
+        },
+        {
+          "id": "d",
+          "text": "Number.isInteger(raw)"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "unknown must be narrowed with a runtime check such as typeof before you can use it as a specific type."
+  },
+  {
+    "key": "ts.any-unknown.bug.01",
+    "concept": "ts.any-unknown",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "Status recently gained \"refunded\". The compiler should have flagged this switch, but it compiled and the app threw \"Unhandled status\" in production. Find the bug.",
+      "code": "type Status = \"paid\" | \"pending\" | \"refunded\";\n\nfunction label(status: Status): string {\n  switch (status) {\n    case \"paid\":\n      return \"Paid\";\n    case \"pending\":\n      return \"Waiting for payment\";\n    default: {\n      const unhandled: any = status;\n      throw new Error(`Unhandled status: ${unhandled}`);\n    }\n  }\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change the type to never: const unhandled: never = status;"
+        },
+        {
+          "id": "f2",
+          "text": "Change the type to unknown: const unhandled: unknown = status;"
+        },
+        {
+          "id": "f3",
+          "text": "Change the type to Status: const unhandled: Status = status;"
+        }
+      ],
+      "answer": {
+        "line": 10,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Assign the leftover value to never in the default branch: when a union gains a member you did not handle, that line stops compiling."
+  },
+  {
+    "key": "ts.any-unknown.match.01",
+    "concept": "ts.any-unknown",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each type with how the compiler treats it under strict mode.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "any"
+        },
+        {
+          "id": "l2",
+          "text": "unknown"
+        },
+        {
+          "id": "l3",
+          "text": "never"
+        },
+        {
+          "id": "l4",
+          "text": "{}"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Has no values, and is assignable to every type"
+        },
+        {
+          "id": "r2",
+          "text": "Accepts every value except null and undefined"
+        },
+        {
+          "id": "r3",
+          "text": "Switches type checking off for that value"
+        },
+        {
+          "id": "r4",
+          "text": "Accepts every value, null too, but must be narrowed before use"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "any switches checks off, unknown demands a check, never has no values, and {} means any value that is not null or undefined."
   }
 ]

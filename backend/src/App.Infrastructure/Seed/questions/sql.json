@@ -1420,5 +1420,432 @@
       }
     },
     "remember": "A materialized view is a stored snapshot: it can be indexed, and it changes only on REFRESH MATERIALIZED VIEW."
+  },
+  {
+    "key": "sql.joins.out.02",
+    "concept": "sql.joins",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH users(id, name) AS (\n  VALUES (1, 'Ana')\n), orders(user_id, total) AS (\n  VALUES (1, 100), (1, 50)\n), logins(user_id, day) AS (\n  VALUES (1, 'mon'), (1, 'tue'), (1, 'wed')\n)\nSELECT u.name,\n       sum(o.total) AS revenue,\n       count(l.day) AS logins\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\nLEFT JOIN logins l ON l.user_id = u.id\nGROUP BY u.name;",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 row: (Ana, 150, 3)"
+        },
+        {
+          "id": "b",
+          "text": "1 row: (Ana, 450, 3)"
+        },
+        {
+          "id": "c",
+          "text": "1 row: (Ana, 150, 6)"
+        },
+        {
+          "id": "d",
+          "text": "1 row: (Ana, 450, 6)"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Joining two one-to-many tables to the same row multiplies their rows; aggregate each one in its own subquery before joining."
+  },
+  {
+    "key": "sql.indexes.cloze.01",
+    "concept": "sql.indexes",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "Fill the blank so the index hands this query its 20 rows already sorted, without reading entries it then throws away.",
+      "code": "SELECT id, total\nFROM orders\nWHERE customer_id = $1\n  AND status = 'paid'\nORDER BY created_at DESC\nLIMIT 20;\n\nCREATE INDEX orders_paid_feed\n  ON orders (____);",
+      "options": [
+        {
+          "id": "a",
+          "text": "customer_id, status, created_at DESC"
+        },
+        {
+          "id": "b",
+          "text": "created_at DESC, customer_id, status"
+        },
+        {
+          "id": "c",
+          "text": "customer_id, created_at DESC, status"
+        },
+        {
+          "id": "d",
+          "text": "status, created_at DESC, customer_id"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "In a composite index put the equality columns first and the sort or range column last, so matching rows come out in order."
+  },
+  {
+    "key": "sql.n-plus-one.order.01",
+    "concept": "sql.n-plus-one",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A batching loader (DataLoader style) removes the N+1 when 20 resolvers each need one author. Put its steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Send one query with WHERE id = ANY($1)"
+        },
+        {
+          "id": "s2",
+          "text": "Each resolver calls load(authorId) and gets a promise"
+        },
+        {
+          "id": "s3",
+          "text": "Resolve each waiting promise with its own author"
+        },
+        {
+          "id": "s4",
+          "text": "Wait for the current tick to end, collecting every requested id"
+        },
+        {
+          "id": "s5",
+          "text": "Put the returned rows in a map keyed by id"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s5",
+          "s3"
+        ]
+      }
+    },
+    "remember": "A batching loader collects the ids asked for in one tick, loads them with one query and maps the rows back by id, not by position."
+  },
+  {
+    "key": "sql.transactions.cloze.01",
+    "concept": "sql.transactions",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "In PostgreSQL the coupon INSERT fails. Fill the blank so order 7 and the audit row are still committed together.",
+      "code": "BEGIN;\nINSERT INTO orders (id, total)\nVALUES (7, 50);\nSAVEPOINT coupon;\nINSERT INTO coupon_uses (order_id, code)\nVALUES (7, 'WELCOME');\n-- ERROR: duplicate key (coupon already used)\n____;\nINSERT INTO audit_log (msg)\nVALUES ('order 7 placed');\nCOMMIT;",
+      "options": [
+        {
+          "id": "a",
+          "text": "ROLLBACK"
+        },
+        {
+          "id": "b",
+          "text": "RELEASE SAVEPOINT coupon"
+        },
+        {
+          "id": "c",
+          "text": "ROLLBACK TO SAVEPOINT coupon"
+        },
+        {
+          "id": "d",
+          "text": "COMMIT"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "After an error, ROLLBACK TO SAVEPOINT undoes only the work since the savepoint; in PostgreSQL nothing else runs in the transaction until you do."
+  },
+  {
+    "key": "sql.normalization.mc.02",
+    "concept": "sql.normalization",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "order_items.unit_price is copied from products.price at checkout. A reviewer says it duplicates products.price and should be replaced with a join. Which reply is right?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Agree: a join keeps one source of truth for every price"
+        },
+        {
+          "id": "b",
+          "text": "Keep it: it is the price at the time of sale, a separate fact from today's price"
+        },
+        {
+          "id": "c",
+          "text": "Keep it, but update it in every order whenever products.price changes"
+        },
+        {
+          "id": "d",
+          "text": "Agree: the same column in two tables breaks third normal form"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A copied value is redundant only if it is the same fact; the price paid at checkout is its own fact and must not follow later price changes."
+  },
+  {
+    "key": "sql.null.bug.02",
+    "concept": "sql.null",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "opt_out is a nullable boolean that stays NULL until the user chooses. The newsletter should reach every confirmed user who has not opted out, but users who never chose get nothing. Find the bug.",
+      "code": "SELECT id, email\nFROM users\nWHERE confirmed\n  AND opt_out <> true\nORDER BY id;",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Write opt_out = false"
+        },
+        {
+          "id": "f2",
+          "text": "Write NOT opt_out"
+        },
+        {
+          "id": "f3",
+          "text": "Write opt_out IS NOT TRUE"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f3"
+      }
+    },
+    "remember": "For a NULL value, <> true, = false and NOT all give unknown and drop the row; IS NOT TRUE or coalesce(opt_out, false) keeps it."
+  },
+  {
+    "key": "sql.aggregates.bug.02",
+    "concept": "sql.aggregates",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "sql",
+    "content": {
+      "prompt": "It should list customers who have orders but never paid for any of them. It returns no rows, although such customers exist. Find the bug.",
+      "code": "SELECT c.id, c.name\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nGROUP BY c.id, c.name\nHAVING count(CASE WHEN o.status = 'paid'\n                  THEN 1 ELSE 0 END) = 0\nORDER BY c.name;",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change JOIN to LEFT JOIN"
+        },
+        {
+          "id": "f2",
+          "text": "Remove ELSE 0 from the CASE"
+        },
+        {
+          "id": "f3",
+          "text": "Add WHERE o.status = 'paid' and use HAVING count(*) = 0"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f2",
+        "acceptLines": [
+          6
+        ]
+      }
+    },
+    "remember": "count() counts every non-NULL value, 0 included; count a condition with count(*) FILTER (WHERE ...) or a CASE without ELSE."
+  },
+  {
+    "key": "sql.subqueries.out.02",
+    "concept": "sql.subqueries",
+    "type": "output",
+    "difficulty": 4,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH users(id, name) AS (\n  VALUES (1, 'ana'), (2, 'ben'), (3, 'cid')\n), banned(user_id) AS (\n  VALUES (2)\n)\nSELECT name\nFROM users\nWHERE id IN (SELECT id FROM banned)\nORDER BY name;",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 row: ben"
+        },
+        {
+          "id": "b",
+          "text": "0 rows"
+        },
+        {
+          "id": "c",
+          "text": "An error: column id does not exist in banned"
+        },
+        {
+          "id": "d",
+          "text": "3 rows: ana, ben, cid"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A column the subquery's own tables lack silently refers to the outer query; qualify columns in subqueries, as in b.user_id."
+  },
+  {
+    "key": "sql.constraints.bug.01",
+    "concept": "sql.constraints",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "sql",
+    "content": {
+      "prompt": "A double click on Sign up sometimes creates two users with the same email. Find the bug (PostgreSQL, READ COMMITTED).",
+      "code": "CREATE TABLE users (\n  id bigint GENERATED ALWAYS AS IDENTITY\n    PRIMARY KEY,\n  email text NOT NULL\n);\n\n-- run for every sign-up request:\nBEGIN;\nSELECT 1 FROM users WHERE email = $1;\n-- app: if a row came back, ROLLBACK\nINSERT INTO users (email) VALUES ($1);\nCOMMIT;",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Declare email text NOT NULL UNIQUE"
+        },
+        {
+          "id": "f2",
+          "text": "Append FOR UPDATE to the SELECT 1 query"
+        },
+        {
+          "id": "f3",
+          "text": "Open the transaction with BEGIN ISOLATION LEVEL REPEATABLE READ"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Only a UNIQUE constraint stops concurrent duplicates; a check before INSERT cannot lock a row that does not exist yet."
+  },
+  {
+    "key": "sql.isolation.match.01",
+    "concept": "sql.isolation",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each concurrency anomaly with what happens.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Dirty read"
+        },
+        {
+          "id": "l2",
+          "text": "Non-repeatable read"
+        },
+        {
+          "id": "l3",
+          "text": "Phantom read"
+        },
+        {
+          "id": "l4",
+          "text": "Write skew"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Two transactions each check a rule, then update different rows, and together break it"
+        },
+        {
+          "id": "r2",
+          "text": "Re-running the same WHERE query returns extra rows another transaction inserted"
+        },
+        {
+          "id": "r3",
+          "text": "Reading data that another transaction has not committed yet"
+        },
+        {
+          "id": "r4",
+          "text": "The same row, read twice, has changed because another transaction committed an update"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Dirty read sees uncommitted data, non-repeatable read sees a row change, phantom read sees new rows, write skew breaks a rule across rows."
+  },
+  {
+    "key": "sql.query-order.out.02",
+    "concept": "sql.query-order",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH posts(id, likes) AS (\n  VALUES (1, 5), (2, 9), (3, 0),\n         (4, 7), (5, 3)\n)\nSELECT id, count(*) OVER () AS total\nFROM posts\nWHERE likes > 0\nORDER BY likes DESC\nLIMIT 2;",
+      "options": [
+        {
+          "id": "a",
+          "text": "2 rows: (2, 2), (4, 2)"
+        },
+        {
+          "id": "b",
+          "text": "2 rows: (2, 4), (4, 4)"
+        },
+        {
+          "id": "c",
+          "text": "2 rows: (2, 5), (4, 5)"
+        },
+        {
+          "id": "d",
+          "text": "2 rows: (2, 1), (4, 2)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Window functions run after WHERE, GROUP BY and HAVING but before ORDER BY and LIMIT, so count(*) OVER () counts the rows before paging."
+  },
+  {
+    "key": "sql.views.odd.02",
+    "concept": "sql.views",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In PostgreSQL, three of these are true. Which one is the odd one out because it is false?",
+      "items": [
+        {
+          "id": "a",
+          "text": "A plain REFRESH MATERIALIZED VIEW blocks readers until done"
+        },
+        {
+          "id": "b",
+          "text": "A WHERE on a view can still use the table's indexes"
+        },
+        {
+          "id": "c",
+          "text": "A view made with SELECT * picks up columns added later"
+        },
+        {
+          "id": "d",
+          "text": "A table cannot be dropped while a view uses it, without CASCADE"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "PostgreSQL expands SELECT * when a view is created, so columns added to the table later need CREATE OR REPLACE VIEW."
   }
 ]

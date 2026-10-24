@@ -154,13 +154,14 @@ public class DailyService(IAppDbContext db, Rewarder rewarder, TimeProvider time
             .Where(m => m.FinishedAt >= dayStart && m.ResultReason != MatchResultReason.Aborted && m.Players.Any(p => p.UserId == userId && p.Kind == SeatKind.Human))
             .CountAsync(ct);
 
-    // A find-the-bug question at D2–D3, the same for everyone, chosen from the day (any find-the-bug if none fits).
+    // A find-the-bug question at D2–D3 of an offered topic, the same for everyone, chosen from the day (any find-the-bug if none fits).
     private async Task<DailyChallenge> ChallengeOfAsync(DateOnly day, bool create, CancellationToken ct)
     {
         if (await db.DailyChallenges.AsNoTracking().FirstOrDefaultAsync(c => c.Day == day, ct) is { } existing) return existing;
         if (!create) throw new AppException(ErrorCodes.DailyNotFound, "There was no challenge on that day.", 404);
 
-        var candidates = await db.Questions.Where(q => q.Type == QuestionType.FindBug && q.Status == QuestionStatus.Active)
+        var candidates = await db.Questions
+            .Where(q => q.Type == QuestionType.FindBug && q.Status == QuestionStatus.Active && db.Topics.Any(t => t.Id == q.TopicId && t.IsActive))
             .OrderBy(q => q.Id)
             .Select(q => new { q.Id, InBand = q.Difficulty == 2 || q.Difficulty == 3 })
             .ToListAsync(ct);

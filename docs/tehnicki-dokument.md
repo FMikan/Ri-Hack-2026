@@ -201,7 +201,7 @@ create index on user_topics (topic_id);
 ```sql
 create table topics (
   id          uuid primary key,
-  slug        text not null unique,          -- 'sql', 'javascript', 'how-ai-works' ...
+  slug        text not null unique,          -- 'sql', 'javascript', 'git' ...
   name        text not null,
   description text not null,
   sort_order  integer not null,
@@ -1088,7 +1088,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 **F0: auth, onboarding, dashboard**
 - `register`, `login`, `refresh`, `logout`, `GET/PATCH /api/me`, `PUT /api/me/topics`, `GET /api/me/dashboard`, `GET /api/topics`, `GET /api/topics/{slug}/concepts`.
 - Validacija je `400` s `errors` po polju; ključevi su imena svojstava DTO-a u PascalCase (`Username`, `Password`), pa ih spajaj s poljima forme bez obzira na velika slova; `409` s `type` `urn:app:auth/email-taken` ili `urn:app:auth/username-taken` ide uz polje forme.
-- `GET /api/topics` vraća samo aktivne teme, one koje imaju dovoljno pitanja (zasad `javascript`, `sql`, `how-ai-works`). Onboarding traži 3–5 (`409 urn:app:topics/count`).
+- `GET /api/topics` vraća samo aktivne teme, one koje imaju dovoljno pitanja (od grane `content/topics` svih 12: `javascript`, `frontend`, `backend`, `sql`, `networking`, `security`, `algorithms`, `git`, `linux`, `testing`, `devops`, `system-design`). Onboarding traži 3–5 (`409 urn:app:topics/count`); `PUT /api/me/topics` prima samo aktivne teme (`404 urn:app:topics/not-found`).
 - Token flow je opisan u §6.10 i još nije u `api-client.ts`; to je prvi posao frontenda.
 
 **F1: bot duel, trening, povijest**
@@ -1142,6 +1142,8 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 - `backend/src/App.Infrastructure/Seed/topics.json` (teme s konceptima: slug, name, description; redoslijed u datoteci je `sort_order`) i `Seed/questions/<tema>.json` (niz pitanja: `key`, `concept` (slug), `type`, `difficulty`, `language`, `content` s `answer`, `remember`). `Seed/shop.json` (artikli shopa; s `seasonDropTier` je sezonski drop koji se ne prodaje). Titule se ne seedaju: stvaraju se kad se prvi put dodijele. Datoteke su embedded resources u Infrastructure assemblyju.
 - `Seeder` se pokreće na startu kad je `Database:SeedOnStartup=true` (Development i prod) i radi upsert po `slug`/`key` (`questions.seed_key`); nikad ne briše i ne vraća u igru pitanje koje je u karanteni ili povučeno. Na kraju postavi `topics.is_active` = tema gradi potpun ranked deck za novog igrača (D1–D2, ništa viđeno); `GET /api/topics` vraća samo aktivne teme.
+- Teme su fiksne (12, redoslijed u `topics.json`): JavaScript & TypeScript, Frontend, Backend & APIs, Databases & SQL, Networking & web, Cybersecurity, Algorithms & data structures, Git & version control, OS & Linux, Testing & debugging, DevOps & cloud basics, System design basics. Tema koja ispadne iz `topics.json` ostaje u bazi (partije i mastery pokazuju na nju), ali je `is_active = false`; koncepti se ne brišu, pa se postojeći slugovi koncepata ne mijenjaju.
+- Pool po temi: 12 koncepata (JavaScript 16 s TypeScriptom), oko 60 pitanja (5 po konceptu): svaki koncept ima T/N na D1 i multiple choice, ostalo su ostali tipovi raspoređeni D1–D4 tako da svaki band (D1–D2, D2–D3, D3–D4) gradi potpun deck; to provjerava `SeedTests.Deep_topics_build_complete_decks_on_every_band` za svaku temu.
 - Novo pitanje se dodaje u JSON i provjerava s `dotnet test` (`SeedTests`); format i primjer svakog tipa su u postojećim datotekama.
 - `difficulty` iz JSON-a vrijedi samo kad se pitanje prvi put upiše; poslije težinu vodi auto-kalibracija (§8), pa promjena težine u JSON-u ne dira postojeće pitanje.
 - Povlačenje pitanja: `"retired": true` u njegovom JSON-u. Seeder ga na idućem startu povuče (`QuestionOps.RetireQuestion`): izlazi iz svih novih deckova, rezultati završenih partija ostaju, a mastery promjena svakog odgovora na to pitanje se oduzme (`answers.reverted_at`, statistika i achievementi ih preskaču).

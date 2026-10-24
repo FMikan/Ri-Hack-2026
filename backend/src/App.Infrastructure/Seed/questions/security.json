@@ -1,0 +1,1882 @@
+[
+  {
+    "key": "sec.sqli.tf.01",
+    "concept": "sec.sqli",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Passing user input as a query parameter, such as $1, instead of concatenating it stops the input from changing the structure of the SQL statement.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Parameters travel separately from the SQL text, so the database treats them as values, never as code."
+  },
+  {
+    "key": "sec.sqli.mc.01",
+    "concept": "sec.sqli",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "email comes from a login form. Which call is safe from SQL injection?",
+      "options": [
+        {
+          "id": "a",
+          "text": "db.query(`SELECT id FROM users WHERE email = '${email}'`)"
+        },
+        {
+          "id": "b",
+          "text": "db.query(\"SELECT id FROM users WHERE email = '\" + email + \"'\")"
+        },
+        {
+          "id": "c",
+          "text": "db.query(\"SELECT id FROM users WHERE email = $1\", [email])"
+        },
+        {
+          "id": "d",
+          "text": "db.query(\"SELECT id FROM users WHERE email = '\" + email.trim() + \"'\")"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Template literals and concatenation both paste input into the SQL text; only a placeholder keeps it separate."
+  },
+  {
+    "key": "sec.sqli.out.01",
+    "concept": "sec.sqli",
+    "type": "output",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "A user types ' OR '1'='1 into the name field. What does this print?",
+      "code": "const name = \"' OR '1'='1\";\nconst sql = \"SELECT * FROM users WHERE name = '\"\n  + name + \"'\";\nconsole.log(sql);",
+      "options": [
+        {
+          "id": "a",
+          "text": "SELECT * FROM users WHERE name = '' OR '1'='1'"
+        },
+        {
+          "id": "b",
+          "text": "SELECT * FROM users WHERE name = '\\' OR \\'1\\'=\\'1'"
+        },
+        {
+          "id": "c",
+          "text": "SELECT * FROM users WHERE name = ''' OR ''1''=''1'"
+        },
+        {
+          "id": "d",
+          "text": "SELECT * FROM users WHERE name = '' OR '1'='1''"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Concatenation copies the input's quotes into the SQL, so ' OR '1'='1 turns the WHERE clause into a condition that is always true."
+  },
+  {
+    "key": "sec.sqli.bug.01",
+    "concept": "sec.sqli",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Searching for O'Brien returns a 500 error, and a security scanner reports this endpoint as injectable. Find the bug.",
+      "code": "app.get(\"/api/products\", async (req, res) => {\n  const q = String(req.query.q ?? \"\");\n  const { rows } = await db.query(\n    \"SELECT id, name FROM products WHERE published \" +\n      \"AND name ILIKE '%\" + q + \"%'\");\n  res.json(rows);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add a pattern attribute to the search box that blocks quotes"
+        },
+        {
+          "id": "f2",
+          "text": "Encode the term first with encodeURIComponent(q)"
+        },
+        {
+          "id": "f3",
+          "text": "Use ILIKE $1 and pass [\"%\" + q + \"%\"] as the parameters"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f3",
+        "acceptLines": [
+          3,
+          4
+        ]
+      }
+    },
+    "remember": "Fix injection on the server with a placeholder; client-side checks and URL encoding leave the quote intact."
+  },
+  {
+    "key": "sec.sqli.cloze.01",
+    "concept": "sec.sqli",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "?sort= is name or newest. A placeholder such as $1 cannot stand in for a column in ORDER BY. Fill the blank so sorting works and ?sort= cannot inject SQL.",
+      "code": "const SORTS = new Map([\n  [\"name\", \"name\"],\n  [\"newest\", \"created_at DESC\"],\n]);\n\napp.get(\"/api/products\", async (req, res) => {\n  const order = ____;\n  const { rows } = await db.query(\n    `SELECT id, name FROM products ORDER BY ${order}`);\n  res.json(rows);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "req.query.sort.replaceAll(\"'\", \"''\")"
+        },
+        {
+          "id": "b",
+          "text": "\"'\" + req.query.sort + \"'\""
+        },
+        {
+          "id": "c",
+          "text": "req.query.sort.split(\" \")[0]"
+        },
+        {
+          "id": "d",
+          "text": "SORTS.get(req.query.sort) ?? \"name\""
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Column names cannot be parameters; map the user's choice through an allow-list to SQL you wrote yourself."
+  },
+  {
+    "key": "sec.xss.tf.01",
+    "concept": "sec.xss",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Stored XSS can only harm the user who submitted the malicious input.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Stored XSS is saved on the server, so the script runs in the browser of every user who views that content."
+  },
+  {
+    "key": "sec.xss.mc.01",
+    "concept": "sec.xss",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A user posts the comment <script>alert(1)</script>. The server renders comments into the page's HTML, and now every visitor sees an alert. What is this?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Reflected XSS"
+        },
+        {
+          "id": "b",
+          "text": "Stored XSS"
+        },
+        {
+          "id": "c",
+          "text": "SQL injection"
+        },
+        {
+          "id": "d",
+          "text": "CSRF"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Input that is saved and later rendered as HTML for other users is stored XSS; escape it when you output it."
+  },
+  {
+    "key": "sec.xss.bug.01",
+    "concept": "sec.xss",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "A comment containing <img src=x onerror=alert(1)> runs a script in every reader's browser. Find the bug.",
+      "code": "async function renderComments(postId) {\n  const res = await fetch(`/api/posts/${postId}/comments`);\n  const comments = await res.json();\n  const list = document.querySelector(\"#comments\");\n  for (const c of comments) {\n    const li = document.createElement(\"li\");\n    li.innerHTML = c.text;\n    list.append(li);\n  }\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Assign li.textContent = c.text instead"
+        },
+        {
+          "id": "f2",
+          "text": "Strip <script> tags from c.text before inserting it"
+        },
+        {
+          "id": "f3",
+          "text": "Validate the comment in the browser before it is posted"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f1"
+      }
+    },
+    "remember": "innerHTML parses text as markup; use textContent for untrusted text, since filtering script tags misses event handlers."
+  },
+  {
+    "key": "sec.xss.out.01",
+    "concept": "sec.xss",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "function escapeHtml(s) {\n  return s\n    .replace(\"&\", \"&amp;\")\n    .replace(\"<\", \"&lt;\")\n    .replace(\">\", \"&gt;\");\n}\nconsole.log(escapeHtml(\"<b>hi</b>\"));",
+      "options": [
+        {
+          "id": "a",
+          "text": "&lt;b&gt;hi&lt;/b&gt;"
+        },
+        {
+          "id": "b",
+          "text": "&lt;b&gt;hi</b>"
+        },
+        {
+          "id": "c",
+          "text": "&lt;b>hi</b>"
+        },
+        {
+          "id": "d",
+          "text": "<b>hi</b>"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "replace with a string pattern changes only the first match, so hand-rolled escapers leak tags; use a vetted escaping function."
+  },
+  {
+    "key": "sec.xss.match.01",
+    "concept": "sec.xss",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Untrusted text is inserted where HERE stands. Match each context with the protection it needs.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "<p>HERE</p>"
+        },
+        {
+          "id": "l2",
+          "text": "<input value=\"HERE\">"
+        },
+        {
+          "id": "l3",
+          "text": "<a href=\"HERE\">"
+        },
+        {
+          "id": "l4",
+          "text": "<script>const d = HERE;</script>"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Allow only http(s) URLs, since javascript: needs no special characters"
+        },
+        {
+          "id": "r2",
+          "text": "Serialize as JSON and escape < so </script> cannot appear"
+        },
+        {
+          "id": "r3",
+          "text": "HTML-escape < and & so no tag can start"
+        },
+        {
+          "id": "r4",
+          "text": "Escape \" and & so the value cannot leave the quotes"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Escaping depends on where the text lands: text, attribute, URL and script each need their own encoding."
+  },
+  {
+    "key": "sec.csrf.tf.01",
+    "concept": "sec.csrf",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "CSRF relies on the browser sending the victim's cookies with a request that another website triggered.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A forged request carries the victim's cookies automatically, so the server must check where it came from."
+  },
+  {
+    "key": "sec.csrf.mc.01",
+    "concept": "sec.csrf",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "The forms of a bank app all carry a CSRF token that POST /transfer checks. Which endpoint can still be abused with CSRF?",
+      "options": [
+        {
+          "id": "a",
+          "text": "GET /api/rates, which returns public exchange rates"
+        },
+        {
+          "id": "b",
+          "text": "POST /transfer/confirm, which checks the same token"
+        },
+        {
+          "id": "c",
+          "text": "GET /statement, which only shows the user's balance"
+        },
+        {
+          "id": "d",
+          "text": "GET /transfer?to=...&amount=..., which also moves money"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Any request that changes state needs CSRF protection, and a GET that changes data can be fired by a plain link or image."
+  },
+  {
+    "key": "sec.csrf.order.01",
+    "concept": "sec.csrf",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "bank.example sets its session cookie with SameSite=None and uses no CSRF token. Put the steps of a CSRF attack in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The browser attaches the bank's session cookie to the request"
+        },
+        {
+          "id": "s2",
+          "text": "The victim logs in to bank.example and gets a session cookie"
+        },
+        {
+          "id": "s3",
+          "text": "The bank sees a valid session and makes the transfer"
+        },
+        {
+          "id": "s4",
+          "text": "The victim opens a page on evil.example"
+        },
+        {
+          "id": "s5",
+          "text": "That page auto-submits a hidden form to bank.example/transfer"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "CSRF needs an existing login: the attacker's page triggers the request and the browser adds the cookie."
+  },
+  {
+    "key": "sec.csrf.cloze.01",
+    "concept": "sec.csrf",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so the bank rejects form posts that were started by other websites.",
+      "code": "function checkOrigin(req, res, next) {\n  const origin = req.get(____);\n  if (origin !== \"https://bank.example\") {\n    return res.status(403).send(\"Forbidden\");\n  }\n  next();\n}\napp.post(\"/transfer\", checkOrigin, transfer);",
+      "options": [
+        {
+          "id": "a",
+          "text": "\"Host\""
+        },
+        {
+          "id": "b",
+          "text": "\"Cookie\""
+        },
+        {
+          "id": "c",
+          "text": "\"Origin\""
+        },
+        {
+          "id": "d",
+          "text": "\"X-Forwarded-For\""
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "The browser sets Origin to the site that started the request; Host only names the server being called."
+  },
+  {
+    "key": "sec.csrf.mc.02",
+    "concept": "sec.csrf",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A JSON API uses cookie sessions, has no CSRF token and no CORS configuration, and rejects every request whose Content-Type is not application/json. Why can a page on another site not forge a POST to it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Forms cannot send that type, and fetch() with it needs a CORS preflight the API never approves"
+        },
+        {
+          "id": "b",
+          "text": "Browsers never attach cookies to a cross-site request whose body is JSON"
+        },
+        {
+          "id": "c",
+          "text": "The same-origin policy stops cross-site POST requests from being sent at all"
+        },
+        {
+          "id": "d",
+          "text": "A cross-site fetch() cannot set a Content-Type header, so the request is dropped"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Forms can only send urlencoded, multipart or text/plain bodies; any other Content-Type makes a cross-site request wait for a CORS preflight."
+  },
+  {
+    "key": "sec.access-control.tf.01",
+    "concept": "sec.access-control",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If an API checks that the request comes from a logged-in user, each user can reach only their own data.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Authentication says who the user is; every request must still check that this user may touch this record."
+  },
+  {
+    "key": "sec.access-control.mc.01",
+    "concept": "sec.access-control",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "The Delete user button is shown only to admins, but a normal user who sends DELETE /api/users/5 by hand succeeds. What is the fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Check the caller's admin role on the server in that endpoint"
+        },
+        {
+          "id": "b",
+          "text": "Remove the endpoint's path from the JavaScript bundle"
+        },
+        {
+          "id": "c",
+          "text": "Rename the endpoint to a long, unguessable path"
+        },
+        {
+          "id": "d",
+          "text": "Also disable the button with the disabled attribute"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Hiding a button is not access control; the server must check the caller's permission on every request."
+  },
+  {
+    "key": "sec.access-control.bug.01",
+    "concept": "sec.access-control",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "requireAuth sets req.user from the session. Logs show users deleting notes that belong to other accounts. Find the bug.",
+      "code": "app.delete(\"/notes/:id\", requireAuth, async (req, res) => {\n  const note = await db.notes.find(req.params.id);\n  if (!note) return res.sendStatus(404);\n  if (note.ownerId !== req.body.userId) {\n    return res.sendStatus(403);\n  }\n  await db.notes.remove(note.id);\n  res.sendStatus(204);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use != so string and number IDs compare equal"
+        },
+        {
+          "id": "f2",
+          "text": "Compare with req.user.id instead of req.body.userId"
+        },
+        {
+          "id": "f3",
+          "text": "Return 404 instead of 403 so note IDs stay hidden"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Take the user's identity from the verified session, never from the request body the client controls."
+  },
+  {
+    "key": "sec.access-control.cloze.01",
+    "concept": "sec.access-control",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so users can read only their own invoices.",
+      "code": "app.get(\"/invoices/:id\", requireAuth, async (req, res) => {\n  const { rows } = await db.query(\n    \"SELECT * FROM invoices WHERE id = $1 AND ____\",\n    [req.params.id, req.user.id]);\n  if (rows.length === 0) return res.sendStatus(404);\n  res.json(rows[0]);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "$2 IS NOT NULL"
+        },
+        {
+          "id": "b",
+          "text": "owner_id IS NOT NULL"
+        },
+        {
+          "id": "c",
+          "text": "id = $2"
+        },
+        {
+          "id": "d",
+          "text": "owner_id = $2"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Filter by the owner in the query itself, so a guessed ID belonging to someone else finds nothing."
+  },
+  {
+    "key": "sec.access-control.odd.01",
+    "concept": "sec.access-control",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these are broken access control. Which one is a different kind of flaw?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Changing ?account=1001 to 1002 shows another customer's balance"
+        },
+        {
+          "id": "b",
+          "text": "A normal user's POST /api/admin/promote succeeds"
+        },
+        {
+          "id": "c",
+          "text": "A comment containing a script tag runs in other users' browsers"
+        },
+        {
+          "id": "d",
+          "text": "A logged-out visitor downloads /exports/report.csv by its URL"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Broken access control means reaching data or actions you are not allowed to; injected script is XSS."
+  },
+  {
+    "key": "sec.hashing.tf.01",
+    "concept": "sec.hashing",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A fast hash such as SHA-256 is a good choice for storing passwords because it keeps logins quick.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Password hashes should be slow on purpose (bcrypt, scrypt, Argon2) so every guess in an offline attack is expensive."
+  },
+  {
+    "key": "sec.hashing.mc.01",
+    "concept": "sec.hashing",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A site's Forgot password feature emails you your current password. What does that reveal?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Passwords are hashed with a per-user salt"
+        },
+        {
+          "id": "b",
+          "text": "Passwords are stored in a form that can be turned back into plain text"
+        },
+        {
+          "id": "c",
+          "text": "Passwords are hashed with bcrypt"
+        },
+        {
+          "id": "d",
+          "text": "The emails are sent over an encrypted connection"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A hashed password cannot be recovered; a site that can send it back stores it plain or encrypted."
+  },
+  {
+    "key": "sec.hashing.match.01",
+    "concept": "sec.hashing",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each term with what it means.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Encryption (AES)"
+        },
+        {
+          "id": "l2",
+          "text": "Password hashing (bcrypt)"
+        },
+        {
+          "id": "l3",
+          "text": "Encoding (Base64)"
+        },
+        {
+          "id": "l4",
+          "text": "Salt"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "One-way and deliberately slow"
+        },
+        {
+          "id": "r2",
+          "text": "Random value that makes equal passwords hash differently"
+        },
+        {
+          "id": "r3",
+          "text": "Reversible by anyone who has the key"
+        },
+        {
+          "id": "r4",
+          "text": "Reversible by anyone, no key needed"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Encoding hides nothing, encryption is reversible with a key, and password hashing is one-way, slow and salted."
+  },
+  {
+    "key": "sec.hashing.out.01",
+    "concept": "sec.hashing",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "import hashlib, os\n\ndef hash_pw(pw, salt):\n    return hashlib.pbkdf2_hmac(\"sha256\", pw, salt, 600_000)\n\ns1, s2 = os.urandom(16), os.urandom(16)\nh = hash_pw(b\"hunter2\", s1)\nprint(h == hash_pw(b\"hunter2\", s1))\nprint(h == hash_pw(b\"hunter2\", s2))",
+      "options": [
+        {
+          "id": "a",
+          "text": "True, then True"
+        },
+        {
+          "id": "b",
+          "text": "False, then False"
+        },
+        {
+          "id": "c",
+          "text": "False, then True"
+        },
+        {
+          "id": "d",
+          "text": "True, then False"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A random salt makes equal passwords hash differently, so the salt is stored with the hash and reused at login."
+  },
+  {
+    "key": "sec.hashing.order.01",
+    "concept": "sec.hashing",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Passwords are stored with bcrypt. Put the server's steps for a login in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Hash the submitted password with that salt and cost"
+        },
+        {
+          "id": "s2",
+          "text": "Create a new session for the user"
+        },
+        {
+          "id": "s3",
+          "text": "Find the user by the submitted email"
+        },
+        {
+          "id": "s4",
+          "text": "Compare the result with the stored hash in constant time"
+        },
+        {
+          "id": "s5",
+          "text": "Read the salt and cost stored with that user's hash"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "A hash cannot be decrypted, so login hashes the attempt again with the stored salt and compares the results."
+  },
+  {
+    "key": "sec.secrets.tf.01",
+    "concept": "sec.secrets",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Deleting a committed API key in a new commit removes it from the repository's history.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Git keeps every old commit, so a pushed key must be revoked and replaced, not just deleted."
+  },
+  {
+    "key": "sec.secrets.mc.01",
+    "concept": "sec.secrets",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A React app built with Vite reads a payment provider's secret key from import.meta.env.VITE_PAY_SECRET. Who can read the key?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only the server that builds the app"
+        },
+        {
+          "id": "b",
+          "text": "Only users who are logged in"
+        },
+        {
+          "id": "c",
+          "text": "Anyone who opens the site, since it is in the JavaScript bundle"
+        },
+        {
+          "id": "d",
+          "text": "No one, because Vite encrypts env variables at build time"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Anything the frontend reads ends up in the bundle; secret keys belong on the server only."
+  },
+  {
+    "key": "sec.secrets.bug.01",
+    "concept": "sec.secrets",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "After the repository was made public, someone used the company's mail account to send spam. Find the bug.",
+      "code": "import { Mailer } from \"mail-sdk\";\n\nconst mailer = new Mailer({\n  apiKey: \"mk_live_7f3a9c2e5d1b48a0\",\n  region: \"eu\",\n});\n\nexport function sendReset(to, link) {\n  return mailer.send({\n    to,\n    template: \"password-reset\",\n    data: { link },\n  });\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Read it from process.env.MAIL_API_KEY and revoke the old key"
+        },
+        {
+          "id": "f2",
+          "text": "Move the key into keys.js and import it from there"
+        },
+        {
+          "id": "f3",
+          "text": "Store the key Base64-encoded and decode it at startup"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Load keys from the environment and revoke any key that was ever committed; encoding or moving it to another file hides nothing."
+  },
+  {
+    "key": "sec.secrets.out.01",
+    "concept": "sec.secrets",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "app.js and .env are already committed. What does the last command print?",
+      "code": "echo \".env\" > .gitignore\necho \"API_KEY=new-value\" > .env\ngit status --short",
+      "options": [
+        {
+          "id": "a",
+          "text": "?? .gitignore only"
+        },
+        {
+          "id": "b",
+          "text": "M .env, then ?? .gitignore"
+        },
+        {
+          "id": "c",
+          "text": "D .env, then ?? .gitignore"
+        },
+        {
+          "id": "d",
+          "text": "Nothing, both files are ignored"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": ".gitignore only affects untracked files; a committed file needs git rm --cached, and its secret must be rotated."
+  },
+  {
+    "key": "sec.secrets.odd.01",
+    "concept": "sec.secrets",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these are reasonable places for a production API key. Which one is not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "An environment variable set on the server"
+        },
+        {
+          "id": "b",
+          "text": "A secrets manager such as HashiCorp Vault"
+        },
+        {
+          "id": "c",
+          "text": "The CI system's encrypted secret settings"
+        },
+        {
+          "id": "d",
+          "text": "A config.json committed to the repository"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Secrets live in the environment, a secrets manager or CI secrets, never in files committed to the repo."
+  },
+  {
+    "key": "sec.jwt.tf.01",
+    "concept": "sec.jwt",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A server must verify a JWT's signature before trusting any claim in it, such as the user's role.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Anyone can edit a JWT's payload; only a verified signature proves the server issued those claims."
+  },
+  {
+    "key": "sec.jwt.mc.01",
+    "concept": "sec.jwt",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "An API issues JWTs that expire after 24 hours. A user logs out and the frontend deletes its copy, but a copy stolen earlier still works. Why?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A JWT stays valid until it expires unless the server tracks revoked tokens"
+        },
+        {
+          "id": "b",
+          "text": "The API cached the token's claims in memory for 24 hours"
+        },
+        {
+          "id": "c",
+          "text": "JWTs are encrypted, so the server cannot tell the two copies apart"
+        },
+        {
+          "id": "d",
+          "text": "Signature checks are skipped for tokens that were already used"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "The server keeps no record of a JWT, so logout cannot revoke it; keep lifetimes short or keep a deny-list."
+  },
+  {
+    "key": "sec.jwt.out.01",
+    "concept": "sec.jwt",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The signing secret is not in this code. What does it print?",
+      "code": "const token =\n  \"eyJhbGciOiJIUzI1NiJ9\" +\n  \".eyJzdWIiOiI0MiIsInJvbGUiOiJ1c2VyIn0\" +\n  \".4f8Kc2xq9T1u0aVwYbQ3nR7mJpL5eZ6sDhG8iWkXo1E\";\nconst payload = token.split(\".\")[1];\nconsole.log(Buffer.from(payload, \"base64url\").toString());",
+      "options": [
+        {
+          "id": "a",
+          "text": "{\"alg\":\"HS256\"}"
+        },
+        {
+          "id": "b",
+          "text": "Unreadable bytes, because the payload is encrypted"
+        },
+        {
+          "id": "c",
+          "text": "{\"sub\":\"42\",\"role\":\"user\"}"
+        },
+        {
+          "id": "d",
+          "text": "An error, because the secret is missing"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A JWT payload is only Base64url-encoded, so anyone can read it; never put secrets in it."
+  },
+  {
+    "key": "sec.jwt.cloze.01",
+    "concept": "sec.jwt",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "This service checks the HMAC signature itself and must also reject expired tokens. Fill the blank.",
+      "code": "// signature already checked by verifyHmac(token)\nconst [, body] = token.split(\".\");\nconst claims = JSON.parse(\n  Buffer.from(body, \"base64url\").toString());\n\nif (____) {\n  throw new Error(\"token expired\");\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "claims.exp < Date.now()"
+        },
+        {
+          "id": "b",
+          "text": "claims.exp * 1000 < Date.now()"
+        },
+        {
+          "id": "c",
+          "text": "claims.exp > Date.now() / 1000"
+        },
+        {
+          "id": "d",
+          "text": "new Date(claims.exp) < new Date()"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "The exp claim counts seconds since 1970 while Date.now() counts milliseconds; convert before comparing."
+  },
+  {
+    "key": "sec.jwt.bug.01",
+    "concept": "sec.jwt",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "auth.example.com issues tokens for several company apps. A token issued for the internal wiki is accepted by this payments API. Find the bug.",
+      "code": "const publicKey = fs.readFileSync(\"auth-public.pem\");\n\nfunction authenticate(req, res, next) {\n  const token = req.get(\"Authorization\")?.slice(7);\n  try {\n    req.user = jwt.verify(token, publicKey, {\n      algorithms: [\"RS256\"],\n      issuer: \"https://auth.example.com\",\n    });\n  } catch {\n    return res.sendStatus(401);\n  }\n  next();\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Switch to HS256 with one secret shared by all apps"
+        },
+        {
+          "id": "f2",
+          "text": "Reject tokens whose exp is more than an hour away"
+        },
+        {
+          "id": "f3",
+          "text": "Add audience: \"payments-api\" to the verify options"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f3",
+        "acceptLines": [
+          7,
+          8,
+          9
+        ]
+      }
+    },
+    "remember": "A valid signature only proves who issued the token; check the aud claim to make sure it was issued for your API."
+  },
+  {
+    "key": "sec.input-validation.tf.01",
+    "concept": "sec.input-validation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Once the server validates all input, output escaping and SQL query parameters are no longer needed.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Valid input such as O'Brien can still break SQL or HTML, so validation adds to parameters and escaping, it never replaces them."
+  },
+  {
+    "key": "sec.input-validation.mc.01",
+    "concept": "sec.input-validation",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What does allow-list validation of an input mean?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Reject values that contain known attack strings"
+        },
+        {
+          "id": "b",
+          "text": "Accept only values that match the expected format and reject the rest"
+        },
+        {
+          "id": "c",
+          "text": "Accept input only from users who are logged in"
+        },
+        {
+          "id": "d",
+          "text": "Escape every value before it is stored"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "An allow-list says what is valid and rejects everything else; a deny-list always misses some bad input."
+  },
+  {
+    "key": "sec.input-validation.bug.01",
+    "concept": "sec.input-validation",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "The profile form edits only name and bio, yet some users have given themselves role: \"admin\". Find the bug.",
+      "code": "app.patch(\"/api/me\", requireAuth, async (req, res) => {\n  const user = await db.users.find(req.user.id);\n  Object.assign(user, req.body);\n  await db.users.save(user);\n  res.json({ name: user.name, bio: user.bio });\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Remove the role field from the profile form's HTML"
+        },
+        {
+          "id": "f2",
+          "text": "Copy only name and bio from req.body onto user"
+        },
+        {
+          "id": "f3",
+          "text": "Return 400 when req.body is not a plain object"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Copy only an allow-list of fields from the request; merging the whole body lets clients set any field."
+  },
+  {
+    "key": "sec.input-validation.out.01",
+    "concept": "sec.input-validation",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "import re\n\nusername = re.compile(r\"^[a-z0-9_]+$\")\ntests = [\"ana_99\", \"ana_99\\n\", \"ana\\nrm\", \"Ana\"]\nprint([bool(username.match(t)) for t in tests])",
+      "options": [
+        {
+          "id": "a",
+          "text": "[True, False, False, False]"
+        },
+        {
+          "id": "b",
+          "text": "[True, True, True, False]"
+        },
+        {
+          "id": "c",
+          "text": "[True, False, False, True]"
+        },
+        {
+          "id": "d",
+          "text": "[True, True, False, False]"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "In Python, $ also matches before a trailing newline; use re.fullmatch or \\Z to match the whole string."
+  },
+  {
+    "key": "sec.input-validation.odd.01",
+    "concept": "sec.input-validation",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these checks still protect the API when someone calls it with curl. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "A pattern attribute on the form's email input"
+        },
+        {
+          "id": "b",
+          "text": "A [Range(1, 10)] annotation on the API's request DTO"
+        },
+        {
+          "id": "c",
+          "text": "A CHECK (quantity > 0) constraint on the table"
+        },
+        {
+          "id": "d",
+          "text": "A Zod schema parsed inside the Express handler"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Browser-side checks help honest users; only checks on the server or in the database stop a crafted request."
+  },
+  {
+    "key": "sec.cookies-sessions.tf.01",
+    "concept": "sec.cookies-sessions",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Any script running on the page, including one injected through XSS, can read a session token stored in localStorage.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "localStorage is open to every script on the page; an HttpOnly cookie keeps the session token out of JavaScript's reach."
+  },
+  {
+    "key": "sec.cookies-sessions.mc.01",
+    "concept": "sec.cookies-sessions",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "An attacker copies a user's session cookie value into their own browser. What usually happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Nothing, because the cookie only works from the original IP"
+        },
+        {
+          "id": "b",
+          "text": "Nothing, because browsers encrypt cookie values"
+        },
+        {
+          "id": "c",
+          "text": "The server sees two browsers and logs both out"
+        },
+        {
+          "id": "d",
+          "text": "They are signed in as that user until the session ends"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A session cookie works like a password for whoever holds it, which is why its attributes matter."
+  },
+  {
+    "key": "sec.cookies-sessions.match.01",
+    "concept": "sec.cookies-sessions",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each cookie attribute with its effect.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "HttpOnly"
+        },
+        {
+          "id": "l2",
+          "text": "Secure"
+        },
+        {
+          "id": "l3",
+          "text": "SameSite=Strict"
+        },
+        {
+          "id": "l4",
+          "text": "Max-Age=3600"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Removed by the browser after an hour"
+        },
+        {
+          "id": "r2",
+          "text": "Not sent on requests started by other sites"
+        },
+        {
+          "id": "r3",
+          "text": "Sent only over HTTPS"
+        },
+        {
+          "id": "r4",
+          "text": "Hidden from document.cookie"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "HttpOnly blocks scripts, Secure blocks plain HTTP, SameSite blocks other sites and Max-Age limits lifetime."
+  },
+  {
+    "key": "sec.cookies-sessions.cloze.01",
+    "concept": "sec.cookies-sessions",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The app uses express-session. Fill the blank so a session ID planted in the victim's browser before login is useless after login.",
+      "code": "app.post(\"/login\", async (req, res, next) => {\n  const user = await checkLogin(req.body);\n  if (!user) return res.status(401).send(\"Wrong login\");\n  req.session.____((err) => {\n    if (err) return next(err);\n    req.session.userId = user.id;\n    res.redirect(\"/dashboard\");\n  });\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "reload"
+        },
+        {
+          "id": "b",
+          "text": "save"
+        },
+        {
+          "id": "c",
+          "text": "regenerate"
+        },
+        {
+          "id": "d",
+          "text": "touch"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Issue a new session ID at login so an ID an attacker planted earlier (session fixation) never becomes authenticated."
+  },
+  {
+    "key": "sec.cookies-sessions.mc.02",
+    "concept": "sec.cookies-sessions",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "shop.example sets its session cookie with SameSite=Lax. Which request from a page on another site carries that cookie?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The user clicks a link that opens shop.example/orders"
+        },
+        {
+          "id": "b",
+          "text": "A hidden form on the page POSTs to shop.example/cart"
+        },
+        {
+          "id": "c",
+          "text": "An <img> on the page loads shop.example/avatar.png"
+        },
+        {
+          "id": "d",
+          "text": "A fetch() to shop.example/api/me with credentials included"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "SameSite=Lax sends the cookie only on top-level navigations with safe methods such as GET, not on cross-site POSTs or subresources."
+  },
+  {
+    "key": "sec.ssrf.tf.01",
+    "concept": "sec.ssrf",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In an SSRF attack, the attacker makes your server send a request to an address of the attacker's choice, such as an internal service.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "SSRF turns your server into the attacker's proxy, reaching addresses that are closed to the internet."
+  },
+  {
+    "key": "sec.ssrf.mc.01",
+    "concept": "sec.ssrf",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Why is http://169.254.169.254/ a common SSRF target on cloud servers?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It is the cloud provider's public DNS resolver"
+        },
+        {
+          "id": "b",
+          "text": "It serves instance metadata, which can include cloud credentials"
+        },
+        {
+          "id": "c",
+          "text": "It is a loopback address that skips the firewall"
+        },
+        {
+          "id": "d",
+          "text": "It hosts the load balancer's admin console"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "The cloud metadata service answers only from inside the instance and can hand out credentials, so block it for user-supplied URLs."
+  },
+  {
+    "key": "sec.ssrf.out.01",
+    "concept": "sec.ssrf",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const allowed = \"https://api.partner.com\";\nconst urls = [\n  \"https://api.partner.com.evil.io/x\",\n  \"https://api.partner.com@10.0.0.5/admin\",\n];\nfor (const u of urls) {\n  console.log(u.startsWith(allowed), new URL(u).hostname);\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "true api.partner.com.evil.io, then true api.partner.com"
+        },
+        {
+          "id": "b",
+          "text": "false api.partner.com.evil.io, then false 10.0.0.5"
+        },
+        {
+          "id": "c",
+          "text": "true api.partner.com.evil.io, then true 10.0.0.5"
+        },
+        {
+          "id": "d",
+          "text": "true api.partner.com, then true api.partner.com"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Compare the parsed hostname with an exact allow-list; a prefix check accepts look-alike hosts and user@host URLs."
+  },
+  {
+    "key": "sec.ssrf.bug.01",
+    "concept": "sec.ssrf",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "images.partner.com has an open redirect. A pentest made /proxy return data from http://169.254.169.254/. Find the bug.",
+      "code": "const ALLOWED = new Set([\"images.partner.com\"]);\n\napp.get(\"/proxy\", async (req, res) => {\n  const url = new URL(req.query.url);\n  if (url.protocol !== \"https:\" ||\n      !ALLOWED.has(url.hostname)) {\n    return res.status(400).send(\"URL not allowed\");\n  }\n  const upstream = await fetch(url);\n  res.type(upstream.headers.get(\"content-type\"));\n  res.send(Buffer.from(await upstream.arrayBuffer()));\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Compare url.href instead of url.hostname with the list"
+        },
+        {
+          "id": "f2",
+          "text": "Pass { redirect: \"error\" } to fetch so redirects fail"
+        },
+        {
+          "id": "f3",
+          "text": "Lowercase url.hostname before checking the Set"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f2"
+      }
+    },
+    "remember": "fetch follows redirects to any address by default; refuse them, or validate every hop like the first URL."
+  },
+  {
+    "key": "sec.ssrf.order.01",
+    "concept": "sec.ssrf",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A webhook feature lets users enter any URL, so no host allow-list is possible. Put the server's checks before sending the webhook in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Reject it if any address is private, loopback or link-local"
+        },
+        {
+          "id": "s2",
+          "text": "Parse the URL and allow only http and https"
+        },
+        {
+          "id": "s3",
+          "text": "Connect to the address that was checked, not a new lookup"
+        },
+        {
+          "id": "s4",
+          "text": "Resolve the hostname to its IP addresses"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Check the IP the name resolves to and connect to that same IP, so a second DNS answer cannot point inside."
+  },
+  {
+    "key": "sec.dependencies.tf.01",
+    "concept": "sec.dependencies",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "An npm package can run its own scripts during npm install, with the permissions of the user who runs the install.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Install scripts run with your permissions, so adding a package means trusting its code and its maintainers."
+  },
+  {
+    "key": "sec.dependencies.mc.01",
+    "concept": "sec.dependencies",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A developer types npm install expresss (three s). Which risk is real?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A different package, possibly malicious, is installed and its install scripts run"
+        },
+        {
+          "id": "b",
+          "text": "npm corrects the typo and installs express"
+        },
+        {
+          "id": "c",
+          "text": "Nothing, because every package on the registry is reviewed by npm"
+        },
+        {
+          "id": "d",
+          "text": "Nothing, because install scripts run in a sandbox without file access"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Typosquatted names are a common way to ship malware; check the exact package name before you install."
+  },
+  {
+    "key": "sec.dependencies.match.01",
+    "concept": "sec.dependencies",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each item with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "package-lock.json"
+        },
+        {
+          "id": "l2",
+          "text": "npm ci"
+        },
+        {
+          "id": "l3",
+          "text": "npm audit"
+        },
+        {
+          "id": "l4",
+          "text": "\"^1.4.2\" in package.json"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Reports installed packages with known vulnerabilities"
+        },
+        {
+          "id": "r2",
+          "text": "Records the exact version of every installed package"
+        },
+        {
+          "id": "r3",
+          "text": "Allows any 1.x version from 1.4.2 upward"
+        },
+        {
+          "id": "r4",
+          "text": "Installs exactly what the lockfile lists, or fails"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "The lockfile pins exact versions, npm ci installs them, npm audit flags known flaws, and ^ allows minor updates."
+  },
+  {
+    "key": "sec.dependencies.order.01",
+    "concept": "sec.dependencies",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "An advisory says a package your app uses has a critical flaw, fixed in a newer version. Put the response in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Deploy the new build"
+        },
+        {
+          "id": "s2",
+          "text": "Update to the fixed version, updating the lockfile"
+        },
+        {
+          "id": "s3",
+          "text": "Check the lockfile for an affected version"
+        },
+        {
+          "id": "s4",
+          "text": "Run the test suite against the update"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s2",
+          "s4",
+          "s1"
+        ]
+      }
+    },
+    "remember": "Confirm you are affected, upgrade through the lockfile, test, then ship the fixed build."
+  },
+  {
+    "key": "sec.dependencies.odd.01",
+    "concept": "sec.dependencies",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these reduce the risk from a malicious or compromised package release. Which one increases it?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Committing the lockfile and installing with npm ci"
+        },
+        {
+          "id": "b",
+          "text": "Running npm update in the deploy script to get the latest patches"
+        },
+        {
+          "id": "c",
+          "text": "Reviewing dependency update pull requests before merging"
+        },
+        {
+          "id": "d",
+          "text": "Installing in CI with --ignore-scripts so install hooks do not run"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Updating at deploy time ships versions nobody reviewed or tested; update in a pull request through the lockfile."
+  },
+  {
+    "key": "sec.least-privilege.tf.01",
+    "concept": "sec.least-privilege",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A web app should connect to its database as a superuser, so its queries never fail on missing permissions.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Give the app a role with only the table rights it uses, so an injection or leaked password does limited damage."
+  },
+  {
+    "key": "sec.least-privilege.mc.01",
+    "concept": "sec.least-privilege",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A CI job only uploads build files to one storage bucket. Which credentials should it get?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Admin access to the whole cloud account"
+        },
+        {
+          "id": "b",
+          "text": "Read and write access to every bucket"
+        },
+        {
+          "id": "c",
+          "text": "The same key the production app uses"
+        },
+        {
+          "id": "d",
+          "text": "Write access to that one bucket only"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Each job gets its own credentials limited to what it does, so a leaked CI key cannot touch anything else."
+  },
+  {
+    "key": "sec.least-privilege.match.01",
+    "concept": "sec.least-privilege",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each database user with the least privilege it needs.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Web app that reads and writes orders"
+        },
+        {
+          "id": "l2",
+          "text": "Migration job"
+        },
+        {
+          "id": "l3",
+          "text": "Reporting dashboard"
+        },
+        {
+          "id": "l4",
+          "text": "Health check"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "CREATE and ALTER on the app's schema"
+        },
+        {
+          "id": "r2",
+          "text": "SELECT on a few reporting views"
+        },
+        {
+          "id": "r3",
+          "text": "CONNECT only, enough to run SELECT 1"
+        },
+        {
+          "id": "r4",
+          "text": "SELECT, INSERT and UPDATE on the app's tables"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "Split database users by job, so the everyday app role cannot change the schema and reports cannot write."
+  },
+  {
+    "key": "sec.least-privilege.odd.01",
+    "concept": "sec.least-privilege",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "An API token may leak one day. Three of these limit what an attacker can do with the leaked token. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Scoping the token to one API with an audience claim"
+        },
+        {
+          "id": "b",
+          "text": "Giving the token a 15-minute lifetime"
+        },
+        {
+          "id": "c",
+          "text": "Storing the token in an encrypted vault"
+        },
+        {
+          "id": "d",
+          "text": "Granting the token only the read:orders permission"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Protecting a token lowers the chance of a leak; scope, lifetime and permissions limit the damage once it leaks."
+  },
+  {
+    "key": "sec.least-privilege.order.01",
+    "concept": "sec.least-privilege",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A server starts as root because it must listen on port 443. Put its startup in order so client requests are handled without root.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Call setuid to switch to the app's user"
+        },
+        {
+          "id": "s2",
+          "text": "Start accepting and handling requests"
+        },
+        {
+          "id": "s3",
+          "text": "Bind port 443 and read the root-only TLS key"
+        },
+        {
+          "id": "s4",
+          "text": "Call setgid to switch to the app's group"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s4",
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Do the privileged work first, then drop the group before the user, because after setuid the process can no longer change its group."
+  }
+]
