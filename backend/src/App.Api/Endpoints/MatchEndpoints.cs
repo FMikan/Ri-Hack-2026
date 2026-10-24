@@ -21,6 +21,12 @@ public static class MatchEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        group.MapPost("/calibration", async (StartCalibrationRequest request, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
+            TypedResults.Created((string?)null, await matches.StartCalibrationAsync(user.UserId(), request, ct)))
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         // Polled about once a second while the match runs; also marks the player as connected.
         group.MapGet("/{id:guid}", (Guid id, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
             matches.GetStateAsync(user.UserId(), id, ct))
@@ -31,6 +37,12 @@ public static class MatchEndpoints
             matches.SubmitAnswerAsync(user.UserId(), id, request, ct))
             .RequireRateLimiting(RateLimits.Answers)
             .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapGet("/{id:guid}/review", (Guid id, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
+            matches.ReviewAsync(user.UserId(), id, ct))
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);

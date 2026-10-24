@@ -38,6 +38,7 @@ public class Answer
     public required int Difficulty { get; init; }
     public required AnswerSource Source { get; init; }
     public Guid? MatchId { get; init; }
+    public Guid? LessonId { get; init; } // a lesson check answer
     public string? Payload { get; init; } // jsonb; null = timed out
     public required bool IsCorrect { get; init; }
     public required double Fraction { get; init; }
@@ -45,8 +46,8 @@ public class Answer
     public required int ElapsedMs { get; init; }
     public int? TimeLimitMs { get; init; } // null = untimed practice
     public AnswerLabel? Label { get; init; }
-    public required double MasteryBefore { get; init; }
-    public required double MasteryAfter { get; init; }
+    public double MasteryBefore { get; set; } // both set when the answer is recorded (LearningLog)
+    public double MasteryAfter { get; set; }
     public required DateTimeOffset CreatedAt { get; init; }
 }
 
@@ -103,11 +104,53 @@ public static class Mastery
         return weight;
     }
 
-    // ponytail: mastery only; review steps and graduation join in F2 with lessons.
-    public static void Apply(ConceptMastery concept, double fraction, double weight, DateTimeOffset now)
+    // Mastery, then the review queue: a graduated concept that falls below 70 re-enters it; a concept in the queue
+    // goes back to step 1 on any miss and moves forward on a correct answer once it is due (idea §11).
+    public static void Apply(ConceptMastery concept, double fraction, double weight, int difficulty, DateTimeOffset now)
     {
         concept.Mastery = Next(concept.Mastery, concept.AnswerCount, 100 * fraction, weight);
         concept.AnswerCount++;
         concept.LastAnsweredAt = now;
+
+        if (concept.IsGraduated)
+        {
+            if (concept.Mastery >= GameRules.SolidMastery) return;
+            concept.IsGraduated = false;
+            ReviewSchedule.Fail(concept, now);
+        }
+        else if (concept.ReviewStep is not null && fraction < 1) ReviewSchedule.Fail(concept, now);
+        else if (concept.ReviewDueAt <= now) ReviewSchedule.Success(concept, questionWasD1: difficulty == 1, now);
+    }
+}
+
+public static class ReviewSchedule
+{
+    // A passed lesson ("patched"): the concept enters the review queue at step 1.
+    public static void Patch(ConceptMastery concept, DateTimeOffset now) => Restart(concept, now);
+
+    public static void Fail(ConceptMastery concept, DateTimeOffset now) => Restart(concept, now);
+
+    // Step 5 passed with mastery ≥ 85 graduates the concept out of the queue; otherwise the next step's interval.
+    public static void Success(ConceptMastery concept, bool questionWasD1, DateTimeOffset now)
+    {
+        var steps = GameRules.ReviewIntervals.Length;
+        concept.ConsecutiveReviewSuccesses++;
+        if (concept.ReviewStep == steps && concept.Mastery >= GameRules.GraduationMastery)
+        {
+            concept.IsGraduated = true;
+            concept.ReviewStep = null;
+            concept.ReviewDueAt = null;
+            return;
+        }
+        concept.ReviewStep = Math.Min((concept.ReviewStep ?? 0) + 1, steps);
+        var interval = GameRules.ReviewIntervals[concept.ReviewStep.Value - 1];
+        concept.ReviewDueAt = now + (questionWasD1 ? interval / 2 : interval);
+    }
+
+    private static void Restart(ConceptMastery concept, DateTimeOffset now)
+    {
+        concept.ReviewStep = 1;
+        concept.ReviewDueAt = now + GameRules.ReviewIntervals[0];
+        concept.ConsecutiveReviewSuccesses = 0;
     }
 }

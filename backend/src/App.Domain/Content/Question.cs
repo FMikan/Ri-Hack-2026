@@ -23,6 +23,16 @@ public class Question
     public required DateTimeOffset CreatedAt { get; init; }
 }
 
+// One player's report of a broken question; the third report quarantines the question (docs §3.2).
+public class QuestionReport
+{
+    public Guid Id { get; init; } = Guid.CreateVersion7();
+    public required Guid QuestionId { get; init; }
+    public required Guid UserId { get; init; }
+    public required string Reason { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
+}
+
 // questions.content holds the public part and the key ("answer") together; these split them.
 public static class QuestionJson
 {

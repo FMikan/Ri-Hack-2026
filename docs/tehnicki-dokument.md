@@ -30,8 +30,8 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | --- | --- | --- | --- |
 | **F0 Auth i profil** | register, login, refresh (rotacija + opoziv obitelji), logout, `/api/me`, odabir 3–5 tema, teme i koncepti, dashboard | Korisnik se registrira i vidi dashboard s temama | gotovo, u `development` |
 | **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka | gotovo, u `development` |
-| **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, PR `feature/f0b-password-reset` |
-| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | sljedeće |
+| **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, u `development` |
+| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, PR `feature/f2-review-lessons` (nagrade poduke se knjiže u F4) |
 | **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | nije počelo |
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | nije počelo |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
@@ -74,10 +74,10 @@ App.Application/                   jedna servisna klasa po featureu (AuthService
   IAppDbContext.cs, AppException.cs (ErrorCodes)
   Auth/         AuthService (register, login, refresh, logout; F0b: forgot/reset), ITokenService + IPasswordHasher, IEmailSender, AuthDtos
   Me/           MeService (get, update, topics, dashboard; kasnije knowledge map, stats, matches), MeDtos
-  Content/      ContentService (topics, concepts; kasnije: GetQuestion, ReportQuestion, RetireQuestion, GetExplanation, IExplanationGenerator, RecalibrateDifficulty
+  Content/      ContentService (topics, concepts, question, explanation, report; kasnije RetireQuestion, RecalibrateDifficulty), IExplanationGenerator, QuestionView
   Matches/      StartBotMatch, StartPracticeMatch, StartCalibration, GetMatchState, BanTopic, SubmitAnswer, NextQuestion, ResignMatch, AdvanceMatches, FinishMatch, GetMatchReview, RequestRematch, AcceptRematch, MatchStateMapper, MatchLock
   Matchmaking/  JoinQueue, GetQueueState, LeaveQueue, AcceptProposal, RunMatchmaking, AcceptGhostOffer, DeclineGhostOffer
-  Lessons/      StartLesson, SubmitLessonCheck, GetLesson, ILessonGenerator
+  Lessons/      LessonService (start, get, check), ILessonGenerator, LessonDtos
   Economy/      Rewarder (jedina klasa koja piše u reward_events), GetShop, PurchaseItem, SetEquipment
   Daily/        GetDailyChallenge, AttemptDailyChallenge, GetDailyTasks, RecordActivity (streak)
   Social/       friends + friend challenges use caseovi
@@ -85,7 +85,7 @@ App.Application/                   jedna servisna klasa po featureu (AuthService
   Seasons/      CloseSeason, CloseWeek, RefreshGrandmasters
 App.Infrastructure/
   AppDbContext.cs, Configurations/*.cs (jedna klasa po entitetu), SnakeCaseEnumConverter.cs
-  EmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
+  EmailSender.cs, ClaudeAi.cs (oba AI sučelja)
   Seed/Seeder.cs + Seed/topics.json + Seed/questions/<tema>.json (embedded resources, nema problema s putanjama u Dockeru)
 App.Api/
   Auth.cs (JWT izdavanje i validacija, PasswordHasher adapter, ClaimsPrincipal.UserId()), AppExceptionHandler.cs (AppException → Problem Details),
@@ -456,10 +456,11 @@ create table lessons (
   concept_ids    uuid[] not null,          -- promašeni u partiji + do 2 kronične praznine
   cards          jsonb not null,           -- [{"conceptId","title","why","code","language","misconception"}] ×3–5
   cards_source   text not null check (cards_source in ('ai','cache','fallback')),
-  check_question_ids uuid[] not null,      -- 3; [0] = varijanta promašenog pitanja
+  check_question_ids uuid[] not null,      -- 3; [0] = varijanta promašenog pitanja; nakon pada nova tri (ključevi starih su prikazani)
   check_results  jsonb,                    -- [{"questionId","payload","isCorrect"}] zadnjeg pokušaja
   attempt        smallint not null default 1,
   last_attempt_at timestamptz,
+  first_for_match boolean not null default true,   -- druga poduka za istu partiju je bez nagrade
   rewarded       boolean not null default false,
   retry_after    timestamptz,              -- pad: +10 min
   created_at     timestamptz not null,
@@ -481,9 +482,12 @@ Pravila sastavljanja (`StartLesson`, `LessonRules`):
 
 - Ulaz: moji odgovori u partiji s `fraction < 1`; ako ih nema → 409 `urn:app:lesson/nothing-missed` i `MatchResultDto.lessonAvailable = false`.
 - Varijanta: izvor je moj promašaj s najvećim `base_points · (1 - fraction)` (isto pitanje koje je Blunder kartica); traži se pitanje istog koncepta, iste težine, drugog tipa, neviđeno 30 dana → fallback susjedna težina → fallback isti tip, drugo pitanje. Ostala 2 kontrolna: nova pitanja iz `concept_ids`, neviđena 30 dana.
-- Kronične praznine: do 2 koncepta teme partije sa stanjem *weak* i `answer_count > 0`, najniži mastery, koji nisu već u promašenima.
+- Koncepti: promašeni, najskuplji prvi (koncept varijante uvijek prvi), najviše 3; plus kronične praznine. Jedna kartica po konceptu, dakle 1–5 kartica.
+- Kronične praznine: do 2 koncepta teme partije sa stanjem *weak* i `answer_count > 0`, najniži mastery, koji nisu promašeni u ovoj partiji (ni oni iznad limita od 3).
+- Kartice: keš `concept_lesson_cards` po (koncept, band igrača), inače AI (paralelno, zajednički limit `Ai:TimeoutMs`), inače kartica iz `concepts.description` (`misconception` prazan). Kešira se samo AI kartica.
 - Prolaz: varijanta točna + barem 1 od 2 ostala. Zakrpani = svi `concept_ids` (doslovno §10 ideje) → `ReviewSchedule.Patch`.
-- Nagrada (`rewardEligible`): `lessons.rewarded = false` i nema ranijeg pokušaja te poduke na današnji dan (`last_attempt_at` u `Clock.Today`); druga poduka za istu partiju i pokušaj isti dan nakon pada su bez nagrade, pokušaj idući dan je s nagradom. Coins 50 + XP 100 samo ako je ≥ 1 zakrpani koncept nagradno podoban (`patched_at` null ili stariji od 7 dana); SP 2 po podobnom konceptu pod dnevnim capom 10 (×2 prva dva tjedna sezone).
+- Nagrada (`rewardEligible`): `lessons.rewarded = false` i nema ranijeg pokušaja te poduke na današnji dan (`last_attempt_at` u `Clock.Today`); druga poduka za istu partiju i pokušaj isti dan nakon pada su bez nagrade, pokušaj idući dan je s nagradom. Coins 50 + XP 100 samo ako je ≥ 1 zakrpani koncept nagradno podoban (`patched_at` null ili stariji od 7 dana); SP 2 po podobnom konceptu pod dnevnim capom 10 (×2 prva dva tjedna sezone). F2 računa `rewardEligible` i postavlja `rewarded`; iznose knjiži F4 kroz ledger (do tada `rewards` su 0, a `patched_at` se ne dira).
+- Kontrolna pitanja su bez vremena (mastery težina ×0.5), pišu `answers` sa `source = lesson_check` i `lesson_id`. Pad: `retry_after = now + 10 min`, `attempt + 1`, nova tri kontrolna pitanja.
 
 ### 3.7 Ekonomija
 
@@ -794,11 +798,10 @@ Finish(now)                                       §17: human s disconnected_at 
 | `ITokenService` | `JwtTokenService` (u `App.Api/Auth.cs`, uz JwtBearer paket) | HS256, ključ iz `Auth:JwtSigningKey` (env `Auth__JwtSigningKey`, ≥ 32 bajta, u `.env`), issuer/audience iz konfiguracije; `JwtBearerOptions.TimeProvider` = isti `TimeProvider` (testovi pomiču sat) |
 | `IPasswordHasher` | `PasswordHasherAdapter` nad `PasswordHasher<User>` (u `App.Api/Auth.cs`) | PBKDF2; nepoznati e-mail se provjerava protiv lažnog hasha da odgovor traje jednako |
 | `IEmailSender` | `EmailSender`: SMTP (`System.Net.Mail`, `Email:Smtp:Host/Port/Username/Password/From/EnableSsl` iz env) kad je `Email:Smtp:Host` postavljen, inače link ide u log (lokalni razvoj) | reset lozinke; link je `{Frontend:BaseUrl}/reset-password?token=...`; SMTP slanje je fire-and-forget (`Task.Run` + log greške) da odgovor ne otkriva postoji li e-mail; testovi koriste `FakeEmailSender` |
-| `IExplanationGenerator` | `ClaudeExplanationGenerator`, `StaticExplanationGenerator` (vraća `remember`) | `Ai:TimeoutMs` → fallback; rezultat se kešira u `questions.explanation`; nikad se ne zove iz `GET /api/matches/{id}` ni iz `SubmitAnswer` |
-| `ILessonGenerator` | `ClaudeLessonGenerator`, `FallbackLessonGenerator` (kartice iz `concepts.description`) | keš u `concept_lesson_cards` po (koncept, band) |
+| `IExplanationGenerator`, `ILessonGenerator` | `ClaudeAi` (jedna klasa za oba); bez `ANTHROPIC_API_KEY` baca `NotSupportedException`. Fallback radi pozivatelj kroz `AiOptions.TryAsync`: objašnjenje → `remember` (`source: 'static'`), kartica → `concepts.description` | `Ai:TimeoutMs` (8000) ograničava svaki poziv; objašnjenje se kešira u `questions.explanation`, kartica u `concept_lesson_cards`; nikad se ne zove iz `GET /api/matches/{id}` ni iz `SubmitAnswer` |
 | `TimeProvider` | `TimeProvider.System`; testovi `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) inicijaliziran na `DateTimeOffset.UtcNow` | |
 
-AI pozivi (`Anthropic` NuGet): `client.Messages.Create` s `Model = "claude-opus-5-5"`, `OutputConfig.Format` JSON shema za `{whyCorrect, whyDistractor, remember}` odnosno `[{title, why, code, language, misconception}]`, `MaxTokens` 2048, `CancellationToken` s `Ai:TimeoutMs`. Ključ `ANTHROPIC_API_KEY` iz `.env`; bez ključa se registrira fallback implementacija (hackathon radi bez AI-ja).
+AI pozivi (`Anthropic` NuGet): `client.Beta.Messages.Create` s `Model = "claude-opus-5-5"`, effort `low` (kratak odgovor unutar 8 s), `OutputConfig.Format` JSON shema za `{whyCorrect, whyDistractor, remember}` odnosno `{title, why, code, language, misconception}` (jedna kartica po pozivu), `MaxTokens` 2048, server-side fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) za odbijene zahtjeve, `CancellationToken` s `Ai:TimeoutMs`. Ključ `ANTHROPIC_API_KEY` iz `.env`; bez ključa igra radi na fallbacku.
 
 Novi paketi: `Microsoft.AspNetCore.Authentication.JwtBearer`, `EFCore.NamingConventions`, `Anthropic`, `Microsoft.Extensions.ApiDescription.Server` (Api: `dotnet build` piše `openapi/v1.json` koji se commita); `Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing` (testovi). Frontend: `openapi-typescript` (dev) za generiranje tipova iz committanog `openapi/v1.json`.
 
@@ -813,7 +816,8 @@ urn:app:topics/count            (nije 3–5)          urn:app:topics/locked-in-q
 urn:app:queue/already-in        urn:app:queue/not-in                 urn:app:proposal/expired          urn:app:queue/no-ghost-offer
 urn:app:match/not-participant   urn:app:match/wrong-phase            urn:app:match/not-your-turn       urn:app:match/already-in-match
 urn:app:match/already-answered  urn:app:match/wrong-index            urn:app:match/topic-not-in-pool   urn:app:match/not-finished
-urn:app:lesson/already-passed   urn:app:lesson/retry-too-soon        urn:app:lesson/nothing-missed
+urn:app:lesson/already-passed   urn:app:lesson/retry-too-soon        urn:app:lesson/nothing-missed     urn:app:match/nothing-to-calibrate
+urn:app:question/not-answered (403)  urn:app:question/not-found (404)  urn:app:lesson/not-found (404)
 urn:app:shop/insufficient-coins urn:app:shop/already-owned           urn:app:shop/freeze-limit         urn:app:shop/not-owned
 urn:app:auth/invalid-credentials urn:app:auth/email-taken            urn:app:auth/username-taken       urn:app:auth/reset-token-invalid
 urn:app:friends/already         urn:app:challenge/expired            urn:app:daily/already-attempted   urn:app:daily/too-late
@@ -909,9 +913,9 @@ interface MatchSummaryDto { id: Uuid; kind: MatchKind; topic?: TopicDto; opponen
 GET  /api/topics                           → TopicDto[]            (javno)
 GET  /api/topics/{slug}/concepts           → ConceptDto[]
 GET  /api/bots                             → { persona: BotPersona; displayRating: number; recommended: boolean }[]
-GET  /api/questions/{id}                   → QuestionPublicDto & { key?: AnswerKeyDto }   // key samo ako sam ga odgovorio
-POST /api/questions/{id}/report            { reason } → 204        // 3. prijava → quarantine
-GET  /api/questions/{id}/explanation       → ExplanationDto         // samo ako je korisnik to pitanje odgovorio; prvi poziv generira i kešira; klijent ga zove zasebno (nikad u pollingu)
+GET  /api/questions/{id}                   → QuestionPublicDto & { key?: AnswerKeyDto }   // key samo ako sam ga odgovorio; 404 question/not-found
+POST /api/questions/{id}/report            { reason } → 204        // reason 1–500; jedna po igraču; 3. igrač → quarantine (završene partije ostaju iste); 403 question/not-answered
+GET  /api/questions/{id}/explanation       → ExplanationDto         // samo ako je korisnik to pitanje odgovorio (inače 403 question/not-answered); prvi poziv generira i kešira (≤ 8 s); klijent ga zove zasebno (nikad u pollingu); source 'static' = AI nedostupan, whyCorrect i whyDistractor su prazni
 ```
 
 ### 6.5 Partija (F1 bot/practice, F3 ranked)
@@ -919,7 +923,7 @@ GET  /api/questions/{id}/explanation       → ExplanationDto         // samo ak
 ```ts
 POST /api/matches/bot          { persona: BotPersona; topicId: Uuid }                         → 201 MatchStateDto   (409 match/already-in-match)
 POST /api/matches/practice     { topicId: Uuid; timed: boolean; conceptIds?: Uuid[] }        → 201 MatchStateDto   ("Practice this", "Due for review", prijedlog nakon poraza)
-POST /api/matches/calibration  { topicId: Uuid }                                             → 201 MatchStateDto   (F2; 5 pitanja D1–D2 nad 'unknown' konceptima, bez nagrade)
+POST /api/matches/calibration  { topicId: Uuid }                                             → 201 MatchStateDto   (F2; do 5 pitanja D1–D2 nad 'unknown' konceptima, s vremenom, bez nagrade; 409 match/nothing-to-calibrate)
 GET  /api/matches/{id}                                                                        → MatchStateDto  (poll 1 s; samo sudionik)
 POST /api/matches/{id}/veto/ban   { topicId }                                                 → MatchStateDto
 POST /api/matches/{id}/answers    { questionIndex; payload; clientElapsedMs }                 → MatchStateDto  (409 already-answered / wrong-index / wrong-phase)
@@ -991,7 +995,7 @@ interface QueueStateDto {
 ### 6.7 Poduka i napredak (F2)
 
 ```ts
-POST /api/lessons                 { matchId: Uuid }                          → 201 LessonDto   (409 lesson/nothing-missed; druga za istu partiju: bez nagrade)
+POST /api/lessons                 { matchId: Uuid }                          → 201 LessonDto   (409 lesson/nothing-missed, match/not-finished; 403 tuđa partija; druga za istu partiju: bez nagrade)
 GET  /api/lessons/{id}                                                       → LessonDto
 POST /api/lessons/{id}/check      { answers: { questionId: Uuid; payload: AnswerPayload }[] }  → LessonResultDto  (409 retry-too-soon / already-passed)
 GET  /api/me/progress/due                                                    → { concepts: (ConceptDto & { reviewDueAt: Iso; reviewStep: number; topic: TopicDto })[] }
@@ -1073,12 +1077,21 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - `find_bug`: linije koda broje se od 1 (`split('\n')`); ključ može imati `acceptLines` (druge linije iste naredbe) za isticanje.
 - `409 urn:app:match/already-in-match`: `me.activeMatchId` vodi natrag u partiju (i nakon reloada).
 - Trening bez vremena nema `phaseDeadline`; nakon međuekrana klijent zove `POST .../next`. Objašnjenje (`/api/questions/{id}/explanation`) dolazi tek u F2.
-- `result.cards` (blunder, brilliant, koncept za vježbu) je popunjen; rating, coins, XP i SP su 0 do F3/F4, a `lessonAvailable`, `reviewAvailable` i `rematchAvailable` su `false` do F2/F3.
+- `result.cards` (blunder, brilliant, koncept za vježbu) je popunjen; rating, coins, XP i SP su 0 do F3/F4, a `rematchAvailable` je `false` do F3.
 
 **F0b: reset lozinke i rate limit**
 - `/forgot-password` uvijek vraća 202: ekran uvijek kaže "ako račun postoji, poslali smo link", bez obzira na e-mail.
 - Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
+
+**F2: analiza, objašnjenja, poduka, red ponavljanja, mapa znanja, kalibracija**
+- Rezultat: `reviewAvailable` je `true`; `lessonAvailable` kad je išta promašeno; `lessonId` je zadnja poduka za tu partiju (ako postoji, otvori nju s `GET /api/lessons/{id}` umjesto nove); `lessonRewardEligible` za gumb "Poduka (+50)".
+- Analiza: `GET /api/matches/{id}/review`. `explanation` je u pitanju samo ako ga je netko već otvorio; inače klikom zovi `GET /api/questions/{id}/explanation` (prvi put može trajati do 8 s, prikaži loader). `source: 'static'` znači da AI nije dostupan: prikaži samo `remember`. "Prijavi pitanje" je `POST /api/questions/{id}/report` (204, i kad je već prijavljeno).
+- Poduka: `POST /api/lessons { matchId }` (201). Kartice redom (jedna po konceptu), zatim 3 kontrolna pitanja bez vremena, `check[0]` je varijanta promašenog. `POST /api/lessons/{id}/check { answers }` vraća rezultat s ključevima. Pad: `retryAfter` (10 min), nova pitanja se vide tek nakon `GET /api/lessons/{id}`; `409 urn:app:lesson/retry-too-soon` prije toga. `rewards` je `0` do F4.
+- Trening bez vremena: u međuekranu zovi objašnjenje pa `POST .../next` (igrač je odgovorio, pa endpoint radi).
+- Red ponavljanja: `dashboard.dueReviews` i `suggestion` (`review_due` s `topicId` i `conceptIds`, spremno za `POST /api/matches/practice`). Popis: `GET /api/me/progress/due`.
+- Mapa znanja: `GET /api/me/knowledge-map`, boja po `state`; `completion` je postotak (0–100) graduiranih; klik na čvor: `lastAnswers` + `GET /api/questions/{questionId}` (s ključem jer je odgovoreno) + "Vježbaj ovo" (`practice` s `conceptIds: [id]`). Gumb "Kalibriraj" kad je `calibrationAvailable`: `POST /api/matches/calibration { topicId }` je obična partija za jednog igrača (do 5 pitanja, s vremenom).
+- Dashboard `topics[].mastery` i `completion` sada imaju prave vrijednosti.
 
 ## 7. Seed sadržaja
 
@@ -1297,11 +1310,12 @@ F2 Analiza, poduka, mapa
   Lesson_check_has_variant_of_missed_question_first
   Variant_falls_back_to_neighbor_difficulty
   Lesson_pass_requires_variant_plus_one_more
-  Lesson_pass_patches_concepts_sets_review_due_tomorrow_and_rewards_50_coins_2_sp_per_concept
-  Lesson_fail_allows_retry_after_10_minutes_without_reward_same_day
-  Retry_on_a_later_day_is_rewarded
-  Second_lesson_for_same_match_gives_no_reward
-  Same_concept_rewards_at_most_once_in_7_days                           dan 6 → ne, dan 8 → da
+  Lesson_pass_patches_concepts_and_sets_review_due_tomorrow
+  Lesson_fail_allows_retry_after_10_minutes_without_reward_same_day     retry dobiva nova pitanja
+  Retry_on_a_later_day_is_reward_eligible
+  Second_lesson_for_same_match_is_not_reward_eligible_and_reuses_cached_cards
+  Lesson_cards_fall_back_to_the_concept_description_when_the_generator_times_out
+  Unanswered_question_shows_no_key_and_no_explanation
   Due_concepts_appear_in_dashboard_and_due_endpoint
   Due_concept_answered_correctly_moves_review_step
   Timeout_updates_mastery_as_wrong
@@ -1335,6 +1349,8 @@ F3 Rangirano
   Sp_win_cap_100_per_day / Upset_bonus_5_sp
   Weekly_points_only_from_ranked_and_ghost
 F4 Ekonomija
+  Lesson_pass_rewards_50_coins_100_xp_and_2_sp_per_eligible_concept
+  Same_concept_rewards_at_most_once_in_7_days                           dan 6 → ne, dan 8 → da
   Ledger_sum_equals_cached_balance                       invarijanta nakon niza nagrada
   Dedupe_key_prevents_double_reward                      FinishMatch dvaput → jedan red
   Daily_tasks_are_three_and_progress_from_activity
@@ -1396,7 +1412,7 @@ F5 Društveno i rang-liste
 - Svi upisi u partiju idu pod row lock i idempotentni su ili odbijeni s 409; `dedupe_key` na ledgeru; `current_match_id` sprječava dvije partije.
 - Korisnik vidi samo svoje partije, poduke, nagrade; javni profil poštuje `profile_visibility`.
 - Reset lozinke: token 32 nasumična bajta, SHA-256 u bazi, 1 h, jednokratan; odgovor 202 bez obzira na e-mail; slanje asinkrono da vrijeme odgovora ne otkriva korisnika.
-- `.env` dobiva `Auth__JwtSigningKey`, `Email__Smtp__*`, `ANTHROPIC_API_KEY`, `Frontend__BaseUrl` (za link u e-mailu); `.env.example` prazne placeholdere.
+- `.env` dobiva `Auth__JwtSigningKey`, `Email__Smtp__*`, `ANTHROPIC_API_KEY` (opcionalno; bez njega AI fallback), `Frontend__BaseUrl` (za link u e-mailu); `.env.example` prazne placeholdere.
 
 ## 12. Otvorena pitanja za Mateja (ideja ne precizira ili je u sukobu sama sa sobom; dokument pretpostavlja prvo)
 

@@ -2,8 +2,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Api;
 using App.Api.Endpoints;
+using App.Application;
 using App.Application.Auth;
 using App.Application.Content;
+using App.Application.Lessons;
 using App.Application.Matches;
 using App.Application.Me;
 using App.Infrastructure;
@@ -52,6 +54,9 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MeService>();
 builder.Services.AddScoped<ContentService>();
 builder.Services.AddScoped<MatchService>();
+builder.Services.AddScoped<LessonService>();
+// Live AI calls (explanations, lesson cards) give up after this and fall back (idea §16: 8 s).
+builder.Services.AddSingleton(new AiOptions(TimeSpan.FromMilliseconds(builder.Configuration.GetValue("Ai:TimeoutMs", 8000))));
 // Tests turn the tick off and advance matches themselves with a fake clock.
 if (builder.Configuration.GetValue("Game:TickEnabled", true)) builder.Services.AddHostedService<GameTickService>();
 
@@ -96,6 +101,7 @@ app.MapAuthEndpoints();
 app.MapMeEndpoints();
 app.MapContentEndpoints();
 app.MapMatchEndpoints();
+app.MapLessonEndpoints();
 
 app.Run();
 

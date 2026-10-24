@@ -3,6 +3,7 @@ using App.Application.Content;
 using App.Application.Me;
 using App.Domain;
 using App.Domain.Content;
+using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Progress;
 using App.Domain.Users;
@@ -35,6 +36,18 @@ public class MatchService(IAppDbContext db, TimeProvider time)
         var band = DeckBuilder.Band(user.Rating, user.Rating);
         return await StartAsync(user, MatchKind.Practice, request.TopicId, request.Timed, band, [Human(user)],
             (pool, player, rng, now) => DeckBuilder.BuildPractice(pool, player, request.ConceptIds ?? [], band, now, rng), ct);
+    }
+
+    // Calibration (idea §11): five timed D1–D2 questions on concepts the player has never answered, no rewards.
+    public async Task<MatchStateDto> StartCalibrationAsync(Guid userId, StartCalibrationRequest request, CancellationToken ct)
+    {
+        var user = await LoadUserAsync(userId, ct);
+        return await StartAsync(user, MatchKind.Calibration, request.TopicId, timed: true, (1, 2), [Human(user)], (pool, player, rng, _) =>
+        {
+            var deck = DeckBuilder.BuildCalibration(pool, player, rng);
+            return deck.Count > 0 ? deck
+                : throw new AppException(ErrorCodes.MatchNothingToCalibrate, "Every concept of this topic already has answers; there is nothing to calibrate.");
+        }, ct);
     }
 
     public async Task<MatchStateDto> GetStateAsync(Guid userId, Guid matchId, CancellationToken ct)
@@ -104,7 +117,19 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             .Include(m => m.Players).ThenInclude(p => p.User)
             .AsSplitQuery()
             .ToListAsync(ct);
+        return await SummariesAsync(matches, userId, ct);
+    }
+
+    private async Task<List<MatchSummaryDto>> SummariesAsync(List<Match> matches, Guid userId, CancellationToken ct)
+    {
         var topics = await TopicsAsync(matches.Select(m => m.TopicId), ct);
+        var ids = matches.Select(m => m.Id).ToList();
+        // Newest first (UUIDv7 ids break ties in creation order), so each match keeps its latest lesson.
+        var lessons = (await db.Lessons.Where(l => l.UserId == userId && l.MatchId != null && ids.Contains(l.MatchId.Value))
+                .OrderByDescending(l => l.CreatedAt).ThenByDescending(l => l.Id)
+                .Select(l => new { MatchId = l.MatchId!.Value, l.Id }).ToListAsync(ct))
+            .GroupBy(l => l.MatchId)
+            .ToDictionary(g => g.Key, g => g.First().Id);
 
         return matches.Select(m =>
         {
@@ -116,8 +141,30 @@ public class MatchService(IAppDbContext db, TimeProvider time)
                 : m.WinnerSeat == me.Seat ? MatchOutcome.Win : MatchOutcome.Loss;
             return new MatchSummaryDto(
                 m.Id, m.Kind, m.TopicId is { } t ? topics.GetValueOrDefault(t) : null, other is null ? null : Opponent(other),
-                me.Score, other?.Score ?? 0, outcome, null, m.FinishedAt, null);
+                me.Score, other?.Score ?? 0, outcome, null, m.FinishedAt, lessons.TryGetValue(m.Id, out var lessonId) ? lessonId : null);
         }).ToList();
+    }
+
+    public async Task<MatchReviewDto> ReviewAsync(Guid userId, Guid matchId, CancellationToken ct)
+    {
+        var match = await LoadAsync(matchId, ct);
+        var me = Seat(match, userId);
+        if (match.Phase != MatchPhase.Done)
+            throw new AppException(ErrorCodes.MatchNotFinished, "The analysis opens when the match is over.");
+
+        var opponentSeat = match.Players.FirstOrDefault(p => p.Seat != me.Seat)?.Seat;
+        var concepts = await ConceptsAsync(match, ct);
+        var questionIds = match.Questions.Select(q => q.QuestionId).ToList();
+        var reported = (await db.QuestionReports.Where(r => r.UserId == userId && questionIds.Contains(r.QuestionId)).Select(r => r.QuestionId).ToListAsync(ct)).ToHashSet();
+        var answers = await db.Answers.Where(a => a.MatchId == match.Id && a.UserId == userId).OrderBy(a => a.CreatedAt).ToListAsync(ct);
+        var deltas = answers.GroupBy(a => a.ConceptId)
+            .Select(g => new MasteryDeltaDto(concepts[g.Key], g.First().MasteryBefore, g.Last().MasteryAfter))
+            .ToArray();
+
+        return new MatchReviewDto(
+            (await SummariesAsync([match], userId, ct))[0],
+            match.Questions.Select(q => Review(match, q.Index, me.Seat, opponentSeat, concepts, reported.Contains(q.QuestionId))).ToArray(),
+            deltas);
     }
 
     public async Task<List<BotDto>> ListBotsAsync(Guid userId, CancellationToken ct)
@@ -180,15 +227,7 @@ public class MatchService(IAppDbContext db, TimeProvider time)
         foreach (var (player, question, answer, counts) in recorded)
         {
             if (!counts || player.UserId is not { } userId) continue;
-            var concept = await db.ConceptMastery.FindAsync([userId, question.ConceptId], ct);
-            if (concept is null)
-            {
-                concept = new ConceptMastery { UserId = userId, ConceptId = question.ConceptId, TopicId = match.TopicId!.Value };
-                db.ConceptMastery.Add(concept);
-            }
-            var before = concept.Mastery;
-            Mastery.Apply(concept, answer.Fraction, Mastery.Weight(question.Difficulty, question.Type, answer.Fraction, answer.Label, match.Timed), answer.AnsweredAt);
-            db.Answers.Add(new Answer
+            await db.RecordAsync(new Answer
             {
                 UserId = userId,
                 QuestionId = question.QuestionId,
@@ -205,10 +244,8 @@ public class MatchService(IAppDbContext db, TimeProvider time)
                 ElapsedMs = answer.ElapsedMs,
                 TimeLimitMs = match.Timed ? question.TimeLimitMs : null,
                 Label = answer.Label,
-                MasteryBefore = before,
-                MasteryAfter = concept.Mastery,
                 CreatedAt = answer.AnsweredAt,
-            });
+            }, match.Timed, ct);
         }
     }
 
@@ -225,10 +262,12 @@ public class MatchService(IAppDbContext db, TimeProvider time)
         var mastery = await db.ConceptMastery.AsNoTracking().Where(m => m.UserId == userId && m.TopicId == topicId).ToDictionaryAsync(m => m.ConceptId, ct);
         var since = now.AddDays(-GameRules.SeenQuestionDays);
         var seen = await db.Answers.Where(a => a.UserId == userId && a.CreatedAt >= since).Select(a => a.QuestionId).Distinct().ToListAsync(ct);
-        // ponytail: rotation ignores lessons until F2 adds patching ("not targeted again until patched").
+        // A concept targeted in the last two matches rests until a passed lesson patches it (idea §8).
         var lastMatches = db.MatchPlayers.Where(p => p.UserId == userId).OrderByDescending(p => p.MatchId).Take(GameRules.TargetedRotationMatches).Select(p => p.MatchId);
         var targeted = await db.MatchQuestions.Where(q => lastMatches.Contains(q.MatchId) && q.Slot == MatchSlot.Targeted).Select(q => q.ConceptId).ToListAsync(ct);
-        return new DeckPlayer(mastery, seen.ToHashSet(), targeted.ToHashSet());
+        var targetedSince = await db.Matches.Where(m => lastMatches.Contains(m.Id)).MinAsync(m => (DateTimeOffset?)m.CreatedAt, ct);
+        var patched = await db.Lessons.Where(l => l.UserId == userId && l.Status == LessonStatus.Passed && l.FinishedAt >= targetedSince).Select(l => l.ConceptIds).ToListAsync(ct);
+        return new DeckPlayer(mastery, seen.ToHashSet(), targeted.Except(patched.SelectMany(c => c)).ToHashSet());
     }
 
     private async Task<Match> LoadAsync(Guid matchId, CancellationToken ct)
@@ -288,6 +327,14 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             match.Phase == MatchPhase.Done ? await ResultAsync(match, me, opponentSeat, ct) : null);
     }
 
+    private async Task<Dictionary<Guid, ConceptDto>> ConceptsAsync(Match match, CancellationToken ct)
+    {
+        var conceptIds = match.Questions.Select(q => q.ConceptId).Distinct().ToList();
+        return await db.Concepts.Where(c => conceptIds.Contains(c.Id))
+            .Select(c => new ConceptDto(c.Id, c.Slug, c.Name, c.TopicId))
+            .ToDictionaryAsync(c => c.Id, ct);
+    }
+
     private async Task<MatchResultDto> ResultAsync(Match match, MatchPlayer me, int? opponentSeat, CancellationToken ct)
     {
         var deltas = await db.Answers
@@ -295,19 +342,11 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             .GroupBy(a => a.ConceptId)
             .Select(g => new { g.Key, Delta = g.Sum(a => a.MasteryAfter - a.MasteryBefore) })
             .ToDictionaryAsync(x => x.Key, x => x.Delta, ct);
-        var conceptIds = match.Questions.Select(q => q.ConceptId).Distinct().ToList();
-        var concepts = await db.Concepts.Where(c => conceptIds.Contains(c.Id))
-            .Select(c => new ConceptDto(c.Id, c.Slug, c.Name, c.TopicId))
-            .ToDictionaryAsync(c => c.Id, ct);
+        var concepts = await ConceptsAsync(match, ct);
         var cards = ResultCardRules.Of(match, me.Seat, deltas);
-
-        ReviewQuestionDto? Review(int? index)
-        {
-            if (index is not { } i) return null;
-            var q = match.Questions.First(x => x.Index == i);
-            var theirs = opponentSeat is { } os ? match.AnswerOf(os, i) : null;
-            return new ReviewQuestionDto(i, Public(q), Key(q), concepts[q.ConceptId], q.Slot, Result(match.AnswerOf(me.Seat, i)!), theirs is null ? null : Result(theirs), null, false);
-        }
+        var lesson = await db.Lessons.Where(l => l.MatchId == match.Id && l.UserId == me.UserId)
+            .OrderByDescending(l => l.CreatedAt).ThenByDescending(l => l.Id).FirstOrDefaultAsync(ct);
+        var lessonAvailable = match.Answers.Any(a => a.Seat == me.Seat && a.Fraction < 1);
 
         var opponent = opponentSeat is { } seat ? match.Players.First(p => p.Seat == seat) : null;
         return new MatchResultDto(
@@ -316,9 +355,23 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             new MyResultDto(me.Score, me.CorrectCount, null, null, 0, 0, 0, false),
             opponent is null ? null : new OpponentResultDto(opponent.Score, opponent.CorrectCount),
             new ResultCardsDto(
-                Review(cards.BlunderIndex), Review(cards.BrilliantIndex),
+                cards.BlunderIndex is { } b ? Review(match, b, me.Seat, opponentSeat, concepts, false) : null,
+                cards.BrilliantIndex is { } r ? Review(match, r, me.Seat, opponentSeat, concepts, false) : null,
                 cards.PracticeConceptId is { } c ? new PracticeConceptCardDto(concepts[c], Math.Round(cards.PracticeConceptDelta, 1)) : null),
-            false, false, null, false, false); // lessons and review arrive in F2, rematch in F3
+            lessonAvailable,
+            lessonAvailable && (lesson is null || LessonRules.RewardEligible(lesson, time.GetUtcNow())),
+            lesson?.Id,
+            false, // rematch arrives in F3
+            true);
+    }
+
+    private static ReviewQuestionDto Review(Match match, int index, int seat, int? opponentSeat, Dictionary<Guid, ConceptDto> concepts, bool reported)
+    {
+        var q = match.Questions.First(x => x.Index == index);
+        var theirs = opponentSeat is { } os ? match.AnswerOf(os, index) : null;
+        return new ReviewQuestionDto(
+            index, Public(q), Key(q), concepts[q.ConceptId], q.Slot, Result(match.AnswerOf(seat, index)!), theirs is null ? null : Result(theirs),
+            QuestionView.Explanation(q.Question!.Explanation), reported);
     }
 
     private static PlayerDto Player(Match match, MatchPlayer player, DateTimeOffset now) => new(

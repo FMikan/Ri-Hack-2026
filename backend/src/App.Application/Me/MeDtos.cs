@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using App.Application.Content;
 using App.Domain;
+using App.Domain.Content;
+using App.Domain.Progress;
 using App.Domain.Users;
 
 namespace App.Application.Me;
@@ -54,3 +56,17 @@ public record InboxDto(RematchInboxDto? Rematch, FriendChallengeInboxDto? Friend
 public record DashboardDto(
     MeDto Me, DashboardTopicDto[] Topics, RatingPointDto[] RatingHistory, int DueReviews, DailyTaskDto[] DailyTasks,
     bool DailyChallengeAttempted, SuggestionDto? Suggestion, InboxDto Inbox, bool QueueLocked);
+
+public record DueConceptDto(Guid Id, string Slug, string Name, Guid TopicId, DateTimeOffset ReviewDueAt, int ReviewStep, TopicDto Topic);
+
+public record DueConceptsDto(DueConceptDto[] Concepts);
+
+public record LastAnswerDto(Guid QuestionId, QuestionType Type, string Prompt, bool IsCorrect, DateTimeOffset At);
+
+public record KnowledgeConceptDto(ConceptDto Concept, double Mastery, ConceptState State, DateTimeOffset? ReviewDueAt, int? ReviewStep, LastAnswerDto[] LastAnswers);
+
+// mastery: average over answered concepts (null until one is answered); completion: % of the topic's concepts graduated.
+public record KnowledgeTopicDto(TopicDto Topic, bool Active, double? Mastery, double Completion, bool CalibrationAvailable, KnowledgeConceptDto[] Concepts);
+
+public record KnowledgeMapDto(KnowledgeTopicDto[] Topics);
+

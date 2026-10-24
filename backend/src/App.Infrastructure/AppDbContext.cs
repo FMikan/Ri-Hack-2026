@@ -1,5 +1,6 @@
 using App.Application;
 using App.Domain.Content;
+using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Progress;
 using App.Domain.Users;
@@ -16,12 +17,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<Concept> Concepts => Set<Concept>();
     public DbSet<Question> Questions => Set<Question>();
+    public DbSet<QuestionReport> QuestionReports => Set<QuestionReport>();
     public DbSet<ConceptMastery> ConceptMastery => Set<ConceptMastery>();
     public DbSet<Answer> Answers => Set<Answer>();
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<MatchPlayer> MatchPlayers => Set<MatchPlayer>();
     public DbSet<MatchQuestion> MatchQuestions => Set<MatchQuestion>();
     public DbSet<MatchAnswer> MatchAnswers => Set<MatchAnswer>();
+    public DbSet<Lesson> Lessons => Set<Lesson>();
+    public DbSet<ConceptLessonCards> ConceptLessonCards => Set<ConceptLessonCards>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
@@ -41,5 +45,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<MatchSlot>().HaveConversion<SnakeCaseEnumConverter<MatchSlot>>();
         builder.Properties<SeatKind>().HaveConversion<SnakeCaseEnumConverter<SeatKind>>();
         builder.Properties<BotPersona>().HaveConversion<SnakeCaseEnumConverter<BotPersona>>();
+        builder.Properties<LessonStatus>().HaveConversion<SnakeCaseEnumConverter<LessonStatus>>();
+        builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
     }
 }

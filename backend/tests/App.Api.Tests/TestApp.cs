@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Application.Auth;
+using App.Application.Content;
+using App.Application.Lessons;
 using App.Application.Matches;
 using App.Domain.Content;
 using App.Infrastructure;
@@ -29,6 +31,8 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.UtcNow);
 
     public FakeEmailSender Emails { get; } = new();
+
+    public FakeAi Ai { get; } = new();
 
     public JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web)
     {
@@ -62,16 +66,20 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Game:TickEnabled", "false");
         builder.UseSetting("Database:SeedOnStartup", "false");
         builder.UseSetting("RateLimit:Enabled", "false");
+        builder.UseSetting("Ai:TimeoutMs", "50");
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<TimeProvider>(Clock);
             services.AddSingleton<IEmailSender>(Emails);
+            services.AddSingleton<IExplanationGenerator>(Ai);
+            services.AddSingleton<ILessonGenerator>(Ai);
         });
     }
 
     public async Task ResetAsync()
     {
         Emails.Sent.Clear();
+        Ai.Reset();
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var tables = await db.Database
@@ -121,6 +129,30 @@ public sealed class FakeEmailSender : IEmailSender
     }
 }
 
+// Stands in for Claude: counts calls and can be slowed down past Ai:TimeoutMs (50 ms in tests) to force the fallback.
+public sealed class FakeAi : IExplanationGenerator, ILessonGenerator
+{
+    public int ExplanationCalls;
+    public int CardCalls;
+    public TimeSpan Delay { get; set; }
+
+    public void Reset() => (ExplanationCalls, CardCalls, Delay) = (0, 0, TimeSpan.Zero);
+
+    public async Task<GeneratedExplanation> ExplainAsync(ExplanationInput input, CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref ExplanationCalls);
+        await Task.Delay(Delay, cancellationToken);
+        return new GeneratedExplanation("AI why correct", "AI why distractor", "AI remember");
+    }
+
+    public async Task<GeneratedCard> CardAsync(LessonCardInput input, CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref CardCalls);
+        await Task.Delay(Delay, cancellationToken);
+        return new GeneratedCard($"AI card: {input.Concept}", "AI why", "const x = 1;", "js", "AI misconception");
+    }
+}
+
 [CollectionDefinition(nameof(ApiCollection))]
 public class ApiCollection : ICollectionFixture<TestApp>;
 
@@ -143,6 +175,17 @@ public abstract class ApiTestBase(TestApp app) : IAsyncLifetime
     protected async Task<Session> RegisterAsync(string username, string password = "secret-123")
     {
         var response = await PostAsync(Client, "/api/auth/register", new RegisterRequest { Email = $"{username}@example.com", Username = username, Password = password });
+        response.EnsureSuccessStatusCode();
+        var auth = (await ReadAsync<AuthResponse>(response))!;
+        var client = App.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+        return new Session(client, auth);
+    }
+
+    // A fresh access token for the same account, e.g. after moving the clock past the token's 15 minutes.
+    protected async Task<Session> LoginAgainAsync(Session session, string password = "secret-123")
+    {
+        var response = await PostAsync(Client, "/api/auth/login", new LoginRequest { Email = session.Auth.User.Email, Password = password });
         response.EnsureSuccessStatusCode();
         var auth = (await ReadAsync<AuthResponse>(response))!;
         var client = App.CreateClient();

@@ -24,4 +24,12 @@ public static class ErrorCodes
     public const string MatchWrongPhase = "urn:app:match/wrong-phase";
     public const string MatchWrongIndex = "urn:app:match/wrong-index";
     public const string MatchAlreadyAnswered = "urn:app:match/already-answered";
+    public const string MatchNotFinished = "urn:app:match/not-finished";
+    public const string MatchNothingToCalibrate = "urn:app:match/nothing-to-calibrate";
+    public const string QuestionNotFound = "urn:app:question/not-found";
+    public const string QuestionNotAnswered = "urn:app:question/not-answered";
+    public const string LessonNotFound = "urn:app:lesson/not-found";
+    public const string LessonNothingMissed = "urn:app:lesson/nothing-missed";
+    public const string LessonAlreadyPassed = "urn:app:lesson/already-passed";
+    public const string LessonRetryTooSoon = "urn:app:lesson/retry-too-soon";
 }
