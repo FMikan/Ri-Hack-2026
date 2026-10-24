@@ -49,6 +49,7 @@ cd frontend && npx shadcn@latest add <component>
 
 ## Frontend
 
+- Frontend agents: read `frontend/CLAUDE.md` (what the backend already serves, where the contract is).
 - All HTTP goes through `src/lib/api-client.ts` using the full origin from `VITE_API_BASE_URL` (no Vite
   proxy). Keep `src/types/api.ts` in sync with backend DTOs. No `any`.
 - Feature UI in `src/features/<feature>/`, shared bits in `src/components/shared/`, shadcn components in
