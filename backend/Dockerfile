@@ -8,6 +8,8 @@ RUN dotnet publish src/App.Api -c Release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 WORKDIR /app
 COPY --from=build /app .
+# Npgsql probes for Kerberos (GSSAPI) on connect; without it every start logs a misleading library error.
+RUN apk add --no-cache krb5-libs
 # Non-root user built into the .NET images. Listens on 8080 by default.
 USER $APP_UID
 ENTRYPOINT ["dotnet", "App.Api.dll"]

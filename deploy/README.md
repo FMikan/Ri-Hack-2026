@@ -1,5 +1,7 @@
 # Deployment
 
+Live at **https://hack.fmikan.me**, served from the VPS by the `hack` user.
+
 ## Branches
 
 | Branch | What happens on push |
@@ -17,94 +19,113 @@ directly.
 2. **publish** (main only): builds `ghcr.io/fmikan/ri-hack-2026/api` and `.../web`, tagged with the commit SHA
    and `latest`. It then starts the real production stack (`docker-compose.prod.yml`) in CI and checks
    `/health/ready`, the SPA, and a note round trip. Images are pushed only if that passes.
-3. **deploy** (main only): copies `docker-compose.prod.yml` to the server, pulls the new images, and runs
-   `docker compose up -d --wait`. The job fails, and the logs are printed, if the API does not become ready.
-   That includes the database migrations, which the API applies on startup.
+3. **deploy** (main only):
+   - copies `docker-compose.prod.yml` to the server
+   - records the commit SHA as `IMAGE_TAG` in the server `.env`
+   - pulls the new images and runs `docker compose up -d --wait`
+
+   The job fails, and the logs are printed, if the API does not become ready. That includes the database
+   migrations, which the API applies on startup.
+
+Runs on the same branch queue instead of overlapping, so `main` always deploys in push order.
 
 ## How it fits on a shared server
 
-The VPS already runs other sites, so this stack does not touch ports 80/443. It listens only on
-`127.0.0.1:8081`. The server's existing web server proxies a (sub)domain to it and handles HTTPS.
+The VPS already runs other sites behind a host-level Caddy on ports 80/443. This stack never touches those
+ports. It listens only on `127.0.0.1:8081`, and the host Caddy proxies `hack.fmikan.me` to it and handles HTTPS.
 
 ```text
-browser --HTTPS--> existing nginx/Apache/Caddy --> 127.0.0.1:8081 (web: Caddy, frontend files)
-                                                        |-- /api/*, /health* --> api:8080 --> postgres
+browser --HTTPS--> host Caddy (80/443) --> 127.0.0.1:8081 (web: Caddy in Docker, frontend files)
+                                                 |-- /api/*, /health* --> api:8080 --> postgres
 ```
 
 - `web` and `api` are on a private Docker network; `postgres` has no published port.
-- Containers, volumes and the network are all prefixed `ri-hack-2026-prod`, so they can't collide with the
-  other apps.
+- Containers, volumes and the network are all prefixed `ri-hack-2026-prod`.
 - The deploy only ever prunes images labelled with this repository.
 
-Use a subdomain (e.g. `hack.example.com`). The frontend expects to be served from `/`, not from a sub-path.
+The frontend expects to be served from `/` of its own (sub)domain, not from a sub-path.
 
 ## One-time server setup
 
-**1. Check what is already there.** Run with sudo:
+All commands run as root on the server unless stated otherwise.
+
+**1. Check what is already there.** These commands are read-only.
 
 ```bash
-docker compose version            # Docker + Compose plugin present?
-sudo ss -ltnp | grep -E ':(80|443|8081) '   # which web server owns 80/443, and is 8081 free?
+docker version && docker compose version     # Compose must be v2.17 or newer
+ss -ltnp | grep -E ':(80|443|8081) '         # who owns 80/443; is 8081 free?
 ```
 
-- **No Docker?** Install it with `curl -fsSL https://get.docker.com | sh`.
-- **8081 taken?** Pick another free port and set it as `WEB_PORT` in step 4.
-- **Is the existing web server itself a Docker container** (the process shown is `docker-proxy`)? Then
-  `127.0.0.1` inside it is not the host, and the proxy config below needs adapting.
+- **Docker missing entirely:** install it with `curl -fsSL https://get.docker.com | sh`.
+- **Docker present but Compose missing:** install only the plugin, with `apt install docker-compose-v2`.
+  Never run get.docker.com on a host that already has Docker; it replaces the engine and restarts the other
+  apps' containers.
+- **8081 taken:** use another free port as `WEB_PORT` in step 3.
 
-**2. Deploy user.** Run with sudo. Membership in the `docker` group is root-equivalent on this host.
-
-```bash
-sudo adduser --disabled-password --gecos "" deploy
-sudo usermod -aG docker deploy
-```
-
-No firewall changes are needed. Nothing new is exposed publicly.
-
-**3. SSH key for GitHub Actions.** On your own machine:
+**2. SSH key for GitHub Actions.** On your own machine:
 
 ```bash
 ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/ri-hack-deploy -N ""
-cat ~/.ssh/ri-hack-deploy.pub                                     # copy this line
-ssh-keyscan -H YOUR_SERVER > known_hosts.txt                      # for DEPLOY_KNOWN_HOSTS (add -p PORT if SSH isn't on 22)
+ssh-keyscan -H hack.fmikan.me > ~/.ssh/ri-hack-deploy.known_hosts    # add -p PORT if SSH isn't on 22
 ```
 
-`deploy` has no password, so `ssh-copy-id` won't work. Install the public key on the server with sudo:
+Compare the ED25519 fingerprint (`ssh-keygen -lf ~/.ssh/ri-hack-deploy.known_hosts`) with the one on the
+server (`ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`). `DEPLOY_HOST` must be exactly the name you
+scanned (`hack.fmikan.me`).
+
+**3. Dedicated user, key and app directory.** Use a user that doesn't exist yet. Don't reuse an account
+another app deploys with. Paste the public key from `~/.ssh/ri-hack-deploy.pub`.
 
 ```bash
-sudo install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
-echo "PASTE_THE_PUBLIC_KEY_LINE" | sudo tee -a /home/deploy/.ssh/authorized_keys
-sudo chown deploy:deploy /home/deploy/.ssh/authorized_keys && sudo chmod 600 /home/deploy/.ssh/authorized_keys
-```
-
-Check from your machine: `ssh -i ~/.ssh/ri-hack-deploy deploy@YOUR_SERVER docker ps`. It should list
-containers, with no password prompt and no permission error.
-
-**4. App directory and secrets.** As the `deploy` user on the server (`sudo -iu deploy`):
-
-```bash
-mkdir -p ~/ri-hack-2026 && cd ~/ri-hack-2026
-cat > .env <<EOF
+if id hack >/dev/null 2>&1; then echo "user hack already exists, stop"; else
+  useradd -m -s /bin/bash -G docker hack       # docker group = root-equivalent; key-only login
+  install -d -m 700 -o hack -g hack /home/hack/.ssh /home/hack/ri-hack-2026
+  echo 'PASTE_PUBLIC_KEY' >> /home/hack/.ssh/authorized_keys
+  chown hack:hack /home/hack/.ssh/authorized_keys && chmod 600 /home/hack/.ssh/authorized_keys
+  cat > /home/hack/ri-hack-2026/.env <<EOF
 POSTGRES_DB=app
 POSTGRES_USER=app
 POSTGRES_PASSWORD=$(openssl rand -hex 24)
 WEB_PORT=8081
 EOF
-chmod 600 .env
+  chown hack:hack /home/hack/ri-hack-2026/.env && chmod 600 /home/hack/ri-hack-2026/.env
+fi
 ```
 
-**5. DNS.** Add an A record for the subdomain, pointing at the server's IP.
+- **Locked password:** `useradd` creates the account with a locked password. Key login still works with
+  Ubuntu's default `UsePAM yes`. If `sshd -T | grep usepam` says `no`, also run `usermod -p '*' hack`.
+- **Verify** from your machine, with no password prompt:
+  `ssh -i ~/.ssh/ri-hack-deploy -o IdentitiesOnly=yes hack@hack.fmikan.me docker ps`
 
-**6. Reverse proxy in the existing web server.** Use whichever server step 1 showed.
+**4. DNS.** Create an A record `hack.fmikan.me` pointing at the server IP. If you use Cloudflare, set it to
+"DNS only".
 
-nginx: create `/etc/nginx/sites-available/ri-hack` and run
-`sudo ln -s /etc/nginx/sites-available/ri-hack /etc/nginx/sites-enabled/`:
+**5. Reverse proxy in the host web server.**
+
+Caddy (this server): add this to the host Caddyfile (usually `/etc/caddy/Caddyfile`). Then validate and
+reload; existing sites keep running. HTTPS is automatic.
+
+```caddy
+hack.fmikan.me {
+	reverse_proxy 127.0.0.1:8081
+}
+```
+
+```bash
+caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile && systemctl reload caddy
+```
+
+nginx (other servers):
+
+- Create `/etc/nginx/sites-available/ri-hack` with the block below.
+- Symlink it into `sites-enabled`. nginx.org packages only read `conf.d/`, so put the file there instead.
+- Run `nginx -t && systemctl reload nginx && certbot --nginx -d hack.fmikan.me`. This needs certbot with
+  `python3-certbot-nginx`.
 
 ```nginx
 server {
     listen 80;
-    server_name hack.example.com;
-
+    server_name hack.fmikan.me;
     location / {
         proxy_pass http://127.0.0.1:8081;
         proxy_set_header Host $host;
@@ -114,30 +135,6 @@ server {
 }
 ```
 
-```bash
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d hack.example.com      # HTTPS certificate + redirect
-```
-
-Apache: `sudo a2enmod proxy proxy_http`, then create `/etc/apache2/sites-available/ri-hack.conf`:
-
-```apache
-<VirtualHost *:80>
-    ServerName hack.example.com
-    ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:8081/
-    ProxyPassReverse / http://127.0.0.1:8081/
-</VirtualHost>
-```
-
-```bash
-sudo a2ensite ri-hack && sudo apache2ctl configtest && sudo systemctl reload apache2
-sudo certbot --apache -d hack.example.com
-```
-
-Caddy on the host: add `hack.example.com { reverse_proxy 127.0.0.1:8081 }` to the Caddyfile and reload. HTTPS
-is automatic.
-
 Until the first deploy, the proxy returns 502 Bad Gateway. That is expected.
 
 ## GitHub configuration
@@ -146,44 +143,48 @@ Go to **Settings > Secrets and variables > Actions > New repository secret**:
 
 | Secret | Value |
 |--------|-------|
-| `DEPLOY_HOST` | Server IP or hostname |
-| `DEPLOY_USER` | `deploy` |
-| `DEPLOY_SSH_KEY` | Contents of `~/.ssh/ri-hack-deploy` (the private key) |
-| `DEPLOY_KNOWN_HOSTS` | Contents of `known_hosts.txt` |
+| `DEPLOY_HOST` | `hack.fmikan.me` (exactly the name used with `ssh-keyscan`) |
+| `DEPLOY_USER` | `hack` |
+| `DEPLOY_SSH_KEY` | Contents of `~/.ssh/ri-hack-deploy` (the private key, including the BEGIN/END lines) |
+| `DEPLOY_KNOWN_HOSTS` | Contents of `~/.ssh/ri-hack-deploy.known_hosts` |
 | `DEPLOY_PORT` | Optional. Only if SSH is not on port 22 |
 
-No registry token is needed. The deploy job logs the server into GHCR with the job's own short-lived
-`GITHUB_TOKEN` and logs out again afterwards.
-
-Optional: **Settings > Branches**. Protect `main` (require a pull request and the `test` check). On a private
-repository this needs a paid GitHub plan.
+- **No registry token needed:** the deploy job logs the server into GHCR with the job's own short-lived
+  `GITHUB_TOKEN`, and logs out again afterwards.
+- **Who can reach the server:** anyone with write access to this repository can push a workflow that uses
+  these secrets, and so can reach the server as `hack`. Give write access only to trusted teammates.
+- **Optional, Settings > Branches:** protect `main` by requiring a pull request and the `test` check. On a
+  private repository this needs a paid GitHub plan.
 
 ## Operating the server
 
-Run these as `deploy` in `~/ri-hack-2026`:
+Run these as `hack` in `~/ri-hack-2026`:
 
 ```bash
 docker compose ps                         # status and health
 docker compose logs -f api                # API logs (also: web, postgres)
-curl -s 127.0.0.1:8081/health/ready       # readiness, bypassing the outer web server
-IMAGE_TAG=<older-commit-sha> docker compose up -d --wait   # roll back to an earlier build
+curl -s 127.0.0.1:8081/health/ready       # readiness, bypassing the host web server
+docker compose up -d --wait               # restart with the deployed version (IMAGE_TAG in .env)
 docker compose exec postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > backup-$(date +%F).sql
 ```
 
-Re-running the last deploy: open **Actions > CI/CD > Run workflow** on `main`.
+- **Redeploy:** open **Actions > CI/CD > Run workflow** and pick `main` as the branch. Other branches only
+  run tests.
+- **Roll back:** open the older run of that commit on `main` in **Actions**, then click **Re-run jobs**. It
+  deploys that commit's images again.
 
 ## Troubleshooting
 
-- **Deploy job: `Permission denied (publickey)`.** `DEPLOY_SSH_KEY` doesn't match the key in
-  `/home/deploy/.ssh/authorized_keys`, or `DEPLOY_USER` is wrong.
-- **Deploy job: `Host key verification failed`.** `DEPLOY_KNOWN_HOSTS` is missing or stale. Re-run
-  `ssh-keyscan`.
-- **Deploy job: `scp: ri-hack-2026/docker-compose.yml: No such file or directory`.** The `~/ri-hack-2026`
-  directory doesn't exist for the deploy user.
-- **`set POSTGRES_PASSWORD in .env`.** The server `.env` is missing or incomplete.
-- **`port is already allocated` on 8081.** Set another `WEB_PORT` in `.env`, and update the proxy config to
-  match.
-- **Deploy times out waiting for `api`.** Run `docker compose logs api`. This is usually a failed migration
+- **`Permission denied (publickey)`:** `DEPLOY_SSH_KEY` doesn't match `/home/hack/.ssh/authorized_keys`, or
+  `DEPLOY_USER` is wrong.
+- **`Host key verification failed`:** `DEPLOY_KNOWN_HOSTS` is missing or stale, or `DEPLOY_HOST` differs from
+  the name that was scanned.
+- **`scp: dest open "ri-hack-2026/docker-compose.yml": No such file or directory`:** `/home/hack/ri-hack-2026`
+  doesn't exist.
+- **`set POSTGRES_PASSWORD in .env`:** the server `.env` is missing or incomplete.
+- **`port is already allocated` on 8081:** set another `WEB_PORT` in `.env`, update the host proxy to match,
+  then run `docker compose up -d --wait`.
+- **Deploy times out waiting for `api`:** run `docker compose logs api`. This is usually a failed migration
   or wrong database credentials. Credentials are fixed when the `postgres-data` volume is first created.
-- **502 from the domain but `curl 127.0.0.1:8081/health` works.** The outer proxy config is wrong; check
-  `proxy_pass` and the port. If the outer proxy runs in Docker, see step 1.
+- **502 from the domain, but `curl 127.0.0.1:8081/health` works on the server:** the host proxy config is
+  wrong. Check the port.

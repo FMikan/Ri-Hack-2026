@@ -12,6 +12,11 @@ on:
 permissions:
   contents: read
 
+# One run per branch at a time. On main, runs queue instead of cancelling, so deploys happen in push order.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   IMAGE: ghcr.io/fmikan/ri-hack-2026 # lowercase; must match deploy/docker-compose.prod.yml
 
@@ -81,10 +86,6 @@ jobs:
   deploy:
     needs: publish
     runs-on: ubuntu-latest
-    environment: production
-    concurrency:
-      group: production
-      cancel-in-progress: false
     permissions:
       contents: read
       packages: read
@@ -113,8 +114,9 @@ jobs:
             cd ri-hack-2026
             docker login ghcr.io -u '${GITHUB_ACTOR}' --password-stdin
             trap 'docker logout ghcr.io >/dev/null' EXIT
-            export IMAGE_TAG='${GITHUB_SHA}'
-            docker compose pull
+            # Record the deployed version in .env, so manual docker compose commands on the server use it too.
+            sed -i '/^IMAGE_TAG=/d' .env && echo 'IMAGE_TAG=${GITHUB_SHA}' >> .env
+            docker compose pull api web
             docker compose up -d --wait --wait-timeout 180 --remove-orphans || { docker compose logs --tail 100; exit 1; }
             # Shared server: prune only this repository's old images, never other apps' images.
             docker image prune -af --filter 'label=org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}' --filter until=168h
