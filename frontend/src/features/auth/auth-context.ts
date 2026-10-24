@@ -10,7 +10,7 @@ export type Session =
 export interface AuthState {
   session: Session
   retry: () => void
-  login: (body: LoginRequest) => Promise<void>
+  login: (body: LoginRequest, remember: boolean) => Promise<void>
   register: (body: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
   updateMe: (body: UpdateMeRequest) => Promise<void>

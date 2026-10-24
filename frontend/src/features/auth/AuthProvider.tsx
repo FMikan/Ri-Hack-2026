@@ -25,8 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession({ status: 'loading' })
         restore()
       },
-      login: async (body) => {
-        const auth = await api.login(body)
+      login: async (body, remember) => {
+        const auth = await api.login(body, remember)
         setSession({ status: 'authenticated', user: auth.user })
       },
       register: async (body) => {

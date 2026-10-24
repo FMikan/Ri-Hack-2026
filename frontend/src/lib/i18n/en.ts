@@ -24,6 +24,7 @@ export const en = {
       username: 'Username',
       password: 'Password',
       showPassword: 'Show password',
+      rememberMe: 'Remember me',
     },
     hints: {
       username: 'Public name: 3 to 20 letters, numbers or _',
