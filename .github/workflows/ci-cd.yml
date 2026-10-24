@@ -1,0 +1,119 @@
+name: CI/CD
+
+# development and pull requests: tests only.
+# main: tests, then build images, smoke-test the production stack, push to GHCR and deploy to the VPS.
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+  workflow_dispatch: # manual re-run from the Actions tab; deploys only when run on main
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/fmikan/ri-hack-2026 # lowercase; must match deploy/docker-compose.prod.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Backend build and tests
+        run: dotnet test backend/App.slnx
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Frontend lint, type-check and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+  publish:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build images
+        run: |
+          for app in api:backend web:frontend; do
+            docker build \
+              --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+              -t "$IMAGE/${app%%:*}:${GITHUB_SHA}" -t "$IMAGE/${app%%:*}:latest" "${app#*:}"
+          done
+
+      - name: Smoke test the production stack
+        working-directory: deploy
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          printf 'POSTGRES_DB=app\nPOSTGRES_USER=app\nPOSTGRES_PASSWORD=smoke\nSITE_ADDRESS=:80\n' > .env
+          compose="docker compose -f docker-compose.prod.yml"
+          $compose up -d --wait --wait-timeout 120 || { $compose logs; exit 1; }
+          curl -fsS http://localhost/health/ready
+          curl -fsS http://localhost/ | grep -q '<div id="root">'
+          curl -fsS -X POST http://localhost/api/notes -H 'Content-Type: application/json' -d '{"text":"smoke test"}'
+          curl -fsS http://localhost/api/notes | grep -q 'smoke test'
+          $compose down -v
+
+      - name: Push images
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          docker push --all-tags "$IMAGE/api"
+          docker push --all-tags "$IMAGE/web"
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        env:
+          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+          PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+        run: |
+          scp -P "$PORT" deploy/docker-compose.prod.yml "$TARGET:ri-hack-2026/docker-compose.yml"
+          # The registry token travels over stdin (never in a command line) and expires when this job ends.
+          echo "${{ secrets.GITHUB_TOKEN }}" | ssh -p "$PORT" "$TARGET" "
+            set -e
+            cd ri-hack-2026
+            docker login ghcr.io -u '${GITHUB_ACTOR}' --password-stdin
+            trap 'docker logout ghcr.io >/dev/null' EXIT
+            export IMAGE_TAG='${GITHUB_SHA}'
+            docker compose pull
+            docker compose up -d --wait --wait-timeout 180 --remove-orphans || { docker compose logs --tail 100; exit 1; }
+            docker image prune -af --filter until=168h
+          "

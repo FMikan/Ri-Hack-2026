@@ -6,6 +6,13 @@ PostgreSQL runs in Docker; the frontend and backend run on your machine so they 
 The starter page shows API and database health and a tiny "notes" example that writes to and reads from
 PostgreSQL. The notes example exists only to prove the wiring; delete it once real features exist.
 
+## Branches and deployment
+
+Work on **`development`**: every push there runs the tests in GitHub Actions. **`main`** is production:
+every push to it is tested, built into Docker images, smoke-tested and deployed to the VPS. Release by
+merging a pull request `development -> main`. Server setup, secrets and operations are in
+[deploy/README.md](deploy/README.md).
+
 ## Stack
 
 | Layer    | Tech |
@@ -31,7 +38,9 @@ backend/
   src/App.Domain/             entities and domain rules, no dependencies
   src/App.Infrastructure/     AppDbContext, Npgsql config, migrations, health checks
   tests/App.Api.Tests/        xUnit + WebApplicationFactory
-docker-compose.yml            PostgreSQL only
+docker-compose.yml            local development: PostgreSQL only
+deploy/                       production compose file, server .env example, deployment guide
+.github/workflows/ci-cd.yml   tests on every push/PR; build + deploy on main
 .env.example                  copy to .env (DB credentials + backend connection string)
 ```
 
@@ -140,7 +149,8 @@ dotnet ef migrations add <Name> --project src/App.Infrastructure --startup-proje
 dotnet ef database update --project src/App.Infrastructure --startup-project src/App.Api
 ```
 
-Migrations are not applied automatically on startup. On a brand-new database the first `database update` logs a
+Migrations are not applied automatically on startup in development. In production, the API applies them on
+startup (`Database__MigrateOnStartup=true` in `deploy/docker-compose.prod.yml`). On a brand-new database the first `database update` logs a
 "Failed executing DbCommand ... __EFMigrationsHistory" line before creating that table; that is normal EF output.
 
 ## Checks
