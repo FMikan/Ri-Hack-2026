@@ -1,0 +1,1896 @@
+[
+  {
+    "key": "ops.ci-cd.tf.01",
+    "concept": "ops.ci-cd",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "With continuous integration, every push triggers an automatic build and test run.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "CI builds and tests every change automatically, so problems surface while the change is still small and fresh."
+  },
+  {
+    "key": "ops.ci-cd.mc.01",
+    "concept": "ops.ci-cd",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is the main idea of continuous integration?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Every commit goes straight to production without review"
+        },
+        {
+          "id": "b",
+          "text": "Each developer works on a long-lived branch until the feature is done"
+        },
+        {
+          "id": "c",
+          "text": "Small changes are merged often, and each one is built and tested automatically"
+        },
+        {
+          "id": "d",
+          "text": "All tests run once, just before each quarterly release"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "CI means merging small changes often and letting an automatic build and test run check every one."
+  },
+  {
+    "key": "ops.ci-cd.bug.01",
+    "concept": "ops.ci-cd",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "yaml",
+    "content": {
+      "prompt": "Commits with failing tests still reach production; the pipeline only turns red after the release is live. Find the bug.",
+      "code": "name: release\non:\n  push:\n    branches: [main]\njobs:\n  ship:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm ci\n      - run: npm run build\n      - run: ./scripts/deploy.sh\n      - run: npm test",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Run npm test before npm ci"
+        },
+        {
+          "id": "f2",
+          "text": "Move the deploy step below npm test"
+        },
+        {
+          "id": "f3",
+          "text": "Run npm test in a separate job that starts at the same time"
+        }
+      ],
+      "answer": {
+        "line": 12,
+        "fixId": "f2",
+        "acceptLines": [
+          13
+        ]
+      }
+    },
+    "remember": "Deploy is the last step and runs only after every test has passed; a failing step must stop the pipeline before the release."
+  },
+  {
+    "key": "ops.ci-cd.order.01",
+    "concept": "ops.ci-cd",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order the stages of a pipeline that packages only code whose tests passed, then promotes the same image from staging to production.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Deploy the image to staging and run smoke tests"
+        },
+        {
+          "id": "s2",
+          "text": "Check out the commit"
+        },
+        {
+          "id": "s3",
+          "text": "Promote the same image to production"
+        },
+        {
+          "id": "s4",
+          "text": "Install dependencies and run the unit tests"
+        },
+        {
+          "id": "s5",
+          "text": "Build the image and push it to the registry"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Test first, build one image, prove it on staging, then promote that exact image to production."
+  },
+  {
+    "key": "ops.ci-cd.out.01",
+    "concept": "ops.ci-cd",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "ci.sh runs as one CI step. What does it print?",
+      "code": "#!/bin/bash\nset -e\n\nrun_tests() {\n  echo \"2 tests failed\"\n  return 1\n}\n\necho \"build ok\"\nrun_tests | tee test.log\necho \"deploying\"",
+      "options": [
+        {
+          "id": "a",
+          "text": "build ok / 2 tests failed"
+        },
+        {
+          "id": "b",
+          "text": "build ok / 2 tests failed / deploying"
+        },
+        {
+          "id": "c",
+          "text": "build ok"
+        },
+        {
+          "id": "d",
+          "text": "build ok / deploying"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A pipeline's exit status is that of its last command, so cmd | tee hides a failure unless you set -o pipefail."
+  },
+  {
+    "key": "ops.containers.tf.01",
+    "concept": "ops.containers",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A virtual machine usually needs less memory than a container running the same app.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A VM carries a whole guest OS, so it needs more memory and boots slower than a container that shares the host kernel."
+  },
+  {
+    "key": "ops.containers.mc.01",
+    "concept": "ops.containers",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "An app runs only on Windows, and your only server runs Linux. What do you need to run the app there?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A Linux container with the Windows app copied inside"
+        },
+        {
+          "id": "b",
+          "text": "A container built from a Windows base image"
+        },
+        {
+          "id": "c",
+          "text": "A Windows virtual machine on that server"
+        },
+        {
+          "id": "d",
+          "text": "Nothing extra; every container brings its own OS kernel"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Containers share the host's kernel, so a Linux host runs Linux containers; another OS needs a virtual machine."
+  },
+  {
+    "key": "ops.containers.odd.01",
+    "concept": "ops.containers",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these normally go inside a container image. Which is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The app's compiled code"
+        },
+        {
+          "id": "b",
+          "text": "The language runtime, such as Node or Python"
+        },
+        {
+          "id": "c",
+          "text": "System libraries the app needs"
+        },
+        {
+          "id": "d",
+          "text": "The production database's data"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "An image holds the app and everything it needs to run; data lives outside it, in volumes or databases."
+  },
+  {
+    "key": "ops.containers.match.01",
+    "concept": "ops.containers",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each term with what it is.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Image"
+        },
+        {
+          "id": "l2",
+          "text": "Container"
+        },
+        {
+          "id": "l3",
+          "text": "Namespaces"
+        },
+        {
+          "id": "l4",
+          "text": "cgroups"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Limit how much CPU and memory a process may use"
+        },
+        {
+          "id": "r2",
+          "text": "A read-only template with the app and its dependencies"
+        },
+        {
+          "id": "r3",
+          "text": "Give a process its own view of process ids, network and mounts"
+        },
+        {
+          "id": "r4",
+          "text": "A running instance with its own writable layer on top"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "An image is the template and a container a running instance of it; namespaces isolate it and cgroups limit its resources."
+  },
+  {
+    "key": "ops.containers.mc.02",
+    "concept": "ops.containers",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "On a Linux server with Docker Engine, you start a container that runs node server.js. On the host itself, ps aux now lists a node server.js process. Why?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Docker copies the container's process list to the host for monitoring"
+        },
+        {
+          "id": "b",
+          "text": "The container is an ordinary host process, isolated with namespaces"
+        },
+        {
+          "id": "c",
+          "text": "The container escaped its isolation because it runs as root"
+        },
+        {
+          "id": "d",
+          "text": "ps reads the image metadata, not the running processes"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A container is a normal process on the host kernel with an isolated view, not a separate machine, so the host can see it."
+  },
+  {
+    "key": "ops.dockerfile.tf.01",
+    "concept": "ops.dockerfile",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If you change a line near the end of a Dockerfile, Docker rebuilds every step starting from the first line.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Docker reuses cached steps up to the first one that changed; only that step and the ones after it run again."
+  },
+  {
+    "key": "ops.dockerfile.mc.01",
+    "concept": "ops.dockerfile",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What does a .dockerignore file do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It lists files Docker deletes from the image after the build"
+        },
+        {
+          "id": "b",
+          "text": "It keeps the listed files out of the build context, so COPY cannot add them"
+        },
+        {
+          "id": "c",
+          "text": "It lists build steps that must never be cached"
+        },
+        {
+          "id": "d",
+          "text": "It hides the listed files from processes in the running container"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": ".dockerignore keeps files such as node_modules, .git and .env out of the build context, and so out of the image."
+  },
+  {
+    "key": "ops.dockerfile.out.01",
+    "concept": "ops.dockerfile",
+    "type": "output",
+    "difficulty": 2,
+    "language": "dockerfile",
+    "content": {
+      "prompt": "The image was built once. You edit only src/routes.js and build again. Which COPY and RUN steps execute again instead of coming from the cache?",
+      "code": "FROM node:22-alpine\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\nCMD [\"node\", \"dist/server.js\"]",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only RUN npm run build"
+        },
+        {
+          "id": "b",
+          "text": "Every step from COPY package.json on"
+        },
+        {
+          "id": "c",
+          "text": "Only COPY . ."
+        },
+        {
+          "id": "d",
+          "text": "COPY . . and RUN npm run build"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A change invalidates the step that sees it and every step after it; the steps before it come from the cache."
+  },
+  {
+    "key": "ops.dockerfile.bug.01",
+    "concept": "ops.dockerfile",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "dockerfile",
+    "content": {
+      "prompt": "Every one-line code change makes the build download and install all npm packages again, which takes four minutes. Find the bug.",
+      "code": "FROM node:22-alpine\nWORKDIR /app\nCOPY . .\nRUN npm ci\nRUN npm run build\nCMD [\"node\", \"dist/server.js\"]",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Copy package.json and package-lock.json first, run npm ci, then COPY . ."
+        },
+        {
+          "id": "f2",
+          "text": "Replace npm ci with npm install"
+        },
+        {
+          "id": "f3",
+          "text": "Merge npm ci and npm run build into one RUN"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Copy the dependency manifests and install before copying the source, so code changes reuse the cached install layer."
+  },
+  {
+    "key": "ops.dockerfile.cloze.01",
+    "concept": "ops.dockerfile",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "dockerfile",
+    "content": {
+      "prompt": "The final image should hold only the built static files from /app/dist, without Node or node_modules. Fill the blank.",
+      "code": "FROM node:22 AS build\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\nFROM nginx:alpine\nCOPY ____ /usr/share/nginx/html",
+      "options": [
+        {
+          "id": "a",
+          "text": "--from=build /app/dist"
+        },
+        {
+          "id": "b",
+          "text": "/app/dist"
+        },
+        {
+          "id": "c",
+          "text": "--from=node:22 /app/dist"
+        },
+        {
+          "id": "d",
+          "text": "build:/app/dist"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "In a multi-stage build, COPY --from=<stage> carries only the build output into a small final image."
+  },
+  {
+    "key": "ops.compose.tf.01",
+    "concept": "ops.compose",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "docker compose down also deletes the project's named volumes, unless you pass a flag to keep them.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "docker compose down removes containers and networks; named volumes are deleted only when you add -v."
+  },
+  {
+    "key": "ops.compose.mc.01",
+    "concept": "ops.compose",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "In a compose file, which key makes a container's port reachable from a browser on the host?",
+      "options": [
+        {
+          "id": "a",
+          "text": "expose"
+        },
+        {
+          "id": "b",
+          "text": "networks"
+        },
+        {
+          "id": "c",
+          "text": "ports"
+        },
+        {
+          "id": "d",
+          "text": "environment"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "ports publishes a container port on the host, such as \"8080:80\"; expose only documents it for other containers."
+  },
+  {
+    "key": "ops.compose.cloze.01",
+    "concept": "ops.compose",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "yaml",
+    "content": {
+      "prompt": "Fill the blank so the api container can reach the database.",
+      "code": "services:\n  api:\n    build: .\n    environment:\n      DB_HOST: ____\n      DB_PORT: \"5432\"\n  db:\n    image: postgres:17\n    environment:\n      POSTGRES_PASSWORD: ${DB_PASSWORD}",
+      "options": [
+        {
+          "id": "a",
+          "text": "localhost"
+        },
+        {
+          "id": "b",
+          "text": "127.0.0.1"
+        },
+        {
+          "id": "c",
+          "text": "db"
+        },
+        {
+          "id": "d",
+          "text": "postgres"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "In compose, containers reach each other by service name; localhost inside a container is that container itself."
+  },
+  {
+    "key": "ops.compose.out.01",
+    "concept": "ops.compose",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "What does the last command show?",
+      "code": "$ cat .env\nTAG=1.4\n$ cat compose.yaml\nservices:\n  web:\n    image: shop/web:${TAG:-latest}\n$ export TAG=1.5\n$ docker compose config | grep image",
+      "options": [
+        {
+          "id": "a",
+          "text": "image: shop/web:1.4"
+        },
+        {
+          "id": "b",
+          "text": "image: shop/web:latest"
+        },
+        {
+          "id": "c",
+          "text": "image: shop/web:${TAG:-latest}"
+        },
+        {
+          "id": "d",
+          "text": "image: shop/web:1.5"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "For ${VAR} in a compose file, a variable set in the shell wins over .env; the default applies only when neither sets it."
+  },
+  {
+    "key": "ops.compose.bug.01",
+    "concept": "ops.compose",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "yaml",
+    "content": {
+      "prompt": "On a fresh docker compose up, api often exits with \"connection refused\": it starts while PostgreSQL is still initialising. Find the bug.",
+      "code": "services:\n  api:\n    build: .\n    environment:\n      DB_HOST: db\n    depends_on:\n      - db\n  db:\n    image: postgres:17\n    environment:\n      POSTGRES_PASSWORD: ${DB_PASSWORD}\n    healthcheck:\n      test: [\"CMD\", \"pg_isready\", \"-U\", \"postgres\"]\n      interval: 2s\n      retries: 15",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Move the db service above api in the file"
+        },
+        {
+          "id": "f2",
+          "text": "Add restart: unless-stopped to the db service"
+        },
+        {
+          "id": "f3",
+          "text": "Use the long form: depends_on: db: condition: service_healthy"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f3",
+        "acceptLines": [
+          6
+        ]
+      }
+    },
+    "remember": "Plain depends_on only waits for the container to start; condition: service_healthy waits until its health check passes."
+  },
+  {
+    "key": "ops.volumes.tf.01",
+    "concept": "ops.volumes",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Files a container writes to its own filesystem are deleted when the container is removed.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A container's writable layer is removed together with it; keep data that matters in a volume."
+  },
+  {
+    "key": "ops.volumes.mc.01",
+    "concept": "ops.volumes",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "In a compose file, what does the entry ./src:/app/src under volumes do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Copies ./src into the image when it is built"
+        },
+        {
+          "id": "b",
+          "text": "Creates a named volume called src"
+        },
+        {
+          "id": "c",
+          "text": "Copies /app/src back to ./src when the container stops"
+        },
+        {
+          "id": "d",
+          "text": "Makes the host folder ./src appear inside the container at /app/src"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A bind mount host:container shares a host folder live with the container; edits on either side show up at once."
+  },
+  {
+    "key": "ops.volumes.out.01",
+    "concept": "ops.volumes",
+    "type": "output",
+    "difficulty": 1,
+    "language": "sh",
+    "content": {
+      "prompt": "What does the last command print?",
+      "code": "$ docker volume create notes\n$ docker run --rm -v notes:/data alpine \\\n    sh -c 'echo hello > /data/a.txt'\n$ docker run --rm -v notes:/data alpine \\\n    cat /data/a.txt",
+      "options": [
+        {
+          "id": "a",
+          "text": "cat: can't open '/data/a.txt': No such file or directory"
+        },
+        {
+          "id": "b",
+          "text": "An empty line"
+        },
+        {
+          "id": "c",
+          "text": "Error: volume notes is in use"
+        },
+        {
+          "id": "d",
+          "text": "hello"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A volume outlives the containers that use it, even ones started with --rm, until you remove the volume itself."
+  },
+  {
+    "key": "ops.volumes.bug.01",
+    "concept": "ops.volumes",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "yaml",
+    "content": {
+      "prompt": "The API saves uploaded files to UPLOAD_DIR. After every deploy recreates the container, all uploaded files are gone. Find the bug.",
+      "code": "services:\n  api:\n    build: .\n    environment:\n      UPLOAD_DIR: /app/uploads\n    volumes:\n      - uploads:/uploads\nvolumes:\n  uploads:",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use a bind mount ./uploads:/uploads instead"
+        },
+        {
+          "id": "f2",
+          "text": "Mount the volume at /app/uploads"
+        },
+        {
+          "id": "f3",
+          "text": "Add restart: always to the api service"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A volume keeps only what is written under its mount path, so mount it exactly where the app writes."
+  },
+  {
+    "key": "ops.volumes.match.01",
+    "concept": "ops.volumes",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each kind of storage with how it behaves.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Named volume"
+        },
+        {
+          "id": "l2",
+          "text": "Bind mount"
+        },
+        {
+          "id": "l3",
+          "text": "tmpfs mount"
+        },
+        {
+          "id": "l4",
+          "text": "The container's writable layer"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "A host folder mapped in, handy for live-editing code in development"
+        },
+        {
+          "id": "r2",
+          "text": "Removed together with the container"
+        },
+        {
+          "id": "r3",
+          "text": "Managed by Docker and kept after the container is removed"
+        },
+        {
+          "id": "r4",
+          "text": "Held in memory only and gone when the container stops"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Named volumes keep data, bind mounts share host folders, tmpfs lives in memory, and the writable layer dies with its container."
+  },
+  {
+    "key": "ops.config.tf.01",
+    "concept": "ops.config",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "It is good practice to build a separate image per environment, with that environment's settings baked in.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Build one image and promote it; each environment supplies its own settings through environment variables or config."
+  },
+  {
+    "key": "ops.config.mc.01",
+    "concept": "ops.config",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which value should come from configuration instead of being written in the code?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The URL of the payment API, which differs between test and production"
+        },
+        {
+          "id": "b",
+          "text": "The formula that calculates an order's total"
+        },
+        {
+          "id": "c",
+          "text": "The names of the database tables"
+        },
+        {
+          "id": "d",
+          "text": "The list of HTTP routes the API serves"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Anything that changes between environments, such as URLs and credentials, belongs in configuration, not in code."
+  },
+  {
+    "key": "ops.config.cloze.01",
+    "concept": "ops.config",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "yaml",
+    "content": {
+      "prompt": "This compose file is committed to git. Fill the blank so the API receives the real password, yet the password itself is never stored in the repository.",
+      "code": "services:\n  api:\n    image: shop/api:1.8.0\n    environment:\n      APP_ENV: production\n      DB_PASSWORD: ____",
+      "options": [
+        {
+          "id": "a",
+          "text": "${DB_PASSWORD}"
+        },
+        {
+          "id": "b",
+          "text": "prod-S3cret!"
+        },
+        {
+          "id": "c",
+          "text": "$(cat db_password.txt)"
+        },
+        {
+          "id": "d",
+          "text": "${DB_PASSWORD:-prod-S3cret!}"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Reference secrets as ${VAR} and set them on the server; a literal value or a default puts the secret in git."
+  },
+  {
+    "key": "ops.config.out.01",
+    "concept": "ops.config",
+    "type": "output",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "Compose files use the same ${...} defaults as the shell. What does this script print?",
+      "code": "#!/bin/bash\nLOG_LEVEL=\"\"\necho \"a=${LOG_LEVEL:-info}\"\necho \"b=${LOG_LEVEL-info}\"\nunset LOG_LEVEL\necho \"c=${LOG_LEVEL-info}\"",
+      "options": [
+        {
+          "id": "a",
+          "text": "a=info b= c=info"
+        },
+        {
+          "id": "b",
+          "text": "a=info b=info c=info"
+        },
+        {
+          "id": "c",
+          "text": "a= b= c=info"
+        },
+        {
+          "id": "d",
+          "text": "a=info b= c="
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "${VAR:-default} replaces unset or empty values; ${VAR-default} replaces only unset ones, so an empty VAR stays empty."
+  },
+  {
+    "key": "ops.config.bug.01",
+    "concept": "ops.config",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "dockerfile",
+    "content": {
+      "prompt": ".npmrc holds a token for the private package registry. Anyone who pulls the image can recover the token, although the file is deleted. npm ci must still install the private packages. Find the bug.",
+      "code": "FROM node:22-alpine\nWORKDIR /app\nCOPY package.json package-lock.json ./\nCOPY .npmrc ./\nRUN npm ci\nRUN rm .npmrc\nCOPY src ./src\nCMD [\"node\", \"src/server.js\"]",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Delete .npmrc in the same RUN as npm ci"
+        },
+        {
+          "id": "f2",
+          "text": "Mount .npmrc as a build secret for the npm ci step only"
+        },
+        {
+          "id": "f3",
+          "text": "Add .npmrc to .dockerignore"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A file deleted in a later step still sits in the earlier layer; pass secrets as a build secret mount so they never enter a layer."
+  },
+  {
+    "key": "ops.health-checks.tf.01",
+    "concept": "ops.health-checks",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A health check that only tests that the process exists can miss an app that is stuck.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A useful health check asks the app itself to answer, for example GET /health, instead of only checking that the process exists."
+  },
+  {
+    "key": "ops.health-checks.mc.01",
+    "concept": "ops.health-checks",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "An instance keeps failing its liveness check. What does an orchestrator typically do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Restarts the container"
+        },
+        {
+          "id": "b",
+          "text": "Keeps it running but stops sending it traffic"
+        },
+        {
+          "id": "c",
+          "text": "Adds one more instance"
+        },
+        {
+          "id": "d",
+          "text": "Rolls back to the previous release"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A failing liveness check leads to a restart; a failing readiness check only takes the instance out of traffic."
+  },
+  {
+    "key": "ops.health-checks.odd.01",
+    "concept": "ops.health-checks",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these are good practice for a liveness endpoint. Which is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Answers quickly without calling other services"
+        },
+        {
+          "id": "b",
+          "text": "Returns 200 as long as the process can handle a request"
+        },
+        {
+          "id": "c",
+          "text": "Fails when the database is unreachable"
+        },
+        {
+          "id": "d",
+          "text": "Is cheap enough to be called every few seconds"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Keep dependencies out of liveness: when the database is down, restarting every app instance does not help."
+  },
+  {
+    "key": "ops.health-checks.bug.01",
+    "concept": "ops.health-checks",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "yaml",
+    "content": {
+      "prompt": "The site works in the browser on port 80, but docker ps keeps showing the api container as unhealthy. Find the bug.",
+      "code": "services:\n  api:\n    build: .\n    environment:\n      PORT: \"8080\"\n    ports:\n      - \"80:8080\"\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\",\n             \"http://localhost:80/health\"]\n      interval: 10s\n      retries: 3",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Check http://localhost:8080/health, the port inside the container"
+        },
+        {
+          "id": "f2",
+          "text": "Check http://api:80/health instead of localhost"
+        },
+        {
+          "id": "f3",
+          "text": "Publish \"80:80\" instead of \"80:8080\""
+        }
+      ],
+      "answer": {
+        "line": 10,
+        "fixId": "f1",
+        "acceptLines": [
+          9
+        ]
+      }
+    },
+    "remember": "A health check runs inside the container, so it must use the port the app listens on there, not the published host port."
+  },
+  {
+    "key": "ops.health-checks.match.01",
+    "concept": "ops.health-checks",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each situation with what usually happens next.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "The liveness check fails"
+        },
+        {
+          "id": "l2",
+          "text": "The readiness check fails"
+        },
+        {
+          "id": "l3",
+          "text": "The startup check has not passed yet"
+        },
+        {
+          "id": "l4",
+          "text": "A plain Docker HEALTHCHECK fails, with no orchestrator"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Liveness and readiness checks are held back"
+        },
+        {
+          "id": "r2",
+          "text": "The container is restarted"
+        },
+        {
+          "id": "r3",
+          "text": "The container is marked unhealthy, but nothing restarts it"
+        },
+        {
+          "id": "r4",
+          "text": "The instance leaves the load balancer but keeps running"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "Liveness failures restart, readiness failures remove from traffic, startup checks delay both, and plain Docker only reports health."
+  },
+  {
+    "key": "ops.observability.tf.01",
+    "concept": "ops.observability",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A metric such as requests per second is a number tracked over time, which suits dashboards and alerts.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Metrics are cheap numbers over time: use them for dashboards and alerts, then dig into logs and traces for details."
+  },
+  {
+    "key": "ops.observability.mc.01",
+    "concept": "ops.observability",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "The average response time is 120 ms, yet some users complain about 5-second page loads. Which number shows what those users experience?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Median (p50) latency"
+        },
+        {
+          "id": "b",
+          "text": "Requests per second"
+        },
+        {
+          "id": "c",
+          "text": "99th percentile (p99) latency"
+        },
+        {
+          "id": "d",
+          "text": "Average CPU usage"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Averages hide the slow tail; watch high percentiles such as p95 and p99 latency."
+  },
+  {
+    "key": "ops.observability.match.01",
+    "concept": "ops.observability",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each signal with an example of it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Log"
+        },
+        {
+          "id": "l2",
+          "text": "Metric"
+        },
+        {
+          "id": "l3",
+          "text": "Trace"
+        },
+        {
+          "id": "l4",
+          "text": "Alert"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Spans showing one checkout request through gateway, orders and payments"
+        },
+        {
+          "id": "r2",
+          "text": "Page the on-call engineer when the error rate stays above 5% for 5 minutes"
+        },
+        {
+          "id": "r3",
+          "text": "payment 812 failed: card declined"
+        },
+        {
+          "id": "r4",
+          "text": "http_requests_total, counted per status code"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Logs record single events, metrics count over time, traces follow one request, and alerts turn metrics into a page."
+  },
+  {
+    "key": "ops.observability.out.01",
+    "concept": "ops.observability",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "import logging\n\nlogging.basicConfig(\n    level=logging.WARNING,\n    format=\"%(levelname)s %(message)s\",\n)\nlog = logging.getLogger(\"api\")\n\nlog.debug(\"cache miss user=42\")\nlog.info(\"GET /orders 200\")\nlog.warning(\"slow query 2300 ms\")\nlog.error(\"payment failed id=812\")",
+      "options": [
+        {
+          "id": "a",
+          "text": "The WARNING and ERROR lines"
+        },
+        {
+          "id": "b",
+          "text": "All four lines"
+        },
+        {
+          "id": "c",
+          "text": "Only the ERROR line"
+        },
+        {
+          "id": "d",
+          "text": "The INFO, WARNING and ERROR lines"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A logger drops every message below its level; production usually logs INFO or WARNING and up."
+  },
+  {
+    "key": "ops.observability.odd.01",
+    "concept": "ops.observability",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these are sensible labels on a request-count metric. Which is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "method, such as GET or POST"
+        },
+        {
+          "id": "b",
+          "text": "route template, such as /orders/{id}"
+        },
+        {
+          "id": "c",
+          "text": "status code"
+        },
+        {
+          "id": "d",
+          "text": "user_id"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Every distinct label value creates a new time series; unbounded values such as user ids belong in logs and traces."
+  },
+  {
+    "key": "ops.deploy-strategies.tf.01",
+    "concept": "ops.deploy-strategies",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a canary release, a small share of users gets the new version first.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A canary exposes a new version to a small slice of traffic first, so a bad release hurts few users."
+  },
+  {
+    "key": "ops.deploy-strategies.mc.01",
+    "concept": "ops.deploy-strategies",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A release must move every user to the new version at the same moment and be rolled back within seconds if needed. Which strategy fits?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Rolling"
+        },
+        {
+          "id": "b",
+          "text": "Canary"
+        },
+        {
+          "id": "c",
+          "text": "Recreate"
+        },
+        {
+          "id": "d",
+          "text": "Blue-green"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Blue-green runs the new version beside the old one and switches all traffic at once; switching back is the rollback."
+  },
+  {
+    "key": "ops.deploy-strategies.order.01",
+    "concept": "ops.deploy-strategies",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "You rename the column name to full_name. Rolling deploys keep old and new app versions running side by side. Order the steps so no running version ever breaks.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Drop the old name column"
+        },
+        {
+          "id": "s2",
+          "text": "Add the new full_name column"
+        },
+        {
+          "id": "s3",
+          "text": "Backfill full_name from name for existing rows"
+        },
+        {
+          "id": "s4",
+          "text": "Deploy code that reads and writes only full_name"
+        },
+        {
+          "id": "s5",
+          "text": "Deploy code that writes both columns and reads full_name, falling back to name"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s3",
+          "s4",
+          "s1"
+        ]
+      }
+    },
+    "remember": "Expand, migrate, contract: add the new shape, write both, backfill, switch to the new one, and only then drop the old one."
+  },
+  {
+    "key": "ops.deploy-strategies.mc.02",
+    "concept": "ops.deploy-strategies",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "During a rolling deploy, v2 writes user objects to the shared cache in a new JSON shape, and the v1 instances still running crash when they read them. What is the most robust fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Flush the cache right before the rollout starts"
+        },
+        {
+          "id": "b",
+          "text": "Put a schema version in the cache key, such as user:v2:42"
+        },
+        {
+          "id": "c",
+          "text": "Replace more instances at once so the rollout ends sooner"
+        },
+        {
+          "id": "d",
+          "text": "Wrap the cache read in v2 in a try/catch"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "During a rollout old and new versions share caches, queues and databases; keep formats compatible or version the keys."
+  },
+  {
+    "key": "ops.deploy-strategies.cloze.01",
+    "concept": "ops.deploy-strategies",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "Fill the blank so about 5% of users get the canary, and each user always gets the same version on every instance, even after restarts.",
+      "code": "import random\nimport zlib\n\ndef bucket(user_id: str) -> int:\n    # stable number from 0 to 99 per user\n    return zlib.crc32(user_id.encode()) % 100\n\ndef use_canary(user_id: str) -> bool:\n    return ____",
+      "options": [
+        {
+          "id": "a",
+          "text": "hash(user_id) % 100 < 5"
+        },
+        {
+          "id": "b",
+          "text": "random.random() < 0.05"
+        },
+        {
+          "id": "c",
+          "text": "bucket(user_id) < 5"
+        },
+        {
+          "id": "d",
+          "text": "bucket(user_id) % 5 == 0"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Pick canary users with a stable hash of their id; a random choice per request flips users between versions."
+  },
+  {
+    "key": "ops.scaling.tf.01",
+    "concept": "ops.scaling",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Vertical scaling means adding more servers behind a load balancer.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Vertical scaling makes one machine bigger; horizontal scaling adds more machines behind a load balancer."
+  },
+  {
+    "key": "ops.scaling.mc.01",
+    "concept": "ops.scaling",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Why do teams usually prefer horizontal over vertical scaling for a web API?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It needs no change to where the app keeps its sessions and uploaded files"
+        },
+        {
+          "id": "b",
+          "text": "It always costs less per CPU core than one bigger machine"
+        },
+        {
+          "id": "c",
+          "text": "It removes the need for a load balancer in front of the API"
+        },
+        {
+          "id": "d",
+          "text": "No single machine sets the limit, and one failing machine does not stop the API"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Horizontal scaling has no hard ceiling and survives a machine failing, but it needs a stateless app behind a load balancer."
+  },
+  {
+    "key": "ops.scaling.order.01",
+    "concept": "ops.scaling",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "An autoscaler watches average CPU. Traffic suddenly doubles. Order what happens next.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "New instances boot and start the app"
+        },
+        {
+          "id": "s2",
+          "text": "The load balancer starts sending them traffic"
+        },
+        {
+          "id": "s3",
+          "text": "Average CPU stays above the target for the evaluation window"
+        },
+        {
+          "id": "s4",
+          "text": "New instances pass their readiness check"
+        },
+        {
+          "id": "s5",
+          "text": "The autoscaler raises the desired instance count"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Scaling out takes minutes: the metric must stay high, then new instances boot and pass readiness before they help."
+  },
+  {
+    "key": "ops.scaling.out.01",
+    "concept": "ops.scaling",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "class Instance:\n    def __init__(self, name):\n        self.name = name\n        self.carts = {}  # kept in process memory\n\ndef route(pool, user_id):\n    # sticky routing by user id\n    return pool[user_id % len(pool)]\n\npool = [Instance(\"a\"), Instance(\"b\")]\nroute(pool, 8).carts[8] = [\"book\", \"pen\"]\n\npool.append(Instance(\"c\"))  # autoscaler adds one\ninst = route(pool, 8)\nprint(inst.name, inst.carts.get(8, []))",
+      "options": [
+        {
+          "id": "a",
+          "text": "a ['book', 'pen']"
+        },
+        {
+          "id": "b",
+          "text": "c []"
+        },
+        {
+          "id": "c",
+          "text": "c ['book', 'pen']"
+        },
+        {
+          "id": "d",
+          "text": "b []"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Sticky routing by hash moves users when the instance count changes; keep sessions in a shared store, not in process memory."
+  },
+  {
+    "key": "ops.scaling.bug.01",
+    "concept": "ops.scaling",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The API was scaled from 1 to 4 instances behind a load balancer. Since then, every user gets the daily digest email four times. Find the bug.",
+      "code": "import express from \"express\";\nimport cron from \"node-cron\";\n\nconst app = express();\napp.get(\"/health\", (req, res) => res.send(\"ok\"));\napp.post(\"/orders\", createOrder);\n\n// Daily digest email at 07:00\ncron.schedule(\"0 7 * * *\", async () => {\n  await sendDailyDigestToAllUsers();\n});\n\napp.listen(8080);",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Await cron.schedule so the job is registered only once"
+        },
+        {
+          "id": "f2",
+          "text": "Move the cron.schedule call below app.listen"
+        },
+        {
+          "id": "f3",
+          "text": "Run the job in one separate worker, or guard it with a shared lock"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f3",
+        "acceptLines": [
+          10,
+          11
+        ]
+      }
+    },
+    "remember": "Every instance runs the code in its own process, so a job scheduled inside a scaled web app runs once per instance."
+  },
+  {
+    "key": "ops.cloud-models.tf.01",
+    "concept": "ops.cloud-models",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "With SaaS, such as hosted email, the customer patches the servers it runs on.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "SaaS is finished software you just use; the provider runs and maintains everything underneath."
+  },
+  {
+    "key": "ops.cloud-models.mc.01",
+    "concept": "ops.cloud-models",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A serverless function scales to zero when idle and is billed per call. Which trade-off comes with that?",
+      "options": [
+        {
+          "id": "a",
+          "text": "You must patch the operating system the function runs on"
+        },
+        {
+          "id": "b",
+          "text": "The first request after an idle period can be slower, a cold start"
+        },
+        {
+          "id": "c",
+          "text": "It cannot connect to a database"
+        },
+        {
+          "id": "d",
+          "text": "You pay for a fixed number of servers, even at night"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Serverless saves idle cost and server work, but an idle function starts cold, so the first call can be slow."
+  },
+  {
+    "key": "ops.cloud-models.match.01",
+    "concept": "ops.cloud-models",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each cloud service model with an example.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "IaaS"
+        },
+        {
+          "id": "l2",
+          "text": "PaaS"
+        },
+        {
+          "id": "l3",
+          "text": "SaaS"
+        },
+        {
+          "id": "l4",
+          "text": "Serverless functions"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "You push code; the platform builds, runs and patches it"
+        },
+        {
+          "id": "r2",
+          "text": "Code that runs on each event and is billed per call"
+        },
+        {
+          "id": "r3",
+          "text": "A rented virtual machine you log in to and patch"
+        },
+        {
+          "id": "r4",
+          "text": "A finished app, such as hosted email, used in the browser"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "IaaS rents machines, PaaS runs your code, SaaS is ready-made software, and serverless runs functions per event."
+  },
+  {
+    "key": "ops.cloud-models.order.01",
+    "concept": "ops.cloud-models",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order these from the model where your team manages the most to the one where it manages the least.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "SaaS"
+        },
+        {
+          "id": "s2",
+          "text": "PaaS"
+        },
+        {
+          "id": "s3",
+          "text": "On-premises servers"
+        },
+        {
+          "id": "s4",
+          "text": "IaaS"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s4",
+          "s2",
+          "s1"
+        ]
+      }
+    },
+    "remember": "From on-premises to IaaS, PaaS and SaaS, the provider takes over more layers and you manage less."
+  },
+  {
+    "key": "ops.cloud-models.odd.01",
+    "concept": "ops.cloud-models",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these are a natural fit for serverless functions. Which is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Resize each uploaded image"
+        },
+        {
+          "id": "b",
+          "text": "Hold game WebSocket connections open all day"
+        },
+        {
+          "id": "c",
+          "text": "Handle a webhook a few times an hour"
+        },
+        {
+          "id": "d",
+          "text": "Send a report email every night"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Serverless suits short, event-driven work; long-running processes and always-open connections fit containers or VMs better."
+  },
+  {
+    "key": "ops.iac.tf.01",
+    "concept": "ops.iac",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "With infrastructure as code, servers and networks are described in versioned files that are reviewed like code.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "IaC turns infrastructure into versioned files, so changes are reviewed, repeatable and easy to rebuild."
+  },
+  {
+    "key": "ops.iac.mc.01",
+    "concept": "ops.iac",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "The infrastructure is managed as code, but a teammate changed a firewall rule by hand in the cloud console. What is the problem?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The files no longer match reality, and the next apply may undo the change"
+        },
+        {
+          "id": "b",
+          "text": "Nothing; the IaC tool copies the change back into the files"
+        },
+        {
+          "id": "c",
+          "text": "The change had no effect, because hand edits are blocked"
+        },
+        {
+          "id": "d",
+          "text": "Only that the console change was not written to an audit log"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Manual changes cause drift: the code no longer describes reality, and the next apply may silently revert them."
+  },
+  {
+    "key": "ops.iac.cloze.01",
+    "concept": "ops.iac",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "provision.sh runs on every deploy and must leave the machine in the same state however many times it runs. Fill the blank.",
+      "code": "#!/bin/sh\nset -e\nid -u app >/dev/null 2>&1 || useradd app\nmkdir -p /srv/app\n\nLINE=\"10.0.0.5 db.internal\"\n____ echo \"$LINE\" >> /etc/hosts",
+      "options": [
+        {
+          "id": "a",
+          "text": "grep -qxF \"$LINE\" /etc/hosts &&"
+        },
+        {
+          "id": "b",
+          "text": "[ -f /etc/hosts ] ||"
+        },
+        {
+          "id": "c",
+          "text": "grep -qxF \"$LINE\" /etc/hosts ||"
+        },
+        {
+          "id": "d",
+          "text": "[ -f /etc/hosts ] &&"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Idempotent steps check the current state before changing it, so a second run changes nothing."
+  },
+  {
+    "key": "ops.iac.order.01",
+    "concept": "ops.iac",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Order the steps to change infrastructure that is managed as code.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Merge, and the pipeline applies the change"
+        },
+        {
+          "id": "s2",
+          "text": "Reviewers read the diff and the plan"
+        },
+        {
+          "id": "s3",
+          "text": "Edit the definition files in a branch"
+        },
+        {
+          "id": "s4",
+          "text": "The pipeline runs a plan showing what would change"
+        },
+        {
+          "id": "s5",
+          "text": "Open a pull request"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s4",
+          "s2",
+          "s1"
+        ]
+      }
+    },
+    "remember": "Change infrastructure like code: branch, pull request, review the planned changes, then let the pipeline apply them after merge."
+  },
+  {
+    "key": "ops.iac.odd.01",
+    "concept": "ops.iac",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these are good practice for an IaC tool's state file. Which is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Store it remotely, with locking"
+        },
+        {
+          "id": "b",
+          "text": "Commit it to git next to the code"
+        },
+        {
+          "id": "c",
+          "text": "Encrypt it and restrict access; it can hold secrets"
+        },
+        {
+          "id": "d",
+          "text": "Change it only through the tool, never by hand"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "IaC state can hold secrets and must not be changed by two runs at once; keep it in a locked, encrypted remote store, not in git."
+  }
+]

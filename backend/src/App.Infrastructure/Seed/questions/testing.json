@@ -1,0 +1,1892 @@
+[
+  {
+    "key": "test.unit-integration.tf.01",
+    "concept": "test.unit-integration",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A test that saves a user to a real test database and reads it back is an integration test.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "As soon as a test runs your code together with a real database, network or file system, it is an integration test."
+  },
+  {
+    "key": "test.unit-integration.mc.01",
+    "concept": "test.unit-integration",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What does an integration test check that a unit test does not?",
+      "options": [
+        {
+          "id": "a",
+          "text": "That one function returns the right value for a given input"
+        },
+        {
+          "id": "b",
+          "text": "That the screens look right in every supported browser"
+        },
+        {
+          "id": "c",
+          "text": "That your code works together with real dependencies, such as the database"
+        },
+        {
+          "id": "d",
+          "text": "That the code stays fast under heavy production load"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Unit tests check one piece in isolation; integration tests check that pieces and real dependencies work together."
+  },
+  {
+    "key": "test.unit-integration.odd.01",
+    "concept": "test.unit-integration",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these are unit tests. Which one is an integration test?",
+      "items": [
+        {
+          "id": "a",
+          "text": "slugify(\"Hello World\") returns \"hello-world\""
+        },
+        {
+          "id": "b",
+          "text": "UserRepository saves a user to a PostgreSQL test database and reads it back"
+        },
+        {
+          "id": "c",
+          "text": "The price calculator takes 10% off a 200 EUR order"
+        },
+        {
+          "id": "d",
+          "text": "validateEmail rejects \"ana@\""
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "A test that needs a real database to run is an integration test; pure logic is checked with unit tests."
+  },
+  {
+    "key": "test.unit-integration.match.01",
+    "concept": "test.unit-integration",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each bug with the cheapest kind of test that would catch it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "calculateVat rounds 2.675 the wrong way"
+        },
+        {
+          "id": "l2",
+          "text": "A migration renamed a column, but the repository's SQL still uses the old name"
+        },
+        {
+          "id": "l3",
+          "text": "Checkout retries forever when the payment client throws"
+        },
+        {
+          "id": "l4",
+          "text": "The reverse proxy strips the Authorization header before requests reach the API"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "An end-to-end test against the deployed app"
+        },
+        {
+          "id": "r2",
+          "text": "A unit test of the function"
+        },
+        {
+          "id": "r3",
+          "text": "An integration test against a real database"
+        },
+        {
+          "id": "r4",
+          "text": "A unit test with a stubbed client that throws"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Pick the cheapest test that can see the bug: logic in unit tests, SQL in integration tests, wiring of the deployed parts end to end."
+  },
+  {
+    "key": "test.unit-integration.mc.02",
+    "concept": "test.unit-integration",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Your integration tests run the repositories against an in-memory SQLite database, while production runs PostgreSQL. What is the main risk?",
+      "options": [
+        {
+          "id": "a",
+          "text": "In-memory SQLite is slower than PostgreSQL, so the suite drags"
+        },
+        {
+          "id": "b",
+          "text": "The tests stop being integration tests and become end-to-end tests"
+        },
+        {
+          "id": "c",
+          "text": "SQLite cannot run inside the same process as the tests"
+        },
+        {
+          "id": "d",
+          "text": "Tests can pass on SQL that PostgreSQL would reject or run differently"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Integration tests should use the same database engine as production; a stand-in hides dialect and constraint differences."
+  },
+  {
+    "key": "test.pyramid.tf.01",
+    "concept": "test.pyramid",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a healthy test pyramid, end-to-end tests are the most numerous kind of test.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "The pyramid has many unit tests at the base, fewer integration tests and only a few end-to-end tests at the top."
+  },
+  {
+    "key": "test.pyramid.mc.01",
+    "concept": "test.pyramid",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Why should unit tests make up the base of the test pyramid?",
+      "options": [
+        {
+          "id": "a",
+          "text": "They catch every bug that end-to-end tests catch"
+        },
+        {
+          "id": "b",
+          "text": "They run in milliseconds and point straight at the broken code"
+        },
+        {
+          "id": "c",
+          "text": "They never need to change when the code changes"
+        },
+        {
+          "id": "d",
+          "text": "They exercise the real database and network"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Unit tests are cheap, fast and precise, so you can afford many of them; slower tests cover what units cannot see."
+  },
+  {
+    "key": "test.pyramid.order.01",
+    "concept": "test.pyramid",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order these tests of an online shop from the base of the test pyramid (most numerous, fastest) to the top.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "A browser signs in, fills the cart and pays"
+        },
+        {
+          "id": "s2",
+          "text": "calculateTotal() returns the sum of the line prices"
+        },
+        {
+          "id": "s3",
+          "text": "POST /api/orders on the running API returns 201 and stores the order"
+        },
+        {
+          "id": "s4",
+          "text": "OrderRepository saves an order to a test database and reads it back"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s3",
+          "s1"
+        ]
+      }
+    },
+    "remember": "The bigger the slice of the real system a test runs, the higher it sits in the pyramid and the fewer of them you write."
+  },
+  {
+    "key": "test.pyramid.odd.01",
+    "concept": "test.pyramid",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these are signs of an upside-down test pyramid with too many end-to-end tests. Which one is not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The full test suite takes 40 minutes to run"
+        },
+        {
+          "id": "b",
+          "text": "A red test rarely tells you which function broke"
+        },
+        {
+          "id": "c",
+          "text": "A unit test fails right after someone changes that function's logic"
+        },
+        {
+          "id": "d",
+          "text": "Tests often fail because a page loaded slowly"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Slow runs, vague failures and timing noise mean the suite leans on end-to-end tests; push those checks down to unit and integration tests."
+  },
+  {
+    "key": "test.pyramid.mc.02",
+    "concept": "test.pyramid",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "For which service is it reasonable to write more integration tests than unit tests?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A thin CRUD API whose logic is mostly SQL queries and mapping rows to JSON"
+        },
+        {
+          "id": "b",
+          "text": "A tax engine that applies hundreds of rules in memory"
+        },
+        {
+          "id": "c",
+          "text": "A date parser that accepts many input formats"
+        },
+        {
+          "id": "d",
+          "text": "A pricing function that combines discounts and coupons"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "The pyramid is a guide, not a law: when the behaviour lives in the database, integration tests give more confidence than unit tests with mocks."
+  },
+  {
+    "key": "test.assertions.tf.01",
+    "concept": "test.assertions",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A test with no assertions is reported as passed as long as the code it calls does not throw.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A test only fails when something throws or an assertion fails, so a test without assertions checks almost nothing."
+  },
+  {
+    "key": "test.assertions.mc.01",
+    "concept": "test.assertions",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "getUser() returns a new object { id: 1, name: \"Ana\" }. Which assertion passes?",
+      "options": [
+        {
+          "id": "a",
+          "text": "expect(getUser()).toBe({ id: 1, name: \"Ana\" })"
+        },
+        {
+          "id": "b",
+          "text": "expect(getUser() === { id: 1, name: \"Ana\" }).toBe(true)"
+        },
+        {
+          "id": "c",
+          "text": "expect(getUser() == { id: 1, name: \"Ana\" }).toBeTruthy()"
+        },
+        {
+          "id": "d",
+          "text": "expect(getUser()).toEqual({ id: 1, name: \"Ana\" })"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "toBe compares identity like ===, so two separate objects never match; use toEqual to compare their contents."
+  },
+  {
+    "key": "test.assertions.cloze.01",
+    "concept": "test.assertions",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "parse(\"\") throws an Error with the message \"empty input\". Fill the blank so the test passes.",
+      "code": "test(\"parse rejects empty input\", () => {\n  expect(____).toThrow(\"empty input\");\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "parse(\"\")"
+        },
+        {
+          "id": "b",
+          "text": "async () => parse(\"\")"
+        },
+        {
+          "id": "c",
+          "text": "() => parse(\"\")"
+        },
+        {
+          "id": "d",
+          "text": "new Error(\"empty input\")"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "toThrow needs a function it can call; passing parse(\"\") runs it before expect, so the error escapes the assertion."
+  },
+  {
+    "key": "test.assertions.bug.01",
+    "concept": "test.assertions",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Someone deleted the amount check from withdraw, yet this test still passes. Find the bug.",
+      "code": "test(\"rejects a negative amount\", () => {\n  const account = { balance: 100 };\n  try {\n    withdraw(account, -50);\n  } catch (err) {\n    expect(err.message).toBe(\"Amount must be positive\");\n  }\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use toEqual instead of toBe to compare err.message"
+        },
+        {
+          "id": "f2",
+          "text": "Replace the try/catch with expect(() => withdraw(account, -50)).toThrow(\"Amount must be positive\")"
+        },
+        {
+          "id": "f3",
+          "text": "Also assert expect(account.balance).toBe(100) inside the catch block"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f2",
+        "acceptLines": [
+          4,
+          5,
+          6,
+          7
+        ]
+      }
+    },
+    "remember": "An assertion inside catch only runs if something throws; assert the throw itself with expect(() => ...).toThrow()."
+  },
+  {
+    "key": "test.assertions.out.01",
+    "concept": "test.assertions",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "Ignoring warnings, what happens when this script runs?",
+      "code": "def total(prices):\n    return sum(prices) + 1   # bug\n\n\ndef test_total():\n    assert (total([10, 20]) == 30, \"wrong total\")\n\n\ntest_total()\nprint(\"test passed\")",
+      "options": [
+        {
+          "id": "a",
+          "text": "It raises AssertionError: wrong total"
+        },
+        {
+          "id": "b",
+          "text": "It raises AssertionError with no message"
+        },
+        {
+          "id": "c",
+          "text": "It prints test passed"
+        },
+        {
+          "id": "d",
+          "text": "It raises TypeError, because assert cannot take a tuple"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "assert (cond, \"msg\") asserts a non-empty tuple, which is always true; write assert cond, \"msg\" without parentheses."
+  },
+  {
+    "key": "test.edge-cases.tf.01",
+    "concept": "test.edge-cases",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If a function works for a list of three items, also testing it with an empty list adds nothing.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Empty input is one of the most common edge cases; test it on purpose, along with one item and the maximum."
+  },
+  {
+    "key": "test.edge-cases.mc.01",
+    "concept": "test.edge-cases",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A field accepts quantities from 1 to 99. Which set of test values best covers its boundaries?",
+      "options": [
+        {
+          "id": "a",
+          "text": "1, 50, 99"
+        },
+        {
+          "id": "b",
+          "text": "0, 1, 99, 100"
+        },
+        {
+          "id": "c",
+          "text": "10, 20, 30, 40"
+        },
+        {
+          "id": "d",
+          "text": "50, 51, 52, 53"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Test each limit and the value just outside it; off-by-one bugs live exactly there."
+  },
+  {
+    "key": "test.edge-cases.bug.01",
+    "concept": "test.edge-cases",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Every 10th item, such as the 10th, 20th and 30th, never shows up on any page. Find the bug.",
+      "code": "function getPage(items, page, size = 10) {\n  const start = (page - 1) * size;\n  const end = start + size - 1;\n  return items.slice(start, end);\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "const end = start + size + 1;"
+        },
+        {
+          "id": "f2",
+          "text": "const start = page * size;"
+        },
+        {
+          "id": "f3",
+          "text": "const end = start + size;"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f3"
+      }
+    },
+    "remember": "slice's end index is exclusive; test the first and last item of every page, where off-by-one bugs hide."
+  },
+  {
+    "key": "test.edge-cases.out.01",
+    "concept": "test.edge-cases",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "def last_n(items, n):\n    return items[-n:]\n\n\nprint(last_n([1, 2, 3], 2))\nprint(last_n([1, 2, 3], 0))",
+      "options": [
+        {
+          "id": "a",
+          "text": "[2, 3] then []"
+        },
+        {
+          "id": "b",
+          "text": "[2, 3] then [3]"
+        },
+        {
+          "id": "c",
+          "text": "[2, 3] then IndexError"
+        },
+        {
+          "id": "d",
+          "text": "[2, 3] then [1, 2, 3]"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "-0 is just 0, so items[-0:] is the whole list; always test n = 0 for slicing helpers."
+  },
+  {
+    "key": "test.edge-cases.cloze.01",
+    "concept": "test.edge-cases",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "addMonth has an edge-case bug. Fill the blank with the input that exposes it by making this print a wrong date.",
+      "code": "// Same day next month, or the last day of next\n// month when that day does not exist.\nfunction addMonth(date) {\n  const d = new Date(date);\n  d.setMonth(d.getMonth() + 1);\n  return d;\n}\n\n// months are 0-based: 0 = January\nconst input = new Date(____);\nconsole.log(addMonth(input).toDateString());",
+      "options": [
+        {
+          "id": "a",
+          "text": "2026, 0, 15"
+        },
+        {
+          "id": "b",
+          "text": "2026, 0, 31"
+        },
+        {
+          "id": "c",
+          "text": "2026, 11, 15"
+        },
+        {
+          "id": "d",
+          "text": "2026, 1, 28"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Month ends are classic date edge cases: setMonth rolls 31 January over into March, so test the 31st and February."
+  },
+  {
+    "key": "test.mocks.tf.01",
+    "concept": "test.mocks",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A unit test that replaces every collaborator with a mock also proves that the class works with the real collaborators.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Mocks only behave the way you programmed them; integration tests are still needed to prove the real parts fit."
+  },
+  {
+    "key": "test.mocks.mc.01",
+    "concept": "test.mocks",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which dependency is the best candidate to replace with a test double in a unit test?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A pure function that formats prices"
+        },
+        {
+          "id": "b",
+          "text": "The function under test itself"
+        },
+        {
+          "id": "c",
+          "text": "An HTTP client that charges real credit cards"
+        },
+        {
+          "id": "d",
+          "text": "The built-in Array.prototype.map"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Replace what is slow, external or has side effects, like payment or email APIs; keep fast, pure code real."
+  },
+  {
+    "key": "test.mocks.out.01",
+    "concept": "test.mocks",
+    "type": "output",
+    "difficulty": 1,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "from unittest.mock import Mock\n\nrate = Mock(return_value=1.5)\nprint(rate(\"EUR\"), rate(\"USD\"), rate.call_count)",
+      "options": [
+        {
+          "id": "a",
+          "text": "1.5 1.5 2"
+        },
+        {
+          "id": "b",
+          "text": "1.5 None 2"
+        },
+        {
+          "id": "c",
+          "text": "1.5 1.5 1"
+        },
+        {
+          "id": "d",
+          "text": "None None 2"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A stubbed return value comes back for any arguments, and the mock counts every call so a test can check them."
+  },
+  {
+    "key": "test.mocks.match.01",
+    "concept": "test.mocks",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each kind of test double with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Dummy"
+        },
+        {
+          "id": "l2",
+          "text": "Stub"
+        },
+        {
+          "id": "l3",
+          "text": "Mock"
+        },
+        {
+          "id": "l4",
+          "text": "Fake"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Returns canned answers so the code under test can run"
+        },
+        {
+          "id": "r2",
+          "text": "Checked afterwards for the calls the code was expected to make"
+        },
+        {
+          "id": "r3",
+          "text": "A working but simplified implementation, such as an in-memory repository"
+        },
+        {
+          "id": "r4",
+          "text": "Passed only to fill a parameter; never actually used"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "Dummies fill parameters, stubs feed answers, mocks verify calls, and fakes are light working versions of the real thing."
+  },
+  {
+    "key": "test.mocks.bug.01",
+    "concept": "test.mocks",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "The test still calls the real payment API, although charge is patched. Find the bug.",
+      "code": "# shop/payments.py\ndef charge(card, amount):\n    ...  # calls the real payment API\n\n# shop/orders.py\nfrom shop.payments import charge\n\ndef checkout(card, total):\n    return charge(card, total)\n\n# tests/test_orders.py\nfrom unittest.mock import patch\nfrom shop.orders import checkout\n\n@patch(\"shop.payments.charge\")\ndef test_checkout(mock_charge):\n    mock_charge.return_value = \"ok\"\n    assert checkout(\"4111\", 25) == \"ok\"",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "@patch(\"shop.payments.charge\", return_value=\"ok\")"
+        },
+        {
+          "id": "f2",
+          "text": "@patch(\"shop.orders.charge\")"
+        },
+        {
+          "id": "f3",
+          "text": "@patch(\"shop.payments.charge\", autospec=True)"
+        }
+      ],
+      "answer": {
+        "line": 15,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Patch a name where it is looked up, not where it is defined: from x import f copies f into the importing module."
+  },
+  {
+    "key": "test.isolation.tf.01",
+    "concept": "test.isolation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Every test should pass when run on its own and in any order with the other tests.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Tests that rely on each other's leftovers break when run alone, in parallel or in a different order."
+  },
+  {
+    "key": "test.isolation.mc.01",
+    "concept": "test.isolation",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Several tests need an empty shopping cart. Where should the cart be created?",
+      "options": [
+        {
+          "id": "a",
+          "text": "In the first test; the later tests reuse it"
+        },
+        {
+          "id": "b",
+          "text": "In a beforeEach hook or fixture, so every test gets a new one"
+        },
+        {
+          "id": "c",
+          "text": "Once, in a global variable when the test file loads"
+        },
+        {
+          "id": "d",
+          "text": "In an afterAll hook at the end of the file"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Create fresh state for every test in beforeEach or a fixture; never let a test depend on what an earlier one left behind."
+  },
+  {
+    "key": "test.isolation.bug.01",
+    "concept": "test.isolation",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "\"a new cart is empty\" fails when the whole file runs, but passes when it runs on its own. Find the bug.",
+      "code": "let cart;\n\nbeforeAll(() => {\n  cart = new Cart();\n});\n\ntest(\"adding a book counts one item\", () => {\n  cart.add(\"book\");\n  expect(cart.count()).toBe(1);\n});\n\ntest(\"a new cart is empty\", () => {\n  expect(cart.count()).toBe(0);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Replace beforeAll with beforeEach"
+        },
+        {
+          "id": "f2",
+          "text": "Replace beforeAll with afterEach"
+        },
+        {
+          "id": "f3",
+          "text": "Add afterAll(() => { cart = undefined; }) below it"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f1",
+        "acceptLines": [
+          4,
+          5
+        ]
+      }
+    },
+    "remember": "beforeAll shares one object across all tests; use beforeEach so each test starts from a clean state."
+  },
+  {
+    "key": "test.isolation.out.01",
+    "concept": "test.isolation",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "pytest runs both tests in file order. What does it report?",
+      "code": "def add_tag(tag, tags=[]):\n    tags.append(tag)\n    return tags\n\n\ndef test_first_tag():\n    assert add_tag(\"a\") == [\"a\"]\n\n\ndef test_second_tag():\n    assert add_tag(\"b\") == [\"b\"]",
+      "options": [
+        {
+          "id": "a",
+          "text": "test_first_tag passes, test_second_tag fails"
+        },
+        {
+          "id": "b",
+          "text": "Both tests pass"
+        },
+        {
+          "id": "c",
+          "text": "test_first_tag fails, test_second_tag passes"
+        },
+        {
+          "id": "d",
+          "text": "Both tests fail"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A mutable default argument is shared between calls, so state leaks from one test into the next; default to None and build a new list."
+  },
+  {
+    "key": "test.isolation.order.01",
+    "concept": "test.isolation",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A test file has a top-level beforeEach. Below it, a describe block holds a beforeAll, a beforeEach, an afterEach and then its first test. In what order do these run for that test?",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The describe block's beforeEach"
+        },
+        {
+          "id": "s2",
+          "text": "The test itself"
+        },
+        {
+          "id": "s3",
+          "text": "The top-level beforeEach"
+        },
+        {
+          "id": "s4",
+          "text": "The describe block's afterEach"
+        },
+        {
+          "id": "s5",
+          "text": "The describe block's beforeAll"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s5",
+          "s3",
+          "s1",
+          "s2",
+          "s4"
+        ]
+      }
+    },
+    "remember": "A block's beforeAll runs before any per-test hooks; then beforeEach hooks run outside-in and afterEach hooks inside-out."
+  },
+  {
+    "key": "test.flaky.tf.01",
+    "concept": "test.flaky",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Rerunning a flaky test until it passes is a safe fix, because flakiness never points to a real bug.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Flakiness can hide a real race condition or time bug; find the cause instead of retrying until green."
+  },
+  {
+    "key": "test.flaky.mc.01",
+    "concept": "test.flaky",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A test starts a background import, sleeps 200 ms, then checks that the rows exist. It fails now and then on busy CI machines. What is the most reliable fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Sleep 2 seconds instead of 200 ms"
+        },
+        {
+          "id": "b",
+          "text": "Retry the test up to three times"
+        },
+        {
+          "id": "c",
+          "text": "Run this test first in the suite"
+        },
+        {
+          "id": "d",
+          "text": "Wait for the import to finish, or poll for the rows with a timeout"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A fixed sleep races against the machine's speed; wait for the actual condition instead."
+  },
+  {
+    "key": "test.flaky.out.01",
+    "concept": "test.flaky",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "import random\n\n\ndef shuffled(items, seed):\n    rng = random.Random(seed)\n    result = items[:]\n    rng.shuffle(result)\n    return result\n\n\na = shuffled([1, 2, 3, 4, 5], seed=42)\nb = shuffled([1, 2, 3, 4, 5], seed=42)\nprint(a == b)",
+      "options": [
+        {
+          "id": "a",
+          "text": "False"
+        },
+        {
+          "id": "b",
+          "text": "True on some runs and False on others"
+        },
+        {
+          "id": "c",
+          "text": "TypeError, because rng.shuffle returns None"
+        },
+        {
+          "id": "d",
+          "text": "True"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A random generator with a fixed seed repeats the same sequence, so log the seed and reuse it to replay a failing random test."
+  },
+  {
+    "key": "test.flaky.bug.01",
+    "concept": "test.flaky",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "On a laptop in Zagreb, this test fails when run shortly after midnight and passes the rest of the day. Find the bug.",
+      "code": "from datetime import date, datetime, timezone\n\ndef create_order(items):\n    return {\"items\": items,\n            \"created\": datetime.now(timezone.utc)}\n\ndef test_order_is_dated_today():\n    order = create_order([\"book\"])\n    assert order[\"created\"].date() == date.today()",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Compare with datetime.now(timezone.utc).date()"
+        },
+        {
+          "id": "f2",
+          "text": "Call date.today() before create_order and compare with that"
+        },
+        {
+          "id": "f3",
+          "text": "Compare full datetimes: order[\"created\"] == datetime.now(timezone.utc)"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f1"
+      }
+    },
+    "remember": "A UTC timestamp and the local date disagree for some hours of the day; compare in one time zone, or pass in a fixed clock."
+  },
+  {
+    "key": "test.flaky.odd.01",
+    "concept": "test.flaky",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these tests are flaky. Which one is wrong but not flaky?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Asserts the order of strings read from a Python set"
+        },
+        {
+          "id": "b",
+          "text": "Asserts the row order of ORDER BY created_at when several rows share a timestamp"
+        },
+        {
+          "id": "c",
+          "text": "Two parallel workers start their test servers on the same fixed port"
+        },
+        {
+          "id": "d",
+          "text": "Expects 0.1 + 0.2 === 0.3 to be true"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "A test that fails every time is just wrong; a flaky one depends on something that varies, such as hash order, ties in sorting or shared ports."
+  },
+  {
+    "key": "test.tdd.tf.01",
+    "concept": "test.tdd",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In TDD, the code you write to make a test pass may be crude at first, because the refactor step cleans it up while the tests stay green.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Green only has to pass the test; refactoring afterwards improves the design with the tests as a safety net."
+  },
+  {
+    "key": "test.tdd.mc.01",
+    "concept": "test.tdd",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is the first step of each test-driven development cycle?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Write a small test that fails"
+        },
+        {
+          "id": "b",
+          "text": "Write the simplest code that could work"
+        },
+        {
+          "id": "c",
+          "text": "Refactor the existing code"
+        },
+        {
+          "id": "d",
+          "text": "Measure the test coverage"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Each TDD cycle starts red: a small test for the next behaviour, failing because the code does not exist yet."
+  },
+  {
+    "key": "test.tdd.bug.01",
+    "concept": "test.tdd",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "In the red step this new test passed at once, although slugify did not handle spaces yet. Find the bug.",
+      "code": "import { slugify } from \"./slugify.js\";\n\ntest(\"turns spaces into dashes\", () => {\n  const input = \"Hello World\";\n  const expected = slugify(input);\n  expect(slugify(input)).toBe(expected);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use toEqual instead of toBe"
+        },
+        {
+          "id": "f2",
+          "text": "const expected = \"hello-world\";"
+        },
+        {
+          "id": "f3",
+          "text": "Call slugify only once and store the result"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Never compute the expected value with the code under test; write it out, and watch each new test fail first."
+  },
+  {
+    "key": "test.tdd.order.01",
+    "concept": "test.tdd",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "You test-drive total(cart), starting from the simplest case. In which order do you add these tests?",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "A coupon bigger than the sum gives 0, not a negative total"
+        },
+        {
+          "id": "s2",
+          "text": "A cart with one item totals that item's price"
+        },
+        {
+          "id": "s3",
+          "text": "An empty cart totals 0"
+        },
+        {
+          "id": "s4",
+          "text": "A 5 EUR coupon is taken off the sum of the items"
+        },
+        {
+          "id": "s5",
+          "text": "A cart with several items totals the sum of their prices"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s2",
+          "s5",
+          "s4",
+          "s1"
+        ]
+      }
+    },
+    "remember": "Grow the code in small steps: start with the simplest case, generalise one test at a time, then add the special rules."
+  },
+  {
+    "key": "test.tdd.odd.01",
+    "concept": "test.tdd",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these are TDD habits. Which one goes against TDD?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Write the whole feature first, then add tests until coverage is high"
+        },
+        {
+          "id": "b",
+          "text": "Watch each new test fail before writing the code"
+        },
+        {
+          "id": "c",
+          "text": "Write only enough code to make the failing test pass"
+        },
+        {
+          "id": "d",
+          "text": "Refactor only while all tests are green"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "In TDD the tests drive the code one small step at a time; tests written afterwards to raise coverage are not TDD."
+  },
+  {
+    "key": "test.coverage.tf.01",
+    "concept": "test.coverage",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "100% line coverage means every behaviour of the code is checked by an assertion.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Coverage only says which lines ran during the tests, not whether any assertion checked what they did."
+  },
+  {
+    "key": "test.coverage.mc.01",
+    "concept": "test.coverage",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The report shows 100% line coverage for finalPrice but only 50% branch coverage. What is missing?",
+      "code": "function finalPrice(price, coupon) {\n  if (coupon) price -= coupon.amount;\n  return Math.max(price, 0);\n}\n\ntest(\"applies a coupon\", () => {\n  expect(finalPrice(50, { amount: 10 })).toBe(40);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "An assertion on the returned price"
+        },
+        {
+          "id": "b",
+          "text": "A test where the price drops below zero"
+        },
+        {
+          "id": "c",
+          "text": "A test without a coupon, so the if condition is false"
+        },
+        {
+          "id": "d",
+          "text": "A second test with a different coupon amount"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Branch coverage needs every condition to go both ways; an if that is only ever true leaves half its branches untested."
+  },
+  {
+    "key": "test.coverage.out.01",
+    "concept": "test.coverage",
+    "type": "output",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "Only this test runs. Which lines of shipping() does the coverage report mark as never executed?",
+      "code": "def shipping(total, country):\n    if country != \"HR\":\n        return 20\n    if total >= 50:\n        return 0\n    return 5\n\n\ndef test_free_shipping():\n    assert shipping(80, \"HR\") == 0",
+      "options": [
+        {
+          "id": "a",
+          "text": "Line 6 only"
+        },
+        {
+          "id": "b",
+          "text": "Line 3 only"
+        },
+        {
+          "id": "c",
+          "text": "Lines 3 and 6"
+        },
+        {
+          "id": "d",
+          "text": "None; every line runs"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Missed lines in a coverage report show the paths no test took, here the foreign order and the small order."
+  },
+  {
+    "key": "test.coverage.match.01",
+    "concept": "test.coverage",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each measure with what it counts.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Statement coverage"
+        },
+        {
+          "id": "l2",
+          "text": "Branch coverage"
+        },
+        {
+          "id": "l3",
+          "text": "Path coverage"
+        },
+        {
+          "id": "l4",
+          "text": "Mutation score"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Share of small deliberate code changes that made some test fail"
+        },
+        {
+          "id": "r2",
+          "text": "Share of distinct routes through a function, combining all its decisions, that were run"
+        },
+        {
+          "id": "r3",
+          "text": "Share of statements that ran at least once"
+        },
+        {
+          "id": "r4",
+          "text": "Share of decision outcomes, such as both sides of each if, that were taken"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Statement and branch coverage count what ran, path coverage counts combinations of decisions, and a mutation score shows whether tests notice changed behaviour."
+  },
+  {
+    "key": "test.coverage.cloze.01",
+    "concept": "test.coverage",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "A mutation testing tool changed >= to > in isAdult, and the suite still passed. Fill the blank so the test passes on the real code but fails on the mutant.",
+      "code": "function isAdult(age) {\n  return age >= 18;\n}\n\ntest(\"recognises adults\", () => {\n  expect(isAdult(____)).toBe(true);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "30"
+        },
+        {
+          "id": "b",
+          "text": "19"
+        },
+        {
+          "id": "c",
+          "text": "17"
+        },
+        {
+          "id": "d",
+          "text": "18"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Full coverage can still miss a boundary; a surviving mutant points at the value, here exactly 18, that no test checks."
+  },
+  {
+    "key": "test.e2e.tf.01",
+    "concept": "test.e2e",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "End-to-end tests drive the application through its real interface, such as a browser, with the real backend behind it.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "End-to-end tests use the app the way a user does, so they catch wiring problems that isolated tests miss."
+  },
+  {
+    "key": "test.e2e.mc.01",
+    "concept": "test.e2e",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which bug is an end-to-end test best placed to catch?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A helper that formats prices drops the cents"
+        },
+        {
+          "id": "b",
+          "text": "A sort function fails on an empty array"
+        },
+        {
+          "id": "c",
+          "text": "A regular expression accepts \"ana@\" as an email"
+        },
+        {
+          "id": "d",
+          "text": "The frontend calls /api/order while the API only serves /api/orders"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "End-to-end tests are best at wiring bugs between parts; logic bugs inside one function are cheaper to catch with unit tests."
+  },
+  {
+    "key": "test.e2e.order.01",
+    "concept": "test.e2e",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order the stages of a CI pipeline so the fastest feedback comes first.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Run integration tests against a database container"
+        },
+        {
+          "id": "s2",
+          "text": "Run browser end-to-end tests against staging"
+        },
+        {
+          "id": "s3",
+          "text": "Run the unit tests"
+        },
+        {
+          "id": "s4",
+          "text": "Deploy the build to a staging environment"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Run cheap, fast tests first and the slow end-to-end tests last, once the build is deployed somewhere realistic."
+  },
+  {
+    "key": "test.e2e.match.01",
+    "concept": "test.e2e",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each end-to-end test problem with its fix.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Breaks whenever designers rename CSS classes"
+        },
+        {
+          "id": "l2",
+          "text": "Takes 40 minutes, so developers stop running it"
+        },
+        {
+          "id": "l3",
+          "text": "A failure in CI cannot be understood from the log alone"
+        },
+        {
+          "id": "l4",
+          "text": "Clicks Pay while the page is still loading and misses the button"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Keep a few key journeys and move detailed rule checks to unit tests"
+        },
+        {
+          "id": "r2",
+          "text": "Wait until the element is visible and enabled before acting"
+        },
+        {
+          "id": "r3",
+          "text": "Find elements by role, label or a test id"
+        },
+        {
+          "id": "r4",
+          "text": "Save a screenshot, video or trace when a test fails"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Keep end-to-end tests few and sturdy: user-facing selectors, waits for real conditions, and failure artifacts you can inspect."
+  },
+  {
+    "key": "test.e2e.cloze.01",
+    "concept": "test.e2e",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "This end-to-end test runs against a shared staging server many times a day, also in parallel CI jobs. Signup rejects an email that is already taken. Fill the blank so the test keeps passing.",
+      "code": "test(\"a new user can sign up and log in\", async () => {\n  const email = `e2e-${____}@test.example`;\n  const body = { email, password: \"Secret-123\" };\n  await api.post(\"/signup\", body);\n  const res = await api.post(\"/login\", body);\n  expect(res.status).toBe(200);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "crypto.randomUUID()"
+        },
+        {
+          "id": "b",
+          "text": "\"user\""
+        },
+        {
+          "id": "c",
+          "text": "process.env.CI"
+        },
+        {
+          "id": "d",
+          "text": "new Date().getFullYear()"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "End-to-end tests share a real environment, so each run must create its own unique data instead of reusing fixed names."
+  },
+  {
+    "key": "test.debugging.tf.01",
+    "concept": "test.debugging",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Changing several things at once is the fastest way to find out which change fixes a bug.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Change one thing at a time; otherwise you cannot tell which change made the difference."
+  },
+  {
+    "key": "test.debugging.mc.01",
+    "concept": "test.debugging",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A bug appeared somewhere in the last 1,000 commits, and a test shows it. With git bisect, about how many commits do you need to test at most?",
+      "options": [
+        {
+          "id": "a",
+          "text": "About 10"
+        },
+        {
+          "id": "b",
+          "text": "About 100"
+        },
+        {
+          "id": "c",
+          "text": "About 500"
+        },
+        {
+          "id": "d",
+          "text": "All 1,000"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Bisecting halves the search space at each step, so 1,000 commits need only about 10 tests."
+  },
+  {
+    "key": "test.debugging.order.01",
+    "concept": "test.debugging",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Order these steps for fixing a bug that a user reported.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Form a hypothesis about the cause"
+        },
+        {
+          "id": "s2",
+          "text": "Fix it and add a regression test that failed before the fix"
+        },
+        {
+          "id": "s3",
+          "text": "Reproduce the failure reliably"
+        },
+        {
+          "id": "s4",
+          "text": "Run an experiment that could prove the hypothesis wrong"
+        },
+        {
+          "id": "s5",
+          "text": "Shrink it to the smallest input that still fails"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Reproduce, shrink, form a hypothesis, test it, then fix with a regression test so the bug cannot quietly return."
+  },
+  {
+    "key": "test.debugging.cloze.01",
+    "concept": "test.debugging",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "py",
+    "content": {
+      "prompt": "One of 10,000 orders has a negative total and crashes process(). Fill the blank to pause in the debugger right before that order is processed.",
+      "code": "for order in orders:\n    if order.total < 0:\n        ____\n    process(order)",
+      "options": [
+        {
+          "id": "a",
+          "text": "print(order)"
+        },
+        {
+          "id": "b",
+          "text": "breakpoint()"
+        },
+        {
+          "id": "c",
+          "text": "import pdb"
+        },
+        {
+          "id": "d",
+          "text": "raise SystemExit"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A conditional breakpoint stops only on the failing case, so you can inspect the state right before things go wrong."
+  },
+  {
+    "key": "test.debugging.odd.01",
+    "concept": "test.debugging",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these narrow down where a bug is. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Bisecting the failing input file and retrying each half"
+        },
+        {
+          "id": "b",
+          "text": "Reverting only your local changes to see whether the bug remains"
+        },
+        {
+          "id": "c",
+          "text": "Upgrading every dependency at once and retrying"
+        },
+        {
+          "id": "d",
+          "text": "Logging the data halfway through the pipeline to see which half goes wrong"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Narrow a bug down by splitting the search space; changing many things at once only adds new suspects."
+  },
+  {
+    "key": "test.logs-stacktraces.tf.01",
+    "concept": "test.logs-stacktraces",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a Python traceback, the most recent call is printed last, just above the exception message.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Python prints the oldest call first, so the frame that raised the error sits at the bottom, right above the message."
+  },
+  {
+    "key": "test.logs-stacktraces.mc.01",
+    "concept": "test.logs-stacktraces",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "text",
+    "content": {
+      "prompt": "Signup crashes with this stack trace. Where should you start looking?",
+      "code": "TypeError: Cannot read properties of null (reading 'trim')\n    at normalize (node_modules/mailkit/index.js:8:19)\n    at createUser (src/users.js:41:17)\n    at signup (src/routes.js:12:5)\n    at Layer.handle (node_modules/express/lib/layer.js:95:5)",
+      "options": [
+        {
+          "id": "a",
+          "text": "normalize in node_modules/mailkit, where the error was thrown"
+        },
+        {
+          "id": "b",
+          "text": "createUser in src/users.js, line 41"
+        },
+        {
+          "id": "c",
+          "text": "signup in src/routes.js, where the request came in"
+        },
+        {
+          "id": "d",
+          "text": "Layer.handle in express, at the bottom of the trace"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Start at the topmost frame from your own code: it usually passed the bad value into the library that threw."
+  },
+  {
+    "key": "test.logs-stacktraces.bug.01",
+    "concept": "test.logs-stacktraces",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "The log shows only \"charge failed for 42: timed out\", with no stack trace, so nobody can tell which call timed out. Find the bug.",
+      "code": "import logging\n\nlog = logging.getLogger(\"payments\")\n\ndef charge(order):\n    try:\n        return gateway.charge(order.card, order.total)\n    except GatewayError as err:\n        log.error(\"charge failed for %s: %s\", order.id, err)\n        return None",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "log.critical(\"charge failed for %s: %s\", order.id, err)"
+        },
+        {
+          "id": "f2",
+          "text": "log.error(\"charge failed for %s: %r\", order.id, err)"
+        },
+        {
+          "id": "f3",
+          "text": "log.exception(\"charge failed for %s\", order.id)"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Inside an except block, log.exception (or exc_info=True) records the full traceback; a plain message keeps only the text."
+  },
+  {
+    "key": "test.logs-stacktraces.out.01",
+    "concept": "test.logs-stacktraces",
+    "type": "output",
+    "difficulty": 4,
+    "language": "py",
+    "content": {
+      "prompt": "What does the traceback show when this runs?",
+      "code": "def load_port(cfg):\n    try:\n        return int(cfg[\"port\"])\n    except KeyError:\n        raise ValueError(\"port missing\")\n\n\nload_port({})",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only the ValueError; the KeyError was caught, so it is gone"
+        },
+        {
+          "id": "b",
+          "text": "The KeyError, then \"During handling of the above exception, another exception occurred:\", then the ValueError"
+        },
+        {
+          "id": "c",
+          "text": "The ValueError, then \"Caused by: KeyError: 'port'\""
+        },
+        {
+          "id": "d",
+          "text": "The KeyError, then \"The above exception was the direct cause of the following exception:\", then the ValueError"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Python keeps the exception you were handling and prints it first; use raise ... from err to mark it as the direct cause."
+  },
+  {
+    "key": "test.logs-stacktraces.match.01",
+    "concept": "test.logs-stacktraces",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each log level with the kind of message it is for.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "DEBUG"
+        },
+        {
+          "id": "l2",
+          "text": "INFO"
+        },
+        {
+          "id": "l3",
+          "text": "WARNING"
+        },
+        {
+          "id": "l4",
+          "text": "ERROR"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "An operation failed, such as a payment that could not be charged"
+        },
+        {
+          "id": "r2",
+          "text": "Something unexpected that the app recovered from, such as a retry"
+        },
+        {
+          "id": "r3",
+          "text": "Detailed values for diagnosing a problem, usually off in production"
+        },
+        {
+          "id": "r4",
+          "text": "A normal event worth recording, such as \"order 42 created\""
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "DEBUG is for diagnostic detail, INFO for normal events, WARNING for recovered surprises and ERROR for failed operations."
+  }
+]

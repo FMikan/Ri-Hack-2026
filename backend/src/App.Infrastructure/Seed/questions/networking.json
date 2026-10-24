@@ -1,0 +1,1888 @@
+[
+  {
+    "key": "net.ip-ports.tf.01",
+    "concept": "net.ip-ports",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "One machine with a single IP address can run a web server on port 443 and a database on port 5432 at the same time.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "The IP address finds the machine and the port finds the program, so one address can serve many programs."
+  },
+  {
+    "key": "net.ip-ports.mc.01",
+    "concept": "net.ip-ports",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "npm run dev fails with \"Error: listen EADDRINUSE: address already in use :::3000\". What does it mean?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Another process is already listening on port 3000"
+        },
+        {
+          "id": "b",
+          "text": "A firewall is blocking incoming traffic on port 3000"
+        },
+        {
+          "id": "c",
+          "text": "Port 3000 can only be opened by the root user"
+        },
+        {
+          "id": "d",
+          "text": "Another device on the network already uses this IP address"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "EADDRINUSE means some process already listens on that port; stop it or start your server on another port."
+  },
+  {
+    "key": "net.ip-ports.match.01",
+    "concept": "net.ip-ports",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each port with the service that uses it by default.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "22"
+        },
+        {
+          "id": "l2",
+          "text": "53"
+        },
+        {
+          "id": "l3",
+          "text": "443"
+        },
+        {
+          "id": "l4",
+          "text": "5432"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "HTTPS"
+        },
+        {
+          "id": "r2",
+          "text": "PostgreSQL"
+        },
+        {
+          "id": "r3",
+          "text": "SSH"
+        },
+        {
+          "id": "r4",
+          "text": "DNS"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Well-known defaults: 22 SSH, 53 DNS, 80 HTTP, 443 HTTPS, 5432 PostgreSQL; a URL without a port uses its scheme's default."
+  },
+  {
+    "key": "net.ip-ports.bug.01",
+    "concept": "net.ip-ports",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "yaml",
+    "content": {
+      "prompt": "The api container fails with \"connection refused\" on port 5432, although the db container is up and healthy. Find the bug.",
+      "code": "services:\n  db:\n    image: postgres:17\n    environment:\n      POSTGRES_PASSWORD: dev\n  api:\n    build: ./api\n    environment:\n      DB_HOST: localhost\n      DB_PORT: \"5432\"\n    depends_on:\n      - db",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add a healthcheck so api starts after db is ready"
+        },
+        {
+          "id": "f2",
+          "text": "Set DB_HOST to db, the Compose service name"
+        },
+        {
+          "id": "f3",
+          "text": "Publish the database port with ports: \"5432:5432\""
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Inside a container, localhost is that container itself; reach another Compose service by its service name."
+  },
+  {
+    "key": "net.ip-ports.cloze.01",
+    "concept": "net.ip-ports",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so a phone on the same Wi-Fi can open the dev server at http://<laptop-ip>:8080.",
+      "code": "import http from \"node:http\";\n\nconst server = http.createServer(handler);\nserver.listen(8080, \"____\");",
+      "options": [
+        {
+          "id": "a",
+          "text": "127.0.0.1"
+        },
+        {
+          "id": "b",
+          "text": "localhost"
+        },
+        {
+          "id": "c",
+          "text": "0.0.0.0"
+        },
+        {
+          "id": "d",
+          "text": "::1"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A server bound to 127.0.0.1 or localhost accepts only connections from the same machine; 0.0.0.0 listens on every network interface."
+  },
+  {
+    "key": "net.tcp-udp.tf.01",
+    "concept": "net.tcp-udp",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "UDP guarantees that packets arrive in the same order they were sent.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "UDP packets can be lost, duplicated or reordered; only TCP gives you a reliable, ordered stream."
+  },
+  {
+    "key": "net.tcp-udp.mc.01",
+    "concept": "net.tcp-udp",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which of these is a better fit for UDP than for TCP?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Downloading a 2 GB software update"
+        },
+        {
+          "id": "b",
+          "text": "Live voice in a video call"
+        },
+        {
+          "id": "c",
+          "text": "Submitting a payment form"
+        },
+        {
+          "id": "d",
+          "text": "Fetching a page over HTTP/1.1"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "UDP suits real-time data where a late packet is worthless; anything that must arrive complete uses TCP."
+  },
+  {
+    "key": "net.tcp-udp.order.01",
+    "concept": "net.tcp-udp",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A browser opens a plain HTTP/1.1 connection, sends one request, gets the response and closes the connection. Order the packets.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The client sends ACK"
+        },
+        {
+          "id": "s2",
+          "text": "The client sends SYN"
+        },
+        {
+          "id": "s3",
+          "text": "The client sends the HTTP request"
+        },
+        {
+          "id": "s4",
+          "text": "The server replies with SYN-ACK"
+        },
+        {
+          "id": "s5",
+          "text": "One side sends FIN to close the connection"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s3",
+          "s5"
+        ]
+      }
+    },
+    "remember": "TCP opens with SYN, SYN-ACK, ACK before any data flows, and a FIN starts closing the connection."
+  },
+  {
+    "key": "net.tcp-udp.odd.01",
+    "concept": "net.tcp-udp",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these usually run over UDP. Which one runs over TCP?",
+      "items": [
+        {
+          "id": "a",
+          "text": "DNS lookups for a site's address"
+        },
+        {
+          "id": "b",
+          "text": "Audio and video in a WebRTC call"
+        },
+        {
+          "id": "c",
+          "text": "Player positions in a fast online game"
+        },
+        {
+          "id": "d",
+          "text": "An SSH session to a server"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "SSH needs every byte in order, so it uses TCP; DNS lookups and real-time media and games use UDP."
+  },
+  {
+    "key": "net.tcp-udp.bug.01",
+    "concept": "net.tcp-udp",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The client writes one valid JSON object per line, but under load JSON.parse throws SyntaxError on the server. Find the bug.",
+      "code": "import net from \"node:net\";\n\n// Client sends one JSON object per line.\nnet.createServer((socket) => {\n  socket.setEncoding(\"utf8\");\n  socket.on(\"data\", (chunk) => {\n    const msg = JSON.parse(chunk);\n    handle(msg);\n  });\n}).listen(4000);",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Call socket.setNoDelay(true) so each write arrives alone"
+        },
+        {
+          "id": "f2",
+          "text": "Wrap JSON.parse in try/catch and skip bad chunks"
+        },
+        {
+          "id": "f3",
+          "text": "Buffer the chunks and parse only complete lines"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f3"
+      }
+    },
+    "remember": "TCP is a byte stream without message boundaries: one data event can hold half a message or several, so frame messages yourself."
+  },
+  {
+    "key": "net.dns.tf.01",
+    "concept": "net.dns",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Each time you open a website, your browser asks the root DNS servers for its address.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Browsers ask a nearby recursive resolver, and every step caches answers, so root servers are rarely contacted."
+  },
+  {
+    "key": "net.dns.mc.01",
+    "concept": "net.dns",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You moved shop.hr to a new server and updated its A record. For the next hour some users still reach the old server. What is the most likely reason?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The registry publishes A record changes once a day"
+        },
+        {
+          "id": "b",
+          "text": "Browsers keep an IP for as long as the domain is registered"
+        },
+        {
+          "id": "c",
+          "text": "Resolvers serve the cached old record until its TTL expires"
+        },
+        {
+          "id": "d",
+          "text": "The old server keeps answering because it holds the certificate"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "DNS answers are cached for their TTL; lower the TTL before a planned move so the change takes effect quickly."
+  },
+  {
+    "key": "net.dns.odd.01",
+    "concept": "net.dns",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these are published in DNS records. Which one is never put in DNS?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The IPv4 address of shop.hr"
+        },
+        {
+          "id": "b",
+          "text": "The private key of shop.hr's TLS certificate"
+        },
+        {
+          "id": "c",
+          "text": "The mail servers that accept mail for shop.hr"
+        },
+        {
+          "id": "d",
+          "text": "An alias from www.shop.hr to shop.hr"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "DNS is a public directory of names: addresses (A, AAAA), aliases (CNAME), mail servers (MX) and text (TXT), never secrets."
+  },
+  {
+    "key": "net.dns.order.01",
+    "concept": "net.dns",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Nothing is cached anywhere yet. Order the steps that resolve shop.hr.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The resolver asks a .hr server, which refers it to shop.hr's name servers"
+        },
+        {
+          "id": "s2",
+          "text": "The browser and OS find nothing cached and ask the configured resolver"
+        },
+        {
+          "id": "s3",
+          "text": "The resolver caches the answer for its TTL and returns it"
+        },
+        {
+          "id": "s4",
+          "text": "The resolver asks a root server, which refers it to the .hr servers"
+        },
+        {
+          "id": "s5",
+          "text": "The resolver asks shop.hr's authoritative server and gets the A record"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s5",
+          "s3"
+        ]
+      }
+    },
+    "remember": "An uncached lookup walks root, then TLD, then the domain's authoritative server, and each answer is cached for its TTL."
+  },
+  {
+    "key": "net.dns.out.01",
+    "concept": "net.dns",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "These records are published. What does the command print?",
+      "code": "# www.shop.hr.        CNAME  shop.edge-cdn.net.\n# shop.edge-cdn.net.  A      203.0.113.7\n\n$ dig +short www.shop.hr A",
+      "options": [
+        {
+          "id": "a",
+          "text": "One line: 203.0.113.7"
+        },
+        {
+          "id": "b",
+          "text": "One line: shop.edge-cdn.net."
+        },
+        {
+          "id": "c",
+          "text": "Nothing, because www.shop.hr has no A record"
+        },
+        {
+          "id": "d",
+          "text": "Two lines: shop.edge-cdn.net. then 203.0.113.7"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Resolvers follow CNAME aliases for you: asking for the A record of an alias returns the CNAME and the final address."
+  },
+  {
+    "key": "net.url.tf.01",
+    "concept": "net.url",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "The part of a URL after # is sent to the server with the HTTP request.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "The fragment after # stays in the browser; it is used for in-page anchors and client-side routing, never sent to the server."
+  },
+  {
+    "key": "net.url.mc.01",
+    "concept": "net.url",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "In https://shop.hr/search?q=shoes&page=2, which part is the path?",
+      "options": [
+        {
+          "id": "a",
+          "text": "/search"
+        },
+        {
+          "id": "b",
+          "text": "/search?q=shoes&page=2"
+        },
+        {
+          "id": "c",
+          "text": "shop.hr/search"
+        },
+        {
+          "id": "d",
+          "text": "q=shoes&page=2"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "The path is the part between the host and the ?; the query string comes after the ?."
+  },
+  {
+    "key": "net.url.out.01",
+    "concept": "net.url",
+    "type": "output",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const u = new URL(\"https://shop.hr:8443/cart?id=7\");\nconsole.log(u.hostname, u.port);",
+      "options": [
+        {
+          "id": "a",
+          "text": "shop.hr:8443 8443"
+        },
+        {
+          "id": "b",
+          "text": "shop.hr 8443"
+        },
+        {
+          "id": "c",
+          "text": "https://shop.hr 8443"
+        },
+        {
+          "id": "d",
+          "text": "shop.hr 443"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "hostname is the name alone, host adds the port, and port holds the number written in the URL."
+  },
+  {
+    "key": "net.url.bug.01",
+    "concept": "net.url",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Searching for \"rock & roll\" returns results for \"rock\" only. Find the bug.",
+      "code": "async function search(term) {\n  const url = `https://api.shop.hr/search?q=${term}`;\n  const res = await fetch(url);\n  return res.json();\n}\n\nsearch(\"rock & roll\");",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Wrap term in encodeURIComponent()"
+        },
+        {
+          "id": "f2",
+          "text": "Wrap the whole url in encodeURI()"
+        },
+        {
+          "id": "f3",
+          "text": "Replace the spaces in term with +"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Encode every value you put into a query string with encodeURIComponent or URLSearchParams; a raw & or = splits it."
+  },
+  {
+    "key": "net.url.cloze.01",
+    "concept": "net.url",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so the code prints the URL in the comment.",
+      "code": "const base = new URL(\"https://shop.hr/api/v1/\");\nconst u = new URL(____, base);\nconsole.log(u.href);\n// https://shop.hr/api/v1/users",
+      "options": [
+        {
+          "id": "a",
+          "text": "\"/users\""
+        },
+        {
+          "id": "b",
+          "text": "\"../users\""
+        },
+        {
+          "id": "c",
+          "text": "\"/v1/users\""
+        },
+        {
+          "id": "d",
+          "text": "\"users\""
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A relative URL without a leading slash resolves against the base's directory; a leading slash replaces the whole path."
+  },
+  {
+    "key": "net.http-basics.tf.01",
+    "concept": "net.http-basics",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Every HTTP response carries a status code, such as 200 or 404, that tells the client what happened.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A response is a status code, headers and an optional body; the code says whether and how the request succeeded."
+  },
+  {
+    "key": "net.http-basics.mc.01",
+    "concept": "net.http-basics",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A client POSTs JSON to an API. Which request header tells the server what format the body is in?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Accept: application/json"
+        },
+        {
+          "id": "b",
+          "text": "Content-Encoding: application/json"
+        },
+        {
+          "id": "c",
+          "text": "Content-Type: application/json"
+        },
+        {
+          "id": "d",
+          "text": "Transfer-Encoding: application/json"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Content-Type describes the body being sent; Accept says which formats the client wants back."
+  },
+  {
+    "key": "net.http-basics.out.01",
+    "concept": "net.http-basics",
+    "type": "output",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "http://shop.hr/login answers 301 with Location: https://shop.hr/login, and that page answers 200. What does the command print?",
+      "code": "$ curl -s -o /dev/null -w \"%{http_code}\\n\" \\\n    http://shop.hr/login",
+      "options": [
+        {
+          "id": "a",
+          "text": "301"
+        },
+        {
+          "id": "b",
+          "text": "200"
+        },
+        {
+          "id": "c",
+          "text": "301 200"
+        },
+        {
+          "id": "d",
+          "text": "000"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "curl does not follow redirects unless you pass -L; without it you see the 3xx response itself."
+  },
+  {
+    "key": "net.http-basics.cloze.01",
+    "concept": "net.http-basics",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "http",
+    "content": {
+      "prompt": "Several sites share one IP address. Fill the blank so the server knows which site this request is for.",
+      "code": "GET /cart HTTP/1.1\n____: shop.hr\nAccept: text/html",
+      "options": [
+        {
+          "id": "a",
+          "text": "Origin"
+        },
+        {
+          "id": "b",
+          "text": "Host"
+        },
+        {
+          "id": "c",
+          "text": "Referer"
+        },
+        {
+          "id": "d",
+          "text": "Server"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "HTTP/1.1 requires a Host header; it lets one server at one IP address host many sites."
+  },
+  {
+    "key": "net.http-basics.bug.01",
+    "concept": "net.http-basics",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The API's JSON parser leaves the body empty and it answers 400 \"items is required\", although order.items is set. Find the bug.",
+      "code": "async function createOrder(order) {\n  const res = await fetch(\"/api/orders\", {\n    method: \"POST\",\n    headers: { Accept: \"application/json\" },\n    body: JSON.stringify(order),\n  });\n  if (!res.ok) throw new Error(`HTTP ${res.status}`);\n  return res.json();\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Pass body: order without JSON.stringify"
+        },
+        {
+          "id": "f2",
+          "text": "Add \"Content-Type\": \"application/json\" to headers"
+        },
+        {
+          "id": "f3",
+          "text": "Change the method to PUT"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A JSON body needs Content-Type: application/json; fetch labels a string body text/plain, and JSON parsers skip it."
+  },
+  {
+    "key": "net.http-caching.tf.01",
+    "concept": "net.http-caching",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Cache-Control: no-cache tells the browser not to store the response at all.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "no-cache means store it but revalidate before every reuse; no-store is the directive that forbids keeping a copy."
+  },
+  {
+    "key": "net.http-caching.mc.01",
+    "concept": "net.http-caching",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "The browser holds a copy with ETag: \"v7\". It sends If-None-Match: \"v7\" and the resource has not changed. How should the server answer?",
+      "options": [
+        {
+          "id": "a",
+          "text": "200 OK with the full body and the same ETag"
+        },
+        {
+          "id": "b",
+          "text": "204 No Content with no body"
+        },
+        {
+          "id": "c",
+          "text": "412 Precondition Failed"
+        },
+        {
+          "id": "d",
+          "text": "304 Not Modified with no body"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A matching If-None-Match gets 304 Not Modified without a body, and the browser reuses its stored copy."
+  },
+  {
+    "key": "net.http-caching.cloze.01",
+    "concept": "net.http-caching",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "http",
+    "content": {
+      "prompt": "app.4f9c2a.js gets a new file name whenever its content changes. Fill the blank so browsers may reuse it for a year without revalidating, even on a reload.",
+      "code": "HTTP/1.1 200 OK\nContent-Type: text/javascript\nCache-Control: public, max-age=31536000, ____",
+      "options": [
+        {
+          "id": "a",
+          "text": "must-revalidate"
+        },
+        {
+          "id": "b",
+          "text": "no-cache"
+        },
+        {
+          "id": "c",
+          "text": "immutable"
+        },
+        {
+          "id": "d",
+          "text": "stale-if-error"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Fingerprinted files can be cached for a year with immutable; a new file name, not revalidation, delivers updates."
+  },
+  {
+    "key": "net.http-caching.out.01",
+    "concept": "net.http-caching",
+    "type": "output",
+    "difficulty": 4,
+    "language": "http",
+    "content": {
+      "prompt": "The browser receives this response from a CDN at exactly 10:00:00 GMT (clocks in sync). A script requests the same URL at 10:02:00. What does the browser do?",
+      "code": "HTTP/1.1 200 OK\nDate: Sat, 24 Oct 2026 09:51:00 GMT\nCache-Control: max-age=600\nAge: 540\nContent-Type: application/json",
+      "options": [
+        {
+          "id": "a",
+          "text": "Goes to the network; the copy went stale at 10:01:00"
+        },
+        {
+          "id": "b",
+          "text": "Reuses the stored copy; it stays fresh until 10:10:00"
+        },
+        {
+          "id": "c",
+          "text": "Reuses the stored copy; Age only matters to proxies"
+        },
+        {
+          "id": "d",
+          "text": "Goes to the network; responses with Age are never stored"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "max-age counts from when the origin produced the response, and Age tells how much of it a CDN has already used up."
+  },
+  {
+    "key": "net.http-caching.match.01",
+    "concept": "net.http-caching",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each Cache-Control directive with what it allows.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "no-cache"
+        },
+        {
+          "id": "l2",
+          "text": "must-revalidate"
+        },
+        {
+          "id": "l3",
+          "text": "private"
+        },
+        {
+          "id": "l4",
+          "text": "s-maxage=60"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Shared caches treat it as fresh for 60 s, overriding max-age"
+        },
+        {
+          "id": "r2",
+          "text": "Store it, but check with the server before every reuse"
+        },
+        {
+          "id": "r3",
+          "text": "Reuse it freely while fresh, but never serve it stale without checking"
+        },
+        {
+          "id": "r4",
+          "text": "Only the user's browser may store it, not a CDN"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "no-cache revalidates every time, must-revalidate only once stale; private keeps CDNs out and s-maxage sets their lifetime."
+  },
+  {
+    "key": "net.cookies.tf.01",
+    "concept": "net.cookies",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "JavaScript on the page cannot read a cookie that was set with the HttpOnly flag.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "HttpOnly hides a cookie from document.cookie; the browser still sends it with matching requests."
+  },
+  {
+    "key": "net.cookies.mc.01",
+    "concept": "net.cookies",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "How does a server store a cookie in the browser?",
+      "options": [
+        {
+          "id": "a",
+          "text": "With a Cookie header in its response"
+        },
+        {
+          "id": "b",
+          "text": "With a Set-Cookie header in its response"
+        },
+        {
+          "id": "c",
+          "text": "With an Authorization header in its response"
+        },
+        {
+          "id": "d",
+          "text": "By putting the cookie in the JSON response body"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Servers set cookies with Set-Cookie in a response; browsers send them back in the Cookie request header."
+  },
+  {
+    "key": "net.cookies.match.01",
+    "concept": "net.cookies",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each Set-Cookie attribute with its effect.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Domain=shop.hr"
+        },
+        {
+          "id": "l2",
+          "text": "Path=/admin"
+        },
+        {
+          "id": "l3",
+          "text": "Max-Age=0"
+        },
+        {
+          "id": "l4",
+          "text": "No Expires and no Max-Age"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Deleted right away"
+        },
+        {
+          "id": "r2",
+          "text": "Removed when the browser session ends"
+        },
+        {
+          "id": "r3",
+          "text": "Also sent to subdomains such as api.shop.hr"
+        },
+        {
+          "id": "r4",
+          "text": "Sent only for URLs under /admin"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Domain widens a cookie to subdomains, Path narrows it to a URL prefix, and Max-Age or Expires decide how long it lives."
+  },
+  {
+    "key": "net.cookies.out.01",
+    "concept": "net.cookies",
+    "type": "output",
+    "difficulty": 4,
+    "language": "http",
+    "content": {
+      "prompt": "The browser stored these cookies from https://shop.hr. A page on https://evil.example then submits a form with method POST to https://shop.hr/transfer. Which Cookie header does that request carry?",
+      "code": "Set-Cookie: a=1; Secure; SameSite=Strict\nSet-Cookie: b=2; Secure; SameSite=Lax\nSet-Cookie: c=3; Secure; SameSite=None",
+      "options": [
+        {
+          "id": "a",
+          "text": "Cookie: b=2; c=3"
+        },
+        {
+          "id": "b",
+          "text": "Cookie: a=1; b=2; c=3"
+        },
+        {
+          "id": "c",
+          "text": "Cookie: c=3"
+        },
+        {
+          "id": "d",
+          "text": "No Cookie header at all"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "From another site, SameSite=Lax cookies ride only on top-level GET navigations; a cross-site POST carries only SameSite=None cookies."
+  },
+  {
+    "key": "net.cookies.bug.01",
+    "concept": "net.cookies",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "After logout the browser keeps sending the sid cookie with requests to /app. Find the bug.",
+      "code": "app.post(\"/app/login\", async (req, res) => {\n  const sid = await createSession(req.body);\n  res.cookie(\"sid\", sid, {\n    httpOnly: true,\n    secure: true,\n    path: \"/app\",\n  });\n  res.sendStatus(204);\n});\n\napp.post(\"/app/logout\", (req, res) => {\n  res.clearCookie(\"sid\", { httpOnly: true, secure: true });\n  res.sendStatus(204);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Clear it with res.cookie(\"sid\", \"\") instead"
+        },
+        {
+          "id": "f2",
+          "text": "Delete it in the browser with document.cookie"
+        },
+        {
+          "id": "f3",
+          "text": "Pass path: \"/app\" to clearCookie as well"
+        }
+      ],
+      "answer": {
+        "line": 12,
+        "fixId": "f3"
+      }
+    },
+    "remember": "A cookie is identified by name, domain and path; deleting it needs a Set-Cookie with the same domain and path."
+  },
+  {
+    "key": "net.cors.tf.01",
+    "concept": "net.cors",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "http://localhost:5173 and http://localhost:5080 are the same origin.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "An origin is scheme, host and port; a different port alone makes it a different origin."
+  },
+  {
+    "key": "net.cors.mc.01",
+    "concept": "net.cors",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A fetch from https://app.shop.hr to https://api.shop.hr works in curl but fails in the browser with a CORS error. Where does the fix belong?",
+      "options": [
+        {
+          "id": "a",
+          "text": "In fetch: pass mode: \"no-cors\" to skip the check"
+        },
+        {
+          "id": "b",
+          "text": "In fetch: send an Access-Control-Allow-Origin request header"
+        },
+        {
+          "id": "c",
+          "text": "On the server of app.shop.hr: add the header to the HTML page"
+        },
+        {
+          "id": "d",
+          "text": "On the API: return Access-Control-Allow-Origin: https://app.shop.hr"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "CORS is permission from the server you call: only its Access-Control-Allow-Origin response header lets the page read the response."
+  },
+  {
+    "key": "net.cors.odd.01",
+    "concept": "net.cors",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these URLs are cross-origin for a page on https://shop.hr. Which one is the same origin?",
+      "items": [
+        {
+          "id": "a",
+          "text": "https://shop.hr:443/api/cart"
+        },
+        {
+          "id": "b",
+          "text": "http://shop.hr/api/cart"
+        },
+        {
+          "id": "c",
+          "text": "https://www.shop.hr/api/cart"
+        },
+        {
+          "id": "d",
+          "text": "https://shop.hr:8443/api/cart"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Origins compare scheme, host and port; writing the default port 443 changes nothing, any other difference does."
+  },
+  {
+    "key": "net.cors.order.01",
+    "concept": "net.cors",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A page on https://app.shop.hr calls fetch with method PUT and a JSON body to https://api.shop.hr/items/7. Order what happens.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The server answers 204 with Access-Control-Allow-Methods including PUT"
+        },
+        {
+          "id": "s2",
+          "text": "The browser sends OPTIONS with Access-Control-Request-Method: PUT"
+        },
+        {
+          "id": "s3",
+          "text": "The browser checks Access-Control-Allow-Origin on the PUT response"
+        },
+        {
+          "id": "s4",
+          "text": "The browser sends the PUT request with its JSON body"
+        },
+        {
+          "id": "s5",
+          "text": "The fetch promise resolves with the response"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s1",
+          "s4",
+          "s3",
+          "s5"
+        ]
+      }
+    },
+    "remember": "A non-simple request is preceded by an OPTIONS preflight; only if the server allows it does the browser send the real request."
+  },
+  {
+    "key": "net.cors.bug.01",
+    "concept": "net.cors",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "The fetch to /me fails with a CORS error, while the same fetch without credentials: \"include\" works. Find the bug.",
+      "code": "// API on https://api.shop.hr\napp.use((req, res, next) => {\n  res.set(\"Access-Control-Allow-Origin\", \"*\");\n  res.set(\"Access-Control-Allow-Credentials\", \"true\");\n  next();\n});\n\n// Frontend on https://app.shop.hr\nconst res = await fetch(\"https://api.shop.hr/me\", {\n  credentials: \"include\",\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Send https://app.shop.hr instead of *"
+        },
+        {
+          "id": "f2",
+          "text": "Remove the Access-Control-Allow-Credentials header"
+        },
+        {
+          "id": "f3",
+          "text": "Add Cookie to Access-Control-Allow-Headers"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f1"
+      }
+    },
+    "remember": "For credentialed requests the server must name the exact origin and send Access-Control-Allow-Credentials: true; * is rejected."
+  },
+  {
+    "key": "net.tls.tf.01",
+    "concept": "net.tls",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "On an HTTPS site, someone on the same Wi-Fi network can read the query strings of the URLs you request.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "TLS encrypts the whole HTTP message, including path, query and headers; the network still sees which server you contact."
+  },
+  {
+    "key": "net.tls.mc.01",
+    "concept": "net.tls",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What does a server's TLS certificate let the browser check?",
+      "options": [
+        {
+          "id": "a",
+          "text": "That the site is free of malware and phishing"
+        },
+        {
+          "id": "b",
+          "text": "That the company behind the site is trustworthy"
+        },
+        {
+          "id": "c",
+          "text": "That the server controls the domain name in the URL"
+        },
+        {
+          "id": "d",
+          "text": "That nobody can see which IP address you connect to"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A certificate proves the server controls the domain name; it says nothing about whether the site is honest or safe."
+  },
+  {
+    "key": "net.tls.order.01",
+    "concept": "net.tls",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order the steps when a browser opens https://shop.hr on a new connection.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The client checks the certificate chain and that it covers shop.hr"
+        },
+        {
+          "id": "s2",
+          "text": "The client sends ClientHello with its TLS versions and the name shop.hr"
+        },
+        {
+          "id": "s3",
+          "text": "The browser sends the HTTP request, encrypted"
+        },
+        {
+          "id": "s4",
+          "text": "The client and server open a TCP connection"
+        },
+        {
+          "id": "s5",
+          "text": "The server answers with its chosen settings and its certificate"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "TCP connects first, then the TLS handshake proves the server's identity and agrees on keys, and only then does HTTP data flow."
+  },
+  {
+    "key": "net.tls.odd.01",
+    "concept": "net.tls",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A certificate lists only *.shop.hr. Three of these hostnames get a certificate name error. Which one is covered?",
+      "items": [
+        {
+          "id": "a",
+          "text": "shop.hr"
+        },
+        {
+          "id": "b",
+          "text": "api.shop.hr"
+        },
+        {
+          "id": "c",
+          "text": "api.v2.shop.hr"
+        },
+        {
+          "id": "d",
+          "text": "shop.hr.edge-cdn.net"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "A wildcard covers exactly one label: *.shop.hr matches api.shop.hr but neither shop.hr nor api.v2.shop.hr."
+  },
+  {
+    "key": "net.tls.bug.01",
+    "concept": "net.tls",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "nginx",
+    "content": {
+      "prompt": "certbot wrote cert.pem, chain.pem, fullchain.pem and privkey.pem. The site opens in desktop Chrome, but curl fails with \"unable to get local issuer certificate\". Find the bug.",
+      "code": "server {\n  listen 443 ssl;\n  server_name shop.hr;\n  ssl_certificate     certs/shop.hr/cert.pem;\n  ssl_certificate_key certs/shop.hr/privkey.pem;\n\n  location / {\n    proxy_pass http://127.0.0.1:3000;\n  }\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Point ssl_certificate at chain.pem"
+        },
+        {
+          "id": "f2",
+          "text": "Point ssl_certificate at fullchain.pem"
+        },
+        {
+          "id": "f3",
+          "text": "Add ssl_protocols TLSv1.3; to the server block"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Send the intermediate certificates too (fullchain.pem); some browsers patch a missing chain, but curl and many clients do not."
+  },
+  {
+    "key": "net.websocket.tf.01",
+    "concept": "net.websocket",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Over an open WebSocket connection, the server can send a message without the client asking for it first.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A WebSocket is a two-way channel: after the handshake either side can send a message at any time."
+  },
+  {
+    "key": "net.websocket.mc.01",
+    "concept": "net.websocket",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which feature fits WebSocket better than plain HTTP requests?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A live quiz where both players see each answer instantly"
+        },
+        {
+          "id": "b",
+          "text": "Downloading a product image"
+        },
+        {
+          "id": "c",
+          "text": "Submitting a sign-up form"
+        },
+        {
+          "id": "d",
+          "text": "Loading a blog post"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Use WebSocket when the server must push updates as they happen; one-off loads are simpler over plain HTTP."
+  },
+  {
+    "key": "net.websocket.cloze.01",
+    "concept": "net.websocket",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The page is served from https://quiz.shop.hr. Fill the blank so the browser allows the connection.",
+      "code": "const socket = new WebSocket(\n  \"____://quiz.shop.hr/live\"\n);\nsocket.onmessage = (e) => render(JSON.parse(e.data));",
+      "options": [
+        {
+          "id": "a",
+          "text": "ws"
+        },
+        {
+          "id": "b",
+          "text": "http"
+        },
+        {
+          "id": "c",
+          "text": "tls"
+        },
+        {
+          "id": "d",
+          "text": "wss"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Pages served over HTTPS must use wss://, WebSocket over TLS; plain ws:// is blocked as mixed content."
+  },
+  {
+    "key": "net.websocket.out.01",
+    "concept": "net.websocket",
+    "type": "output",
+    "difficulty": 2,
+    "language": "http",
+    "content": {
+      "prompt": "The server accepts this WebSocket handshake. Which status line does it answer with?",
+      "code": "GET /live HTTP/1.1\nHost: quiz.shop.hr\nUpgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\nSec-WebSocket-Version: 13",
+      "options": [
+        {
+          "id": "a",
+          "text": "HTTP/1.1 200 OK"
+        },
+        {
+          "id": "b",
+          "text": "HTTP/1.1 101 Switching Protocols"
+        },
+        {
+          "id": "c",
+          "text": "HTTP/1.1 204 No Content"
+        },
+        {
+          "id": "d",
+          "text": "HTTP/1.1 426 Upgrade Required"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A WebSocket starts as an HTTP/1.1 GET with Upgrade: websocket, and 101 Switching Protocols turns that connection into a WebSocket."
+  },
+  {
+    "key": "net.websocket.mc.02",
+    "concept": "net.websocket",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Chat WebSockets behind a load balancer drop after exactly 60 seconds without messages, while busy ones stay open. What is the usual fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Move the chat to HTTP/2 so the connection is shared"
+        },
+        {
+          "id": "b",
+          "text": "Add Connection: keep-alive to the handshake request"
+        },
+        {
+          "id": "c",
+          "text": "Send a ping or heartbeat message every 30 seconds"
+        },
+        {
+          "id": "d",
+          "text": "Switch from ws:// to wss:// so the proxy cannot read it"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Proxies and load balancers close idle connections; a periodic ping keeps a quiet WebSocket alive and detects dead ones."
+  },
+  {
+    "key": "net.proxies.tf.01",
+    "concept": "net.proxies",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Behind a reverse proxy, the app sees the proxy's IP address as the source of each connection, not the user's.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "The app's TCP peer is the proxy, so the user's address must be passed along in a header such as X-Forwarded-For."
+  },
+  {
+    "key": "net.proxies.mc.01",
+    "concept": "net.proxies",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Users open https://shop.hr. nginx on that server forwards requests to a Node app on port 3000. Which program do the users' browsers connect to?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The Node app on port 3000; nginx only watches"
+        },
+        {
+          "id": "b",
+          "text": "Both nginx and the Node app, in parallel"
+        },
+        {
+          "id": "c",
+          "text": "The DNS server, which relays requests to the app"
+        },
+        {
+          "id": "d",
+          "text": "nginx, which opens its own connection to the app"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A reverse proxy is the only server the client talks to; it makes its own connection to the app behind it."
+  },
+  {
+    "key": "net.proxies.out.01",
+    "concept": "net.proxies",
+    "type": "output",
+    "difficulty": 3,
+    "language": "nginx",
+    "content": {
+      "prompt": "A client at 198.51.100.4 sends a request with the header X-Forwarded-For: 10.1.1.1 to this nginx. What X-Forwarded-For value does the app receive?",
+      "code": "location / {\n  proxy_pass http://app:3000;\n  proxy_set_header X-Forwarded-For\n                   $proxy_add_x_forwarded_for;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "198.51.100.4"
+        },
+        {
+          "id": "b",
+          "text": "10.1.1.1"
+        },
+        {
+          "id": "c",
+          "text": "10.1.1.1, 198.51.100.4"
+        },
+        {
+          "id": "d",
+          "text": "198.51.100.4, 10.1.1.1"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Each proxy appends the address it got the request from, so only the entries your own proxies added can be trusted."
+  },
+  {
+    "key": "net.proxies.match.01",
+    "concept": "net.proxies",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each nginx directive with its job in a reverse proxy.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "proxy_pass"
+        },
+        {
+          "id": "l2",
+          "text": "upstream"
+        },
+        {
+          "id": "l3",
+          "text": "ssl_certificate"
+        },
+        {
+          "id": "l4",
+          "text": "proxy_set_header"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Lists several app servers to spread requests across"
+        },
+        {
+          "id": "r2",
+          "text": "Adds or changes headers on the request to the app"
+        },
+        {
+          "id": "r3",
+          "text": "Forwards the request to the app behind nginx"
+        },
+        {
+          "id": "r4",
+          "text": "Gives nginx the certificate to terminate TLS"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "upstream lists the app servers, proxy_pass sends traffic to them, proxy_set_header shapes what they receive, and ssl_certificate lets nginx terminate TLS."
+  },
+  {
+    "key": "net.proxies.mc.02",
+    "concept": "net.proxies",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A load balancer terminates HTTPS and forwards plain HTTP to the app. After login the app redirects users to http://shop.hr/home. What should the app read to know the original request used HTTPS?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The X-Forwarded-Proto header set by the load balancer"
+        },
+        {
+          "id": "b",
+          "text": "The Host header of the incoming request"
+        },
+        {
+          "id": "c",
+          "text": "The port the app itself listens on"
+        },
+        {
+          "id": "d",
+          "text": "The Upgrade-Insecure-Requests request header"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Behind a TLS-terminating proxy the app sees plain HTTP; X-Forwarded-Proto from your own proxy tells it the original scheme."
+  },
+  {
+    "key": "net.http-versions.tf.01",
+    "concept": "net.http-versions",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "HTTP/3 runs over QUIC, which is built on UDP instead of TCP.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "HTTP/3 replaces TCP with QUIC over UDP, which handles reliability per stream and combines the transport and TLS handshakes."
+  },
+  {
+    "key": "net.http-versions.mc.01",
+    "concept": "net.http-versions",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is the main improvement of HTTP/2 over HTTP/1.1?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Headers and bodies are sent as JSON instead of text"
+        },
+        {
+          "id": "b",
+          "text": "Many requests share one connection at the same time"
+        },
+        {
+          "id": "c",
+          "text": "It runs over UDP instead of TCP"
+        },
+        {
+          "id": "d",
+          "text": "Every request gets its own dedicated connection"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "HTTP/2 multiplexes many requests over one connection as binary frames; HTTP/1.1 handles one response at a time per connection."
+  },
+  {
+    "key": "net.http-versions.match.01",
+    "concept": "net.http-versions",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each HTTP version with how it uses connections.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "HTTP/1.0"
+        },
+        {
+          "id": "l2",
+          "text": "HTTP/1.1"
+        },
+        {
+          "id": "l3",
+          "text": "HTTP/2"
+        },
+        {
+          "id": "l4",
+          "text": "HTTP/3"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Runs over QUIC, on UDP"
+        },
+        {
+          "id": "r2",
+          "text": "Binary frames, many streams over one TCP connection"
+        },
+        {
+          "id": "r3",
+          "text": "Opens a new TCP connection for each request by default"
+        },
+        {
+          "id": "r4",
+          "text": "Keeps connections open; responses come back one at a time, in order"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "1.0 opened a connection per request, 1.1 reuses connections, 2 multiplexes streams over TCP, and 3 moves to QUIC over UDP."
+  },
+  {
+    "key": "net.http-versions.odd.01",
+    "concept": "net.http-versions",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these were workarounds for HTTP/1.1's few parallel requests per host and lose most of their value with HTTP/2. Which one still matters just as much?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Domain sharding across img1. and img2. hosts"
+        },
+        {
+          "id": "b",
+          "text": "Combining icons into one sprite image"
+        },
+        {
+          "id": "c",
+          "text": "Inlining small images as data: URIs"
+        },
+        {
+          "id": "d",
+          "text": "Compressing responses with gzip or Brotli"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "HTTP/2 makes extra requests cheap, so request-saving hacks like sharding and sprites lose their point, while fewer bytes still help."
+  },
+  {
+    "key": "net.http-versions.order.01",
+    "concept": "net.http-versions",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Order what happens when a browser loads https://shop.hr over HTTP/2 for the first time.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "TLS handshake, where ALPN agrees on h2"
+        },
+        {
+          "id": "s2",
+          "text": "DNS lookup of shop.hr"
+        },
+        {
+          "id": "s3",
+          "text": "The GET is sent as a HEADERS frame on stream 1"
+        },
+        {
+          "id": "s4",
+          "text": "TCP three-way handshake"
+        },
+        {
+          "id": "s5",
+          "text": "The client sends the HTTP/2 connection preface and SETTINGS"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s5",
+          "s3"
+        ]
+      }
+    },
+    "remember": "HTTP/2 is negotiated inside the TLS handshake through ALPN; after the connection preface every request is a stream of frames."
+  }
+]

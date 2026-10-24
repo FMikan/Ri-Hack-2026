@@ -1,4 +1,4 @@
-import { Brain, Braces, BookOpen, Database, GitBranch, Globe, LayoutTemplate, Server, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { Binary, Braces, BookOpen, Cloud, Database, FlaskConical, GitBranch, Globe, LayoutTemplate, Network, Server, ShieldCheck, Terminal, type LucideIcon } from 'lucide-react'
 
 // Keyed by topic slug (game idea §3). Unknown slugs get a book until they are added here.
 const ICONS: Record<string, LucideIcon> = {
@@ -8,8 +8,12 @@ const ICONS: Record<string, LucideIcon> = {
   sql: Database,
   networking: Globe,
   security: ShieldCheck,
-  algorithms: GitBranch,
-  'how-ai-works': Brain,
+  algorithms: Binary,
+  git: GitBranch,
+  linux: Terminal,
+  testing: FlaskConical,
+  devops: Cloud,
+  'system-design': Network,
 }
 
 export const topicIcon = (slug: string) => ICONS[slug] ?? BookOpen

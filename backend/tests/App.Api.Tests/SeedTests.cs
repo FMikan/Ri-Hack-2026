@@ -11,7 +11,8 @@ namespace App.Api.Tests;
 // The embedded seed (App.Infrastructure/Seed) is the question pool players see: these are its quality gates (docs §7).
 public class SeedTests(TestApp app) : ApiTestBase(app)
 {
-    private static readonly string[] DeepTopics = ["javascript", "sql", "how-ai-works"];
+    // Every topic in topics.json must be playable on every band.
+    private static readonly string[] DeepTopics = [.. Seeder.ReadTopics().Select(t => t.Slug)];
 
     private async Task SeedAsync()
     {
@@ -32,8 +33,9 @@ public class SeedTests(TestApp app) : ApiTestBase(app)
     }
 
     [Fact]
-    public async Task Deep_topics_are_playable_and_topics_without_questions_are_hidden()
+    public async Task Every_listed_topic_is_playable_and_nothing_else_is()
     {
+        await App.InDbAsync(db => QuestionFixtures.SeedPlayableTopicAsync(db, slug: "dropped-topic")); // no longer in topics.json
         await SeedAsync();
 
         var active = await App.InDbAsync(db => db.Topics.Where(t => t.IsActive).Select(t => t.Slug).ToListAsync());
@@ -42,6 +44,7 @@ public class SeedTests(TestApp app) : ApiTestBase(app)
 
         Assert.All(DeepTopics, slug => Assert.Contains(slug, active));
         Assert.All(active, slug => Assert.Contains(slug, withQuestions));
+        Assert.DoesNotContain("dropped-topic", active);
     }
 
     [Fact]

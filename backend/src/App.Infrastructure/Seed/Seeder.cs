@@ -11,7 +11,7 @@ namespace App.Infrastructure.Seed;
 
 // Upserts topics, concepts and questions from the JSON files embedded next to this class (Seed/topics.json,
 // Seed/questions/*.json). Never deletes, and never reactivates a question that was quarantined or retired.
-// "retired": true in a question's JSON retires it (its mastery changes are taken back). The file sets a question's
+// A topic removed from topics.json is switched off. "retired": true in a question's JSON retires it (its mastery changes are taken back). The file sets a question's
 // difficulty once; after that auto-calibration owns it. A topic is offered only when its pool builds a complete ranked
 // deck for a new player (D1–D2, nothing seen).
 public class Seeder(AppDbContext db, TimeProvider time)
@@ -79,6 +79,8 @@ public class Seeder(AppDbContext db, TimeProvider time)
             question.Status = QuestionStatus.Retired;
         }
 
+        // A topic that left topics.json stays in the database (matches and mastery point at it) but is no longer offered.
+        var listed = ReadTopics().Select(t => t.Slug).ToHashSet();
         foreach (var topic in topics.Values)
         {
             var pool = questions.Values
@@ -87,7 +89,7 @@ public class Seeder(AppDbContext db, TimeProvider time)
                 .Select(q => new DeckQuestion(q.Id, q.ConceptId, q.Type, q.Difficulty))
                 .ToList();
             var deck = DeckBuilder.Build(pool, [], targetingAllowed: false, (1, 2), now, new Random(0), degrade: false);
-            topic.IsActive = DeckBuilder.IsComplete(deck);
+            topic.IsActive = listed.Contains(topic.Slug) && DeckBuilder.IsComplete(deck);
         }
 
         // The shop, upserted by key; prices and names follow the file.

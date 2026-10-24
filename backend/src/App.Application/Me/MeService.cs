@@ -84,8 +84,8 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
         var ids = topicIds.Distinct().ToArray();
         if (ids.Length is < GameRules.MinTopics or > GameRules.MaxTopics)
             throw new AppException(ErrorCodes.TopicsCount, $"Pick between {GameRules.MinTopics} and {GameRules.MaxTopics} topics.");
-        if (await db.Topics.CountAsync(t => ids.Contains(t.Id), cancellationToken) != ids.Length)
-            throw new AppException(ErrorCodes.TopicNotFound, "One of the topics does not exist.", 404);
+        if (await db.Topics.CountAsync(t => ids.Contains(t.Id) && t.IsActive, cancellationToken) != ids.Length)
+            throw new AppException(ErrorCodes.TopicNotFound, "One of the topics does not exist or is no longer offered.", 404);
         // The queue matched on these topics; changing them means leaving it first (idea §4).
         if (await InQueueAsync(userId, cancellationToken))
             throw new AppException(ErrorCodes.TopicsLockedInQueue, "Leave the queue to change your topics.");

@@ -1,8 +1,8 @@
 [
   {
     "slug": "javascript",
-    "name": "JavaScript & runtime",
-    "description": "Async code that works until it doesn't: how the runtime really schedules, scopes and copies things.",
+    "name": "JavaScript & TypeScript",
+    "description": "Async code that works until it doesn't, and the types that catch it before production.",
     "concepts": [
       { "slug": "js.event-loop", "name": "Event loop", "description": "The call stack runs to completion; then microtasks (promise callbacks) drain before the next macrotask (timers, I/O)." },
       { "slug": "js.promises", "name": "Promises", "description": "A promise is a placeholder for a future value; then/catch callbacks run as microtasks and chains pass values along." },
@@ -15,7 +15,11 @@
       { "slug": "js.scope", "name": "var, let and const", "description": "var is function-scoped, let and const are block-scoped; const forbids reassignment, not mutation." },
       { "slug": "js.array-methods", "name": "Array methods", "description": "map, filter and reduce return new values; sort and splice mutate in place, and sort compares strings by default." },
       { "slug": "js.coercion", "name": "Types and coercion", "description": "typeof, truthy and falsy values, and the implicit conversions JavaScript performs with + and comparisons." },
-      { "slug": "js.errors", "name": "Error handling", "description": "try/catch only catches what is thrown synchronously or awaited; an unawaited rejected promise escapes it." }
+      { "slug": "js.errors", "name": "Error handling", "description": "try/catch only catches what is thrown synchronously or awaited; an unawaited rejected promise escapes it." },
+      { "slug": "ts.types-interfaces", "name": "Types and interfaces", "description": "TypeScript checks shapes at compile time and erases them at runtime; interfaces and type aliases both describe object shapes." },
+      { "slug": "ts.narrowing", "name": "Narrowing", "description": "typeof, in, equality checks and discriminant fields narrow a union to one member inside a branch." },
+      { "slug": "ts.generics", "name": "Generics", "description": "A generic keeps the link between input and output types instead of falling back to any." },
+      { "slug": "ts.any-unknown", "name": "any, unknown and never", "description": "any switches checking off, unknown forces a check before use, never marks what cannot happen." }
     ]
   },
   {
@@ -23,17 +27,23 @@
     "name": "Frontend",
     "description": "Components that render forty times: the browser and framework mechanics behind a UI.",
     "concepts": [
-      { "slug": "fe.dom-reflow", "name": "DOM and reflow", "description": "Reading layout after writing styles forces the browser to recalculate layout synchronously." },
-      { "slug": "fe.state-rerender", "name": "State and re-render", "description": "A component re-renders when its state or props change; derived values should be computed, not stored." },
-      { "slug": "fe.flex-grid", "name": "Flexbox and grid", "description": "Flexbox lays out one dimension, grid two; both replace float and table layout hacks." },
+      { "slug": "fe.semantic-html", "name": "Semantic HTML", "description": "Elements such as button, nav, main and label carry meaning that browsers, search engines and screen readers rely on." },
+      { "slug": "fe.box-model", "name": "Box model", "description": "Every element is content, padding, border and margin; box-sizing decides whether width includes padding and border." },
       { "slug": "fe.css-specificity", "name": "CSS specificity", "description": "IDs beat classes, classes beat elements; later rules win ties, and !important overrides the normal order." },
-      { "slug": "fe.accessibility", "name": "Accessibility", "description": "Semantic elements, labels and keyboard focus make an interface usable with assistive technology." },
-      { "slug": "fe.memo-lazy", "name": "Memo and lazy loading", "description": "Memoization skips repeated work; lazy loading defers code until it is needed." }
+      { "slug": "fe.flex-grid", "name": "Flexbox and grid", "description": "Flexbox lays out one dimension, grid two; both replace float and table layout hacks." },
+      { "slug": "fe.responsive", "name": "Responsive design", "description": "Fluid layouts, relative units and media queries adapt one page to every screen; mobile-first starts from the smallest." },
+      { "slug": "fe.dom-reflow", "name": "DOM and reflow", "description": "Reading layout after writing styles forces the browser to recalculate layout synchronously." },
+      { "slug": "fe.events", "name": "Events and delegation", "description": "Events bubble from the target up through its ancestors, so one listener on a parent can handle many children." },
+      { "slug": "fe.state-rerender", "name": "State and re-render", "description": "A component re-renders when its state or props change; derived values should be computed, not stored." },
+      { "slug": "fe.effects", "name": "Effects and dependencies", "description": "An effect runs after render and re-runs when a listed dependency changes; a missing dependency reads stale values." },
+      { "slug": "fe.list-keys", "name": "Keys in lists", "description": "A stable key lets the framework match list items between renders; an index as key breaks when items move." },
+      { "slug": "fe.memo-lazy", "name": "Memo and lazy loading", "description": "Memoization skips repeated work; lazy loading defers code until it is needed." },
+      { "slug": "fe.accessibility", "name": "Accessibility", "description": "Semantic elements, labels and keyboard focus make an interface usable with assistive technology." }
     ]
   },
   {
     "slug": "backend",
-    "name": "Backend, APIs & architecture",
+    "name": "Backend & APIs",
     "description": "Endpoints without validation and layers without purpose: how a server should behave.",
     "concepts": [
       { "slug": "be.http-status", "name": "HTTP semantics and status codes", "description": "Methods carry meaning (safe, idempotent) and status codes tell the client what happened." },
@@ -42,6 +52,11 @@
       { "slug": "be.error-handling", "name": "Error handling", "description": "Return consistent error bodies and never leak stack traces or internal messages to clients." },
       { "slug": "be.auth-flow", "name": "Authentication flow", "description": "Authentication proves who you are; authorization decides what you may do." },
       { "slug": "be.middleware", "name": "Middleware", "description": "Middleware runs in order around every request; its position in the pipeline matters." },
+      { "slug": "be.idempotency", "name": "Idempotency", "description": "Repeating an idempotent request has the same effect as sending it once; retries rely on it." },
+      { "slug": "be.pagination", "name": "Pagination", "description": "Large lists come in pages; cursor pagination stays correct while rows are inserted, offset pagination does not." },
+      { "slug": "be.rate-limiting", "name": "Rate limiting", "description": "Limiting requests per client protects the server from abuse; the client gets 429 and Retry-After." },
+      { "slug": "be.caching", "name": "Server-side caching", "description": "A cache keeps computed results close by; every cached value needs a rule for when it becomes stale." },
+      { "slug": "be.background-jobs", "name": "Background jobs", "description": "Slow work such as e-mail or image processing moves to a queue so the request can answer quickly." },
       { "slug": "be.coupling", "name": "Coupling", "description": "Modules that know too much about each other change together; dependencies should point inward." }
     ]
   },
@@ -66,15 +81,21 @@
   },
   {
     "slug": "networking",
-    "name": "Networking & web protocols",
+    "name": "Networking & web",
     "description": "The CORS error that goes straight into ChatGPT: what happens between browser and server.",
     "concepts": [
+      { "slug": "net.ip-ports", "name": "IP addresses and ports", "description": "An IP address finds the machine, a port finds the program on it; localhost is the machine itself." },
       { "slug": "net.tcp-udp", "name": "TCP vs UDP", "description": "TCP delivers ordered, reliable streams; UDP sends independent packets with no delivery guarantee." },
       { "slug": "net.dns", "name": "DNS", "description": "DNS translates names into IP addresses through a chain of cached lookups." },
-      { "slug": "net.http-caching", "name": "HTTP methods, caching and cookies", "description": "Cache headers decide who may reuse a response and for how long; cookies travel with every matching request." },
+      { "slug": "net.url", "name": "URLs", "description": "A URL is scheme, host, port, path, query and fragment; the fragment never reaches the server." },
+      { "slug": "net.http-basics", "name": "HTTP requests and responses", "description": "A request is a method, a path, headers and an optional body; a response is a status code, headers and a body." },
+      { "slug": "net.http-caching", "name": "HTTP caching", "description": "Cache-Control and validators such as ETag decide who may reuse a response and for how long." },
+      { "slug": "net.cookies", "name": "Cookies", "description": "The server sets cookies and the browser sends them back on matching requests; flags limit where they go." },
       { "slug": "net.cors", "name": "CORS", "description": "The browser blocks reading cross-origin responses unless the server allows the origin." },
       { "slug": "net.tls", "name": "TLS", "description": "TLS encrypts the connection and proves the server's identity with a certificate." },
-      { "slug": "net.websocket", "name": "WebSocket vs HTTP", "description": "WebSocket keeps one connection open for messages in both directions; HTTP is request and response." }
+      { "slug": "net.websocket", "name": "WebSocket vs HTTP", "description": "WebSocket keeps one connection open for messages in both directions; HTTP is request and response." },
+      { "slug": "net.proxies", "name": "Proxies and load balancers", "description": "A reverse proxy sits in front of servers to terminate TLS, route and balance load; the client only sees the proxy." },
+      { "slug": "net.http-versions", "name": "HTTP/1.1, HTTP/2 and HTTP/3", "description": "HTTP/2 multiplexes many requests over one connection; HTTP/3 runs over QUIC on UDP." }
     ]
   },
   {
@@ -85,10 +106,15 @@
       { "slug": "sec.sqli", "name": "SQL injection", "description": "Concatenating input into SQL lets it become code; parameters keep data as data." },
       { "slug": "sec.xss", "name": "XSS", "description": "Inserting untrusted text into HTML without escaping lets it run as script in other users' browsers." },
       { "slug": "sec.csrf", "name": "CSRF", "description": "A forged request from another site rides on the victim's cookies unless the server checks its origin." },
+      { "slug": "sec.access-control", "name": "Broken access control", "description": "Checking that a user is logged in is not enough; every request must check that this user may touch this resource." },
       { "slug": "sec.hashing", "name": "Hashing vs encryption", "description": "Encryption is reversible with a key; password hashing is one-way and deliberately slow." },
       { "slug": "sec.secrets", "name": "Secrets in code", "description": "Keys committed to a repository are public forever; load them from the environment." },
       { "slug": "sec.jwt", "name": "JWT pitfalls", "description": "A JWT is signed, not encrypted; the server must verify the signature, algorithm and expiry." },
-      { "slug": "sec.input-validation", "name": "Input validation", "description": "Validate on the server with allow-lists; client-side checks are a convenience, not protection." }
+      { "slug": "sec.input-validation", "name": "Input validation", "description": "Validate on the server with allow-lists; client-side checks are a convenience, not protection." },
+      { "slug": "sec.cookies-sessions", "name": "Session cookies", "description": "HttpOnly, Secure and SameSite keep session cookies away from scripts, plain HTTP and other sites." },
+      { "slug": "sec.ssrf", "name": "SSRF", "description": "A server that fetches user-supplied URLs can be pointed at internal services and cloud metadata." },
+      { "slug": "sec.dependencies", "name": "Dependencies and supply chain", "description": "Every package you install runs with your permissions; pin versions and update known-vulnerable ones." },
+      { "slug": "sec.least-privilege", "name": "Least privilege", "description": "Give each user, service and key only the permissions it needs, so a leak does limited damage." }
     ]
   },
   {
@@ -98,29 +124,111 @@
     "concepts": [
       { "slug": "alg.complexity", "name": "Complexity", "description": "Big O describes how work grows with input size; nested loops over the same data are usually O(n²)." },
       { "slug": "alg.hashmap-vs-list", "name": "Hash map vs list", "description": "A hash map finds a key in constant time on average; searching a list is linear." },
+      { "slug": "alg.stack-queue", "name": "Stack and queue", "description": "A stack is last in, first out; a queue is first in, first out." },
+      { "slug": "alg.linked-lists", "name": "Linked lists", "description": "A linked list inserts and removes in constant time at a known node but must walk the list to find an index." },
       { "slug": "alg.recursion", "name": "Recursion", "description": "A recursive function needs a base case; each call uses stack space until it returns." },
       { "slug": "alg.sorting", "name": "Sorting", "description": "Good general sorts are O(n log n); a stable sort keeps the order of equal elements." },
+      { "slug": "alg.binary-search", "name": "Binary search", "description": "On sorted data, halving the search range each step finds an item in O(log n)." },
+      { "slug": "alg.two-pointers", "name": "Two pointers and sliding window", "description": "Two indexes moving through an array solve many pair and subarray problems in one pass." },
+      { "slug": "alg.trees", "name": "Trees", "description": "A binary search tree keeps smaller keys left and larger right; its speed depends on staying balanced." },
+      { "slug": "alg.heaps", "name": "Heaps and priority queues", "description": "A heap returns the smallest (or largest) item in O(log n) per removal, which is what a priority queue needs." },
       { "slug": "alg.bfs-dfs", "name": "BFS and DFS", "description": "Breadth-first search explores level by level with a queue; depth-first goes deep with a stack." },
-      { "slug": "alg.stack-queue", "name": "Stack and queue", "description": "A stack is last in, first out; a queue is first in, first out." }
+      { "slug": "alg.dynamic-programming", "name": "Dynamic programming", "description": "When subproblems repeat, storing their answers turns exponential recursion into polynomial work." }
     ]
   },
   {
-    "slug": "how-ai-works",
-    "name": "How AI works",
-    "description": "Used every day, rarely understood: how language models work and when they are wrong.",
+    "slug": "git",
+    "name": "Git & version control",
+    "description": "The force push that erased a week of work: how Git actually stores and moves history.",
     "concepts": [
-      { "slug": "ai.tokens", "name": "Tokens", "description": "Models read and write tokens, pieces of words; limits and prices are counted in tokens, not characters." },
-      { "slug": "ai.context-window", "name": "Context window", "description": "The model sees only what is in the current request, up to a fixed number of tokens." },
-      { "slug": "ai.hallucinations", "name": "Hallucinations", "description": "A model produces likely-sounding text, so it can state wrong facts and invent sources with full confidence." },
-      { "slug": "ai.temperature", "name": "Temperature and sampling", "description": "Sampling picks the next token from a probability distribution; temperature makes the choice more or less random." },
-      { "slug": "ai.embeddings", "name": "Embeddings", "description": "An embedding is a vector that places similar meanings close together, so similarity becomes distance." },
-      { "slug": "ai.rag", "name": "Retrieval-augmented generation", "description": "RAG retrieves relevant documents and puts them into the prompt so answers are grounded in them." },
-      { "slug": "ai.prompting", "name": "Prompt structure", "description": "Instructions, context and examples in clear sections; the system prompt sets the rules for the conversation." },
-      { "slug": "ai.fine-tuning", "name": "Prompting vs fine-tuning", "description": "Fine-tuning changes the model's weights with examples; prompting changes only the input." },
-      { "slug": "ai.verification", "name": "When not to trust it", "description": "Check generated code, numbers and citations; the model has no built-in way to know it is wrong." },
-      { "slug": "ai.structured-output", "name": "Structured output", "description": "Asking for JSON is not a guarantee; validate and parse the output, or use a schema-constrained mode." },
-      { "slug": "ai.llm-api", "name": "Calling an LLM API", "description": "The API is stateless: you resend the conversation each call and set limits such as max_tokens yourself." },
-      { "slug": "ai.training-vs-inference", "name": "Training vs inference", "description": "Knowledge comes from training data up to a cutoff; at inference the model only predicts, it does not learn." }
+      { "slug": "git.commits-staging", "name": "Commits and the staging area", "description": "git add puts changes in the staging area; a commit records a snapshot of exactly what was staged." },
+      { "slug": "git.branches", "name": "Branches and HEAD", "description": "A branch is a movable pointer to a commit; HEAD points to what you have checked out." },
+      { "slug": "git.merge", "name": "Merging", "description": "A merge joins two histories; it fast-forwards when one side has no new commits, otherwise it creates a merge commit." },
+      { "slug": "git.rebase", "name": "Rebasing", "description": "Rebase replays commits on a new base, creating new commits; never rebase history others have pulled." },
+      { "slug": "git.conflicts", "name": "Merge conflicts", "description": "A conflict appears when both sides changed the same lines; you edit the file, remove the markers and stage it." },
+      { "slug": "git.remotes", "name": "Remotes: fetch, pull and push", "description": "fetch downloads remote commits, pull is fetch plus merge (or rebase), push uploads and is rejected when you are behind." },
+      { "slug": "git.undo", "name": "Undoing changes", "description": "restore discards working changes, reset moves the branch pointer, revert adds a commit that undoes another." },
+      { "slug": "git.history", "name": "Reading history", "description": "log, diff, show and blame answer what changed, when and by whom; bisect finds the commit that broke something." },
+      { "slug": "git.stash", "name": "Stash", "description": "stash shelves uncommitted changes so you can switch branches and bring them back later." },
+      { "slug": "git.ignore", "name": ".gitignore", "description": ".gitignore keeps untracked files out of Git; a file that is already tracked stays tracked until you remove it from the index." },
+      { "slug": "git.workflow", "name": "Branching workflow and pull requests", "description": "Short-lived feature branches merged through reviewed pull requests keep the main branch releasable." },
+      { "slug": "git.tags", "name": "Tags and releases", "description": "A tag names a specific commit, usually a release version; unlike a branch it does not move." }
+    ]
+  },
+  {
+    "slug": "linux",
+    "name": "OS & Linux",
+    "description": "Permission denied, port already in use: the operating system under every server.",
+    "concepts": [
+      { "slug": "os.processes", "name": "Processes", "description": "A process is a running program with its own memory and PID; a parent starts children and collects their exit status." },
+      { "slug": "os.threads", "name": "Threads and concurrency", "description": "Threads share their process's memory, so unsynchronized writes to shared data cause race conditions." },
+      { "slug": "os.memory", "name": "Memory: stack, heap and virtual memory", "description": "Each process sees its own virtual address space; the stack holds call frames, the heap holds dynamic allocations." },
+      { "slug": "os.filesystem", "name": "Filesystem and paths", "description": "Everything hangs off / ; absolute paths start there, relative paths start from the current directory." },
+      { "slug": "os.permissions", "name": "Permissions", "description": "Read, write and execute bits for owner, group and others decide who may do what with a file." },
+      { "slug": "os.users-sudo", "name": "Users and sudo", "description": "root can do anything; sudo runs a single command with elevated rights instead of working as root." },
+      { "slug": "os.shell-pipes", "name": "Pipes and redirection", "description": "| sends one command's output into the next; > and >> redirect output to files, 2> redirects errors." },
+      { "slug": "os.text-tools", "name": "Text tools", "description": "grep finds lines, sort and uniq count them, find locates files, and small tools combine into pipelines." },
+      { "slug": "os.env-vars", "name": "Environment variables", "description": "Environment variables are passed from a process to its children; export makes a shell variable part of it." },
+      { "slug": "os.signals", "name": "Signals and killing processes", "description": "SIGTERM asks a process to stop and can be handled; SIGKILL cannot be caught or ignored." },
+      { "slug": "os.exit-codes", "name": "Exit codes", "description": "Exit code 0 means success and anything else failure; && and || in the shell branch on it." },
+      { "slug": "os.services", "name": "Services and logs", "description": "systemd starts, restarts and supervises long-running services; journalctl shows their logs." }
+    ]
+  },
+  {
+    "slug": "testing",
+    "name": "Testing & debugging",
+    "description": "Green on my machine, red in CI: writing tests that catch bugs and finding the ones they missed.",
+    "concepts": [
+      { "slug": "test.unit-integration", "name": "Unit vs integration tests", "description": "A unit test checks one piece in isolation; an integration test checks that pieces work together with real dependencies." },
+      { "slug": "test.pyramid", "name": "Test pyramid", "description": "Many fast unit tests, fewer integration tests and a handful of end-to-end tests keep a suite fast and trustworthy." },
+      { "slug": "test.assertions", "name": "Assertions", "description": "A test without a meaningful assertion passes no matter what the code does." },
+      { "slug": "test.edge-cases", "name": "Edge cases and boundaries", "description": "Bugs gather at boundaries: empty input, zero, one, the maximum, off-by-one limits and invalid values." },
+      { "slug": "test.mocks", "name": "Mocks, stubs and fakes", "description": "Test doubles replace slow or external dependencies; mocking too much tests the mocks instead of the code." },
+      { "slug": "test.isolation", "name": "Test isolation and fixtures", "description": "Each test sets up its own state and must pass alone and in any order." },
+      { "slug": "test.flaky", "name": "Flaky tests", "description": "A flaky test passes and fails without code changes, usually because of time, randomness, order or shared state." },
+      { "slug": "test.tdd", "name": "Test-driven development", "description": "Write a failing test, make it pass with the simplest code, then refactor with the test as a safety net." },
+      { "slug": "test.coverage", "name": "Coverage", "description": "Coverage shows which lines ran during tests, not whether their behaviour was checked." },
+      { "slug": "test.e2e", "name": "End-to-end tests", "description": "End-to-end tests drive the real application like a user; they catch wiring bugs but are slow and brittle." },
+      { "slug": "test.debugging", "name": "Debugging method", "description": "Reproduce, isolate, form a hypothesis, test it; bisecting the input or the history narrows a bug fast." },
+      { "slug": "test.logs-stacktraces", "name": "Logs and stack traces", "description": "A stack trace shows where an exception was thrown and how the code got there; read it from the top frame of your own code." }
+    ]
+  },
+  {
+    "slug": "devops",
+    "name": "DevOps & cloud basics",
+    "description": "It works on my machine, so ship the machine: building, shipping and running software.",
+    "concepts": [
+      { "slug": "ops.ci-cd", "name": "CI/CD pipelines", "description": "Continuous integration builds and tests every change; continuous delivery deploys what passed, automatically." },
+      { "slug": "ops.containers", "name": "Containers vs virtual machines", "description": "A container packages an app with its dependencies and shares the host kernel; a VM runs a whole guest OS." },
+      { "slug": "ops.dockerfile", "name": "Dockerfiles and image layers", "description": "Each Dockerfile instruction creates a cached layer; order instructions from least to most frequently changing." },
+      { "slug": "ops.compose", "name": "Docker Compose", "description": "Compose starts several containers with their networks, volumes and environment from one file." },
+      { "slug": "ops.volumes", "name": "Volumes and state", "description": "A container's filesystem is thrown away with it; data that must survive lives in a volume or a database." },
+      { "slug": "ops.config", "name": "Configuration and environments", "description": "The same build runs everywhere; what differs between environments comes from environment variables or config, not code." },
+      { "slug": "ops.health-checks", "name": "Health checks", "description": "Liveness says the process is alive, readiness says it can take traffic; orchestrators restart or route by them." },
+      { "slug": "ops.observability", "name": "Logs, metrics and traces", "description": "Logs say what happened, metrics show trends and alert, traces follow one request across services." },
+      { "slug": "ops.deploy-strategies", "name": "Deployment strategies", "description": "Rolling, blue-green and canary deployments replace a version without downtime and allow a fast rollback." },
+      { "slug": "ops.scaling", "name": "Scaling", "description": "Vertical scaling buys a bigger machine, horizontal scaling adds more; autoscaling adds and removes them by load." },
+      { "slug": "ops.cloud-models", "name": "Cloud service models", "description": "IaaS rents machines, PaaS runs your app, SaaS is finished software, serverless runs functions on demand." },
+      { "slug": "ops.iac", "name": "Infrastructure as code", "description": "Servers, networks and permissions described in versioned files can be reviewed, repeated and rebuilt." }
+    ]
+  },
+  {
+    "slug": "system-design",
+    "name": "System design basics",
+    "description": "One server is fine until it isn't: the building blocks of systems that grow.",
+    "concepts": [
+      { "slug": "sd.requirements", "name": "Requirements and trade-offs", "description": "Functional requirements say what the system does; non-functional ones (latency, availability, cost) shape how it is built." },
+      { "slug": "sd.estimation", "name": "Back-of-the-envelope estimates", "description": "Rough numbers for users, requests per second and storage show early which parts must scale." },
+      { "slug": "sd.stateless-scaling", "name": "Stateless services", "description": "A server that keeps no session state can be copied freely behind a load balancer." },
+      { "slug": "sd.load-balancing", "name": "Load balancing", "description": "A load balancer spreads requests over healthy servers using round robin, least connections or hashing." },
+      { "slug": "sd.caching", "name": "Caching strategies", "description": "Cache-aside, write-through and TTLs trade freshness for speed; invalidation is the hard part." },
+      { "slug": "sd.cdn", "name": "CDN", "description": "A CDN serves static content from servers close to users and takes load off the origin." },
+      { "slug": "sd.replication", "name": "Database replication", "description": "Read replicas copy the primary to spread reads; replication lag means a replica can return stale data." },
+      { "slug": "sd.sharding", "name": "Partitioning and sharding", "description": "Sharding splits data across databases by a key; a bad key creates hot shards and cross-shard queries." },
+      { "slug": "sd.queues", "name": "Message queues", "description": "A queue decouples producers from consumers, absorbs spikes and lets work be retried." },
+      { "slug": "sd.consistency", "name": "Consistency and CAP", "description": "During a network partition a distributed system must choose between consistency and availability." },
+      { "slug": "sd.availability", "name": "Availability and failure", "description": "Redundancy removes single points of failure; 99.9 % uptime still allows almost nine hours of downtime a year." },
+      { "slug": "sd.monolith-microservices", "name": "Monolith vs microservices", "description": "Microservices scale teams and parts independently at the cost of network calls, deployment and debugging complexity." }
     ]
   }
 ]
