@@ -28,6 +28,7 @@ export const hr: Messages = {
       username: 'Korisničko ime',
       password: 'Lozinka',
       showPassword: 'Prikaži lozinku',
+      rememberMe: 'Zapamti me',
     },
     hints: {
       username: 'Javno ime: 3 do 20 slova, brojki ili _',

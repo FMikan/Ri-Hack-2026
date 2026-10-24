@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { useAuth } from './auth-context'
@@ -10,7 +11,12 @@ export function LoginPage() {
   const { login } = useAuth()
   const { t } = useLocale()
   const location = useLocation()
-  const form = useAuthForm(['email', 'password'], (values) => validateLogin(values, t.auth.errors), login)
+  const [remember, setRemember] = useState(true)
+  const form = useAuthForm(
+    ['email', 'password'],
+    (values) => validateLogin(values, t.auth.errors),
+    (values) => login(values, remember),
+  )
   const passwordReset = (location.state as { notice?: string } | null)?.notice === 'password-reset'
 
   return (
@@ -36,12 +42,23 @@ export function LoginPage() {
         autoComplete="current-password"
         error={form.errors.password}
       />
-      <Link
-        to="/forgot-password"
-        className="-mt-2 justify-self-end rounded-sm text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-      >
-        {t.auth.login.forgot}
-      </Link>
+      <div className="-mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <label className="flex w-fit cursor-pointer items-center gap-2.5 text-sm select-none">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(event) => setRemember(event.target.checked)}
+            className="size-4 cursor-pointer accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          />
+          {t.auth.fields.rememberMe}
+        </label>
+        <Link
+          to="/forgot-password"
+          className="rounded-sm text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          {t.auth.login.forgot}
+        </Link>
+      </div>
     </AuthForm>
   )
 }

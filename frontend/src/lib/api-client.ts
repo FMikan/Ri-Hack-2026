@@ -79,14 +79,22 @@ export class ApiError extends Error {
 }
 
 // Access token lives only in memory. The refresh token sits behind an async store so the Android build can swap
-// localStorage for Capacitor Preferences (docs §6.10).
+// localStorage for Capacitor Preferences (docs §6.10). "Remember me" keeps it in localStorage; without it the token
+// goes to sessionStorage and the session ends when the browser closes. A rotated token stays where the old one was.
 let accessToken: string | undefined
 const REFRESH_TOKEN_KEY = 'refreshToken'
 
 export const tokenStore = {
-  get: async () => localStorage.getItem(REFRESH_TOKEN_KEY) ?? undefined,
-  set: async (token: string) => localStorage.setItem(REFRESH_TOKEN_KEY, token),
-  clear: async () => localStorage.removeItem(REFRESH_TOKEN_KEY),
+  get: async () => localStorage.getItem(REFRESH_TOKEN_KEY) ?? sessionStorage.getItem(REFRESH_TOKEN_KEY) ?? undefined,
+  remembered: async () => localStorage.getItem(REFRESH_TOKEN_KEY) !== null,
+  set: async (token: string, remember: boolean) => {
+    await tokenStore.clear()
+    ;(remember ? localStorage : sessionStorage).setItem(REFRESH_TOKEN_KEY, token)
+  },
+  clear: async () => {
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+  },
 }
 
 let onUnauthenticated = () => {}
@@ -96,9 +104,9 @@ export function setUnauthenticatedHandler(handler: () => void) {
   onUnauthenticated = handler
 }
 
-async function startSession(auth: AuthResponse) {
+async function startSession(auth: AuthResponse, remember: boolean) {
   accessToken = auth.accessToken
-  await tokenStore.set(auth.refreshToken)
+  await tokenStore.set(auth.refreshToken, remember)
   return auth
 }
 
@@ -139,8 +147,9 @@ export function refreshSession(): Promise<AuthResponse | undefined> {
   refreshing ??= (async () => {
     const refreshToken = await tokenStore.get()
     if (!refreshToken) return undefined
+    const remember = await tokenStore.remembered()
     try {
-      return await startSession(await send<AuthResponse>('/api/auth/refresh', post({ refreshToken })))
+      return await startSession(await send<AuthResponse>('/api/auth/refresh', post({ refreshToken })), remember)
     } catch (error) {
       // Network errors keep the stored token so the session survives a brief outage.
       if (!(error instanceof ApiError && error.status === 401)) throw error
@@ -178,9 +187,9 @@ export const api = {
   listTopics: (signal?: AbortSignal) => request<TopicDto[]>('/api/topics', { signal }, { auth: false }),
 
   register: async (body: RegisterRequest) =>
-    startSession(await request<AuthResponse>('/api/auth/register', post(body), { auth: false })),
-  login: async (body: LoginRequest) =>
-    startSession(await request<AuthResponse>('/api/auth/login', post(body), { auth: false })),
+    startSession(await request<AuthResponse>('/api/auth/register', post(body), { auth: false }), true),
+  login: async (body: LoginRequest, remember: boolean) =>
+    startSession(await request<AuthResponse>('/api/auth/login', post(body), { auth: false }), remember),
   logout: async () => {
     const refreshToken = await tokenStore.get()
     await endSession()
