@@ -6,21 +6,29 @@ import type {
   DashboardDto,
   DueConceptsDto,
   ExplanationDto,
+  ForgotPasswordRequest,
   KnowledgeMapDto,
+  LessonDto,
+  LessonResultDto,
   HealthResponse,
   LoginRequest,
+  MatchReviewDto,
   MatchStateDto,
   MatchSummaryDto,
   MeDto,
   ProblemDetails,
+  QuestionDetailDto,
   QueueStateDto,
   RegisterRequest,
+  ReportQuestionRequest,
+  ResetPasswordRequest,
   RematchDto,
   SetTopicsRequest,
   StartBotMatchRequest,
   StartCalibrationRequest,
   StartPracticeRequest,
   SubmitAnswerRequest,
+  SubmitLessonCheckRequest,
   TopicDto,
   UpdateMeRequest,
 } from '@/types/api'
@@ -162,6 +170,10 @@ export const api = {
     if (refreshToken) request('/api/auth/logout', post({ refreshToken }), { auth: false }).catch(() => {})
   },
 
+  // Always 202, whether or not the account exists; the link in the e-mail opens /reset-password?token=...
+  forgotPassword: (body: ForgotPasswordRequest) => request<void>('/api/auth/forgot-password', post(body), { auth: false }),
+  resetPassword: (body: ResetPasswordRequest) => request<void>('/api/auth/reset-password', post(body), { auth: false }),
+
   me: (signal?: AbortSignal) => request<MeDto>('/api/me', { signal }),
   updateMe: (body: UpdateMeRequest) => request<MeDto>('/api/me', { method: 'PATCH', body: JSON.stringify(body) }),
   dashboard: (signal?: AbortSignal) => request<DashboardDto>('/api/me/dashboard', { signal }),
@@ -195,6 +207,14 @@ export const api = {
   acceptProposal: (id: string) => request<QueueStateDto>(`/api/queue/proposals/${id}/accept`, { method: 'POST' }),
   playGhost: () => request<MatchStateDto>('/api/queue/ghost', { method: 'POST' }),
   declineGhost: () => request<QueueStateDto>('/api/queue/ghost/decline', { method: 'POST' }),
+
+  review: (id: string, signal?: AbortSignal) => request<MatchReviewDto>(`/api/matches/${id}/review`, { signal }),
+  // With the key only once I have answered the question.
+  question: (id: string, signal?: AbortSignal) => request<QuestionDetailDto>(`/api/questions/${id}`, { signal }),
+  reportQuestion: (id: string, body: ReportQuestionRequest) => request<void>(`/api/questions/${id}/report`, post(body)),
+  startLesson: (matchId: string) => request<LessonDto>('/api/lessons', post({ matchId })),
+  lesson: (id: string, signal?: AbortSignal) => request<LessonDto>(`/api/lessons/${id}`, { signal }),
+  checkLesson: (id: string, body: SubmitLessonCheckRequest) => request<LessonResultDto>(`/api/lessons/${id}/check`, post(body)),
 
   myMatches: (signal?: AbortSignal) => request<MatchSummaryDto[]>('/api/me/matches?limit=50', { signal }),
   dueConcepts: (signal?: AbortSignal) => request<DueConceptsDto>('/api/me/progress/due', { signal }),

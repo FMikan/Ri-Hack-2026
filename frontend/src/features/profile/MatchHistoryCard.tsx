@@ -19,7 +19,7 @@ const OUTCOMES: Record<MatchSummaryDto['outcome'], string> = {
   completed: 'bg-primary/15 text-primary',
 }
 
-// Last 50 finished matches. On wide screens the card takes the height of its row and the list scrolls inside.
+// Last 50 finished matches; each opens its review. On wide screens the card takes the height of its row and the list scrolls inside.
 export function MatchHistoryCard({ history, className }: { history: MatchSummaryDto[]; className?: string }) {
   const { t, locale } = useLocale()
   const copy = t.profile.history
@@ -51,27 +51,32 @@ export function MatchHistoryCard({ history, className }: { history: MatchSummary
         ) : (
           <ul className="grid max-h-96 min-h-0 flex-1 content-start gap-2 overflow-y-auto [scrollbar-width:thin] xl:max-h-none">
             {history.map((match) => (
-              <li key={match.id} className="flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border ring-inset">
-                <OpponentAvatar match={match} />
-                <span className="grid min-w-0 flex-1">
-                  <span className="truncate text-sm font-medium">{opponentName(match)}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {[match.opponent && match.topic?.name, match.finishedAt && relativeTime(match.finishedAt, locale)]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </span>
-                <span className="grid shrink-0 justify-items-end gap-1">
-                  <span className="font-mono text-sm tabular-nums">
-                    {match.opponent ? `${match.myScore} : ${match.opponentScore}` : match.myScore}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <DeltaBadge value={match.ratingDelta ?? 0} />
-                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', OUTCOMES[match.outcome])}>
-                      {copy.outcomes[match.outcome]}
+              <li key={match.id}>
+                <Link
+                  to={`/match/${match.id}/review`}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border transition-colors ring-inset hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  <OpponentAvatar match={match} />
+                  <span className="grid min-w-0 flex-1">
+                    <span className="truncate text-sm font-medium">{opponentName(match)}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {[match.opponent && match.topic?.name, match.finishedAt && relativeTime(match.finishedAt, locale)]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </span>
                   </span>
-                </span>
+                  <span className="grid shrink-0 justify-items-end gap-1">
+                    <span className="font-mono text-sm tabular-nums">
+                      {match.opponent ? `${match.myScore} : ${match.opponentScore}` : match.myScore}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <DeltaBadge value={match.ratingDelta ?? 0} />
+                      <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', OUTCOMES[match.outcome])}>
+                        {copy.outcomes[match.outcome]}
+                      </span>
+                    </span>
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
