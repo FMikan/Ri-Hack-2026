@@ -1,15 +1,49 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using App.Api;
 using App.Api.Endpoints;
-using App.Application.Notes;
+using App.Application;
+using App.Application.Auth;
+using App.Application.Content;
+using App.Application.Daily;
+using App.Application.Economy;
+using App.Application.Leaderboards;
+using App.Application.Lessons;
+using App.Application.Matches;
+using App.Application.Me;
+using App.Application.Queue;
+using App.Application.Seasons;
+using App.Application.Social;
 using App.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
 LoadDotEnv();
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+// Declares the bearer token so Scalar shows an Authorize field and sends it on every request.
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer((document, _, _) =>
+{
+    document.Components ??= new OpenApiComponents();
+    document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+    document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "accessToken from POST /api/auth/register or /api/auth/login",
+    };
+    document.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference("Bearer", document)] = [] }];
+    return Task.CompletedTask;
+}));
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+// Enums travel as snake_case strings ("true_false", "in_progress"), the same spelling the database stores.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower)));
 // Malformed bodies become 400 Problem Details instead of exceptions (which would surface as 500 in Development).
 builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
 builder.Services.AddValidation();
@@ -18,10 +52,35 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
     .AllowAnyHeader()
     .AllowAnyMethod()));
 
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddScoped<NoteService>();
+builder.Services.AddAppAuth(builder.Configuration);
+builder.Services.AddAppRateLimits();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<MeService>();
+builder.Services.AddScoped<ContentService>();
+builder.Services.AddScoped<MatchService>();
+builder.Services.AddScoped<LessonService>();
+builder.Services.AddScoped<QueueService>();
+builder.Services.AddScoped<Rewarder>();
+builder.Services.AddScoped<DailyService>();
+builder.Services.AddScoped<ShopService>();
+builder.Services.AddScoped<SocialService>();
+builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<LeaderboardService>();
+builder.Services.AddScoped<HousekeepingService>();
+// Live AI calls (explanations, lesson cards) give up after this and fall back (idea §16: 8 s).
+builder.Services.AddSingleton(new AiOptions(TimeSpan.FromMilliseconds(builder.Configuration.GetValue("Ai:TimeoutMs", 8000))));
+// Tests turn the tick off and advance matches themselves with a fake clock.
+if (builder.Configuration.GetValue("Game:TickEnabled", true)) builder.Services.AddHostedService<GameTickService>();
 
 var app = builder.Build();
+
+// Production sits behind the host's Caddy and the web container's Caddy. X-Forwarded-* is trusted only from
+// private (Docker) and loopback addresses, walking back to the first public one, so rate limits see the player's IP.
+var forwarded = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto, ForwardLimit = null };
+foreach (var network in new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16" }) forwarded.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+app.UseForwardedHeaders(forwarded);
 
 // Production (single instance on the VPS) applies pending migrations at startup. Locally, run `dotnet ef database update`.
 if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
@@ -30,9 +89,20 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
 }
 
+// Topics, concepts and questions from App.Infrastructure/Seed (Development and production; tests seed their own data).
+if (app.Configuration.GetValue<bool>("Database:SeedOnStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<App.Infrastructure.Seed.Seeder>().SeedAsync();
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+// Tests switch it off (one test switches it back on); everywhere else it is on.
+if (app.Configuration.GetValue("RateLimit:Enabled", true)) app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
 {
@@ -41,7 +111,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapHealthEndpoints();
-app.MapNoteEndpoints();
+app.MapAuthEndpoints();
+app.MapMeEndpoints();
+app.MapContentEndpoints();
+app.MapMatchEndpoints();
+app.MapLessonEndpoints();
+app.MapQueueEndpoints();
+app.MapEconomyEndpoints();
+app.MapSocialEndpoints();
+app.MapLeaderboardEndpoints();
 
 app.Run();
 

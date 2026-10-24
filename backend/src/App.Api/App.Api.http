@@ -8,11 +8,53 @@ GET {{baseUrl}}/health/ready
 
 ###
 
-GET {{baseUrl}}/api/notes
+GET {{baseUrl}}/api/topics
 
 ###
 
-POST {{baseUrl}}/api/notes
+# @name register
+POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
-{ "text": "Hello from App.Api.http" }
+{ "email": "ana@example.com", "username": "ana", "password": "secret-123" }
+
+###
+
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "ana@example.com", "password": "secret-123" }
+
+###
+
+# Always 202. Locally (no Email__Smtp__Host) the reset link is printed in the API log.
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{ "email": "ana@example.com" }
+
+###
+
+# Paste the token from the link.
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{ "token": "<token>", "newPassword": "new-secret-456" }
+
+###
+
+GET {{baseUrl}}/api/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+
+GET {{baseUrl}}/api/me/dashboard
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.$.refreshToken}}" }

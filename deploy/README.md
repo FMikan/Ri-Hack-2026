@@ -18,7 +18,7 @@ directly.
 1. **test**: `dotnet test` (build + xUnit) and `npm ci && npm run lint && npm run build`.
 2. **publish** (main only): builds `ghcr.io/fmikan/ri-hack-2026/api` and `.../web`, tagged with the commit SHA
    and `latest`. It then starts the real production stack (`docker-compose.prod.yml`) in CI and checks
-   `/health/ready`, the SPA, and a note round trip. Images are pushed only if that passes.
+   `/health/ready`, the SPA, and a register round trip. Images are pushed only if that passes.
 3. **deploy** (main only):
    - copies `docker-compose.prod.yml` to the server
    - records the commit SHA as `IMAGE_TAG` in the server `.env`
@@ -86,6 +86,7 @@ if id hack >/dev/null 2>&1; then echo "user hack already exists, stop"; else
 POSTGRES_DB=app
 POSTGRES_USER=app
 POSTGRES_PASSWORD=$(openssl rand -hex 24)
+JWT_SIGNING_KEY=$(openssl rand -hex 32)
 WEB_PORT=8081
 EOF
   chown hack:hack /home/hack/ri-hack-2026/.env && chmod 600 /home/hack/ri-hack-2026/.env
@@ -167,6 +168,13 @@ curl -s 127.0.0.1:8081/health/ready       # readiness, bypassing the host web se
 docker compose up -d --wait               # restart with the deployed version (IMAGE_TAG in .env)
 docker compose exec postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > backup-$(date +%F).sql
 ```
+
+- **Password reset e-mails:** set `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD` (and `SMTP_FROM` if it differs)
+  in `.env` (see `.env.example`), then `docker compose up -d --wait`. Until then the reset link is only in
+  `docker compose logs api | grep 'reset link'`.
+- **Rate limits** (login, register, forgot password) count per player IP. They rely on the host proxy setting
+  `X-Forwarded-For`. Caddy and the nginx block above both do. Behind Cloudflare's proxy, every player would
+  share Cloudflare's IPs, so keep the record "DNS only".
 
 - **Redeploy:** open **Actions > CI/CD > Run workflow** and pick `main` as the branch. Other branches only
   run tests.

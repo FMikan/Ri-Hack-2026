@@ -1,0 +1,1885 @@
+[
+  {
+    "key": "git.commits-staging.tf.01",
+    "concept": "git.commits-staging",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "The staging area lets you commit some of your modified files and leave the rest for a later commit.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Only what you git add goes into the next commit; everything else waits in the working directory."
+  },
+  {
+    "key": "git.commits-staging.mc.01",
+    "concept": "git.commits-staging",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which command shows which files are staged, which are modified but not staged, and which are untracked?",
+      "options": [
+        {
+          "id": "a",
+          "text": "git diff"
+        },
+        {
+          "id": "b",
+          "text": "git log"
+        },
+        {
+          "id": "c",
+          "text": "git status"
+        },
+        {
+          "id": "d",
+          "text": "git show"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "git status is the overview: staged, modified but not staged, and untracked files."
+  },
+  {
+    "key": "git.commits-staging.out.01",
+    "concept": "git.commits-staging",
+    "type": "output",
+    "difficulty": 1,
+    "language": "sh",
+    "content": {
+      "prompt": "a.txt is a new file. What does the last command print? It shows a.txt as stored in the new commit.",
+      "code": "$ echo \"v1\" > a.txt\n$ git add a.txt\n$ echo \"v2\" > a.txt\n$ git commit -m \"Add a\"\n$ git show HEAD:a.txt",
+      "options": [
+        {
+          "id": "a",
+          "text": "v2"
+        },
+        {
+          "id": "b",
+          "text": "v1"
+        },
+        {
+          "id": "c",
+          "text": "Nothing, the commit is aborted"
+        },
+        {
+          "id": "d",
+          "text": "fatal: a.txt has unstaged changes"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "git add stages the file as it is at that moment; later edits stay out until you add them again."
+  },
+  {
+    "key": "git.commits-staging.odd.01",
+    "concept": "git.commits-staging",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these change what is staged for the next commit. Which one is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "git add app.js"
+        },
+        {
+          "id": "b",
+          "text": "git restore --staged app.js"
+        },
+        {
+          "id": "c",
+          "text": "git diff --staged app.js"
+        },
+        {
+          "id": "d",
+          "text": "git rm --cached app.js"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "git diff --staged only shows what is staged; add, restore --staged and rm --cached change it."
+  },
+  {
+    "key": "git.commits-staging.cloze.01",
+    "concept": "git.commits-staging",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "You forgot login.css in your last commit, which is not pushed yet. Fill the blank so the file joins that commit instead of creating a new one.",
+      "code": "$ git commit -m \"Add login form\"\n$ git add src/login.css\n$ git commit ____",
+      "options": [
+        {
+          "id": "a",
+          "text": "-a"
+        },
+        {
+          "id": "b",
+          "text": "--no-edit"
+        },
+        {
+          "id": "c",
+          "text": "-m \"Add login form\""
+        },
+        {
+          "id": "d",
+          "text": "--amend --no-edit"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "git commit --amend replaces the last commit with one that includes what is staged now; amend only unpushed commits."
+  },
+  {
+    "key": "git.branches.tf.01",
+    "concept": "git.branches",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Creating a new branch makes a copy of all the project's files.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A branch is just a small pointer to a commit, so creating one is instant and copies nothing."
+  },
+  {
+    "key": "git.branches.mc.01",
+    "concept": "git.branches",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What does HEAD normally point to?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The branch you have checked out"
+        },
+        {
+          "id": "b",
+          "text": "The newest commit in the whole repository"
+        },
+        {
+          "id": "c",
+          "text": "The main branch on the server"
+        },
+        {
+          "id": "d",
+          "text": "The first commit of the project"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "HEAD points to the branch you have checked out, and that branch points to its latest commit."
+  },
+  {
+    "key": "git.branches.match.01",
+    "concept": "git.branches",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each command with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "git branch fix"
+        },
+        {
+          "id": "l2",
+          "text": "git switch fix"
+        },
+        {
+          "id": "l3",
+          "text": "git switch -c fix"
+        },
+        {
+          "id": "l4",
+          "text": "git branch -d fix"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Creates the branch and switches to it"
+        },
+        {
+          "id": "r2",
+          "text": "Deletes the branch if it is fully merged"
+        },
+        {
+          "id": "r3",
+          "text": "Moves HEAD to an existing branch"
+        },
+        {
+          "id": "r4",
+          "text": "Creates the branch but stays on the current one"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "git branch only creates or deletes; git switch moves HEAD, and switch -c does both at once."
+  },
+  {
+    "key": "git.branches.out.01",
+    "concept": "git.branches",
+    "type": "output",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "What does the last command print? Its lines are joined with commas here.",
+      "code": "$ git init -b main\n$ echo \"hi\" > README.md\n$ git add README.md\n$ git commit -m \"init\"\n$ git branch feature\n$ git switch -c fix\n$ git branch",
+      "options": [
+        {
+          "id": "a",
+          "text": "feature, fix, * main"
+        },
+        {
+          "id": "b",
+          "text": "* feature, fix, main"
+        },
+        {
+          "id": "c",
+          "text": "feature, * fix, main"
+        },
+        {
+          "id": "d",
+          "text": "* fix, main"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "git branch lists every local branch and marks the one HEAD points to with *."
+  },
+  {
+    "key": "git.branches.odd.01",
+    "concept": "git.branches",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A local main branch exists. Three of these commands leave you in a detached HEAD state. Which one is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "git checkout main"
+        },
+        {
+          "id": "b",
+          "text": "git checkout v2.0.0"
+        },
+        {
+          "id": "c",
+          "text": "git checkout origin/main"
+        },
+        {
+          "id": "d",
+          "text": "git checkout 4b7a1d0"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Checking out anything that is not a local branch (a tag, a hash, origin/main) detaches HEAD; new commits there belong to no branch."
+  },
+  {
+    "key": "git.merge.tf.01",
+    "concept": "git.merge",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A fast-forward merge creates a new merge commit with two parents.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A fast-forward just moves the branch pointer ahead; only a real merge of two histories creates a merge commit."
+  },
+  {
+    "key": "git.merge.mc.01",
+    "concept": "git.merge",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "On main you run git merge feature. When does Git fast-forward instead of creating a merge commit?",
+      "options": [
+        {
+          "id": "a",
+          "text": "When the two branches changed different files"
+        },
+        {
+          "id": "b",
+          "text": "When the merge has no conflicts"
+        },
+        {
+          "id": "c",
+          "text": "When feature has only one commit"
+        },
+        {
+          "id": "d",
+          "text": "When main has no commits that feature lacks"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Git fast-forwards when the current branch is an ancestor of the merged one; any new commit on both sides needs a merge commit."
+  },
+  {
+    "key": "git.merge.out.01",
+    "concept": "git.merge",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "Each commit -am follows an edit to a tracked file. What does the last command print? Its lines are joined with commas here.",
+      "code": "$ git switch -c feature\n$ git commit -am \"Add search\"\n$ git commit -am \"Fix search\"\n$ git switch main\n$ git merge --squash feature\n$ git commit -m \"Search feature\"\n$ git branch --merged main",
+      "options": [
+        {
+          "id": "a",
+          "text": "feature, * main"
+        },
+        {
+          "id": "b",
+          "text": "* main"
+        },
+        {
+          "id": "c",
+          "text": "feature"
+        },
+        {
+          "id": "d",
+          "text": "No output"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A squash merge copies the changes into one new commit but does not record feature as merged, so Git still sees it as unmerged."
+  },
+  {
+    "key": "git.merge.bug.01",
+    "concept": "git.merge",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "You checked out feature yesterday. Since then Ana pushed two more commits to it. After this, main on the server has the feature but not Ana's two new commits. Find the bug.",
+      "code": "$ git switch main\n$ git pull\n$ git merge feature\n$ git push",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "git merge --no-ff feature"
+        },
+        {
+          "id": "f2",
+          "text": "git merge --squash feature"
+        },
+        {
+          "id": "f3",
+          "text": "git merge origin/feature"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Your local feature only has what you last pulled into it; merge origin/feature to get what is on the server."
+  },
+  {
+    "key": "git.merge.mc.02",
+    "concept": "git.merge",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "You merged feature into main, found a bug and reverted the merge commit. Later you add one fix commit to feature and merge feature into main again. What does main contain afterwards?",
+      "options": [
+        {
+          "id": "a",
+          "text": "All of feature's changes plus the fix, since the new merge brings everything back"
+        },
+        {
+          "id": "b",
+          "text": "A conflict in every file that the revert touched"
+        },
+        {
+          "id": "c",
+          "text": "Only the fix; the earlier feature changes stay reverted until you revert the revert"
+        },
+        {
+          "id": "d",
+          "text": "Nothing new; Git refuses to merge a branch it has merged before"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Reverting a merge undoes its changes but not its history, so a later merge only brings new commits; revert the revert to get the rest back."
+  },
+  {
+    "key": "git.rebase.tf.01",
+    "concept": "git.rebase",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Rebasing a branch onto a new base creates new commits with different hashes instead of moving the old ones.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Rebase replays your changes as brand-new commits, which is why rebased history no longer matches anyone's copy."
+  },
+  {
+    "key": "git.rebase.mc.01",
+    "concept": "git.rebase",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which of these branches should you NOT rebase?",
+      "options": [
+        {
+          "id": "a",
+          "text": "main, which every developer pulls from"
+        },
+        {
+          "id": "b",
+          "text": "Local commits you have not pushed yet"
+        },
+        {
+          "id": "c",
+          "text": "A branch you created this morning for a quick experiment"
+        },
+        {
+          "id": "d",
+          "text": "Your own feature branch that nobody else has fetched"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Rebase only history nobody else has; rewriting a shared branch breaks everyone who built on it."
+  },
+  {
+    "key": "git.rebase.order.01",
+    "concept": "git.rebase",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "You have two local commits on main and origin has new commits. Put the steps git pull --rebase performs in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Replay your commits on top, one at a time, as new commits"
+        },
+        {
+          "id": "s2",
+          "text": "Download the new commits and update origin/main"
+        },
+        {
+          "id": "s3",
+          "text": "Point main at the last replayed commit"
+        },
+        {
+          "id": "s4",
+          "text": "Set aside your commits that origin/main does not contain"
+        },
+        {
+          "id": "s5",
+          "text": "Move HEAD to the tip of origin/main"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "pull --rebase fetches, sets your commits aside, moves to the new upstream tip, replays them and finally moves the branch."
+  },
+  {
+    "key": "git.rebase.bug.01",
+    "concept": "git.rebase",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "Ben pulled feature/checkout yesterday and keeps working on it. After you run this, Ben's branch has diverged from origin: the same changes now exist under different commit hashes. Find the bug.",
+      "code": "$ git switch feature/checkout\n$ git fetch origin\n$ git rebase origin/main\n$ git push --force-with-lease",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "git merge origin/main"
+        },
+        {
+          "id": "f2",
+          "text": "git pull --rebase origin main"
+        },
+        {
+          "id": "f3",
+          "text": "git rebase -i origin/main"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f1"
+      }
+    },
+    "remember": "On a branch others have pulled, bring in main with a merge; a rebase rewrites the commits they already have."
+  },
+  {
+    "key": "git.rebase.cloze.01",
+    "concept": "git.rebase",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "text",
+    "content": {
+      "prompt": "In this git rebase -i todo list, fill the blank so the typo fix is folded into \"Add search box\" and its own message is thrown away.",
+      "code": "pick 1a2b3c4 Add search box\n____ 5d6e7f8 Fix typo in search box\npick 9a8b7c6 Add search API",
+      "options": [
+        {
+          "id": "a",
+          "text": "squash"
+        },
+        {
+          "id": "b",
+          "text": "fixup"
+        },
+        {
+          "id": "c",
+          "text": "drop"
+        },
+        {
+          "id": "d",
+          "text": "edit"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "fixup melds a commit into the one above and discards its message; squash melds it but keeps both messages to edit."
+  },
+  {
+    "key": "git.conflicts.tf.01",
+    "concept": "git.conflicts",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Git reports a conflict whenever both branches changed the same file.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Git merges changes to different parts of a file on its own; it only conflicts when both sides changed the same or adjacent lines."
+  },
+  {
+    "key": "git.conflicts.mc.01",
+    "concept": "git.conflicts",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "language": "text",
+    "content": {
+      "prompt": "On main you ran git merge feature/retry and got this conflict. Which version is between <<<<<<< HEAD and =======?",
+      "code": "<<<<<<< HEAD\nconst timeout = 5000;\n=======\nconst timeout = 10000;\n>>>>>>> feature/retry",
+      "options": [
+        {
+          "id": "a",
+          "text": "The version from the common ancestor"
+        },
+        {
+          "id": "b",
+          "text": "feature/retry's version, the branch being merged in"
+        },
+        {
+          "id": "c",
+          "text": "The version Git picked automatically"
+        },
+        {
+          "id": "d",
+          "text": "main's version, the branch you are on"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "In a merge, HEAD is the branch you are on; the part after ======= comes from the branch being merged in."
+  },
+  {
+    "key": "git.conflicts.order.01",
+    "concept": "git.conflicts",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You merge feature into main and hit a conflict in app.js. Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "git commit to conclude the merge"
+        },
+        {
+          "id": "s2",
+          "text": "git merge feature prints CONFLICT for app.js"
+        },
+        {
+          "id": "s3",
+          "text": "git add app.js"
+        },
+        {
+          "id": "s4",
+          "text": "Edit app.js: keep the right lines and delete the markers"
+        },
+        {
+          "id": "s5",
+          "text": "git switch main"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s5",
+          "s2",
+          "s4",
+          "s3",
+          "s1"
+        ]
+      }
+    },
+    "remember": "Resolve a conflict by editing the file, removing the markers, staging it with git add and committing the merge."
+  },
+  {
+    "key": "git.conflicts.cloze.01",
+    "concept": "git.conflicts",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "You decide to give up this merge and get back to exactly where you were before it. Fill the blank.",
+      "code": "$ git merge feature/payments\nCONFLICT (content): Merge conflict in api.js\n$ git ____\n$ git status --short   # prints nothing",
+      "options": [
+        {
+          "id": "a",
+          "text": "merge --abort"
+        },
+        {
+          "id": "b",
+          "text": "merge --quit"
+        },
+        {
+          "id": "c",
+          "text": "stash"
+        },
+        {
+          "id": "d",
+          "text": "restore api.js"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "git merge --abort cancels a conflicted merge and restores the state from before it started."
+  },
+  {
+    "key": "git.conflicts.bug.01",
+    "concept": "git.conflicts",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "You rebase feature onto main and want to keep feature's version of settings.json in the conflict. After the rebase, settings.json has main's version. Find the bug.",
+      "code": "$ git switch feature\n$ git rebase main\nCONFLICT (content): Merge conflict in settings.json\n$ git checkout --ours settings.json\n$ git add settings.json\n$ git rebase --continue",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "git checkout HEAD -- settings.json"
+        },
+        {
+          "id": "f2",
+          "text": "git checkout main -- settings.json"
+        },
+        {
+          "id": "f3",
+          "text": "git checkout --theirs settings.json"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f3"
+      }
+    },
+    "remember": "During a rebase, ours is the branch you are rebasing onto and theirs is your own commit being replayed."
+  },
+  {
+    "key": "git.remotes.tf.01",
+    "concept": "git.remotes",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "git pull is a git fetch followed by a merge (or a rebase) into your current branch.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "pull = fetch + merge or rebase; fetch alone only downloads and never touches your branch."
+  },
+  {
+    "key": "git.remotes.mc.01",
+    "concept": "git.remotes",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What does git fetch do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Downloads new commits and merges them into your current branch"
+        },
+        {
+          "id": "b",
+          "text": "Uploads your new commits to the server"
+        },
+        {
+          "id": "c",
+          "text": "Downloads new commits and updates origin/main, leaving your main and your files as they are"
+        },
+        {
+          "id": "d",
+          "text": "Replaces your local main with the server's version"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "fetch only updates remote-tracking branches such as origin/main; your branches change when you merge or rebase."
+  },
+  {
+    "key": "git.remotes.bug.01",
+    "concept": "git.remotes",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "You wanted to publish your typo fix. Afterwards, Ben's commit from this morning is gone from origin/main. Find the bug.",
+      "code": "$ git commit -am \"Fix typo in footer\"\n$ git push\n ! [rejected]  main -> main (fetch first)\n$ git push --force",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "git fetch, then git push"
+        },
+        {
+          "id": "f2",
+          "text": "git pull --rebase, then git push"
+        },
+        {
+          "id": "f3",
+          "text": "git push -u origin main"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A rejected push means the server has commits you lack; pull them in first instead of overwriting them with --force."
+  },
+  {
+    "key": "git.remotes.match.01",
+    "concept": "git.remotes",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each command with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "git clone <url>"
+        },
+        {
+          "id": "l2",
+          "text": "git remote -v"
+        },
+        {
+          "id": "l3",
+          "text": "git push -u origin feature"
+        },
+        {
+          "id": "l4",
+          "text": "git fetch --prune"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Uploads the branch and sets origin/feature as its upstream"
+        },
+        {
+          "id": "r2",
+          "text": "Copies a repository and names its source origin"
+        },
+        {
+          "id": "r3",
+          "text": "Downloads updates and drops origin/* refs for branches deleted on the server"
+        },
+        {
+          "id": "r4",
+          "text": "Lists the remotes and their URLs"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "clone sets up origin, push -u links a branch to its upstream, and fetch --prune cleans up deleted remote branches."
+  },
+  {
+    "key": "git.remotes.out.01",
+    "concept": "git.remotes",
+    "type": "output",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "You and Ana cloned the repo at the same commit. Ana then pushed two commits to main. You have not fetched or pulled since cloning. What does the last command print?",
+      "code": "# edit header.css (tracked), then:\n$ git commit -am \"Fix header\"\n$ git status -sb",
+      "options": [
+        {
+          "id": "a",
+          "text": "## main...origin/main [ahead 1, behind 2]"
+        },
+        {
+          "id": "b",
+          "text": "## main...origin/main [behind 2]"
+        },
+        {
+          "id": "c",
+          "text": "## main...origin/main"
+        },
+        {
+          "id": "d",
+          "text": "## main...origin/main [ahead 1]"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Ahead and behind are counted against your local origin/main, which only changes when you fetch."
+  },
+  {
+    "key": "git.undo.tf.01",
+    "concept": "git.undo",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "git revert removes the reverted commit from the branch's history.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "revert adds a new commit that undoes the old one; the original stays in history, which makes it safe on shared branches."
+  },
+  {
+    "key": "git.undo.mc.01",
+    "concept": "git.undo",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You ran git add config.js by mistake. How do you unstage it but keep your edits in the file?",
+      "options": [
+        {
+          "id": "a",
+          "text": "git restore config.js"
+        },
+        {
+          "id": "b",
+          "text": "git restore --staged config.js"
+        },
+        {
+          "id": "c",
+          "text": "git reset --hard"
+        },
+        {
+          "id": "d",
+          "text": "git revert config.js"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "git restore --staged takes a file out of the staging area and leaves your working copy alone."
+  },
+  {
+    "key": "git.undo.out.01",
+    "concept": "git.undo",
+    "type": "output",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "What does the last command print? Its lines are joined with commas here.",
+      "code": "$ git log --format=%s\nAdd banner\nInit\n$ git revert --no-edit HEAD\n$ git log --format=%s",
+      "options": [
+        {
+          "id": "a",
+          "text": "Init"
+        },
+        {
+          "id": "b",
+          "text": "Add banner, Init"
+        },
+        {
+          "id": "c",
+          "text": "Revert \"Add banner\", Add banner, Init"
+        },
+        {
+          "id": "d",
+          "text": "Add banner, Revert \"Add banner\", Init"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "git revert keeps the original commit and adds a new commit on top that undoes it."
+  },
+  {
+    "key": "git.undo.bug.01",
+    "concept": "git.undo",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "The newest commit on the shared main broke checkout and must be undone. The push is rejected, and a git pull would bring the bad commit straight back. Find the bug.",
+      "code": "$ git switch main\n$ git pull\n$ git reset --hard HEAD~1\n$ git push\n ! [rejected]  main -> main (non-fast-forward)",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "git revert HEAD"
+        },
+        {
+          "id": "f2",
+          "text": "git reset --soft HEAD~1"
+        },
+        {
+          "id": "f3",
+          "text": "git checkout HEAD~1"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Undo a pushed commit with git revert; reset rewrites history that everyone else already has."
+  },
+  {
+    "key": "git.undo.cloze.01",
+    "concept": "git.undo",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "You ran git reset --hard HEAD~2 on the wrong branch. Fill the blank to bring both lost commits back.",
+      "code": "$ git reflog\nd5a3a24 HEAD@{0}: reset: moving to HEAD~2\n2f354e3 HEAD@{1}: commit: Add export\nf91a975 HEAD@{2}: commit: Add import\n$ git reset --hard ____",
+      "options": [
+        {
+          "id": "a",
+          "text": "HEAD@{2}"
+        },
+        {
+          "id": "b",
+          "text": "HEAD~2"
+        },
+        {
+          "id": "c",
+          "text": "HEAD@{0}"
+        },
+        {
+          "id": "d",
+          "text": "HEAD@{1}"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "The reflog records where HEAD was before each move; resetting to the entry before the mistake restores those commits."
+  },
+  {
+    "key": "git.history.tf.01",
+    "concept": "git.history",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "git blame shows, for each line of a file, the commit and author that last changed it.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "git blame answers who last touched each line and in which commit; git show then explains that commit."
+  },
+  {
+    "key": "git.history.mc.01",
+    "concept": "git.history",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which command shows the message and the full diff of commit 4b7a1d0?",
+      "options": [
+        {
+          "id": "a",
+          "text": "git log 4b7a1d0"
+        },
+        {
+          "id": "b",
+          "text": "git blame 4b7a1d0"
+        },
+        {
+          "id": "c",
+          "text": "git diff 4b7a1d0"
+        },
+        {
+          "id": "d",
+          "text": "git show 4b7a1d0"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "git show <commit> prints that commit's message and its changes."
+  },
+  {
+    "key": "git.history.match.01",
+    "concept": "git.history",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each question with the command that answers it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Who last changed line 42 of app.js?"
+        },
+        {
+          "id": "l2",
+          "text": "Which commits touched app.js?"
+        },
+        {
+          "id": "l3",
+          "text": "What have I changed since the last commit?"
+        },
+        {
+          "id": "l4",
+          "text": "Which commit introduced this bug?"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "git log -- app.js"
+        },
+        {
+          "id": "r2",
+          "text": "git bisect"
+        },
+        {
+          "id": "r3",
+          "text": "git blame app.js"
+        },
+        {
+          "id": "r4",
+          "text": "git diff HEAD"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "blame is per line, log -- <file> is per file, diff compares states, and bisect searches for the breaking commit."
+  },
+  {
+    "key": "git.history.out.01",
+    "concept": "git.history",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "You start on main, which has one commit A. Each commit -am follows an edit to a tracked file. What does the last command print? Its lines are joined with commas here.",
+      "code": "$ git switch -c feature\n$ git commit -am \"B\"\n$ git commit -am \"C\"\n$ git switch main\n$ git commit -am \"D\"\n$ git log --format=%s main..feature",
+      "options": [
+        {
+          "id": "a",
+          "text": "C, B"
+        },
+        {
+          "id": "b",
+          "text": "D"
+        },
+        {
+          "id": "c",
+          "text": "B, C"
+        },
+        {
+          "id": "d",
+          "text": "C, B, A"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "git log main..feature lists the commits reachable from feature but not from main, newest first."
+  },
+  {
+    "key": "git.history.order.01",
+    "concept": "git.history",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "HEAD is broken and the v1.4.0 release worked. Put the steps for finding the commit that broke it in order. The test and mark steps repeat until Git names the commit.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "git bisect reset"
+        },
+        {
+          "id": "s2",
+          "text": "Test the commit Git checked out"
+        },
+        {
+          "id": "s3",
+          "text": "git bisect start HEAD v1.4.0"
+        },
+        {
+          "id": "s4",
+          "text": "Git prints the first bad commit"
+        },
+        {
+          "id": "s5",
+          "text": "git bisect good or git bisect bad, based on the test"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s2",
+          "s5",
+          "s4",
+          "s1"
+        ]
+      }
+    },
+    "remember": "git bisect halves the range between a good and a bad commit at every step; finish with git bisect reset."
+  },
+  {
+    "key": "git.stash.tf.01",
+    "concept": "git.stash",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Stashed changes stay in your local repository; git push does not upload them.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "The stash is local only; to share unfinished work, commit it on a branch and push that."
+  },
+  {
+    "key": "git.stash.mc.01",
+    "concept": "git.stash",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "You are halfway through uncommitted changes on feature when an urgent bug on main needs fixing. What lets you switch now and continue later?",
+      "options": [
+        {
+          "id": "a",
+          "text": "git switch main; uncommitted changes stay behind on feature"
+        },
+        {
+          "id": "b",
+          "text": "git stash, switch to main; later switch back and git stash pop"
+        },
+        {
+          "id": "c",
+          "text": "git reset --hard, switch to main; Git keeps a backup of the changes"
+        },
+        {
+          "id": "d",
+          "text": "git commit --amend, switch to main; amending leaves no new commit"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "git stash shelves uncommitted work so you can switch branches; git stash pop brings it back."
+  },
+  {
+    "key": "git.stash.odd.01",
+    "concept": "git.stash",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A plain git stash shelves three of these. Which one stays in your working directory?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Edits to a tracked file that you have not staged"
+        },
+        {
+          "id": "b",
+          "text": "Edits to a tracked file that you have staged"
+        },
+        {
+          "id": "c",
+          "text": "A new file you have never added"
+        },
+        {
+          "id": "d",
+          "text": "A new file you staged with git add"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "A plain git stash ignores untracked files; use git stash -u to include them."
+  },
+  {
+    "key": "git.stash.order.01",
+    "concept": "git.stash",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You run git stash push -m A, then B, then C, then git stash pop, then git stash push -m D, then E. Put the entries in the order git stash list prints them, top first.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Entry A"
+        },
+        {
+          "id": "s2",
+          "text": "Entry E"
+        },
+        {
+          "id": "s3",
+          "text": "Entry B"
+        },
+        {
+          "id": "s4",
+          "text": "Entry D"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s3",
+          "s1"
+        ]
+      }
+    },
+    "remember": "The stash is a stack: stash@{0} is the newest entry, and pop takes from the top."
+  },
+  {
+    "key": "git.stash.out.01",
+    "concept": "git.stash",
+    "type": "output",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "title.txt is tracked and its last commit is \"Add title\". What does the last command print? 1a2b3c4 stands for a commit hash, and lines are joined with commas.",
+      "code": "$ echo \"draft\" > title.txt\n$ git stash\n$ echo \"final\" > title.txt\n$ git commit -am \"Set title\"\n$ git stash pop\nCONFLICT (content): Merge conflict in title.txt\n$ git stash list",
+      "options": [
+        {
+          "id": "a",
+          "text": "No output"
+        },
+        {
+          "id": "b",
+          "text": "error: cannot list stashes during a conflict"
+        },
+        {
+          "id": "c",
+          "text": "stash@{0}: WIP on main: 1a2b3c4 Add title"
+        },
+        {
+          "id": "d",
+          "text": "stash@{0}: WIP on main: 1a2b3c4 Add title, stash@{1}: WIP on main: 9f8e7d6 Set title"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "When git stash pop hits a conflict it keeps the entry; drop it yourself after resolving."
+  },
+  {
+    "key": "git.ignore.tf.01",
+    "concept": "git.ignore",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Adding an already committed file to .gitignore makes Git stop tracking it.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": ".gitignore only affects untracked files; a tracked file stays tracked until you run git rm --cached on it."
+  },
+  {
+    "key": "git.ignore.mc.01",
+    "concept": "git.ignore",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which .gitignore line ignores every .log file, in any folder of the project?",
+      "options": [
+        {
+          "id": "a",
+          "text": "*.log"
+        },
+        {
+          "id": "b",
+          "text": "/*.log"
+        },
+        {
+          "id": "c",
+          "text": ".log"
+        },
+        {
+          "id": "d",
+          "text": "logs/"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A pattern without a slash, such as *.log, matches at any depth; a leading / anchors it to the root."
+  },
+  {
+    "key": "git.ignore.bug.01",
+    "concept": "git.ignore",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sh",
+    "content": {
+      "prompt": "You want Git to stop tracking .env but keep the file on your machine. After this, .env is gone from your disk. Find the bug.",
+      "code": "$ echo \".env\" >> .gitignore\n$ git rm .env\n$ git add .gitignore\n$ git commit -m \"Stop tracking .env\"",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "git restore --staged .env"
+        },
+        {
+          "id": "f2",
+          "text": "git rm --cached .env"
+        },
+        {
+          "id": "f3",
+          "text": "git update-index --assume-unchanged .env"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "git rm --cached removes a file from the index only; plain git rm also deletes it from disk."
+  },
+  {
+    "key": "git.ignore.match.01",
+    "concept": "git.ignore",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each .gitignore pattern with what it ignores.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "/config.local.json"
+        },
+        {
+          "id": "l2",
+          "text": "logs/"
+        },
+        {
+          "id": "l3",
+          "text": "!important.log"
+        },
+        {
+          "id": "l4",
+          "text": "docs/*.pdf"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Every directory named logs, at any depth"
+        },
+        {
+          "id": "r2",
+          "text": "PDFs directly in docs, not in its subfolders"
+        },
+        {
+          "id": "r3",
+          "text": "Only that file in the repository root"
+        },
+        {
+          "id": "r4",
+          "text": "Nothing: it re-includes a file an earlier pattern ignored"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "A leading / anchors to the root, a trailing / matches only directories, ! re-includes, and * never crosses a /."
+  },
+  {
+    "key": "git.ignore.odd.01",
+    "concept": "git.ignore",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "The .gitignore has four lines: build/, !build/version.txt, *.tmp and !notes.tmp. Three of these paths are ignored. Which one is not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "build/version.txt"
+        },
+        {
+          "id": "b",
+          "text": "notes.tmp"
+        },
+        {
+          "id": "c",
+          "text": "build/app.js"
+        },
+        {
+          "id": "d",
+          "text": "cache.tmp"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Git does not look inside an ignored directory, so ! cannot re-include a file whose parent directory is ignored."
+  },
+  {
+    "key": "git.workflow.tf.01",
+    "concept": "git.workflow",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A pull request asks teammates to review a branch's changes before they are merged into the target branch.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A pull request is where a branch gets reviewed and checked by CI before it reaches main."
+  },
+  {
+    "key": "git.workflow.mc.01",
+    "concept": "git.workflow",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Why do teams prefer feature branches that live a day or two over ones that live for weeks?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Git slows down when a branch has many commits"
+        },
+        {
+          "id": "b",
+          "text": "Pull requests can only hold a limited number of commits"
+        },
+        {
+          "id": "c",
+          "text": "Git deletes old branches automatically after a while"
+        },
+        {
+          "id": "d",
+          "text": "Short branches drift less from main, so merges bring fewer conflicts and surprises"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "The longer a branch lives, the further it drifts from main; small, frequent merges keep integration cheap."
+  },
+  {
+    "key": "git.workflow.odd.01",
+    "concept": "git.workflow",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these help keep main releasable at all times. Which one is the odd one out?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Required CI checks before a pull request can merge"
+        },
+        {
+          "id": "b",
+          "text": "Pushing small fixes straight to main to skip review"
+        },
+        {
+          "id": "c",
+          "text": "At least one approving review on every pull request"
+        },
+        {
+          "id": "d",
+          "text": "Unfinished features hidden behind feature flags"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Main stays releasable when every change passes review and CI on the way in, with no shortcuts around them."
+  },
+  {
+    "key": "git.workflow.mc.02",
+    "concept": "git.workflow",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "PR #42 had passing CI and an approval, and it merged into main without a conflict. Right after, the tests on main fail. What is the most likely cause?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Another PR merged after #42's CI run, and the two changes break each other"
+        },
+        {
+          "id": "b",
+          "text": "Git dropped some lines, which happens in merges without conflicts"
+        },
+        {
+          "id": "c",
+          "text": "Deleting the PR branch after the merge removed some of its commits"
+        },
+        {
+          "id": "d",
+          "text": "Merging rewrote the PR's commits, so main differs from what was reviewed"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A green PR proves only that it works with the main it was tested against; require up-to-date branches or a merge queue."
+  },
+  {
+    "key": "git.workflow.order.01",
+    "concept": "git.workflow",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Your open pull request for feature/cart now conflicts with main, and the team updates PRs by rebasing. Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "git push --force-with-lease"
+        },
+        {
+          "id": "s2",
+          "text": "git rebase origin/main"
+        },
+        {
+          "id": "s3",
+          "text": "Resolve the conflict, git add, git rebase --continue"
+        },
+        {
+          "id": "s4",
+          "text": "git fetch origin"
+        },
+        {
+          "id": "s5",
+          "text": "CI runs again on the updated pull request"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s3",
+          "s1",
+          "s5"
+        ]
+      }
+    },
+    "remember": "Fetch, rebase onto the new main, resolve, then push with --force-with-lease so you never overwrite unseen work."
+  },
+  {
+    "key": "git.tags.tf.01",
+    "concept": "git.tags",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Like a branch, a tag moves to your new commit each time you commit.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A tag stays on the commit it names, which is why it suits release versions; branches are the pointers that move."
+  },
+  {
+    "key": "git.tags.mc.01",
+    "concept": "git.tags",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You ran git tag -a v1.2.0 -m \"Release 1.2.0\" and then git push. Teammates still do not see the tag. Why?",
+      "options": [
+        {
+          "id": "a",
+          "text": "git push sends branches but not tags; push the tag itself, e.g. git push origin v1.2.0"
+        },
+        {
+          "id": "b",
+          "text": "Annotated tags stay local; only lightweight tags can be pushed"
+        },
+        {
+          "id": "c",
+          "text": "Tags reach the server only after a pull request is merged"
+        },
+        {
+          "id": "d",
+          "text": "Tags are local by design and can never be shared"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Tags are not pushed with a plain git push; push them by name or with --follow-tags."
+  },
+  {
+    "key": "git.tags.cloze.01",
+    "concept": "git.tags",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "sh",
+    "content": {
+      "prompt": "Commit 4b7a1d0 fixed a bug. Fill the blank to list every release tag that includes that fix.",
+      "code": "$ git log --oneline -1 4b7a1d0\n4b7a1d0 Fix rounding in invoice totals\n$ git tag ____",
+      "options": [
+        {
+          "id": "a",
+          "text": "--merged 4b7a1d0"
+        },
+        {
+          "id": "b",
+          "text": "--points-at 4b7a1d0"
+        },
+        {
+          "id": "c",
+          "text": "-l 4b7a1d0"
+        },
+        {
+          "id": "d",
+          "text": "--contains 4b7a1d0"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "git tag --contains lists tags whose history includes the commit; --merged lists tags already behind it."
+  },
+  {
+    "key": "git.tags.match.01",
+    "concept": "git.tags",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "git describe --dirty prints v1.4.0-3-g6e46643-dirty. Match each part with its meaning.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "v1.4.0"
+        },
+        {
+          "id": "l2",
+          "text": "3"
+        },
+        {
+          "id": "l3",
+          "text": "6e46643"
+        },
+        {
+          "id": "l4",
+          "text": "dirty"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Abbreviated hash of the current commit"
+        },
+        {
+          "id": "r2",
+          "text": "Tracked files have uncommitted changes"
+        },
+        {
+          "id": "r3",
+          "text": "Number of commits since that tag"
+        },
+        {
+          "id": "r4",
+          "text": "Nearest annotated tag reachable from HEAD"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "git describe names a commit by its nearest annotated tag, the commits since it and its short hash."
+  },
+  {
+    "key": "git.tags.bug.01",
+    "concept": "git.tags",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "sh",
+    "content": {
+      "prompt": "The team pushes release tags only through push.followTags, and CI builds a release when a tag reaches the server. The commit arrives, but no tag does. Find the bug.",
+      "code": "$ git config push.followTags\ntrue\n$ git commit -am \"Bump version to 1.2.0\"\n$ git tag v1.2.0\n$ git push",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "git tag -f v1.2.0"
+        },
+        {
+          "id": "f2",
+          "text": "git tag -a v1.2.0 -m \"Release 1.2.0\""
+        },
+        {
+          "id": "f3",
+          "text": "git tag v1.2.0 main"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "--follow-tags pushes only annotated tags, so create release tags with git tag -a."
+  }
+]

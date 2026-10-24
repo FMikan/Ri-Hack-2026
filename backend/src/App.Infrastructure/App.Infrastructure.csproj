@@ -6,8 +6,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Anthropic" Version="13.3.0" />
+    <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.13" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Topics, concepts and questions, upserted on startup by Seed/Seeder.cs. -->
+    <EmbeddedResource Include="Seed\**\*.json" />
   </ItemGroup>
 
   <PropertyGroup>

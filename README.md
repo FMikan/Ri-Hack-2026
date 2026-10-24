@@ -3,8 +3,8 @@
 Starter for a hackathon app: React + TypeScript (Vite) frontend, ASP.NET Core (.NET 10) API, PostgreSQL.
 PostgreSQL runs in Docker; the frontend and backend run on your machine so they are easy to debug.
 
-The starter page shows API and database health and a tiny "notes" example that writes to and reads from
-PostgreSQL. The notes example exists only to prove the wiring; delete it once real features exist.
+The product is a ranked 1v1 IT-knowledge quiz game. The design (database, rules, API contract, test plan) is in
+[docs/tehnicki-dokument.md](docs/tehnicki-dokument.md); the game idea is in `docs/Ri-Hack 4.0 — IDEJA IGRE v2.md`.
 
 ## Branches and deployment
 
@@ -17,7 +17,7 @@ merging a pull request `development -> main`. Server setup, secrets and operatio
 
 | Layer    | Tech |
 |----------|------|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui (Radix), lucide-react |
+| Frontend | React 19, TypeScript, Vite, React Router, Tailwind CSS v4, shadcn/ui (Radix), lucide-react |
 | Backend  | ASP.NET Core minimal APIs on .NET 10, EF Core 10, Npgsql, built-in OpenAPI + Scalar |
 | Database | PostgreSQL 18 (Docker Compose) |
 
@@ -28,7 +28,8 @@ frontend/                     Vite app
   src/lib/api-client.ts       every API call goes through here
   src/types/api.ts            TypeScript types for API contracts
   src/hooks/use-async.ts      tiny loading/error/data hook
-  src/features/<feature>/     feature components (status, notes)
+  src/lib/i18n/               UI copy: English (default) and Croatian
+  src/features/<feature>/     feature components
   src/components/ui/          shadcn/ui components (generated, restyle freely)
   src/components/shared/      small shared components
 backend/
@@ -50,7 +51,7 @@ Dependencies point inward: `Api -> Application, Infrastructure`, `Infrastructure
 ## Prerequisites
 
 - .NET SDK 10 (`dotnet --list-sdks` shows `10.0.x`)
-- Node.js 22.12+ (24 LTS recommended) and npm
+- Node.js 22.22+ (24 LTS recommended) and npm
 - Docker with the Compose plugin
 
 ## First-time setup
@@ -104,6 +105,7 @@ on startup by walking up from its working directory (stopping at the repository 
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Compose | Database created on the container's first start |
 | `POSTGRES_PORT` | Compose | Host port for PostgreSQL (default 5432, bound to 127.0.0.1 only) |
 | `ConnectionStrings__Default` | Backend | Npgsql connection string. Keep it in sync with the values above |
+| `Auth__JwtSigningKey` | Backend | Signs login tokens, at least 32 characters (`openssl rand -hex 32`) |
 
 The backend runs on the host, so its connection string uses **`Host=localhost`** and the published port,
 **not** the Compose service name `postgres`. The service name only resolves for containers on the
@@ -118,6 +120,7 @@ Compose network.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `VITE_API_BASE_URL` | `http://localhost:5080` | Full API origin. The browser calls it directly (no Vite proxy) |
+| `VITE_DEMO_DATA` | unset | `true` fills dashboard stats with test numbers until the backend serves them |
 
 Everything prefixed with `VITE_` is bundled into the browser build and is public. Never put secrets there.
 
@@ -177,13 +180,15 @@ docker compose config -q                          # validate the Compose file (n
   update `Port=` in `ConnectionStrings__Default` to match, and run `docker compose up -d postgres` again.
 - **`password authentication failed`** after changing `.env`: credentials are set only when the volume is
   first created. Reset with `docker compose down -v`, which **deletes local data**, then start it again.
+- **`Auth:JwtSigningKey is missing`**: your `.env` predates login. Add `Auth__JwtSigningKey=` with the output of
+  `openssl rand -hex 32` (see `.env.example`).
 - **`Connection string 'Default' is missing`**: there is no `.env` in the repository root. Copy
   `.env.example` to `.env`.
 - **Frontend shows "Cannot reach the API"**: the backend is not running on `VITE_API_BASE_URL`, or the
   frontend origin is missing from `Cors:AllowedOrigins`. Vite uses `strictPort`, so it fails loudly
   instead of silently moving off 5173.
-- **Notes show "An error occurred while processing your request." while Database is Connected**: the schema
-  is missing. Run the `dotnet ef database update` command from [Migrations](#migrations) in `backend/`.
+- **Requests fail with "An error occurred while processing your request." while Database is Connected**: the
+  schema is missing or outdated. Run the `dotnet ef database update` command from [Migrations](#migrations) in `backend/`.
 - **Database "Unavailable" while the API is online**: the container is stopped or unhealthy. Check
   `docker compose ps` and `docker compose logs postgres`.
 - **`dotnet: command not found`** or the wrong SDK: install .NET 10 and make sure it is first on `PATH`.

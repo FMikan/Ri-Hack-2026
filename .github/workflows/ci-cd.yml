@@ -68,14 +68,15 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Throwaway credentials for a database that lives only inside this CI job.
-          printf 'POSTGRES_DB=app\nPOSTGRES_USER=app\nPOSTGRES_PASSWORD=%s\nWEB_PORT=8081\n' "$(openssl rand -hex 16)" > .env
+          printf 'POSTGRES_DB=app\nPOSTGRES_USER=app\nPOSTGRES_PASSWORD=%s\nJWT_SIGNING_KEY=%s\nWEB_PORT=8081\n' "$(openssl rand -hex 16)" "$(openssl rand -hex 32)" > .env
           compose="docker compose -f docker-compose.prod.yml"
           $compose up -d --wait --wait-timeout 120 || { $compose logs; exit 1; }
           url=http://127.0.0.1:8081
           curl -fsS "$url/health/ready"
           curl -fsS "$url/" | grep -q '<div id="root">'
-          curl -fsS -X POST "$url/api/notes" -H 'Content-Type: application/json' -d '{"text":"smoke test"}'
-          curl -fsS "$url/api/notes" | grep -q 'smoke test'
+          curl -fsS -X POST "$url/api/auth/register" -H 'Content-Type: application/json' \
+            -d '{"email":"smoke@example.com","username":"smoke","password":"smoke-test-123"}' | grep -q '"accessToken"'
+          curl -fsS "$url/api/topics" | grep -q '^\['
           $compose down -v
 
       - name: Push images
@@ -97,7 +98,13 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
         run: |
+          for pair in SSH_KEY=DEPLOY_SSH_KEY KNOWN_HOSTS=DEPLOY_KNOWN_HOSTS HOST=DEPLOY_HOST USER_NAME=DEPLOY_USER; do
+            var=${pair%%=*}
+            [ -n "${!var}" ] || { echo "::error::Repository secret ${pair#*=} is missing (Settings > Secrets and variables > Actions)"; exit 1; }
+          done
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519

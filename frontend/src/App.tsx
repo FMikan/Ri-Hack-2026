@@ -1,34 +1,40 @@
-import { NotesExample } from '@/features/notes/NotesExample'
-import { SystemStatus } from '@/features/status/SystemStatus'
-import { API_BASE_URL } from '@/lib/api-client'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import { AppShell } from '@/components/shared/AppShell'
+import { AuthProvider } from '@/features/auth/AuthProvider'
+import { LoginPage } from '@/features/auth/LoginPage'
+import { RegisterPage } from '@/features/auth/RegisterPage'
+import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards'
+import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { LeaderboardsPage } from '@/features/leaderboards/LeaderboardsPage'
+import { MatchPage } from '@/features/match/MatchPage'
+import { PracticePage } from '@/features/practice/PracticePage'
+import { ProfilePage } from '@/features/profile/ProfilePage'
+import { LocaleProvider } from '@/lib/i18n/LocaleProvider'
 
 export default function App() {
   return (
-    <div className="mx-auto grid min-h-svh max-w-5xl grid-rows-[auto_1fr_auto] gap-10 px-4 py-10 sm:px-6 sm:py-16">
-      <header className="grid max-w-2xl gap-3">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">Ri-Hack 2026</h1>
-        <p className="text-muted-foreground">
-          Starter for a React, ASP.NET Core and PostgreSQL app. This page checks that every layer is wired
-          together. Replace it with the real product.
-        </p>
-      </header>
-
-      <main className="grid items-start gap-6 md:grid-cols-2">
-        <SystemStatus />
-        <NotesExample />
-      </main>
-
-      <footer className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-muted-foreground">
-        <span>API {API_BASE_URL || 'same origin'}</span>
-        {import.meta.env.DEV && (
-          <a
-            href={`${API_BASE_URL}/scalar`}
-            className="underline underline-offset-4 hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            API reference (Scalar)
-          </a>
-        )}
-      </footer>
-    </div>
+    <BrowserRouter>
+      <LocaleProvider>
+        <AuthProvider>
+          <Routes>
+            <Route element={<GuestOnly />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+            </Route>
+            <Route element={<RequireAuth />}>
+              <Route element={<AppShell />}>
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/practice" element={<PracticePage />} />
+                <Route path="/leaderboards" element={<LeaderboardsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+              </Route>
+              {/* The duel takes the whole screen: no rail or top bar while the clock runs. */}
+              <Route path="/match/:id" element={<MatchPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </LocaleProvider>
+    </BrowserRouter>
   )
 }

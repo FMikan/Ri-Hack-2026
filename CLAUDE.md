@@ -3,6 +3,12 @@
 Hackathon starter: React/Vite frontend (`frontend/`), ASP.NET Core .NET 10 API (`backend/`), PostgreSQL in
 Docker. See README.md for setup, URLs and troubleshooting.
 
+Product: a ranked 1v1 IT-knowledge quiz game. Spec is `docs/tehnicki-dokument.md` (schema §3, game rules §4,
+API contract §6, phases §1, test list §9); the game idea is `docs/Ri-Hack 4.0 — IDEJA IGRE v2.md`. Build
+test-first in the order of §9 and keep DTOs identical to §6. Questions live in
+`backend/src/App.Infrastructure/Seed/questions/<topic>.json` (shapes in docs §3.2.1); `dotnet test` runs `SeedTests`,
+which reject malformed questions and topics that cannot build a full deck.
+
 ## Branches
 
 Commit to `development` (or a feature branch). `main` is production: every push to it deploys to the VPS via
@@ -43,11 +49,14 @@ cd frontend && npx shadcn@latest add <component>
 
 ## Frontend
 
+- Frontend agents: read `frontend/CLAUDE.md` (what the backend already serves, where the contract is).
 - All HTTP goes through `src/lib/api-client.ts` using the full origin from `VITE_API_BASE_URL` (no Vite
   proxy). Keep `src/types/api.ts` in sync with backend DTOs. No `any`.
 - Feature UI in `src/features/<feature>/`, shared bits in `src/components/shared/`, shadcn components in
   `src/components/ui/` (generated; excluded from lint).
 - Use the `@/` import alias. Server data via `useAsync` or local state; no global state library.
+- All UI copy comes from `useLocale().t` (`src/lib/i18n/`): English is the default, `hr.ts` must have every key.
+  Routes live in `App.tsx` (React Router); signed-in pages sit under `<RequireAuth>` and `<AppShell>` (nav + top bar).
 - Tailwind v4 is configured in CSS (`src/index.css`, `@theme`); there is no tailwind.config.js. Theme tokens
   live in `:root`, including `--success` and `--warning`.
 - Accessible by default: real labels, visible focus, text next to color, semantic elements.

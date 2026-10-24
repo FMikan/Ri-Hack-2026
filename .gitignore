@@ -26,3 +26,7 @@ dist/
 *.log
 *.db
 *.sqlite
+
+# Local notes
+/Setup/
+/PRAVILA.md
