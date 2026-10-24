@@ -84,13 +84,12 @@ App.Application/                   jedna servisna klasa po featureu (AuthService
 App.Infrastructure/
   AppDbContext.cs, Configurations/*.cs (jedna klasa po entitetu), SnakeCaseEnumConverter.cs
   Email/SmtpEmailSender.cs + LogEmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
-  Seed/Seeder.cs (čita backend/seed/*.json), Background/GameTickService.cs
+  Seed/Seeder.cs + Seed/topics.json + Seed/questions/<tema>.json (embedded resources, nema problema s putanjama u Dockeru)
 App.Api/
-  Auth.cs (JWT izdavanje i validacija, PasswordHasher adapter, ClaimsPrincipal.UserId()), AppExceptionHandler.cs (AppException → Problem Details)
+  Auth.cs (JWT izdavanje i validacija, PasswordHasher adapter, ClaimsPrincipal.UserId()), AppExceptionHandler.cs (AppException → Problem Details),
+  GameTickService.cs (BackgroundService; Infrastructure nema Hosting paket)
 App.Api/Endpoints/
   AuthEndpoints, MeEndpoints, ContentEndpoints, MatchEndpoints, QueueEndpoints, LessonEndpoints, EconomyEndpoints, DailyEndpoints, SocialEndpoints, LeaderboardEndpoints, HealthEndpoints
-backend/seed/
-  topics.json, concepts.json, questions/<topic-slug>.json, shop-items.json, titles.json
 ```
 
 `Note`, `NoteService`, `NoteEndpoints`, `NotesExample.tsx` i njihova migracija se brišu u F0 (README to i traži); dva postojeća Notes testa u `ApiTests.cs` postaju isti testovi nad `POST /api/auth/register`.
@@ -261,7 +260,7 @@ Zajednička polja: `type`, `prompt` (tekst pitanja, smije biti prazan kod cloze/
 | `output` | `{ code, options ×4 }` | `{ optionId }` | `{ optionId }` | 1 ili 0 |
 | `match_pairs` | `{ prompt, left: [{id,text}] ×4, right: [{id,text}] ×4 }` | `{ pairs: [{leftId,rightId}] ×4 }` | `{ pairs: [{leftId,rightId}] }` | točni parovi / 4 |
 | `order` | `{ prompt, steps: [{id,text}] ×4–5 }` (promiješani u seedu) | `{ orderedIds: [] }` | `{ orderedIds: [] }` | 1 ili 0 |
-| `find_bug` | `{ prompt, code, fixes: [{id,text}] ×3 }` | `{ line: int, fixId }` | `{ line: int, fixId }` | kriva linija 0; točna linija 0.4 + 0.6·(fix točan) |
+| `find_bug` | `{ prompt, code, fixes: [{id,text}] ×3 }` | `{ line: int, fixId, acceptLines?: int[] }` | `{ line: int, fixId }` | kriva linija 0; točna linija 0.4, uz točan fix 1. `acceptLines` su druge linije iste razlomljene naredbe koje se također priznaju; `line` je kanonska linija za analizu |
 
 Opcije se ne miješaju u runtimeu: seed ih sprema već promiješane, oba igrača vide isti redoslijed. ID-evi opcija su kratki stringovi (`"a"`, `"b"`, ...); kod `match_pairs` ID-evi desne strane ne smiju slijediti redoslijed lijeve (seed test), inače ključ curi.
 
@@ -734,7 +733,7 @@ public static class GameRules
 | `Veto.BansFor` | `(int poolSize) → int` | 3→1, 4→2, 5→3, 6→4 |
 | `Veto.Ban / AutoBan / Pick` | nad `VetoState` | naizmjence, istek = nasumični ban, 2 preostale → nasumični odabir |
 | `DeckBuilder.Band` | `(ratingA, ratingB) → (min, max)` | `D = D(avg)`; par susjednih bandova na strani bližeg praga: avg bliže gornjem pragu → `(D, D+1)`, inače `(D-1, D)`; D1 → (1,2), D4 → (3,4). Primjer ideje 1350+1420 → avg 1385 → D2–D3 |
-| `DeckBuilder.Build` | `(DeckInput) → Deck` | §8 slotovi 1+3+4+2; ciljanje samo koncepata s `answer_count > 0` kod oba igrača i samo ako oba imaju profil (`ranked_matches ≥ 5`; bot nema → cilja se iz igračevih); grupa 1 = oba < 40, grupa 2 = oba < 70 i razlika ≤ 20, sortirano po prosjeku; rotacija (ciljan u zadnje 2 partije → preskoči dok nije zakrpan); ograničenja tipova i `TypeGroups`; susjedna težina → drugi tip → jezgra; bez ponavljanja koncepta; 30-dnevna isključenja; shuffle 2–10 |
+| `DeckBuilder.Build` | `(pool, players, targetingAllowed, band, now, rng, degrade) → DeckSlot[]` | §8 slotovi 1+3+4+2; ciljanje samo koncepata s `answer_count > 0` kod svih ljudskih igrača; `targetingAllowed = false` u rangiranoj partiji dok netko nema profil (`ranked_matches < 5`), u bot partiji uvijek true (cilja se iz igračevih slabih koncepata); grupa 1 = oba < 40, grupa 2 = oba < 70 i razlika ≤ 20, sortirano po prosjeku; rotacija (ciljan u zadnje 2 partije → preskoči dok nije zakrpan); ograničenja tipova i `TypeGroups`; susjedna težina → drugi tip → jezgra; bez ponavljanja koncepta; 30-dnevna isključenja; shuffle 2–10 |
 | `DeckBuilder.BuildPractice` | `(topic questions, myMastery, due, seen, conceptIds?, Random) → Deck` | 10 pitanja bez warmupa: tražene `conceptIds` prvo, pa dospjeli, pa najniži mastery; tipovi po `Types`/`TypeGroups`; degradacija kad nema dovoljno: dopusti ponavljanje koncepta → sve težine → zanemari 30 dana (nikad prazno) |
 | `DeckBuilder.Degrade` | isto za bot/kalibraciju | bot i trening nikad ne padaju zbog tankog poola; ranked tema s premalo pitanja dobiva `topics.is_active = false` |
 | `Tiebreak.Winner` | `(MatchPlayer a, MatchPlayer b) → (seat?, reason)` | bodovi → više točnih → manji zbroj vremena na točnim → remi |
@@ -876,7 +875,7 @@ GET   /api/me                      → MeDto
 PATCH /api/me                      { username?; avatar?; locale?; profileVisibility?; notifications? } → MeDto
 PUT   /api/me/topics               { topicIds: Uuid[] }  → 204   // 3–5; 409 locked-in-queue
 GET   /api/me/dashboard            → DashboardDto
-GET   /api/me/matches?limit=50     → MatchSummaryDto[]
+GET   /api/me/matches?limit=50     → MatchSummaryDto[]        (F1; samo završene partije, najviše 50)
 GET   /api/me/knowledge-map        → KnowledgeMapDto           (F2)
 GET   /api/me/stats                → StatsDto                  (F5)
 GET   /api/users/{username}        → PublicProfileDto          (F5; 403 ako je 'friends' i niste prijatelji)
@@ -898,7 +897,7 @@ interface DashboardDto {
   inbox: { rematch?: { matchId: Uuid; from: UserRefDto; expiresAt: Iso }; friendChallenge?: { code: string; host: UserRefDto; expiresAt: Iso } }
   queueLocked: boolean
 }
-interface MatchSummaryDto { id: Uuid; kind: MatchKind; topic?: TopicDto; opponent?: UserRefDto & { kind: 'human'|'bot'|'ghost'; persona?: BotPersona }; myScore: number; opponentScore: number; outcome: 'win'|'loss'|'draw'|'aborted'; ratingDelta?: number; finishedAt?: Iso; lessonId?: Uuid }
+interface MatchSummaryDto { id: Uuid; kind: MatchKind; topic?: TopicDto; opponent?: { kind: 'human'|'bot'|'ghost'; persona?: BotPersona; user?: UserRefDto; displayRating: number }; myScore: number; opponentScore: number; outcome: 'win'|'loss'|'draw'|'aborted'|'completed' /* completed = trening */; ratingDelta?: number; finishedAt?: Iso; lessonId?: Uuid }
 ```
 
 ### 6.4 Sadržaj (F0/F2)
@@ -945,7 +944,7 @@ interface VetoDto {
   pool: { topic: TopicDto; myMastery?: number; pickedByOpponent: boolean; bannedBySeat?: 0|1; auto?: boolean }[]
   coinWinnerSeat: 0|1; turnSeat?: 0|1; bansRemaining: number; finalTwo?: Uuid[]; chosenTopicId?: Uuid   // chosenTopicId je poznat od početka veto_pick: klijent animira prema njemu
 }
-interface QuestionTurnDto { index: number; total: number; question: QuestionPublicDto; startedAt: Iso; deliveredAt: Iso; myAnswer?: { payload: AnswerPayload; elapsedMs: number } }
+interface QuestionTurnDto { index: number; total: number; question: QuestionPublicDto; startedAt: Iso; deliveredAt?: Iso; myAnswer?: { payload?: AnswerPayload; elapsedMs: number } }
 interface InterstitialDto { index: number; key: AnswerKeyDto; mine: AnswerResultDto; opponent?: AnswerResultDto }
 interface AnswerResultDto { payload?: AnswerPayload; isCorrect: boolean; fraction: number; points: number; elapsedMs: number; timedOut: boolean; label: AnswerLabel }
 interface MatchResultDto {
@@ -1055,8 +1054,9 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 ## 7. Seed sadržaja
 
-- `backend/seed/topics.json`, `concepts.json` (slug, name, description, sortOrder), `questions/<topic>.json` (polja iz §3.2 + `seedKey`), `shop-items.json`, `titles.json`.
-- `Seeder` se pokreće na startu kad je `Database:SeedOnStartup=true` (Development i prod) i radi upsert po `slug`/`seed_key`/`key`; nikad ne briše.
+- `backend/src/App.Infrastructure/Seed/topics.json` (teme s konceptima: slug, name, description; redoslijed u datoteci je `sort_order`) i `Seed/questions/<tema>.json` (niz pitanja: `key`, `concept` (slug), `type`, `difficulty`, `language`, `content` s `answer`, `remember`). Kasnije `shop-items.json`, `titles.json`. Datoteke su embedded resources u Infrastructure assemblyju.
+- `Seeder` se pokreće na startu kad je `Database:SeedOnStartup=true` (Development i prod) i radi upsert po `slug`/`key` (`questions.seed_key`); nikad ne briše i ne vraća u igru pitanje koje je u karanteni ili povučeno. Na kraju postavi `topics.is_active` = tema gradi potpun ranked deck za novog igrača (D1–D2, ništa viđeno); `GET /api/topics` vraća samo aktivne teme.
+- Novo pitanje se dodaje u JSON i provjerava s `dotnet test` (`SeedTests`); format i primjer svakog tipa su u postojećim datotekama.
 - Hackathon pitanja se pišu kroz Claude Code sesije ravno u JSON (po konceptu, tipu, težini), a `SeedTests` su drugi prolaz validacije: točno jedan točan odgovor, svi ID-evi opcija jedinstveni, kod ≤ 25 linija i ≤ 60 znakova, `find_bug.line` unutar koda, koncept i tema postoje, `order` ima 4–5 koraka, `match_pairs` 4+4 i desna strana nije u redoslijedu ključa, svaki koncept ima ≥ 1 `find_bug` i ≥ 1 `output` u temi, i **svaka aktivna tema gradi ranked deck za band D1–D2 s praznom poviješću** (ograničenja decka §7/§8 ideje ispunjiva).
 - Offline batch generator s AI validacijom (§16 ideje) je roadmap: `tools/QuestionGen` konzolni projekt koji piše iste JSON datoteke.
 

@@ -67,6 +67,87 @@ namespace App.Infrastructure.Migrations
                     b.ToTable("concepts", (string)null);
                 });
 
+            modelBuilder.Entity("App.Domain.Content.Question", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ConceptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("concept_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("integer")
+                        .HasColumnName("difficulty");
+
+                    b.Property<string>("Explanation")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("explanation");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("language");
+
+                    b.Property<string>("Remember")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("remember");
+
+                    b.Property<string>("SeedKey")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("seed_key");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("topic_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_questions");
+
+                    b.HasIndex("ConceptId")
+                        .HasDatabaseName("ix_questions_concept_id");
+
+                    b.HasIndex("SeedKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_questions_seed_key");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("ix_questions_topic_id")
+                        .HasFilter("status = 'active'");
+
+                    b.ToTable("questions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_questions_difficulty", "difficulty between 1 and 4");
+
+                            t.HasCheckConstraint("ck_questions_status", "status in ('active', 'reported', 'quarantine', 'retired')");
+
+                            t.HasCheckConstraint("ck_questions_type", "type in ('true_false', 'multiple_choice', 'cloze', 'odd_one_out', 'output', 'match_pairs', 'order', 'find_bug')");
+                        });
+                });
+
             modelBuilder.Entity("App.Domain.Content.Topic", b =>
                 {
                     b.Property<Guid>("Id")
@@ -107,6 +188,479 @@ namespace App.Infrastructure.Migrations
                         .HasDatabaseName("ix_topics_slug");
 
                     b.ToTable("topics", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.Match", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("BandMax")
+                        .HasColumnType("integer")
+                        .HasColumnName("band_max");
+
+                    b.Property<int>("BandMin")
+                        .HasColumnType("integer")
+                        .HasColumnName("band_min");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("CurrentIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("current_index");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_at");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Phase")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("phase");
+
+                    b.Property<DateTimeOffset?>("PhaseDeadline")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("phase_deadline");
+
+                    b.Property<DateTimeOffset?>("QuestionStartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("question_started_at");
+
+                    b.Property<string>("ResultReason")
+                        .HasColumnType("text")
+                        .HasColumnName("result_reason");
+
+                    b.Property<int>("RngSeed")
+                        .HasColumnType("integer")
+                        .HasColumnName("rng_seed");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<bool>("Timed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("timed");
+
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("topic_id");
+
+                    b.Property<int?>("WinnerSeat")
+                        .HasColumnType("integer")
+                        .HasColumnName("winner_seat");
+
+                    b.HasKey("Id")
+                        .HasName("pk_matches");
+
+                    b.HasIndex("FinishedAt")
+                        .HasDatabaseName("ix_matches_finished_at")
+                        .HasFilter("kind in ('ranked', 'ghost')");
+
+                    b.HasIndex("PhaseDeadline")
+                        .HasDatabaseName("ix_matches_phase_deadline")
+                        .HasFilter("phase <> 'done'");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("ix_matches_topic_id");
+
+                    b.ToTable("matches", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_matches_kind", "kind in ('ranked', 'ghost', 'bot', 'friend', 'practice', 'calibration')");
+
+                            t.HasCheckConstraint("ck_matches_phase", "phase in ('veto_coin', 'veto_ban', 'veto_pick', 'lobby', 'question', 'interstitial', 'done')");
+
+                            t.HasCheckConstraint("ck_matches_result_reason", "result_reason in ('score', 'tiebreak_correct', 'tiebreak_time', 'draw', 'resign', 'disconnect', 'aborted')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.MatchAnswer", b =>
+                {
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<int>("Seat")
+                        .HasColumnType("integer")
+                        .HasColumnName("seat");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("integer")
+                        .HasColumnName("index");
+
+                    b.Property<DateTimeOffset>("AnsweredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("answered_at");
+
+                    b.Property<int>("ElapsedMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("elapsed_ms");
+
+                    b.Property<double>("Fraction")
+                        .HasColumnType("double precision")
+                        .HasColumnName("fraction");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_correct");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("label");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer")
+                        .HasColumnName("points");
+
+                    b.Property<bool>("TimedOut")
+                        .HasColumnType("boolean")
+                        .HasColumnName("timed_out");
+
+                    b.HasKey("MatchId", "Seat", "Index")
+                        .HasName("pk_match_answers");
+
+                    b.ToTable("match_answers", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_match_answers_label", "label in ('brilliant', 'good', 'miss', 'blunder')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.MatchPlayer", b =>
+                {
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<int>("Seat")
+                        .HasColumnType("integer")
+                        .HasColumnName("seat");
+
+                    b.Property<string>("BotPersona")
+                        .HasColumnType("text")
+                        .HasColumnName("bot_persona");
+
+                    b.Property<int>("CoinsEarned")
+                        .HasColumnType("integer")
+                        .HasColumnName("coins_earned");
+
+                    b.Property<int>("CorrectCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("correct_count");
+
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("delivered_at");
+
+                    b.Property<int?>("DeliveredIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("delivered_index");
+
+                    b.Property<int>("DisplayRating")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_rating");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.Property<DateTimeOffset?>("ResignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resigned_at");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.Property<int>("SpEarned")
+                        .HasColumnType("integer")
+                        .HasColumnName("sp_earned");
+
+                    b.Property<int>("TimeOnCorrectMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("time_on_correct_ms");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("XpEarned")
+                        .HasColumnType("integer")
+                        .HasColumnName("xp_earned");
+
+                    b.HasKey("MatchId", "Seat")
+                        .HasName("pk_match_players");
+
+                    b.HasIndex("UserId", "MatchId")
+                        .HasDatabaseName("ix_match_players_user_id_match_id");
+
+                    b.ToTable("match_players", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_match_players_bot_persona", "bot_persona in ('vibe_coder', 'junior', 'mid', 'senior')");
+
+                            t.HasCheckConstraint("ck_match_players_kind", "kind in ('human', 'bot', 'ghost')");
+
+                            t.HasCheckConstraint("ck_match_players_seat", "seat in (0, 1)");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.MatchQuestion", b =>
+                {
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("integer")
+                        .HasColumnName("index");
+
+                    b.Property<int>("BasePoints")
+                        .HasColumnType("integer")
+                        .HasColumnName("base_points");
+
+                    b.Property<Guid>("ConceptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("concept_id");
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("integer")
+                        .HasColumnName("difficulty");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("question_id");
+
+                    b.Property<string>("Slot")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("slot");
+
+                    b.Property<int>("TimeLimitMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("time_limit_ms");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("type");
+
+                    b.HasKey("MatchId", "Index")
+                        .HasName("pk_match_questions");
+
+                    b.HasIndex("ConceptId")
+                        .HasDatabaseName("ix_match_questions_concept_id");
+
+                    b.HasIndex("QuestionId")
+                        .HasDatabaseName("ix_match_questions_question_id");
+
+                    b.ToTable("match_questions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_match_questions_index", "index between 0 and 9");
+
+                            t.HasCheckConstraint("ck_match_questions_slot", "slot in ('warmup', 'targeted', 'core', 'review')");
+
+                            t.HasCheckConstraint("ck_match_questions_type", "type in ('true_false', 'multiple_choice', 'cloze', 'odd_one_out', 'output', 'match_pairs', 'order', 'find_bug')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Progress.Answer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ConceptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("concept_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("integer")
+                        .HasColumnName("difficulty");
+
+                    b.Property<int>("ElapsedMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("elapsed_ms");
+
+                    b.Property<double>("Fraction")
+                        .HasColumnType("double precision")
+                        .HasColumnName("fraction");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_correct");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("text")
+                        .HasColumnName("label");
+
+                    b.Property<double>("MasteryAfter")
+                        .HasColumnType("double precision")
+                        .HasColumnName("mastery_after");
+
+                    b.Property<double>("MasteryBefore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("mastery_before");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer")
+                        .HasColumnName("points");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("question_id");
+
+                    b.Property<string>("QuestionType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("question_type");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("source");
+
+                    b.Property<int?>("TimeLimitMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("time_limit_ms");
+
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("topic_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_answers");
+
+                    b.HasIndex("ConceptId")
+                        .HasDatabaseName("ix_answers_concept_id");
+
+                    b.HasIndex("MatchId")
+                        .HasDatabaseName("ix_answers_match_id");
+
+                    b.HasIndex("QuestionId")
+                        .HasDatabaseName("ix_answers_question_id");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("ix_answers_topic_id");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_answers_user_id_created_at");
+
+                    b.HasIndex("UserId", "ConceptId", "CreatedAt")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("ix_answers_user_id_concept_id_created_at");
+
+                    b.ToTable("answers", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_answers_label", "label in ('brilliant', 'good', 'miss', 'blunder')");
+
+                            t.HasCheckConstraint("ck_answers_question_type", "question_type in ('true_false', 'multiple_choice', 'cloze', 'odd_one_out', 'output', 'match_pairs', 'order', 'find_bug')");
+
+                            t.HasCheckConstraint("ck_answers_source", "source in ('ranked', 'ghost', 'bot', 'friend', 'practice', 'calibration', 'lesson_check', 'daily_challenge')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Progress.ConceptMastery", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("ConceptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("concept_id");
+
+                    b.Property<int>("AnswerCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("answer_count");
+
+                    b.Property<int>("ConsecutiveReviewSuccesses")
+                        .HasColumnType("integer")
+                        .HasColumnName("consecutive_review_successes");
+
+                    b.Property<bool>("IsGraduated")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_graduated");
+
+                    b.Property<DateTimeOffset?>("LastAnsweredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_answered_at");
+
+                    b.Property<double>("Mastery")
+                        .HasColumnType("double precision")
+                        .HasColumnName("mastery");
+
+                    b.Property<DateTimeOffset?>("PatchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("patched_at");
+
+                    b.Property<DateTimeOffset?>("ReviewDueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("review_due_at");
+
+                    b.Property<int?>("ReviewStep")
+                        .HasColumnType("integer")
+                        .HasColumnName("review_step");
+
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("topic_id");
+
+                    b.HasKey("UserId", "ConceptId")
+                        .HasName("pk_concept_mastery");
+
+                    b.HasIndex("ConceptId")
+                        .HasDatabaseName("ix_concept_mastery_concept_id");
+
+                    b.HasIndex("TopicId", "UserId")
+                        .HasDatabaseName("ix_concept_mastery_topic_id_user_id")
+                        .HasFilter("is_graduated");
+
+                    b.HasIndex("UserId", "ReviewDueAt")
+                        .HasDatabaseName("ix_concept_mastery_user_id_review_due_at")
+                        .HasFilter("review_due_at is not null");
+
+                    b.ToTable("concept_mastery", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_concept_mastery_mastery", "mastery between 0 and 100");
+
+                            t.HasCheckConstraint("ck_concept_mastery_review_step", "review_step between 1 and 5");
+                        });
                 });
 
             modelBuilder.Entity("App.Domain.Users.RefreshToken", b =>
@@ -182,6 +736,10 @@ namespace App.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CurrentMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("current_match_id");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -263,6 +821,9 @@ namespace App.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_users");
 
+                    b.HasIndex("CurrentMatchId")
+                        .HasDatabaseName("ix_users_current_match_id");
+
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");
@@ -316,6 +877,147 @@ namespace App.Infrastructure.Migrations
                         .HasConstraintName("fk_concepts_topics_topic_id");
                 });
 
+            modelBuilder.Entity("App.Domain.Content.Question", b =>
+                {
+                    b.HasOne("App.Domain.Content.Concept", null)
+                        .WithMany()
+                        .HasForeignKey("ConceptId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_questions_concepts_concept_id");
+
+                    b.HasOne("App.Domain.Content.Topic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_questions_topics_topic_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.Match", b =>
+                {
+                    b.HasOne("App.Domain.Content.Topic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_matches_topics_topic_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.MatchAnswer", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany("Answers")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_answers_matches_match_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.MatchPlayer", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany("Players")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_players_matches_match_id");
+
+                    b.HasOne("App.Domain.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_match_players_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.MatchQuestion", b =>
+                {
+                    b.HasOne("App.Domain.Content.Concept", null)
+                        .WithMany()
+                        .HasForeignKey("ConceptId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_questions_concepts_concept_id");
+
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany("Questions")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_questions_matches_match_id");
+
+                    b.HasOne("App.Domain.Content.Question", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_questions_questions_question_id");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("App.Domain.Progress.Answer", b =>
+                {
+                    b.HasOne("App.Domain.Content.Concept", null)
+                        .WithMany()
+                        .HasForeignKey("ConceptId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_answers_concepts_concept_id");
+
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_answers_matches_match_id");
+
+                    b.HasOne("App.Domain.Content.Question", null)
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_answers_questions_question_id");
+
+                    b.HasOne("App.Domain.Content.Topic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_answers_topics_topic_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_answers_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Progress.ConceptMastery", b =>
+                {
+                    b.HasOne("App.Domain.Content.Concept", null)
+                        .WithMany()
+                        .HasForeignKey("ConceptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_concept_mastery_concepts_concept_id");
+
+                    b.HasOne("App.Domain.Content.Topic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_concept_mastery_topics_topic_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_concept_mastery_users_user_id");
+                });
+
             modelBuilder.Entity("App.Domain.Users.RefreshToken", b =>
                 {
                     b.HasOne("App.Domain.Users.User", null)
@@ -324,6 +1026,15 @@ namespace App.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_refresh_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Users.User", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("CurrentMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_users_matches_current_match_id");
                 });
 
             modelBuilder.Entity("App.Domain.Users.UserTopic", b =>
@@ -346,6 +1057,15 @@ namespace App.Infrastructure.Migrations
             modelBuilder.Entity("App.Domain.Content.Topic", b =>
                 {
                     b.Navigation("Concepts");
+                });
+
+            modelBuilder.Entity("App.Domain.Matches.Match", b =>
+                {
+                    b.Navigation("Answers");
+
+                    b.Navigation("Players");
+
+                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("App.Domain.Users.User", b =>

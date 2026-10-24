@@ -4,16 +4,32 @@ using App.Api;
 using App.Api.Endpoints;
 using App.Application.Auth;
 using App.Application.Content;
+using App.Application.Matches;
 using App.Application.Me;
 using App.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
 LoadDotEnv();
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+// Declares the bearer token so Scalar shows an Authorize field and sends it on every request.
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer((document, _, _) =>
+{
+    document.Components ??= new OpenApiComponents();
+    document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+    document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "accessToken from POST /api/auth/register or /api/auth/login",
+    };
+    document.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference("Bearer", document)] = [] }];
+    return Task.CompletedTask;
+}));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<AppExceptionHandler>();
 // Enums travel as snake_case strings ("true_false", "in_progress"), the same spelling the database stores.
@@ -33,6 +49,9 @@ builder.Services.AddAppAuth(builder.Configuration);
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MeService>();
 builder.Services.AddScoped<ContentService>();
+builder.Services.AddScoped<MatchService>();
+// Tests turn the tick off and advance matches themselves with a fake clock.
+if (builder.Configuration.GetValue("Game:TickEnabled", true)) builder.Services.AddHostedService<GameTickService>();
 
 var app = builder.Build();
 
@@ -41,6 +60,13 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 {
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
+
+// Topics, concepts and questions from App.Infrastructure/Seed (Development and production; tests seed their own data).
+if (app.Configuration.GetValue<bool>("Database:SeedOnStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<App.Infrastructure.Seed.Seeder>().SeedAsync();
 }
 
 app.UseExceptionHandler();
@@ -59,6 +85,7 @@ app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 app.MapMeEndpoints();
 app.MapContentEndpoints();
+app.MapMatchEndpoints();
 
 app.Run();
 

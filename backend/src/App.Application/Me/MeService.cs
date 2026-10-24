@@ -67,13 +67,16 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             false);
     }
 
-    public MeDto ToDto(User user) => new(
-        user.Id, user.Username, user.Avatar, user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, null,
-        new Dictionary<string, string>(), // ponytail: no cosmetics before F4; then map equipped item ids to asset keys here
-        user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
-        user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), 0,
-        new StreakDto(user.StreakCount, user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == Clock.Today(time.GetUtcNow())),
-        user.Topics.Select(t => t.TopicId).ToArray(), null, null, false, user.CreatedAt);
+    public MeDto ToDto(User user)
+    {
+        var self = UserRefDto.From(user);
+        return new(
+            self.Id, self.Username, self.Avatar, self.Tier, self.Rating, self.IsProvisional, self.Title, self.Equipment,
+            user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
+            user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), 0,
+            new StreakDto(user.StreakCount, user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == Clock.Today(time.GetUtcNow())),
+            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, false, user.CreatedAt);
+    }
 
     private async Task<User> LoadAsync(Guid userId, CancellationToken cancellationToken) =>
         await db.Users.Include(u => u.Topics).FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)

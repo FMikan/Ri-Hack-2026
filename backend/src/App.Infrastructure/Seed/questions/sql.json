@@ -1,0 +1,1424 @@
+[
+  {
+    "key": "sql.joins.tf.01",
+    "concept": "sql.joins",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A LEFT JOIN returns every row of the left table, including rows that have no match in the right table.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "LEFT JOIN keeps every left row; when nothing matches, the right table's columns are NULL."
+  },
+  {
+    "key": "sql.joins.mc.01",
+    "concept": "sql.joins",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Each customer has zero or more orders. Which FROM clause lists every customer, including customers without orders?",
+      "options": [
+        {
+          "id": "a",
+          "text": "FROM customers c JOIN orders o ON o.customer_id = c.id"
+        },
+        {
+          "id": "b",
+          "text": "FROM orders o LEFT JOIN customers c ON o.customer_id = c.id"
+        },
+        {
+          "id": "c",
+          "text": "FROM customers c LEFT JOIN orders o ON o.customer_id = c.id"
+        },
+        {
+          "id": "d",
+          "text": "FROM customers c RIGHT JOIN orders o ON o.customer_id = c.id"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "The table whose rows must all appear goes on the left side of a LEFT JOIN."
+  },
+  {
+    "key": "sql.joins.out.01",
+    "concept": "sql.joins",
+    "type": "output",
+    "difficulty": 1,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH users(id, name) AS (\n  VALUES (1, 'Ana'), (2, 'Ben'), (3, 'Cid')\n), orders(user_id, total) AS (\n  VALUES (1, 50), (1, 20), (3, 10)\n)\nSELECT u.name, o.total\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\nORDER BY u.name, o.total;",
+      "options": [
+        {
+          "id": "a",
+          "text": "3 rows: (Ana, 20), (Ana, 50), (Cid, 10)"
+        },
+        {
+          "id": "b",
+          "text": "4 rows: (Ana, 20), (Ana, 50), (Ben, NULL), (Cid, 10)"
+        },
+        {
+          "id": "c",
+          "text": "3 rows: (Ana, 50), (Ben, NULL), (Cid, 10)"
+        },
+        {
+          "id": "d",
+          "text": "4 rows: (Ana, 20), (Ana, 50), (Ben, 0), (Cid, 10)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "LEFT JOIN repeats a left row once per match and keeps an unmatched left row once, with NULLs."
+  },
+  {
+    "key": "sql.joins.bug.01",
+    "concept": "sql.joins",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sql",
+    "content": {
+      "prompt": "The report should list every customer with their number of orders placed since 1 January 2026, showing 0 for customers without any. Find the bug.",
+      "code": "SELECT c.id,\n       c.name,\n       count(o.id) AS orders_2026\nFROM customers c\nLEFT JOIN orders o\n  ON o.customer_id = c.id\nWHERE o.created_at >= DATE '2026-01-01'\nGROUP BY c.id, c.name\nORDER BY c.name;",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change count(o.id) to count(*)"
+        },
+        {
+          "id": "f2",
+          "text": "Move the date condition into the ON clause"
+        },
+        {
+          "id": "f3",
+          "text": "Add OR o.created_at IS NULL to the WHERE clause"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A WHERE condition on the right table of a LEFT JOIN removes the NULL rows; put such filters in the ON clause."
+  },
+  {
+    "key": "sql.indexes.tf.01",
+    "concept": "sql.indexes",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Adding more indexes to a table makes INSERTs into that table faster.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Every index must be updated on each write, so indexes speed up reads but slow down inserts."
+  },
+  {
+    "key": "sql.indexes.mc.01",
+    "concept": "sql.indexes",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which column is the weakest candidate for a B-tree index that serves WHERE column = value lookups?",
+      "options": [
+        {
+          "id": "a",
+          "text": "users.email, unique for every user"
+        },
+        {
+          "id": "b",
+          "text": "orders.customer_id, a handful of rows per customer"
+        },
+        {
+          "id": "c",
+          "text": "sessions.token, unique for every session"
+        },
+        {
+          "id": "d",
+          "text": "users.is_active, true for about half the rows"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "An index pays off when a lookup returns a small share of the rows; a column with two common values rarely benefits."
+  },
+  {
+    "key": "sql.indexes.odd.01",
+    "concept": "sql.indexes",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "There is a B-tree index on users(email). Which WHERE condition is the odd one out because it cannot use that index?",
+      "items": [
+        {
+          "id": "a",
+          "text": "lower(email) = 'ana@x.hr'"
+        },
+        {
+          "id": "b",
+          "text": "email = 'ana@x.hr'"
+        },
+        {
+          "id": "c",
+          "text": "email > 'm'"
+        },
+        {
+          "id": "d",
+          "text": "email IN ('a@x.hr', 'b@x.hr')"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "An index on a column does not cover an expression on it; to search by lower(email), index lower(email)."
+  },
+  {
+    "key": "sql.indexes.match.01",
+    "concept": "sql.indexes",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each PostgreSQL EXPLAIN node with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Seq Scan"
+        },
+        {
+          "id": "l2",
+          "text": "Index Scan"
+        },
+        {
+          "id": "l3",
+          "text": "Index Only Scan"
+        },
+        {
+          "id": "l4",
+          "text": "Bitmap Heap Scan"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Collects matching row locations from an index first, then reads table pages in physical order"
+        },
+        {
+          "id": "r2",
+          "text": "Returns the needed columns straight from the index, mostly without reading the table"
+        },
+        {
+          "id": "r3",
+          "text": "Reads every row of the table"
+        },
+        {
+          "id": "r4",
+          "text": "Finds each match in the index, then fetches that row from the table"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Seq Scan reads everything; Index Scan and Bitmap Heap Scan find rows through an index; Index Only Scan can skip the table."
+  },
+  {
+    "key": "sql.n-plus-one.tf.01",
+    "concept": "sql.n-plus-one",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Loading 50 posts and then running one query per post to fetch its author sends 51 queries to the database.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "One query for the list plus one per item is N+1; load the related rows with a join or one batched query."
+  },
+  {
+    "key": "sql.n-plus-one.mc.01",
+    "concept": "sql.n-plus-one",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "This code shows 20 orders with their customers. Which change removes the N+1 problem?",
+      "code": "const orders = await db.query(\n  \"SELECT id, customer_id FROM orders LIMIT 20\");\nfor (const o of orders) {\n  const rows = await db.query(\n    \"SELECT name FROM customers WHERE id = $1\",\n    [o.customer_id]);\n  o.customer = rows[0];\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "Start all 20 customer queries at once with Promise.all"
+        },
+        {
+          "id": "b",
+          "text": "Join customers in the first query and remove the loop"
+        },
+        {
+          "id": "c",
+          "text": "Add an index on customers.id"
+        },
+        {
+          "id": "d",
+          "text": "Run the loop on a single reused database connection"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Running the per-item queries in parallel is still N+1; one join or one batched query removes the extra round trips."
+  },
+  {
+    "key": "sql.n-plus-one.cloze.01",
+    "concept": "sql.n-plus-one",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so all customers load in one query. The PostgreSQL driver sends ids as an integer array.",
+      "code": "const orders = await db.query(\n  \"SELECT id, customer_id FROM orders LIMIT 20\");\nconst ids = orders.map(o => o.customer_id);\nconst customers = await db.query(\n  \"SELECT id, name FROM customers WHERE ____\",\n  [ids]);",
+      "options": [
+        {
+          "id": "a",
+          "text": "id IN ($1)"
+        },
+        {
+          "id": "b",
+          "text": "id = $1"
+        },
+        {
+          "id": "c",
+          "text": "id = ANY($1)"
+        },
+        {
+          "id": "d",
+          "text": "id IN (SELECT $1)"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Batch-load related rows with one query over all their ids, such as WHERE id = ANY($1) in PostgreSQL."
+  },
+  {
+    "key": "sql.n-plus-one.bug.01",
+    "concept": "sql.n-plus-one",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "listPosts takes seconds in production although every single query is fast. Find the bug.",
+      "code": "async function getAuthor(db, id) {\n  const rows = await db.query(\n    \"SELECT id, name FROM authors WHERE id = $1\",\n    [id]);\n  return rows[0];\n}\n\nasync function listPosts(db) {\n  const posts = await db.query(\n    \"SELECT id, title, author_id FROM posts LIMIT 100\");\n  for (const post of posts) {\n    post.author = await getAuthor(db, post.author_id);\n  }\n  return posts;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Run the getAuthor calls in parallel with Promise.all"
+        },
+        {
+          "id": "f2",
+          "text": "Fetch the authors with a join in the posts query"
+        },
+        {
+          "id": "f3",
+          "text": "Cache authors in a Map so each one is fetched once"
+        }
+      ],
+      "answer": {
+        "line": 12,
+        "fixId": "f2",
+        "acceptLines": [
+          11
+        ]
+      }
+    },
+    "remember": "A query hidden in a helper still runs once per loop iteration; an await on a query inside a loop is the N+1 smell."
+  },
+  {
+    "key": "sql.transactions.tf.01",
+    "concept": "sql.transactions",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "When a transaction is rolled back, the changes made by its earlier, successful statements are undone as well.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A transaction is all or nothing: ROLLBACK undoes every change made since BEGIN."
+  },
+  {
+    "key": "sql.transactions.mc.01",
+    "concept": "sql.transactions",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A transfer runs two UPDATEs between BEGIN and COMMIT. The server crashes after the first UPDATE, before COMMIT. What is in the database after the restart?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Neither UPDATE"
+        },
+        {
+          "id": "b",
+          "text": "Only the first UPDATE"
+        },
+        {
+          "id": "c",
+          "text": "Both UPDATEs, replayed from the log"
+        },
+        {
+          "id": "d",
+          "text": "The first UPDATE, marked as pending"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Work that was not committed before a crash is discarded on restart; a half-done transaction never survives."
+  },
+  {
+    "key": "sql.transactions.match.01",
+    "concept": "sql.transactions",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each ACID property with its guarantee.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Atomicity"
+        },
+        {
+          "id": "l2",
+          "text": "Consistency"
+        },
+        {
+          "id": "l3",
+          "text": "Isolation"
+        },
+        {
+          "id": "l4",
+          "text": "Durability"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Committed changes survive a crash"
+        },
+        {
+          "id": "r2",
+          "text": "Concurrent transactions do not see each other's uncommitted work"
+        },
+        {
+          "id": "r3",
+          "text": "All statements take effect, or none do"
+        },
+        {
+          "id": "r4",
+          "text": "Each transaction leaves the data satisfying every constraint"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Atomic: all or nothing. Consistent: constraints hold. Isolated: no interference. Durable: commits survive crashes."
+  },
+  {
+    "key": "sql.transactions.bug.01",
+    "concept": "sql.transactions",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "DEBIT_SQL subtracts the amount from a balance and CREDIT_SQL adds it. After a transfer fails with Insufficient funds, the money has still left the sender's account. Find the bug.",
+      "code": "async function transfer(client, from, to, amount) {\n  await client.query(\"BEGIN\");\n  try {\n    await client.query(DEBIT_SQL, [amount, from]);\n    const rows = await client.query(\n      \"SELECT balance FROM accounts WHERE id = $1\",\n      [from]);\n    if (rows[0].balance < 0) {\n      throw new Error(\"Insufficient funds\");\n    }\n    await client.query(CREDIT_SQL, [amount, to]);\n    await client.query(\"COMMIT\");\n  } catch (err) {\n    await client.query(\"COMMIT\");\n    throw err;\n  }\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Send ROLLBACK instead of COMMIT in the catch block"
+        },
+        {
+          "id": "f2",
+          "text": "Move throw err above the COMMIT in the catch block"
+        },
+        {
+          "id": "f3",
+          "text": "Add FOR UPDATE to the balance SELECT"
+        }
+      ],
+      "answer": {
+        "line": 14,
+        "fixId": "f1"
+      }
+    },
+    "remember": "On any error inside a transaction, send ROLLBACK; a COMMIT after an application error saves the half-done work."
+  },
+  {
+    "key": "sql.normalization.tf.01",
+    "concept": "sql.normalization",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Copying a customer's email into every order row, instead of storing it once in a customers table, is an example of normalization.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Normalization stores each fact once; copying it into many rows is denormalization, and the copies can drift apart."
+  },
+  {
+    "key": "sql.normalization.mc.01",
+    "concept": "sql.normalization",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Every order row stores the customer's email. A customer changes their email and only their newest order is updated. What is this problem called?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A dirty read"
+        },
+        {
+          "id": "b",
+          "text": "An insert anomaly"
+        },
+        {
+          "id": "c",
+          "text": "A deadlock"
+        },
+        {
+          "id": "d",
+          "text": "An update anomaly"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "When one fact is stored in many rows, updating only some of them is an update anomaly."
+  },
+  {
+    "key": "sql.normalization.order.01",
+    "concept": "sql.normalization",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order the normal forms from least to most strict.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Third normal form (3NF)"
+        },
+        {
+          "id": "s2",
+          "text": "First normal form (1NF)"
+        },
+        {
+          "id": "s3",
+          "text": "Boyce-Codd normal form (BCNF)"
+        },
+        {
+          "id": "s4",
+          "text": "Second normal form (2NF)"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Each normal form includes the one before it: 1NF, then 2NF, 3NF and BCNF."
+  },
+  {
+    "key": "sql.normalization.odd.01",
+    "concept": "sql.normalization",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these tables break a normal form. Which one is the odd one out because it is in third normal form?",
+      "items": [
+        {
+          "id": "a",
+          "text": "order_items(order_id, product_id, qty, product_name) with PK (order_id, product_id)"
+        },
+        {
+          "id": "b",
+          "text": "enrollments(student_id, course_id, grade) with PK (student_id, course_id)"
+        },
+        {
+          "id": "c",
+          "text": "employees(id, dept_id, dept_name) with PK (id)"
+        },
+        {
+          "id": "d",
+          "text": "users(id, phone_numbers) with PK (id), where phone_numbers holds a comma-separated list"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Every non-key column should depend on the key, the whole key, and nothing but the key."
+  },
+  {
+    "key": "sql.null.tf.01",
+    "concept": "sql.null",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In SQL, the expression NULL = NULL evaluates to true.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Any comparison with NULL, even NULL = NULL, yields NULL (unknown); test for it with IS NULL."
+  },
+  {
+    "key": "sql.null.mc.01",
+    "concept": "sql.null",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In some rows the discount column is NULL. What does price - discount return for those rows?",
+      "options": [
+        {
+          "id": "a",
+          "text": "price, because NULL counts as 0"
+        },
+        {
+          "id": "b",
+          "text": "0"
+        },
+        {
+          "id": "c",
+          "text": "NULL"
+        },
+        {
+          "id": "d",
+          "text": "An error"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Arithmetic with NULL gives NULL; use coalesce(discount, 0) when a missing value should count as 0."
+  },
+  {
+    "key": "sql.null.out.01",
+    "concept": "sql.null",
+    "type": "output",
+    "difficulty": 2,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH t(score) AS (\n  VALUES (10), (NULL), (20)\n)\nSELECT count(*), count(score), avg(score)\nFROM t;",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 row: (3, 2, 15)"
+        },
+        {
+          "id": "b",
+          "text": "1 row: (3, 3, 10)"
+        },
+        {
+          "id": "c",
+          "text": "1 row: (2, 2, 15)"
+        },
+        {
+          "id": "d",
+          "text": "1 row: (3, 2, 10)"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "count(*) counts rows; count(column), avg and the other aggregates skip NULLs."
+  },
+  {
+    "key": "sql.null.bug.01",
+    "concept": "sql.null",
+    "type": "find_bug",
+    "difficulty": 1,
+    "language": "sql",
+    "content": {
+      "prompt": "The query should return verified users that were never deleted, but it returns no rows. Find the bug.",
+      "code": "SELECT id,\n       email\nFROM users\nWHERE email_verified = true\n  AND deleted_at = NULL\nORDER BY id;",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Write deleted_at IS NULL"
+        },
+        {
+          "id": "f2",
+          "text": "Write deleted_at = 'NULL'"
+        },
+        {
+          "id": "f3",
+          "text": "Write deleted_at == NULL"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f1"
+      }
+    },
+    "remember": "column = NULL is never true; use IS NULL or IS NOT NULL."
+  },
+  {
+    "key": "sql.aggregates.tf.01",
+    "concept": "sql.aggregates",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "WHERE filters rows before they are grouped, and HAVING filters groups after GROUP BY.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Filter rows with WHERE before grouping; filter on aggregates such as count(*) with HAVING after grouping."
+  },
+  {
+    "key": "sql.aggregates.mc.01",
+    "concept": "sql.aggregates",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "language": "sql",
+    "content": {
+      "prompt": "Why does PostgreSQL reject this query?",
+      "code": "SELECT dept, name, count(*)\nFROM employees\nGROUP BY dept;",
+      "options": [
+        {
+          "id": "a",
+          "text": "count(*) needs a column name in the parentheses"
+        },
+        {
+          "id": "b",
+          "text": "GROUP BY must also list count(*)"
+        },
+        {
+          "id": "c",
+          "text": "dept must also be wrapped in an aggregate"
+        },
+        {
+          "id": "d",
+          "text": "name is neither grouped nor aggregated"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A selected column must be in GROUP BY or inside an aggregate (unless a grouped primary key determines it); a group holds many values for it."
+  },
+  {
+    "key": "sql.aggregates.bug.01",
+    "concept": "sql.aggregates",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "sql",
+    "content": {
+      "prompt": "It should show, per city, how many different customers have at least one paid order. Find the bug.",
+      "code": "SELECT c.city,\n       count(*) AS buyers\nFROM customers c\nJOIN orders o\n  ON o.customer_id = c.id\nWHERE o.status = 'paid'\nGROUP BY c.city\nORDER BY buyers DESC;",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use count(o.customer_id) instead of count(*)"
+        },
+        {
+          "id": "f2",
+          "text": "Use LEFT JOIN orders instead of JOIN"
+        },
+        {
+          "id": "f3",
+          "text": "Use count(DISTINCT c.id) instead of count(*)"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f3"
+      }
+    },
+    "remember": "After a join, count(*) counts joined rows; use count(DISTINCT key) to count distinct entities."
+  },
+  {
+    "key": "sql.aggregates.out.01",
+    "concept": "sql.aggregates",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH sales(region, amount) AS (\n  VALUES ('north', 100), ('north', 300),\n         ('south', 50),  ('south', 60),\n         ('east', 500)\n)\nSELECT region, count(*) AS n\nFROM sales\nWHERE amount > 55\nGROUP BY region\nHAVING count(*) > 1\nORDER BY region;",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 row: (north, 2)"
+        },
+        {
+          "id": "b",
+          "text": "2 rows: (north, 2), (south, 2)"
+        },
+        {
+          "id": "c",
+          "text": "2 rows: (north, 2), (south, 1)"
+        },
+        {
+          "id": "d",
+          "text": "3 rows: (east, 1), (north, 2), (south, 1)"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "WHERE removes rows before they are counted; HAVING then removes whole groups."
+  },
+  {
+    "key": "sql.subqueries.tf.01",
+    "concept": "sql.subqueries",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A scalar subquery in the SELECT list must return at most one row.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A scalar subquery that returns several rows is an error; one that returns no rows gives NULL."
+  },
+  {
+    "key": "sql.subqueries.mc.01",
+    "concept": "sql.subqueries",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which WHERE clause makes SELECT * FROM customers c return only the customers that have at least one order?",
+      "options": [
+        {
+          "id": "a",
+          "text": "WHERE c.id = (SELECT customer_id FROM orders)"
+        },
+        {
+          "id": "b",
+          "text": "WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id)"
+        },
+        {
+          "id": "c",
+          "text": "WHERE c.id IN (SELECT id FROM orders)"
+        },
+        {
+          "id": "d",
+          "text": "WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id IS NOT NULL)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "EXISTS needs a condition linking the subquery to the outer row; without one it is true for every row."
+  },
+  {
+    "key": "sql.subqueries.out.01",
+    "concept": "sql.subqueries",
+    "type": "output",
+    "difficulty": 4,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH users(id) AS (\n  VALUES (1), (2), (3)\n), banned(user_id) AS (\n  VALUES (2), (NULL)\n)\nSELECT count(*)\nFROM users\nWHERE id NOT IN (SELECT user_id FROM banned);",
+      "options": [
+        {
+          "id": "a",
+          "text": "2"
+        },
+        {
+          "id": "b",
+          "text": "3"
+        },
+        {
+          "id": "c",
+          "text": "0"
+        },
+        {
+          "id": "d",
+          "text": "1"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "x NOT IN (a list containing NULL) is never true; use NOT EXISTS when the subquery column can be NULL."
+  },
+  {
+    "key": "sql.subqueries.cloze.01",
+    "concept": "sql.subqueries",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "banned.user_id can be NULL. Fill the blank so the query returns every user who is not banned.",
+      "code": "SELECT u.id, u.email\nFROM users u\nWHERE NOT EXISTS (\n  SELECT 1\n  FROM banned b\n  WHERE ____\n);",
+      "options": [
+        {
+          "id": "a",
+          "text": "b.user_id <> u.id"
+        },
+        {
+          "id": "b",
+          "text": "b.user_id = u.id"
+        },
+        {
+          "id": "c",
+          "text": "b.user_id IS NOT NULL"
+        },
+        {
+          "id": "d",
+          "text": "u.id NOT IN (b.user_id)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "NOT EXISTS with an equality to the outer row means no matching row exists, and NULLs cannot break it."
+  },
+  {
+    "key": "sql.constraints.tf.01",
+    "concept": "sql.constraints",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A PRIMARY KEY column may hold NULL in one row, as long as no other row is NULL too.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A primary key is UNIQUE plus NOT NULL: every row needs a value, and no two rows may share it."
+  },
+  {
+    "key": "sql.constraints.mc.01",
+    "concept": "sql.constraints",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In PostgreSQL, the users table has UNIQUE (email) with default settings. Two rows are inserted with email set to NULL. What happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Both inserts succeed"
+        },
+        {
+          "id": "b",
+          "text": "The second insert fails with a unique violation"
+        },
+        {
+          "id": "c",
+          "text": "The first insert fails, since UNIQUE implies NOT NULL"
+        },
+        {
+          "id": "d",
+          "text": "Both rows get an empty string instead of NULL"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "UNIQUE treats NULLs as distinct by default, so many NULLs are allowed; add NOT NULL or NULLS NOT DISTINCT to stop that."
+  },
+  {
+    "key": "sql.constraints.cloze.01",
+    "concept": "sql.constraints",
+    "type": "cloze",
+    "difficulty": 1,
+    "language": "sql",
+    "content": {
+      "prompt": "Fill the blank so every order must belong to an existing customer.",
+      "code": "CREATE TABLE orders (\n  id bigint PRIMARY KEY,\n  customer_id bigint NOT NULL\n    ____ customers (id),\n  total numeric(10, 2) NOT NULL\n);",
+      "options": [
+        {
+          "id": "a",
+          "text": "UNIQUE"
+        },
+        {
+          "id": "b",
+          "text": "CHECK"
+        },
+        {
+          "id": "c",
+          "text": "FOREIGN KEY"
+        },
+        {
+          "id": "d",
+          "text": "REFERENCES"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A column-level foreign key is written REFERENCES table (column); the database then rejects ids that do not exist."
+  },
+  {
+    "key": "sql.constraints.match.01",
+    "concept": "sql.constraints",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each constraint with the rule it enforces.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "PRIMARY KEY"
+        },
+        {
+          "id": "l2",
+          "text": "FOREIGN KEY"
+        },
+        {
+          "id": "l3",
+          "text": "UNIQUE"
+        },
+        {
+          "id": "l4",
+          "text": "CHECK"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Rejects rows for which a condition is false"
+        },
+        {
+          "id": "r2",
+          "text": "Identifies each row; implies UNIQUE and NOT NULL"
+        },
+        {
+          "id": "r3",
+          "text": "Non-NULL values must exist in the referenced table"
+        },
+        {
+          "id": "r4",
+          "text": "No two rows may share the same non-NULL value"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "PRIMARY KEY identifies rows, FOREIGN KEY points to existing rows, UNIQUE forbids duplicates, CHECK tests a condition."
+  },
+  {
+    "key": "sql.isolation.tf.01",
+    "concept": "sql.isolation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Under READ COMMITTED, a transaction can read changes that another transaction has made but not yet committed.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "READ COMMITTED never shows uncommitted changes; reading them is a dirty read, which PostgreSQL never allows."
+  },
+  {
+    "key": "sql.isolation.mc.01",
+    "concept": "sql.isolation",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In PostgreSQL at READ COMMITTED, two transactions run UPDATE accounts SET balance = balance - 10 WHERE id = 1 at the same time. What happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Both read the original balance, so the second overwrites the first and one deduction is lost"
+        },
+        {
+          "id": "b",
+          "text": "The second UPDATE fails with a serialization error"
+        },
+        {
+          "id": "c",
+          "text": "The second UPDATE waits for the first to commit, then subtracts from the new balance"
+        },
+        {
+          "id": "d",
+          "text": "The second UPDATE reads the first one's uncommitted balance without waiting"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "An UPDATE that computes from the current value is safe: a concurrent update of the same row waits, then re-reads it."
+  },
+  {
+    "key": "sql.isolation.order.01",
+    "concept": "sql.isolation",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Order the SQL standard isolation levels from weakest to strongest.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "SERIALIZABLE"
+        },
+        {
+          "id": "s2",
+          "text": "READ COMMITTED"
+        },
+        {
+          "id": "s3",
+          "text": "READ UNCOMMITTED"
+        },
+        {
+          "id": "s4",
+          "text": "REPEATABLE READ"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s2",
+          "s4",
+          "s1"
+        ]
+      }
+    },
+    "remember": "READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ, SERIALIZABLE: each level rules out more anomalies."
+  },
+  {
+    "key": "sql.isolation.bug.01",
+    "concept": "sql.isolation",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "When two customers buy the same product at the same moment, stock sometimes drops by 1 instead of 2. Concurrent purchases should run one after the other. Find the bug (PostgreSQL, READ COMMITTED).",
+      "code": "async function buy(client, productId) {\n  await client.query(\"BEGIN\");\n  const rows = await client.query(\n    \"SELECT stock FROM products WHERE id = $1\",\n    [productId]);\n  const stock = rows[0].stock;\n  if (stock < 1) {\n    await client.query(\"ROLLBACK\");\n    throw new Error(\"Sold out\");\n  }\n  await client.query(\n    \"UPDATE products SET stock = $1 WHERE id = $2\",\n    [stock - 1, productId]);\n  await client.query(\"COMMIT\");\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Append FOR SHARE to the SELECT"
+        },
+        {
+          "id": "f2",
+          "text": "Append FOR KEY SHARE to the SELECT"
+        },
+        {
+          "id": "f3",
+          "text": "Append FOR UPDATE to the SELECT"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f3",
+        "acceptLines": [
+          3,
+          5
+        ]
+      }
+    },
+    "remember": "Lock rows you read and then overwrite with SELECT ... FOR UPDATE; FOR SHARE can deadlock, and FOR KEY SHARE does not block the UPDATE."
+  },
+  {
+    "key": "sql.query-order.tf.01",
+    "concept": "sql.query-order",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "ORDER BY is evaluated after the SELECT list, so it can use a column alias defined in SELECT.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "SELECT runs after WHERE and before ORDER BY, so an alias works in ORDER BY but not in WHERE."
+  },
+  {
+    "key": "sql.query-order.mc.01",
+    "concept": "sql.query-order",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "language": "sql",
+    "content": {
+      "prompt": "Why does this query fail?",
+      "code": "SELECT price * qty AS line_total\nFROM items\nWHERE line_total > 100;",
+      "options": [
+        {
+          "id": "a",
+          "text": "WHERE runs before SELECT, so line_total does not exist yet"
+        },
+        {
+          "id": "b",
+          "text": "An alias must be written in double quotes to be referenced"
+        },
+        {
+          "id": "c",
+          "text": "Aliases cannot be given to calculated columns"
+        },
+        {
+          "id": "d",
+          "text": "Filters on calculated values must use HAVING instead"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "WHERE runs before SELECT; repeat the expression or filter in an outer query to use an alias."
+  },
+  {
+    "key": "sql.query-order.order.01",
+    "concept": "sql.query-order",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Put these clauses in the order SQL logically evaluates them.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "SELECT"
+        },
+        {
+          "id": "s2",
+          "text": "WHERE"
+        },
+        {
+          "id": "s3",
+          "text": "ORDER BY"
+        },
+        {
+          "id": "s4",
+          "text": "HAVING"
+        },
+        {
+          "id": "s5",
+          "text": "GROUP BY"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Logical order: FROM, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT."
+  },
+  {
+    "key": "sql.query-order.out.01",
+    "concept": "sql.query-order",
+    "type": "output",
+    "difficulty": 3,
+    "language": "sql",
+    "content": {
+      "prompt": "What does this query return?",
+      "code": "WITH sales(rep, amount) AS (\n  VALUES ('ana', 50), ('ben', 70), ('ana', 45),\n         ('cid', 35), ('ben', 30), ('cid', 55)\n)\nSELECT rep, sum(amount) AS total\nFROM sales\nWHERE amount > 30\nGROUP BY rep\nORDER BY total DESC\nLIMIT 1;",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 row: (ben, 100)"
+        },
+        {
+          "id": "b",
+          "text": "1 row: (ana, 50)"
+        },
+        {
+          "id": "c",
+          "text": "1 row: (ben, 70)"
+        },
+        {
+          "id": "d",
+          "text": "1 row: (ana, 95)"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "LIMIT is applied last, to the sorted groups; WHERE removed rows before they were summed."
+  },
+  {
+    "key": "sql.views.tf.01",
+    "concept": "sql.views",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A regular (non-materialized) view stores a copy of its result rows.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A view is a saved query that runs each time it is used; only a materialized view stores rows."
+  },
+  {
+    "key": "sql.views.mc.01",
+    "concept": "sql.views",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is a common reason to create a regular view?",
+      "options": [
+        {
+          "id": "a",
+          "text": "To cache the query's result rows so that later reads get faster"
+        },
+        {
+          "id": "b",
+          "text": "To give a complex query a name and reuse it like a table"
+        },
+        {
+          "id": "c",
+          "text": "To keep a backup copy of a table"
+        },
+        {
+          "id": "d",
+          "text": "To add an index to a query"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Views name and reuse queries and can hide columns; they do not cache data or speed queries up by themselves."
+  },
+  {
+    "key": "sql.views.out.01",
+    "concept": "sql.views",
+    "type": "output",
+    "difficulty": 2,
+    "language": "sql",
+    "content": {
+      "prompt": "What does the last statement return?",
+      "code": "CREATE TABLE products (name text, price int);\nINSERT INTO products\nVALUES ('pen', 2), ('cup', 8);\nCREATE VIEW cheap AS\n  SELECT name FROM products WHERE price < 5;\nINSERT INTO products VALUES ('ink', 4);\nSELECT count(*) FROM cheap;",
+      "options": [
+        {
+          "id": "a",
+          "text": "1"
+        },
+        {
+          "id": "b",
+          "text": "3"
+        },
+        {
+          "id": "c",
+          "text": "2"
+        },
+        {
+          "id": "d",
+          "text": "An error: the view must be refreshed first"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A regular view runs its query on every use, so it always reflects the current table rows."
+  },
+  {
+    "key": "sql.views.odd.01",
+    "concept": "sql.views",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "In PostgreSQL, three of these are true of a materialized view. Which one is the odd one out because it is false?",
+      "items": [
+        {
+          "id": "a",
+          "text": "It stores its result rows on disk"
+        },
+        {
+          "id": "b",
+          "text": "It can have indexes of its own"
+        },
+        {
+          "id": "c",
+          "text": "REFRESH ... CONCURRENTLY needs a unique index on it"
+        },
+        {
+          "id": "d",
+          "text": "It updates itself whenever a base table changes"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "A materialized view is a stored snapshot: it can be indexed, and it changes only on REFRESH MATERIALIZED VIEW."
+  }
+]

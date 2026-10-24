@@ -27,6 +27,8 @@ public class HealthTests(WebApplicationFactory<Program> factory) : IClassFixture
         {
             b.UseSetting("ConnectionStrings:Default", "Host=db.invalid;Database=unused");
             b.UseSetting("Auth:JwtSigningKey", TestApp.JwtSigningKey);
+            b.UseSetting("Game:TickEnabled", "false");
+            b.UseSetting("Database:SeedOnStartup", "false");
         })
         .CreateClient();
 

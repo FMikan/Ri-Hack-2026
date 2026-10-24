@@ -1,6 +1,9 @@
 using App.Domain.Content;
+using App.Domain.Matches;
+using App.Domain.Progress;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace App.Application;
 
@@ -12,6 +15,15 @@ public interface IAppDbContext
     DbSet<UserTopic> UserTopics { get; }
     DbSet<Topic> Topics { get; }
     DbSet<Concept> Concepts { get; }
+    DbSet<Question> Questions { get; }
+    DbSet<ConceptMastery> ConceptMastery { get; }
+    DbSet<Answer> Answers { get; }
+    DbSet<Match> Matches { get; }
+    DbSet<MatchPlayer> MatchPlayers { get; }
+    DbSet<MatchQuestion> MatchQuestions { get; }
+    DbSet<MatchAnswer> MatchAnswers { get; }
+
+    DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
