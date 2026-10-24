@@ -11,6 +11,7 @@ import { PlayCard } from './PlayCard'
 import { LevelTile, TierTile } from './ProgressTiles'
 import { RatingCard } from './RatingCard'
 import { SkillGraphCard } from './SkillGraphCard'
+import { Suggestion } from './Suggestion'
 import { TopicsCard } from './TopicsCard'
 
 // xl: three columns. Play spans the first two with tier and level under it, rating fills the right column,
@@ -65,6 +66,7 @@ function DashboardView({ data, reload }: { data: DashboardDto; reload: () => voi
       {/* The greeting sits in the top bar; the page keeps its heading for screen readers. */}
       <h1 className="sr-only">{t.dashboard.documentTitle}</h1>
       <Inbox inbox={data.inbox} />
+      <Suggestion data={data} />
       <div className={GRID}>
         <PlayCard me={me} locked={needsTopics} className="col-span-2 xl:col-start-1 xl:row-start-1" />
         {/* A new player picks topics right after the play card; everyone else sees them further down. */}

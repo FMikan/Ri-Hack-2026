@@ -1,8 +1,9 @@
-import { Target } from 'lucide-react'
+import { BookOpen, Target } from 'lucide-react'
 import { Link } from 'react-router'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useStartLesson } from '@/features/lesson/use-start-lesson'
 import { QUESTIONS_PER_MATCH, ratingText } from '@/lib/game'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
@@ -109,13 +110,20 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
       {result.rematchAvailable && opponent && <RematchPanel match={match} opponentName={opponentName} />}
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
+        {/* Every loss ends with a short lesson (game idea §11), so it leads when there is one. */}
+        {result.lessonAvailable && <LessonButton match={match} />}
+        {result.reviewAvailable && (
+          <Button asChild size="lg" variant="outline">
+            <Link to={`/match/${match.id}/review`}>{copy.review}</Link>
+          </Button>
+        )}
         {!opponent ? (
-          <Button asChild size="lg">
+          <Button asChild size="lg" variant={result.lessonAvailable ? 'outline' : 'default'}>
             <Link to="/practice">{copy.practiceAgain}</Link>
           </Button>
         ) : (
           again && (
-            <Button asChild size="lg">
+            <Button asChild size="lg" variant={result.lessonAvailable ? 'outline' : 'default'}>
               <Link to={again}>{copy.playAgain}</Link>
             </Button>
           )
@@ -125,6 +133,27 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
         </Button>
       </div>
     </section>
+  )
+}
+
+function LessonButton({ match }: { match: MatchStateDto }) {
+  const { t } = useLocale()
+  const result = match.result!
+  const lesson = useStartLesson(match.id, result.lessonId)
+
+  return (
+    <span className="grid justify-items-center gap-1">
+      <Button size="lg" aria-disabled={lesson.starting} onClick={lesson.start}>
+        <BookOpen aria-hidden="true" />
+        {result.lessonId ? t.match.result.openLesson : t.match.result.lesson}
+        {result.lessonRewardEligible && !result.lessonId && <span className="font-mono text-xs opacity-80">{t.match.result.lessonReward}</span>}
+      </Button>
+      {lesson.error && (
+        <span role="alert" className="text-xs text-destructive">
+          {lesson.error}
+        </span>
+      )}
+    </span>
   )
 }
 

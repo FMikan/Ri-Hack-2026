@@ -1,10 +1,9 @@
-import { Flag, Ghost, LoaderCircle, WifiOff } from 'lucide-react'
+import { Flag, Ghost, WifiOff } from 'lucide-react'
 import { createElement, useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAsync } from '@/hooks/use-async'
 import { usePoll } from '@/hooks/use-poll'
 import { useTicker } from '@/hooks/use-ticker'
 import { api, ApiError } from '@/lib/api-client'
@@ -16,6 +15,7 @@ import { topicIcon } from '@/lib/topic-icons'
 import { cn } from '@/lib/utils'
 import type { AnswerPayload, PlayerDto } from '@/types/api'
 import { AnswerChip } from './AnswerChip'
+import { Explanation } from './Explanation'
 import { PlayerAvatar } from './PlayerAvatar'
 import { QuestionBody } from './QuestionBody'
 import { ResultView } from './ResultView'
@@ -336,37 +336,6 @@ function QuestionStage({ snapshot, command, opponentName }: QuestionStageProps) 
         </p>
       )}
     </section>
-  )
-}
-
-// The AI explanation for untimed practice. Its first request can take a few seconds; when the AI is unavailable
-// (source 'static') only the "remember" line below it is shown.
-function Explanation({ questionId }: { questionId: string }) {
-  const { t } = useLocale()
-  const load = useCallback((signal: AbortSignal) => api.explanation(questionId, signal), [questionId])
-  const { data, loading } = useAsync(load)
-
-  if (loading)
-    return (
-      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-        <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
-        {t.match.explaining}
-      </p>
-    )
-  if (data?.source !== 'ai') return null
-  return (
-    <div className="grid gap-2 text-sm text-pretty">
-      {data.whyCorrect && (
-        <p>
-          <span className="font-medium text-success">{t.match.whyCorrect}:</span> {data.whyCorrect}
-        </p>
-      )}
-      {data.whyDistractor && (
-        <p>
-          <span className="font-medium text-destructive">{t.match.whyDistractor}:</span> {data.whyDistractor}
-        </p>
-      )}
-    </div>
   )
 }
 
