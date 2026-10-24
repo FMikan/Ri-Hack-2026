@@ -3,6 +3,10 @@
 Hackathon starter: React/Vite frontend (`frontend/`), ASP.NET Core .NET 10 API (`backend/`), PostgreSQL in
 Docker. See README.md for setup, URLs and troubleshooting.
 
+Product: a ranked 1v1 IT-knowledge quiz game. Spec is `docs/tehnicki-dokument.md` (schema §3, game rules §4,
+API contract §6, phases §1, test list §9); the game idea is `docs/Ri-Hack 4.0 — IDEJA IGRE v2.md`. Build
+test-first in the order of §9 and keep DTOs identical to §6.
+
 ## Branches
 
 Commit to `development` (or a feature branch). `main` is production: every push to it deploys to the VPS via
