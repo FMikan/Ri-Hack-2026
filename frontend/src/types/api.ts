@@ -94,7 +94,7 @@ export interface UserRefDto {
   tier: Tier
   rating: number
   isProvisional: boolean
-  title?: string | null
+  title?: string | null // name of the equipped title
   equipment: Partial<Record<EquipmentSlot, string>> // assetKey per slot
 }
 
@@ -115,7 +115,7 @@ export interface MeDto extends UserRefDto {
   xp: number
   level: number
   xpToNextLevel: number
-  seasonPoints: number
+  seasonPoints: number // SP of the season running now
   streak: StreakDto
   activeTopicIds: Uuid[]
   equippedTitleId?: Uuid | null
@@ -500,7 +500,7 @@ export interface PurchaseRequest {
 
 // PUT /api/me/equipment → MeDto. An owned item id puts it on, null takes it off, a missing slot stays (409 shop/not-owned).
 // UserRefDto.equipment then maps the slot to the item's assetKey.
-export type SetEquipmentRequest = Partial<Record<EquipmentSlot, Uuid | null>>
+export type SetEquipmentRequest = Partial<Record<EquipmentSlot | 'titleId', Uuid | null>> // titleId: an earned, active title
 
 // GET /api/me/daily-tasks (also dashboard.dailyTasks). A task that reached its target is paid 20 coins when this is next
 // read; all three pay 30 more (bonusAwarded).
@@ -704,4 +704,35 @@ export interface LeaderboardDto {
   entries: LeaderboardEntryDto[]
   me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] } | null // around includes my own row
   resetsAt?: Iso | null // weekly: next Monday 00:00 (Europe/Zagreb); season: the season's end
+}
+
+// GET /api/seasons/current. Seasons last 3 months; doubleLearningSp during the first two weeks (patched concepts pay 2×).
+export interface SeasonDto {
+  id: Uuid
+  number: number
+  startsAt: Iso
+  endsAt: Iso
+  doubleLearningSp: boolean
+}
+
+// GET /api/me/achievements: every achievement; earnedAt once earned, otherwise progress/target.
+export interface AchievementDto {
+  key: string // first_win, brilliant_10, streak_7, streak_30, streak_100, patched_50, giant_slayer, all_topics_50, daily_30
+  name: string
+  earnedAt?: Iso | null
+  progress?: number | null
+  target?: number | null
+}
+
+export type TitleKind = 'season' | 'knowledge' | 'weekly'
+
+// GET /api/me/titles, newest first. Equip one with PUT /api/me/equipment { titleId } (null takes it off).
+// count: how many times a weekly title was won; active: false for a knowledge title lost below 70 mastery.
+export interface TitleDto {
+  id: Uuid
+  key: string // 's1.top5', 's1.diamond', 'master.sql', 'weekly.top10'
+  name: string
+  kind: TitleKind
+  count: number
+  active: boolean
 }

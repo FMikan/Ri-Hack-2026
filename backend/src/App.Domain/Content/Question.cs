@@ -50,3 +50,15 @@ public static class QuestionJson
         return document.RootElement.GetProperty("answer").Clone();
     }
 }
+
+// Auto-calibration (idea §3): after 50 answers at its current difficulty, a question more than 85 % of players get right
+// moves a band down, one fewer than 30 % get right a band up (D1–D4).
+public static class QuestionCalibration
+{
+    public static int Next(int difficulty, int answers, double correctRatio)
+    {
+        if (answers < GameRules.CalibrationMinAnswers) return difficulty;
+        var next = correctRatio > GameRules.CalibrationEasyRatio ? difficulty - 1 : correctRatio < GameRules.CalibrationHardRatio ? difficulty + 1 : difficulty;
+        return Math.Clamp(next, 1, 4);
+    }
+}

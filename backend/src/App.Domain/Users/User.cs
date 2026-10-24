@@ -21,6 +21,8 @@ public class User
     public DateOnly? StreakLastActiveOn { get; set; }
     public int StreakFreezes { get; set; }
     public string EquipmentJson { get; set; } = "{}";
+    public Guid? EquippedTitleId { get; set; }
+    public Seasons.Title? EquippedTitle { get; set; } // always loaded with the user (AutoInclude): UserRefDto shows its name
     public Guid? CurrentMatchId { get; set; } // one active match per user
     public DateTimeOffset? LastSeenAt { get; set; }
     public required DateTimeOffset CreatedAt { get; init; }

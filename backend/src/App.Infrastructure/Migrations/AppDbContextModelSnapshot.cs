@@ -371,6 +371,10 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("reference_id");
 
+                    b.Property<Guid?>("SeasonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("season_id");
+
                     b.Property<int>("Sp")
                         .HasColumnType("integer")
                         .HasColumnName("sp");
@@ -394,6 +398,10 @@ namespace App.Infrastructure.Migrations
                     b.HasIndex("DedupeKey")
                         .IsUnique()
                         .HasDatabaseName("ix_reward_events_dedupe_key");
+
+                    b.HasIndex("SeasonId", "UserId")
+                        .HasDatabaseName("ix_reward_events_season_id_user_id")
+                        .HasFilter("sp <> 0");
 
                     b.HasIndex("UserId", "CreatedAt")
                         .IsDescending(false, true)
@@ -1153,6 +1161,10 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("question_type");
 
+                    b.Property<DateTimeOffset?>("RevertedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reverted_at");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1272,6 +1284,190 @@ namespace App.Infrastructure.Migrations
 
                             t.HasCheckConstraint("ck_concept_mastery_review_step", "review_step between 1 and 5");
                         });
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.Season", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_seasons");
+
+                    b.HasIndex("Number")
+                        .IsUnique()
+                        .HasDatabaseName("ix_seasons_number");
+
+                    b.ToTable("seasons", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.Title", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_titles");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_titles_key");
+
+                    b.ToTable("titles", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_titles_kind", "kind in ('season', 'knowledge', 'weekly')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.UserAchievement", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTimeOffset>("EarnedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("earned_at");
+
+                    b.HasKey("UserId", "Key")
+                        .HasName("pk_user_achievements");
+
+                    b.ToTable("user_achievements", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.UserSeason", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("SeasonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("season_id");
+
+                    b.Property<string>("BestTier")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("best_tier");
+
+                    b.Property<int?>("FinalRank")
+                        .HasColumnType("integer")
+                        .HasColumnName("final_rank");
+
+                    b.Property<int>("Sp")
+                        .HasColumnType("integer")
+                        .HasColumnName("sp");
+
+                    b.HasKey("UserId", "SeasonId")
+                        .HasName("pk_user_seasons");
+
+                    b.HasIndex("SeasonId", "Sp")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_user_seasons_season_id_sp");
+
+                    b.ToTable("user_seasons", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_user_seasons_best_tier", "best_tier in ('bronze', 'silver', 'gold', 'platinum', 'diamond', 'master')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.UserTitle", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("TitleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("title_id");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean")
+                        .HasColumnName("active");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer")
+                        .HasColumnName("count");
+
+                    b.Property<DateTimeOffset>("EarnedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("earned_at");
+
+                    b.HasKey("UserId", "TitleId")
+                        .HasName("pk_user_titles");
+
+                    b.HasIndex("TitleId")
+                        .HasDatabaseName("ix_user_titles_title_id");
+
+                    b.ToTable("user_titles", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.WeeklyResult", b =>
+                {
+                    b.Property<DateOnly>("WeekStart")
+                        .HasColumnType("date")
+                        .HasColumnName("week_start");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer")
+                        .HasColumnName("points");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("integer")
+                        .HasColumnName("rank");
+
+                    b.HasKey("WeekStart", "UserId")
+                        .HasName("pk_weekly_results");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_weekly_results_user_id");
+
+                    b.ToTable("weekly_results", (string)null);
                 });
 
             modelBuilder.Entity("App.Domain.Social.FriendChallenge", b =>
@@ -1505,6 +1701,10 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("equipment");
 
+                    b.Property<Guid?>("EquippedTitleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("equipped_title_id");
+
                     b.Property<bool>("IsGrandmaster")
                         .HasColumnType("boolean")
                         .HasColumnName("is_grandmaster");
@@ -1584,6 +1784,9 @@ namespace App.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");
+
+                    b.HasIndex("EquippedTitleId")
+                        .HasDatabaseName("ix_users_equipped_title_id");
 
                     b.HasIndex("UsernameNormalized")
                         .IsUnique()
@@ -1723,6 +1926,12 @@ namespace App.Infrastructure.Migrations
 
             modelBuilder.Entity("App.Domain.Economy.RewardEvent", b =>
                 {
+                    b.HasOne("App.Domain.Seasons.Season", null)
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_reward_events_seasons_season_id");
+
                     b.HasOne("App.Domain.Users.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1984,6 +2193,60 @@ namespace App.Infrastructure.Migrations
                         .HasConstraintName("fk_concept_mastery_users_user_id");
                 });
 
+            modelBuilder.Entity("App.Domain.Seasons.UserAchievement", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_achievements_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.UserSeason", b =>
+                {
+                    b.HasOne("App.Domain.Seasons.Season", null)
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_seasons_seasons_season_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_seasons_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.UserTitle", b =>
+                {
+                    b.HasOne("App.Domain.Seasons.Title", null)
+                        .WithMany()
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_titles_titles_title_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_titles_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Seasons.WeeklyResult", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_weekly_results_users_user_id");
+                });
+
             modelBuilder.Entity("App.Domain.Social.FriendChallenge", b =>
                 {
                     b.HasOne("App.Domain.Users.User", null)
@@ -2063,6 +2326,14 @@ namespace App.Infrastructure.Migrations
                         .HasForeignKey("CurrentMatchId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_users_matches_current_match_id");
+
+                    b.HasOne("App.Domain.Seasons.Title", "EquippedTitle")
+                        .WithMany()
+                        .HasForeignKey("EquippedTitleId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_users_titles_equipped_title_id");
+
+                    b.Navigation("EquippedTitle");
                 });
 
             modelBuilder.Entity("App.Domain.Users.UserTopic", b =>

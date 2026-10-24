@@ -16,5 +16,7 @@ public static class LeaderboardEndpoints
                 ? leaderboards.GetAsync(user.UserId(), parsed, topic, ct)
                 : throw new AppException(ErrorCodes.LeaderboardNotFound, "This leaderboard does not exist.", 404))
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapGet("/seasons/current", (LeaderboardService leaderboards, CancellationToken ct) => leaderboards.CurrentSeasonAsync(ct));
     }
 }

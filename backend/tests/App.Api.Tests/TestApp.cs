@@ -9,6 +9,7 @@ using App.Application.Matches;
 using App.Application.Queue;
 using App.Application.Seasons;
 using App.Domain.Content;
+using App.Domain.Seasons;
 using App.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -93,6 +94,10 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
 #pragma warning disable EF1002
         await db.Database.ExecuteSqlRawAsync($"truncate {string.Join(", ", tables.Select(t => $"\"{t}\""))} cascade");
 #pragma warning restore EF1002
+        // A season that started a month ago, so patched concepts pay normal SP unless a test moves the start.
+        var now = Clock.GetUtcNow();
+        db.Seasons.Add(new Season { Number = 1, StartsAt = now.AddDays(-30), EndsAt = now.AddDays(60) });
+        await db.SaveChangesAsync();
     }
 
     public async Task<T> InDbAsync<T>(Func<AppDbContext, Task<T>> action)

@@ -34,13 +34,19 @@ public static class MeEndpoints
 
         group.MapGet("/daily-tasks", (ClaimsPrincipal user, DailyService daily, CancellationToken ct) => daily.TasksAsync(user.UserId(), ct));
 
-        // { avatarFrame?, banner?, boardTheme?, nameColor?, cardBackground? }: an owned item id, or null to take it off.
+        // { avatarFrame?, banner?, boardTheme?, nameColor?, cardBackground?, titleId? }: an owned item (earned title) id, or null to take it off.
         group.MapPut("/equipment", (Dictionary<string, Guid?> slots, ClaimsPrincipal user, MeService me, CancellationToken ct) =>
             me.SetEquipmentAsync(user.UserId(), slots, ct))
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         // Win rate, accuracy and time per question type, the most common blunder type, rating history.
         group.MapGet("/stats", (ClaimsPrincipal user, ProfileService profiles, CancellationToken ct) => profiles.GetStatsAsync(user.UserId(), ct));
+
+        // Every achievement: earnedAt once earned, otherwise progress/target. Newly reached ones are recorded on read.
+        group.MapGet("/achievements", (ClaimsPrincipal user, ProfileService profiles, CancellationToken ct) => profiles.GetAchievementsAsync(user.UserId(), ct));
+
+        // Season, knowledge and weekly titles; equip one with PUT /api/me/equipment { titleId }.
+        group.MapGet("/titles", (ClaimsPrincipal user, ProfileService profiles, CancellationToken ct) => profiles.GetTitlesAsync(user.UserId(), ct));
 
         group.MapGet("/knowledge-map", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetKnowledgeMapAsync(user.UserId(), ct));
 

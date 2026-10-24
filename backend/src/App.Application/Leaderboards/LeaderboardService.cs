@@ -1,4 +1,5 @@
 using App.Application.Me;
+using App.Application.Seasons;
 using App.Application.Social;
 using App.Domain;
 using App.Domain.Matches;
@@ -18,20 +19,22 @@ public record LeaderboardMeDto(LeaderboardEntryDto Entry, LeaderboardEntryDto[] 
 
 public record LeaderboardDto(Board Board, LeaderboardEntryDto[] Entries, LeaderboardMeDto? Me, DateTimeOffset? ResetsAt);
 
-public record WeeklyPoints(Guid UserId, int Points);
+public record LeaderboardRow(Guid UserId, int Value);
+
+// doubleLearningSp: the first two weeks, when patched concepts pay double SP.
+public record SeasonDto(Guid Id, int Number, DateTimeOffset StartsAt, DateTimeOffset EndsAt, bool DoubleLearningSp);
 
 // Five boards (idea §14), each the top 100 plus my own position. Ties keep a stable order (username).
 public class LeaderboardService(IAppDbContext db, TimeProvider time)
 {
-    private record Row(Guid UserId, int Value);
-
     public async Task<LeaderboardDto> GetAsync(Guid userId, Board board, string? topicSlug, CancellationToken ct)
     {
         var now = time.GetUtcNow();
-        (List<Row> Rows, DateTimeOffset? ResetsAt) result = board switch
+        (List<LeaderboardRow> Rows, DateTimeOffset? ResetsAt) result = board switch
         {
             Board.Global => (await GlobalAsync(ct), null),
-            Board.Weekly => (await WeeklyAsync(now, ct), Clock.StartOf(Clock.WeekStart(now).AddDays(7))),
+            Board.Season => await SeasonAsync(now, ct),
+            Board.Weekly => (await WeekAsync(Clock.WeekStart(now), ct), Clock.StartOf(Clock.WeekStart(now).AddDays(7))),
             Board.Topic => (await TopicAsync(topicSlug, ct), null),
             Board.Friends => (await FriendsAsync(userId, ct), null),
             _ => throw new AppException(ErrorCodes.LeaderboardNotFound, "This leaderboard does not exist.", 404),
@@ -50,32 +53,46 @@ public class LeaderboardService(IAppDbContext db, TimeProvider time)
             me < 0 ? null : new LeaderboardMeDto(Entry(me), around.Select(Entry).ToArray()), resetsAt);
     }
 
-    // Points scored in ranked and ghost matches that finished in [from, to) (idea §13); also the weekly snapshot.
-    public static IQueryable<WeeklyPoints> WeeklyPointsOf(IAppDbContext db, DateTimeOffset from, DateTimeOffset to) =>
-        db.MatchPlayers.Where(p => p.Kind == SeatKind.Human && p.UserId != null)
+    public async Task<SeasonDto> CurrentSeasonAsync(CancellationToken ct)
+    {
+        var now = time.GetUtcNow();
+        var season = await db.CurrentSeasonAsync(now, ct);
+        return new SeasonDto(season.Id, season.Number, season.StartsAt, season.EndsAt, season.DoubleLearningSp(now));
+    }
+
+    // Points scored in ranked and ghost matches that finished in the week starting `week` (idea §13), best first.
+    // Also the Monday snapshot (Housekeeping).
+    public async Task<List<LeaderboardRow>> WeekAsync(DateOnly week, CancellationToken ct)
+    {
+        var (from, to) = (Clock.StartOf(week), Clock.StartOf(week.AddDays(7)));
+        var points = await db.MatchPlayers.Where(p => p.Kind == SeatKind.Human && p.UserId != null)
             .Join(db.Matches.Where(m => (m.Kind == MatchKind.Ranked || m.Kind == MatchKind.Ghost) && m.FinishedAt >= from && m.FinishedAt < to
                     && m.ResultReason != MatchResultReason.Aborted),
                 p => p.MatchId, m => m.Id, (p, _) => p)
             .GroupBy(p => p.UserId!.Value)
-            .Select(g => new WeeklyPoints(g.Key, g.Sum(p => p.Score)));
+            .Select(g => new { UserId = g.Key, Points = g.Sum(p => p.Score) })
+            .ToListAsync(ct);
+        return await OrderedAsync(points.Select(p => new LeaderboardRow(p.UserId, p.Points)), ct);
+    }
+
+    // Season points of the season running now; resets when it ends.
+    private async Task<(List<LeaderboardRow>, DateTimeOffset?)> SeasonAsync(DateTimeOffset now, CancellationToken ct)
+    {
+        var season = await db.CurrentSeasonAsync(now, ct);
+        var rows = await db.UserSeasons.Where(s => s.SeasonId == season.Id && s.Sp > 0).Select(s => new { s.UserId, s.Sp }).ToListAsync(ct);
+        return (await OrderedAsync(rows.Select(r => new LeaderboardRow(r.UserId, r.Sp)), ct), season.EndsAt);
+    }
 
     // Elo, without provisional players (idea §14: 10+ ranked matches).
-    private async Task<List<Row>> GlobalAsync(CancellationToken ct) =>
+    private async Task<List<LeaderboardRow>> GlobalAsync(CancellationToken ct) =>
         (await db.Users.Where(u => u.RankedMatches >= GameRules.ProvisionalMatches)
             .OrderByDescending(u => u.Rating).ThenBy(u => u.UsernameNormalized)
             .Select(u => new { u.Id, u.Rating })
             .ToListAsync(ct))
-        .Select(u => new Row(u.Id, u.Rating)).ToList();
-
-    private async Task<List<Row>> WeeklyAsync(DateTimeOffset now, CancellationToken ct)
-    {
-        var week = Clock.WeekStart(now);
-        var points = await WeeklyPointsOf(db, Clock.StartOf(week), Clock.StartOf(week.AddDays(7))).ToListAsync(ct);
-        return await OrderedAsync(points.Select(p => new Row(p.UserId, p.Points)), ct);
-    }
+        .Select(u => new LeaderboardRow(u.Id, u.Rating)).ToList();
 
     // Graduated concepts of the topic; topic mastery breaks ties. Everyone who answered something in it is on the board.
-    private async Task<List<Row>> TopicAsync(string? slug, CancellationToken ct)
+    private async Task<List<LeaderboardRow>> TopicAsync(string? slug, CancellationToken ct)
     {
         var topic = await db.Topics.FirstOrDefaultAsync(t => t.Slug == slug, ct)
             ?? throw new AppException(ErrorCodes.TopicNotFound, "The topic board needs ?topic=<slug> of an existing topic.", 404);
@@ -85,22 +102,22 @@ public class LeaderboardService(IAppDbContext db, TimeProvider time)
                 .Join(db.Users, x => x.UserId, u => u.Id, (x, u) => new { x.UserId, x.Graduated, x.Mastery, u.UsernameNormalized })
                 .OrderByDescending(x => x.Graduated).ThenByDescending(x => x.Mastery).ThenBy(x => x.UsernameNormalized)
                 .ToListAsync(ct))
-            .Select(x => new Row(x.UserId, x.Graduated)).ToList();
+            .Select(x => new LeaderboardRow(x.UserId, x.Graduated)).ToList();
     }
 
     // Me and my accepted friends by Elo (provisional ratings included: it is a private board).
-    private async Task<List<Row>> FriendsAsync(Guid userId, CancellationToken ct)
+    private async Task<List<LeaderboardRow>> FriendsAsync(Guid userId, CancellationToken ct)
     {
         var friends = SocialService.FriendIds(db, userId);
         return (await db.Users.Where(u => u.Id == userId || friends.Contains(u.Id))
                 .OrderByDescending(u => u.Rating).ThenBy(u => u.UsernameNormalized)
                 .Select(u => new { u.Id, u.Rating })
                 .ToListAsync(ct))
-            .Select(u => new Row(u.Id, u.Rating)).ToList();
+            .Select(u => new LeaderboardRow(u.Id, u.Rating)).ToList();
     }
 
     // Highest value first, ties by username.
-    private async Task<List<Row>> OrderedAsync(IEnumerable<Row> rows, CancellationToken ct)
+    public async Task<List<LeaderboardRow>> OrderedAsync(IEnumerable<LeaderboardRow> rows, CancellationToken ct)
     {
         var list = rows.ToList();
         var ids = list.Select(r => r.UserId).ToList();

@@ -5,6 +5,7 @@ using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Matchmaking;
 using App.Domain.Progress;
+using App.Domain.Seasons;
 using App.Domain.Social;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,12 @@ public interface IAppDbContext
     DbSet<ConceptLessonCards> ConceptLessonCards { get; }
     DbSet<Friendship> Friendships { get; }
     DbSet<FriendChallenge> FriendChallenges { get; }
+    DbSet<Season> Seasons { get; }
+    DbSet<UserSeason> UserSeasons { get; }
+    DbSet<Title> Titles { get; }
+    DbSet<UserTitle> UserTitles { get; }
+    DbSet<UserAchievement> UserAchievements { get; }
+    DbSet<WeeklyResult> WeeklyResults { get; }
 
     DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)
 

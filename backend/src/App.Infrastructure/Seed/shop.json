@@ -54,5 +54,59 @@
     "price": 100,
     "rarity": "common",
     "assetKey": "streak-freeze"
+  },
+  {
+    "key": "frame.season-bronze",
+    "kind": "avatar_frame",
+    "name": "Season bronze frame",
+    "price": 1000,
+    "rarity": "common",
+    "assetKey": "frame-season-bronze",
+    "seasonDropTier": "bronze"
+  },
+  {
+    "key": "frame.season-silver",
+    "kind": "avatar_frame",
+    "name": "Season silver frame",
+    "price": 1000,
+    "rarity": "common",
+    "assetKey": "frame-season-silver",
+    "seasonDropTier": "silver"
+  },
+  {
+    "key": "frame.season-gold",
+    "kind": "avatar_frame",
+    "name": "Season gold frame",
+    "price": 1000,
+    "rarity": "rare",
+    "assetKey": "frame-season-gold",
+    "seasonDropTier": "gold"
+  },
+  {
+    "key": "frame.season-platinum",
+    "kind": "avatar_frame",
+    "name": "Season platinum frame",
+    "price": 1000,
+    "rarity": "rare",
+    "assetKey": "frame-season-platinum",
+    "seasonDropTier": "platinum"
+  },
+  {
+    "key": "frame.season-diamond",
+    "kind": "avatar_frame",
+    "name": "Season diamond frame",
+    "price": 1000,
+    "rarity": "epic",
+    "assetKey": "frame-season-diamond",
+    "seasonDropTier": "diamond"
+  },
+  {
+    "key": "frame.season-master",
+    "kind": "avatar_frame",
+    "name": "Season master frame",
+    "price": 1000,
+    "rarity": "epic",
+    "assetKey": "frame-season-master",
+    "seasonDropTier": "master"
   }
 ]

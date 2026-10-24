@@ -17,10 +17,17 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
         await ToDtoAsync(await LoadAsync(userId, cancellationToken), cancellationToken);
 
     // Slot → owned item id; null takes the slot off, a missing slot stays as it is. Stored as slot → assetKey,
-    // which is what every UserRefDto shows. Other keys (titleId arrives with titles in F5) are ignored.
+    // which is what every UserRefDto shows. "titleId" equips an earned, active title (its name shows next to mine).
     public async Task<MeDto> SetEquipmentAsync(Guid userId, Dictionary<string, Guid?> slots, CancellationToken cancellationToken)
     {
         var user = await LoadAsync(userId, cancellationToken);
+        if (slots.TryGetValue("titleId", out var titleId))
+        {
+            if (titleId is { } id && !await db.UserTitles.AnyAsync(t => t.UserId == userId && t.TitleId == id && t.Active, cancellationToken))
+                throw new AppException(ErrorCodes.ShopNotOwned, "You have not earned this title.");
+            user.EquippedTitle = titleId is { } earned ? await db.Titles.FirstAsync(t => t.Id == earned, cancellationToken) : null;
+            user.EquippedTitleId = titleId;
+        }
         var equipment = JsonSerializer.Deserialize<Dictionary<string, string>>(user.EquipmentJson) ?? [];
         var known = Enum.GetValues<ShopItemKind>().Select(ShopItem.SlotOf).OfType<string>().ToHashSet();
         foreach (var (slot, itemId) in slots.Where(s => known.Contains(s.Key)))
@@ -229,18 +236,21 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
 
     public static double Completion(int graduated, int concepts) => concepts == 0 ? 0 : 100.0 * graduated / concepts;
 
-    // ponytail: season points are the ledger's SP sum until seasons (F5) give them a season_id and a reset.
+    // Season points of the season running now (0 before the first SP of a season).
     public async Task<MeDto> ToDtoAsync(User user, CancellationToken cancellationToken)
     {
         var self = UserRefDto.From(user);
-        var today = Clock.Today(time.GetUtcNow());
-        var seasonPoints = await db.RewardEvents.Where(e => e.UserId == user.Id).SumAsync(e => e.Sp, cancellationToken);
+        var now = time.GetUtcNow();
+        var today = Clock.Today(now);
+        var seasonPoints = await db.UserSeasons
+            .Where(s => s.UserId == user.Id && db.Seasons.Any(x => x.Id == s.SeasonId && x.StartsAt <= now && x.EndsAt > now))
+            .Select(s => s.Sp).FirstOrDefaultAsync(cancellationToken);
         return new(
             self.Id, self.Username, self.Avatar, self.Tier, self.Rating, self.IsProvisional, self.Title, self.Equipment,
             user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
             user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), seasonPoints,
             new StreakDto(Streaks.Current(user, today), user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == today),
-            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt);
+            user.Topics.Select(t => t.TopicId).ToArray(), user.EquippedTitleId, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt);
     }
 
     private Task<bool> InQueueAsync(Guid userId, CancellationToken cancellationToken) =>

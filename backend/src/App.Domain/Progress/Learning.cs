@@ -48,6 +48,7 @@ public class Answer
     public AnswerLabel? Label { get; init; }
     public double MasteryBefore { get; set; } // both set when the answer is recorded (LearningLog)
     public double MasteryAfter { get; set; }
+    public DateTimeOffset? RevertedAt { get; set; } // the question was retired and this answer's mastery change taken back
     public required DateTimeOffset CreatedAt { get; init; }
 }
 

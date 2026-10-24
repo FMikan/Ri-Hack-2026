@@ -3,6 +3,7 @@ using App.Application.Content;
 using App.Application.Economy;
 using App.Application.Me;
 using App.Application.Queue;
+using App.Application.Seasons;
 using App.Domain;
 using App.Domain.Content;
 using App.Domain.Economy;
@@ -420,10 +421,23 @@ public class MatchService(IAppDbContext db, Rewarder rewarder, TimeProvider time
         {
             RankedResult.Apply(match);
             foreach (var seat in match.Players.Where(p => p.Kind == SeatKind.Human)) await PayAsync(match, seat, ct);
+            if (match.Kind is MatchKind.Ranked or MatchKind.Ghost && match.ResultReason != MatchResultReason.Aborted) await RaiseBestTierAsync(match, ct);
         }
         await db.SaveChangesAsync(ct);
         if (!wasDone && match.Phase == MatchPhase.Done)
             await db.Users.Where(u => u.CurrentMatchId == match.Id).ExecuteUpdateAsync(s => s.SetProperty(u => u.CurrentMatchId, (Guid?)null), ct);
+    }
+
+    // The season remembers the best tier each player reached in it (the "S1 Diamond" title when it closes).
+    private async Task RaiseBestTierAsync(Match match, CancellationToken ct)
+    {
+        var season = await db.CurrentSeasonAsync(time.GetUtcNow(), ct);
+        foreach (var user in match.Players.Where(p => p.Kind == SeatKind.Human).Select(p => p.User!))
+        {
+            await db.JoinSeasonAsync(user.Id, season.Id, ct);
+            var row = await db.UserSeasons.FirstAsync(s => s.UserId == user.Id && s.SeasonId == season.Id, ct);
+            if (user.Tier > row.BestTier) row.BestTier = user.Tier;
+        }
     }
 
     // What the deck builder needs about the player: mastery in this topic, questions seen in 30 days, recently targeted concepts.

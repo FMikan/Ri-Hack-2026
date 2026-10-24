@@ -1,6 +1,7 @@
 using System.Text.Json;
 using App.Application.Content;
 using App.Application.Economy;
+using App.Application.Seasons;
 using App.Domain;
 using App.Domain.Content;
 using App.Domain.Economy;
@@ -138,7 +139,8 @@ public class LessonService(IAppDbContext db, ILessonGenerator generator, AiOptio
                 }
             }
             var spFromLearning = await rewarder.SpTodayAsync(userId, [RewardType.ConceptPatched], ct);
-            foreach (var grant in Rewards.ForLesson(userId, lesson.Id, eligible, spFromLearning))
+            var boost = (await db.CurrentSeasonAsync(now, ct)).DoubleLearningSp(now) ? 2 : 1;
+            foreach (var grant in Rewards.ForLesson(userId, lesson.Id, eligible, spFromLearning, boost))
                 if (await rewarder.GrantAsync(userId, grant, ct))
                     rewards = new RewardsDto(rewards.Coins + grant.Coins, rewards.Sp + grant.Sp, rewards.Xp + grant.Xp);
             await rewarder.RecordActivityAsync(await db.Users.FirstAsync(u => u.Id == userId, ct), ct);

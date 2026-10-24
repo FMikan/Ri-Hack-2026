@@ -4,6 +4,7 @@ using App.Application.Content;
 using App.Domain;
 using App.Domain.Content;
 using App.Domain.Progress;
+using App.Domain.Seasons;
 using App.Domain.Users;
 
 namespace App.Application.Me;
@@ -11,9 +12,10 @@ namespace App.Application.Me;
 // Mirrors docs/tehnicki-dokument.md §6.3. Keep frontend/src/types/api.ts in sync.
 public record UserRefDto(Guid Id, string Username, string Avatar, string Tier, int Rating, bool IsProvisional, string? Title, Dictionary<string, string> Equipment)
 {
-    // Equipment is stored as slot → assetKey (PUT /api/me/equipment). A Grandmaster shows that instead of the tier.
+    // Equipment is stored as slot → assetKey (PUT /api/me/equipment). A Grandmaster shows that instead of the tier;
+    // the equipped title comes with every loaded user (AutoInclude).
     public static UserRefDto From(User user) =>
-        new(user.Id, user.Username, user.Avatar, user.IsGrandmaster ? "grandmaster" : user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, null,
+        new(user.Id, user.Username, user.Avatar, user.IsGrandmaster ? "grandmaster" : user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, user.EquippedTitle?.Name,
             JsonSerializer.Deserialize<Dictionary<string, string>>(user.EquipmentJson) ?? []);
 }
 
@@ -85,3 +87,8 @@ public record PublicStatsDto(int Matches, double WinRate, int ConceptsGraduated)
 
 // What anyone (or only friends, by profile_visibility) sees: topic-level progress, never concept mastery.
 public record PublicProfileDto(UserRefDto User, PublicTopicDto[] Topics, string[] Titles, string[] Achievements, PublicStatsDto Stats);
+
+// progress/target only for achievements still to earn; earnedAt once earned.
+public record AchievementDto(string Key, string Name, DateTimeOffset? EarnedAt, int? Progress, int? Target);
+
+public record TitleDto(Guid Id, string Key, string Name, TitleKind Kind, int Count, bool Active);

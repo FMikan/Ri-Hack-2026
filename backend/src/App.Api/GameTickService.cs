@@ -1,6 +1,7 @@
 using App.Application.Matches;
 using App.Application.Queue;
 using App.Application.Seasons;
+using App.Domain;
 
 namespace App.Api;
 
@@ -13,6 +14,7 @@ public class GameTickService(IServiceScopeFactory scopes, TimeProvider time, ILo
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1), time);
+        DateOnly? lastDay = null;
         for (var tick = 0L; await timer.WaitForNextTickAsync(stoppingToken); tick++)
         {
             if (tick % 60 == 0)
@@ -20,7 +22,15 @@ public class GameTickService(IServiceScopeFactory scopes, TimeProvider time, ILo
                 try
                 {
                     using var scope = scopes.CreateScope();
-                    await scope.ServiceProvider.GetRequiredService<HousekeepingService>().RunAsync(stoppingToken);
+                    var housekeeping = scope.ServiceProvider.GetRequiredService<HousekeepingService>();
+                    await housekeeping.RunAsync(stoppingToken);
+                    // Once a local day (and once at startup): question difficulty auto-calibration.
+                    var today = Clock.Today(time.GetUtcNow());
+                    if (lastDay != today)
+                    {
+                        await housekeeping.DailyAsync(stoppingToken);
+                        lastDay = today;
+                    }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
