@@ -31,9 +31,9 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F0 Auth i profil** | register, login, refresh (rotacija + opoziv obitelji), logout, `/api/me`, odabir 3–5 tema, teme i koncepti, dashboard | Korisnik se registrira i vidi dashboard s temama | gotovo, u `development` |
 | **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka | gotovo, u `development` |
 | **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, u `development` |
-| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, PR `feature/f2-review-lessons` (nagrade poduke se knjiže u F4) |
-| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | nije počelo |
-| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | nije počelo |
+| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, u `development` (nagrade poduke se knjiže u F4) |
+| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | gotovo, u `development` (F3a red, veto, živi duel, Elo, tierovi; F3b revanš, ghost duel) |
+| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | gotovo, PR `feature/f4a-ledger` (F4a ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak; F4b dnevni zadaci, dnevni izazov, shop, oprema) |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
@@ -421,6 +421,8 @@ create table queue_entries (
   entered_at   timestamptz not null,
   status       text not null default 'waiting' check (status in ('waiting','proposed')),
   proposal_id  uuid references match_proposals(id) on delete set null,
+  ghost_offer_match_id uuid references matches(id) on delete set null,  -- trenutna ghost ponuda (izvorna partija)
+  ghost_offer_seat     smallint,                                           -- sjedalo snimljenog igrača u izvornoj partiji
   ghost_offer_declined boolean not null default false     -- nakon odbijanja: nudi se bot, ghost se više ne nudi u ovom čekanju
 );
 
@@ -551,6 +553,7 @@ create table daily_challenge_attempts (
   answered_at  timestamptz,
   payload      jsonb,
   is_correct   boolean,
+  fraction     double precision,           -- find_bug: 0.4 za točnu liniju s krivim fixom
   elapsed_ms   integer,
   primary key (user_id, day)
 );
@@ -817,7 +820,7 @@ urn:app:queue/already-in        urn:app:queue/not-in                 urn:app:pro
 urn:app:match/not-participant   urn:app:match/wrong-phase            urn:app:match/not-your-turn       urn:app:match/already-in-match
 urn:app:match/already-answered  urn:app:match/wrong-index            urn:app:match/topic-not-in-pool   urn:app:match/not-finished
 urn:app:lesson/already-passed   urn:app:lesson/retry-too-soon        urn:app:lesson/nothing-missed     urn:app:match/nothing-to-calibrate
-urn:app:question/not-answered (403)  urn:app:question/not-found (404)  urn:app:lesson/not-found (404)
+urn:app:question/not-answered (403)  urn:app:question/not-found (404)  urn:app:lesson/not-found (404)  urn:app:match/rematch-unavailable
 urn:app:shop/insufficient-coins urn:app:shop/already-owned           urn:app:shop/freeze-limit         urn:app:shop/not-owned
 urn:app:auth/invalid-credentials urn:app:auth/email-taken            urn:app:auth/username-taken       urn:app:auth/reset-token-invalid
 urn:app:friends/already         urn:app:challenge/expired            urn:app:daily/already-attempted   urn:app:daily/too-late
@@ -975,7 +978,7 @@ Tok na frontendu: `useMatch(id)` polla `GET /api/matches/{id}` svake 1 s dok `st
 ### 6.6 Red čekanja (F3)
 
 ```ts
-POST   /api/queue                               → QueueStateDto   (409 already-in, topics/count, match/already-in-match)
+POST   /api/queue                               → 200 QueueStateDto   (409 queue/already-in, topics/count, match/already-in-match)
 GET    /api/queue                               → QueueStateDto   (poll 1 s)
 DELETE /api/queue                               → 204             (dok je proposed: ponuda se odbija, drugi igrač ostaje u redu)
 POST   /api/queue/proposals/{id}/accept         → QueueStateDto
@@ -1077,12 +1080,35 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - `find_bug`: linije koda broje se od 1 (`split('\n')`); ključ može imati `acceptLines` (druge linije iste naredbe) za isticanje.
 - `409 urn:app:match/already-in-match`: `me.activeMatchId` vodi natrag u partiju (i nakon reloada).
 - Trening bez vremena nema `phaseDeadline`; nakon međuekrana klijent zove `POST .../next`. Objašnjenje (`/api/questions/{id}/explanation`) dolazi tek u F2.
-- `result.cards` (blunder, brilliant, koncept za vježbu) je popunjen; rating, coins, XP i SP su 0 do F3/F4, a `rematchAvailable` je `false` do F3.
+- `result.cards` (blunder, brilliant, koncept za vježbu) je popunjen; bot partija i trening daju samo XP (F4a).
 
 **F0b: reset lozinke i rate limit**
 - `/forgot-password` uvijek vraća 202: ekran uvijek kaže "ako račun postoji, poslali smo link", bez obzira na e-mail.
 - Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
+
+**F4b: dnevni zadaci, dnevni izazov, shop, oprema**
+- Dnevni zadaci: `GET /api/me/daily-tasks` (i `dashboard.dailyTasks`): tri zadatka dana, isti cijeli dan, s `progress/target`; `practice_weakest` nosi `topic` (gumb "Trening" na tu temu). Dovršen zadatak se isplaćuje (20 coina) kad se zadaci sljedeći put učitaju, sva tri još 30 (`bonusAwarded`). Ključevi: `play_2_ranked`, `patch_1_concept`, `daily_challenge`, `practice_weakest`, `3_brilliant`, `review_all_due`.
+- Dnevni izazov: `GET /api/daily-challenge` otvara pokušaj (`startedAt`); odbrojavanje 60 s od `startedAt` preko `serverTime`. Isto `find_bug` pitanje za sve; `POST /api/daily-challenge/attempt { payload, clientElapsedMs }` vraća rezultat, ključ i rang. 30 coina za točno, 5 za pokušaj, 30 XP uvijek; jedan pokušaj (`409 daily/already-attempted`), nakon 60 s `409 daily/too-late` (pokušaj se bilježi kao istek). `leaderboard` top 20: točni prvi, pa brži. Arhiva `GET /api/daily-challenge/{yyyy-mm-dd}`.
+- Shop: `GET /api/shop` (najjeftinije prvo, `owned`), `POST /api/shop/purchase { itemId }` vraća `MeDto` s novim stanjem coina. Zamrzavanje streaka: najviše 2 (`me.streak.freezes`). Oprema: `PUT /api/me/equipment { avatarFrame: itemId | null, ... }`; `UserRefDto.equipment` (svugdje uz ime) daje `assetKey` po slotu. Seed artikli: `frame-bronze-ring`, `frame-circuit`, `banner-terminal`, `name-amber`, `card-blueprint`, `board-midnight`, `streak-freeze` (frontend ih crta po `assetKey`).
+- `dashboard.dailyChallengeAttempted` je sada pravi.
+
+**F4a: nagrade i streak**
+- `result.mine.coins`, `xp`, `sp` sada imaju prave vrijednosti (rangirano: 15/5/10 coina za pobjedu/poraz/remi, 10 SP za pobjedu + 5 za upset protiv 100+ višeg, najviše 100 SP dnevno iz pobjeda; svaka partija osim kalibracije: 50 XP + 5 XP po odgovoru). `streakSecured` kaže je li ova partija osigurala današnji dan.
+- Poduka: `LessonResultDto.rewards` je 50 coina + 100 XP + 2 SP po konceptu kad je nagrada podobna (isti koncept najviše jednom u 7 dana; najviše 10 SP dnevno iz učenja).
+- `me.coins`, `me.xp`, `me.level`, `me.xpToNextLevel`, `me.seasonPoints` (zbroj SP do sezona u F5) i `me.streak` (`count` je 0 kad je niz prekinut; `securedToday`) dolaze iz ledgera. Level-up donosi 50 × level coina, tjedni cilj od 500 XP 100 coina, streak od 7/30/100 dana 100/500/2000 coina.
+- Povijest nagrada: `GET /api/me/rewards?limit=50` (najnovije prvo) za animacije "+15" i ekran povijesti.
+
+**F3b: revanš i ghost duel**
+- Revanš: na ekranu rezultata gumb kad je `result.rematchAvailable` (rangirana partija, protivnik viđen u zadnje 2 min). `POST /api/matches/{id}/rematch` vraća `RematchDto` (`pending`, `expiresAt` = +20 s); ekran polla `GET /api/matches/{id}/rematch` svake 2 s. Protivnik zahtjev vidi u `dashboard.inbox.rematch` (i na svom ekranu rezultata kroz isti GET) i prihvaća s `POST .../rematch/accept`, koji vraća novu partiju u `veto_coin`; kod onoga koji je pitao GET vrati `accepted` + `matchId`. Ako oba pritisnu revanš, drugi pritisak ga odmah pokreće. Istek: `expired`, gumb "Nova partija".
+- Ghost duel: nakon 30 s u redu `ghostOffer` (snimka igrača sličnog ratinga na jednoj od mojih tema; ista snimka se nudi jednom). `POST /api/queue/ghost` → 201 `MatchStateDto` (`kind: 'ghost'`, odmah lobby, bez veta); `players[1].kind = 'ghost'` s `user` snimljenog igrača i `ghostRecordedAt` (ikona duha i datum snimke). Ghost odgovara u svom snimljenom vremenu; međuekran prikazuje njegov snimljeni odgovor. Rating se mijenja samo živom igraču; revanša nakon ghosta nema. `POST /api/queue/ghost/decline` ostavlja igrača u redu i nudi bota.
+
+**F3a: red čekanja, veto, živi rangirani duel**
+- Igraj rangirano: `POST /api/queue` (treba 3–5 tema), zatim `GET /api/queue` svake 1 s. `rangeNow` raste (±100, +50 svakih 10 s). Teme su zaključane dok je igrač u redu (`PUT /api/me/topics` → 409 `urn:app:topics/locked-in-queue`; `me.inQueue`, `dashboard.queueLocked`). `DELETE /api/queue` = Odustani.
+- `status: 'proposed'`: "Protivnik pronađen" s `proposal.opponent` i odbrojavanjem do `proposal.expiresAt` (10 s, iz `serverTime`). `POST /api/queue/proposals/{id}/accept`; dok drugi nije prihvatio, `iAccepted: true`. Kad oba prihvate, `status: 'matched'` + `matchId`: otvori partiju. Ako drugi odbije ili istekne: `409 urn:app:proposal/expired` ili poll vrati `waiting` (vrijeme čekanja ostaje).
+- `botOffer: true` nakon 30 s kad nema ghost ponude (vidi F3b): ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati".
+- Partija počinje u `veto_coin` (3 s animacija novčića, `veto.coinWinnerSeat` banira prvi), pa `veto_ban`: igrač na potezu (`veto.turnSeat == mySeat`) bira temu iz `veto.pool` i šalje `POST /api/matches/{id}/veto/ban { topicId }`; 8 s po potezu, istek = automatski ban (`auto: true`). Uz temu: vlastiti `myMastery` i ikona `pickedByOpponent`. `veto_pick`: `chosenTopicId` je poznat odmah, animacija 3 s prema njemu, zatim lobby i duel kao s botom.
+- Kraj: `result.mine.ratingBefore/ratingAfter`, povijest ima `ratingDelta`. Tier (`user.tier`) i `isProvisional` (prvih 10 partija prikaži `?` umjesto ratinga) dolaze iz `UserRefDto`. Odustajanje i prekid veze (20 s bez pollanja) = poraz; oba odspojena = `aborted` bez promjene ratinga. SP, coini i XP ostaju 0 do F4.
 
 **F2: analiza, objašnjenja, poduka, red ponavljanja, mapa znanja, kalibracija**
 - Rezultat: `reviewAvailable` je `true`; `lessonAvailable` kad je išta promašeno; `lessonId` je zadnja poduka za tu partiju (ako postoji, otvori nju s `GET /api/lessons/{id}` umjesto nove); `lessonRewardEligible` za gumb "Poduka (+50)".
@@ -1322,8 +1348,9 @@ F2 Analiza, poduka, mapa
   Knowledge_map_shows_states_completion_and_last_answers
   Topic_mastery_ignores_unknown_concepts
   Calibration_uses_5_D1_D2_questions_on_unknown_concepts_without_reward
-F3 Rangirano
+F3 Rangirano (F3a: do Tie_resolves..., F3b: revanš i ghost; SP i tjedni bodovi idu s ledgerom u F4/F5)
   Join_queue_requires_topics / Join_twice_is_409 / Join_while_in_match_is_409
+  Starting_a_bot_match_leaves_the_queue / Bot_is_offered_after_30s_without_an_opponent
   Set_topics_is_locked_while_in_queue
   Two_compatible_players_get_proposal_within_one_tick
   Incompatible_topics_never_match
@@ -1348,7 +1375,9 @@ F3 Rangirano
   Same_recording_is_offered_once / Recordings_older_than_30_days_not_offered / Declined_ghost_offers_bot
   Sp_win_cap_100_per_day / Upset_bonus_5_sp
   Weekly_points_only_from_ranked_and_ghost
-F4 Ekonomija
+F4 Ekonomija (F4a: ledger, partije, poduke, level, tjedni cilj, streak; F4b: zadaci, izazov, shop)
+  Ranked_match_pays_both_players_and_the_ledger_matches_the_balance / Upset_bonus_and_the_daily_win_sp_cap
+  Bot_match_grants_xp_but_not_coins_or_sp_and_counts_for_the_streak
   Lesson_pass_rewards_50_coins_100_xp_and_2_sp_per_eligible_concept
   Same_concept_rewards_at_most_once_in_7_days                           dan 6 → ne, dan 8 → da
   Ledger_sum_equals_cached_balance                       invarijanta nakon niza nagrada

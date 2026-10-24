@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using App.Application.Content;
 using App.Domain;
 using App.Domain.Content;
@@ -10,9 +11,10 @@ namespace App.Application.Me;
 // Mirrors docs/tehnicki-dokument.md §6.3. Keep frontend/src/types/api.ts in sync.
 public record UserRefDto(Guid Id, string Username, string Avatar, string Tier, int Rating, bool IsProvisional, string? Title, Dictionary<string, string> Equipment)
 {
-    // ponytail: no titles or cosmetics before F4/F5; then fill Title and map equipped item ids to asset keys here.
+    // Equipment is stored as slot → assetKey (PUT /api/me/equipment). ponytail: Title stays null until titles (F5).
     public static UserRefDto From(User user) =>
-        new(user.Id, user.Username, user.Avatar, user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, null, []);
+        new(user.Id, user.Username, user.Avatar, user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, null,
+            JsonSerializer.Deserialize<Dictionary<string, string>>(user.EquipmentJson) ?? []);
 }
 
 public record StreakDto(int Count, DateOnly? LastActiveOn, int Freezes, bool SecuredToday);

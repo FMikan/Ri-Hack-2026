@@ -6,6 +6,7 @@ using App.Application.Auth;
 using App.Application.Content;
 using App.Application.Lessons;
 using App.Application.Matches;
+using App.Application.Queue;
 using App.Domain.Content;
 using App.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -108,6 +109,13 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
             using var scope = Services.CreateScope();
             await scope.ServiceProvider.GetRequiredService<MatchService>().AdvanceAsync(matchId, default);
         }
+    }
+
+    // What GameTickService does every 2 s for the ranked queue.
+    public async Task MatchmakeAsync()
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<QueueService>().RunMatchmakingAsync(default);
     }
 
     public async Task AdvanceAsync(TimeSpan by)

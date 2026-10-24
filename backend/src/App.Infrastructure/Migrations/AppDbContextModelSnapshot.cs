@@ -231,6 +231,267 @@ namespace App.Infrastructure.Migrations
                     b.ToTable("topics", (string)null);
                 });
 
+            modelBuilder.Entity("App.Domain.Daily.ActivityDay", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.HasKey("UserId", "Day")
+                        .HasName("pk_activity_days");
+
+                    b.ToTable("activity_days", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Daily.DailyChallenge", b =>
+                {
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("question_id");
+
+                    b.HasKey("Day")
+                        .HasName("pk_daily_challenges");
+
+                    b.HasIndex("QuestionId")
+                        .HasDatabaseName("ix_daily_challenges_question_id");
+
+                    b.ToTable("daily_challenges", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Daily.DailyChallengeAttempt", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.Property<DateTimeOffset?>("AnsweredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("answered_at");
+
+                    b.Property<int?>("ElapsedMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("elapsed_ms");
+
+                    b.Property<double?>("Fraction")
+                        .HasColumnType("double precision")
+                        .HasColumnName("fraction");
+
+                    b.Property<bool?>("IsCorrect")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_correct");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.HasKey("UserId", "Day")
+                        .HasName("pk_daily_challenge_attempts");
+
+                    b.HasIndex("Day", "IsCorrect", "ElapsedMs")
+                        .IsDescending(false, true, false)
+                        .HasDatabaseName("ix_daily_challenge_attempts_day_is_correct_elapsed_ms");
+
+                    b.ToTable("daily_challenge_attempts", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Daily.UserDailyTask", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.Property<string>("TaskKey")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("task_key");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<int>("Target")
+                        .HasColumnType("integer")
+                        .HasColumnName("target");
+
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("topic_id");
+
+                    b.HasKey("UserId", "Day", "TaskKey")
+                        .HasName("pk_user_daily_tasks");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("ix_user_daily_tasks_topic_id");
+
+                    b.ToTable("user_daily_tasks", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Economy.RewardEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Coins")
+                        .HasColumnType("integer")
+                        .HasColumnName("coins");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DedupeKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("dedupe_key");
+
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reference_id");
+
+                    b.Property<int>("Sp")
+                        .HasColumnType("integer")
+                        .HasColumnName("sp");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("Xp")
+                        .HasColumnType("integer")
+                        .HasColumnName("xp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reward_events");
+
+                    b.HasIndex("DedupeKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reward_events_dedupe_key");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_reward_events_user_id_created_at");
+
+                    b.HasIndex("UserId", "Type", "CreatedAt")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("ix_reward_events_user_id_type_created_at");
+
+                    b.ToTable("reward_events", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reward_events_type", "type in ('match_win', 'match_loss', 'match_draw', 'rating_upset', 'lesson_passed', 'concept_patched', 'daily_challenge', 'daily_task', 'daily_task_bonus', 'streak_milestone', 'weekly_xp_goal', 'level_up', 'friend_match', 'answer_xp', 'match_xp', 'shop_purchase', 'streak_freeze', 'season_reset', 'season_drop')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Economy.ShopItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AssetKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("asset_key");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Price")
+                        .HasColumnType("integer")
+                        .HasColumnName("price");
+
+                    b.Property<string>("Rarity")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("rarity");
+
+                    b.Property<string>("SeasonDropTier")
+                        .HasColumnType("text")
+                        .HasColumnName("season_drop_tier");
+
+                    b.HasKey("Id")
+                        .HasName("pk_shop_items");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_shop_items_key");
+
+                    b.ToTable("shop_items", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_shop_items_kind", "kind in ('avatar_frame', 'banner', 'board_theme', 'name_color', 'card_background', 'streak_freeze')");
+
+                            t.HasCheckConstraint("ck_shop_items_price", "price > 0");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Economy.UserItem", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_id");
+
+                    b.Property<DateTimeOffset>("AcquiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("acquired_at");
+
+                    b.HasKey("UserId", "ItemId")
+                        .HasName("pk_user_items");
+
+                    b.HasIndex("ItemId")
+                        .HasDatabaseName("ix_user_items_item_id");
+
+                    b.ToTable("user_items", (string)null);
+                });
+
             modelBuilder.Entity("App.Domain.Lessons.ConceptLessonCards", b =>
                 {
                     b.Property<Guid>("ConceptId")
@@ -391,6 +652,26 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("question_started_at");
 
+                    b.Property<Guid?>("RematchMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rematch_match_id");
+
+                    b.Property<Guid?>("RematchOfMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rematch_of_match_id");
+
+                    b.Property<DateTimeOffset?>("RematchRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rematch_requested_at");
+
+                    b.Property<int?>("RematchRequestedBySeat")
+                        .HasColumnType("integer")
+                        .HasColumnName("rematch_requested_by_seat");
+
+                    b.Property<string>("RematchStatus")
+                        .HasColumnType("text")
+                        .HasColumnName("rematch_status");
+
                     b.Property<string>("ResultReason")
                         .HasColumnType("text")
                         .HasColumnName("result_reason");
@@ -411,6 +692,10 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("topic_id");
 
+                    b.Property<string>("Veto")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("veto");
+
                     b.Property<int?>("WinnerSeat")
                         .HasColumnType("integer")
                         .HasColumnName("winner_seat");
@@ -426,6 +711,12 @@ namespace App.Infrastructure.Migrations
                         .HasDatabaseName("ix_matches_phase_deadline")
                         .HasFilter("phase <> 'done'");
 
+                    b.HasIndex("RematchMatchId")
+                        .HasDatabaseName("ix_matches_rematch_match_id");
+
+                    b.HasIndex("RematchOfMatchId")
+                        .HasDatabaseName("ix_matches_rematch_of_match_id");
+
                     b.HasIndex("TopicId")
                         .HasDatabaseName("ix_matches_topic_id");
 
@@ -434,6 +725,8 @@ namespace App.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_matches_kind", "kind in ('ranked', 'ghost', 'bot', 'friend', 'practice', 'calibration')");
 
                             t.HasCheckConstraint("ck_matches_phase", "phase in ('veto_coin', 'veto_ban', 'veto_pick', 'lobby', 'question', 'interstitial', 'done')");
+
+                            t.HasCheckConstraint("ck_matches_rematch_status", "rematch_status in ('none', 'pending', 'accepted', 'declined', 'expired')");
 
                             t.HasCheckConstraint("ck_matches_result_reason", "result_reason in ('score', 'tiebreak_correct', 'tiebreak_time', 'draw', 'resign', 'disconnect', 'aborted')");
                         });
@@ -529,6 +822,10 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("display_rating");
 
+                    b.Property<Guid?>("GhostSourceMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ghost_source_match_id");
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasColumnType("text")
@@ -537,6 +834,14 @@ namespace App.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("LastSeenAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_seen_at");
+
+                    b.Property<int?>("RatingAfter")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating_after");
+
+                    b.Property<int?>("RatingBefore")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating_before");
 
                     b.Property<DateTimeOffset?>("ResignedAt")
                         .HasColumnType("timestamp with time zone")
@@ -564,6 +869,9 @@ namespace App.Infrastructure.Migrations
 
                     b.HasKey("MatchId", "Seat")
                         .HasName("pk_match_players");
+
+                    b.HasIndex("GhostSourceMatchId")
+                        .HasDatabaseName("ix_match_players_ghost_source_match_id");
 
                     b.HasIndex("UserId", "MatchId")
                         .HasDatabaseName("ix_match_players_user_id_match_id");
@@ -634,6 +942,146 @@ namespace App.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_match_questions_slot", "slot in ('warmup', 'targeted', 'core', 'review')");
 
                             t.HasCheckConstraint("ck_match_questions_type", "type in ('true_false', 'multiple_choice', 'cloze', 'odd_one_out', 'output', 'match_pairs', 'order', 'find_bug')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.GhostOffer", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("SourceMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_match_id");
+
+                    b.Property<DateTimeOffset>("OfferedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("offered_at");
+
+                    b.HasKey("UserId", "SourceMatchId")
+                        .HasName("pk_ghost_offers");
+
+                    b.HasIndex("SourceMatchId")
+                        .HasDatabaseName("ix_ghost_offers_source_match_id");
+
+                    b.ToTable("ghost_offers", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.MatchProposal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AAcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("a_accepted_at");
+
+                    b.Property<DateTimeOffset?>("BAcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("b_accepted_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserA")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_a");
+
+                    b.Property<Guid>("UserB")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_b");
+
+                    b.HasKey("Id")
+                        .HasName("pk_match_proposals");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_match_proposals_expires_at")
+                        .HasFilter("status = 'pending'");
+
+                    b.HasIndex("MatchId")
+                        .HasDatabaseName("ix_match_proposals_match_id");
+
+                    b.HasIndex("UserA")
+                        .HasDatabaseName("ix_match_proposals_user_a");
+
+                    b.HasIndex("UserB")
+                        .HasDatabaseName("ix_match_proposals_user_b");
+
+                    b.ToTable("match_proposals", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_match_proposals_status", "status in ('pending', 'matched', 'expired', 'declined')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.QueueEntry", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("EnteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("entered_at");
+
+                    b.Property<bool>("GhostOfferDeclined")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ghost_offer_declined");
+
+                    b.Property<Guid?>("GhostOfferMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ghost_offer_match_id");
+
+                    b.Property<int?>("GhostOfferSeat")
+                        .HasColumnType("integer")
+                        .HasColumnName("ghost_offer_seat");
+
+                    b.Property<Guid?>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.PrimitiveCollection<List<Guid>>("TopicIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("topic_ids");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_queue_entries");
+
+                    b.HasIndex("GhostOfferMatchId")
+                        .HasDatabaseName("ix_queue_entries_ghost_offer_match_id");
+
+                    b.HasIndex("ProposalId")
+                        .HasDatabaseName("ix_queue_entries_proposal_id");
+
+                    b.ToTable("queue_entries", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_queue_entries_status", "status in ('waiting', 'proposed')");
                         });
                 });
 
@@ -1116,6 +1564,86 @@ namespace App.Infrastructure.Migrations
                         .HasConstraintName("fk_question_reports_users_user_id");
                 });
 
+            modelBuilder.Entity("App.Domain.Daily.ActivityDay", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_activity_days_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Daily.DailyChallenge", b =>
+                {
+                    b.HasOne("App.Domain.Content.Question", null)
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_daily_challenges_questions_question_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Daily.DailyChallengeAttempt", b =>
+                {
+                    b.HasOne("App.Domain.Daily.DailyChallenge", null)
+                        .WithMany()
+                        .HasForeignKey("Day")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_daily_challenge_attempts_daily_challenges_day");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_daily_challenge_attempts_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Daily.UserDailyTask", b =>
+                {
+                    b.HasOne("App.Domain.Content.Topic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_user_daily_tasks_topics_topic_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_daily_tasks_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Economy.RewardEvent", b =>
+                {
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reward_events_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Economy.UserItem", b =>
+                {
+                    b.HasOne("App.Domain.Economy.ShopItem", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_items_shop_items_item_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_items_users_user_id");
+                });
+
             modelBuilder.Entity("App.Domain.Lessons.ConceptLessonCards", b =>
                 {
                     b.HasOne("App.Domain.Content.Concept", null)
@@ -1144,6 +1672,18 @@ namespace App.Infrastructure.Migrations
 
             modelBuilder.Entity("App.Domain.Matches.Match", b =>
                 {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("RematchMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_matches_matches_rematch_match_id");
+
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("RematchOfMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_matches_matches_rematch_of_match_id");
+
                     b.HasOne("App.Domain.Content.Topic", null)
                         .WithMany()
                         .HasForeignKey("TopicId")
@@ -1163,6 +1703,12 @@ namespace App.Infrastructure.Migrations
 
             modelBuilder.Entity("App.Domain.Matches.MatchPlayer", b =>
                 {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("GhostSourceMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_match_players_matches_ghost_source_match_id");
+
                     b.HasOne("App.Domain.Matches.Match", null)
                         .WithMany("Players")
                         .HasForeignKey("MatchId")
@@ -1203,6 +1749,68 @@ namespace App.Infrastructure.Migrations
                         .HasConstraintName("fk_match_questions_questions_question_id");
 
                     b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.GhostOffer", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("SourceMatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ghost_offers_matches_source_match_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ghost_offers_users_user_id");
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.MatchProposal", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_match_proposals_matches_match_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserA")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_proposals_users_user_a");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserB")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_proposals_users_user_b");
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.QueueEntry", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("GhostOfferMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_queue_entries_matches_ghost_offer_match_id");
+
+                    b.HasOne("App.Domain.Matchmaking.MatchProposal", null)
+                        .WithMany()
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_queue_entries_match_proposals_proposal_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_queue_entries_users_user_id");
                 });
 
             modelBuilder.Entity("App.Domain.Progress.Answer", b =>

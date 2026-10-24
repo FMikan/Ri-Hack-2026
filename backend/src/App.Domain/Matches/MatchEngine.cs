@@ -8,7 +8,7 @@ namespace App.Domain.Matches;
 public record RecordedAnswer(MatchPlayer Player, MatchQuestion Question, MatchAnswer Answer, bool CountsForLearning);
 
 // The match state machine (docs §4.3). Pure: time comes in as `now`, randomness from the match seed.
-// F1 covers lobby → question → interstitial → done; veto phases arrive with ranked play (F3).
+// Ranked starts with the veto (coin → bans → pick); every other kind starts in the lobby.
 public static class MatchEngine
 {
     public static Match Create(
@@ -17,11 +17,33 @@ public static class MatchEngine
     {
         var match = new Match
         {
-            Kind = kind, TopicId = topicId, Timed = timed, BandMin = band.Min, BandMax = band.Max, RngSeed = seed, CreatedAt = now,
+            Kind = kind, Timed = timed, RngSeed = seed, CreatedAt = now,
             Phase = MatchPhase.Lobby, PhaseDeadline = now.AddSeconds(GameRules.LobbySeconds),
         };
-        match.Players.AddRange(players);
-        foreach (var human in match.Players.Where(p => p.Kind == SeatKind.Human)) human.LastSeenAt ??= now;
+        Seat(match, players, now);
+        AttachDeck(match, band, deck, questions, topicId);
+        // Untimed practice has no countdown to wait for.
+        if (!timed) StartQuestion(match, 0, now);
+        return match;
+    }
+
+    // Ranked: the coin flip animation first; the topic and the deck come out of the veto.
+    public static Match CreateRanked(IEnumerable<MatchPlayer> players, VetoState veto, int seed, DateTimeOffset now)
+    {
+        var match = new Match
+        {
+            Kind = MatchKind.Ranked, RngSeed = seed, CreatedAt = now, Veto = veto,
+            Phase = MatchPhase.VetoCoin, PhaseDeadline = now.AddSeconds(GameRules.VetoAnimationSeconds),
+        };
+        Seat(match, players, now);
+        return match;
+    }
+
+    // The frozen deck of a match (idea §8, rule 6). Ranked gets it once the veto has chosen the topic.
+    public static void AttachDeck(Match match, (int Min, int Max) band, IReadOnlyList<DeckSlot> deck, IReadOnlyDictionary<Guid, Question> questions, Guid? topicId = null)
+    {
+        match.TopicId = topicId ?? match.TopicId;
+        (match.BandMin, match.BandMax) = band;
         match.Questions.AddRange(deck.Select((slot, index) => new MatchQuestion
         {
             Index = index,
@@ -34,10 +56,39 @@ public static class MatchEngine
             BasePoints = GameRules.Types[slot.Question.Type].BasePoints,
             TimeLimitMs = GameRules.Types[slot.Question.Type].TimeMs,
         }));
-        // Untimed practice has no countdown to wait for.
-        if (!timed) StartQuestion(match, 0, now);
-        return match;
     }
+
+    public static void Ban(Match match, int seat, Guid topicId, DateTimeOffset now)
+    {
+        if (match.Phase != MatchPhase.VetoBan || match.PhaseDeadline < now)
+            throw new AppException(ErrorCodes.MatchWrongPhase, "Banning is closed.");
+        Veto.Ban(match.Veto!, seat, topicId);
+        match.Players.First(p => p.Seat == seat).LastSeenAt = now;
+        AfterBan(match, now);
+    }
+
+    private static void Seat(Match match, IEnumerable<MatchPlayer> players, DateTimeOffset now)
+    {
+        match.Players.AddRange(players);
+        foreach (var human in match.Players.Where(p => p.Kind == SeatKind.Human)) human.LastSeenAt ??= now;
+    }
+
+    // Two topics left: one is drawn now and shown for the 3 s pick animation; otherwise the other player bans.
+    private static void AfterBan(Match match, DateTimeOffset at)
+    {
+        var veto = match.Veto!;
+        if (veto.FinalTwo is null)
+        {
+            match.PhaseDeadline = at.AddSeconds(GameRules.VetoBanSeconds);
+            return;
+        }
+        match.TopicId = Veto.Pick(veto, VetoRandom(match));
+        match.Phase = MatchPhase.VetoPick;
+        match.PhaseDeadline = at.AddSeconds(GameRules.VetoAnimationSeconds);
+    }
+
+    // Seeded by the match and the veto step, so a replay of the same bans gives the same auto-bans and pick.
+    private static Random VetoRandom(Match match) => new(match.RngSeed + 97 * (match.Veto!.Bans.Count + 1));
 
     // Runs every transition whose deadline has passed, each at its own deadline, so a late tick catches up exactly.
     public static List<RecordedAnswer> Advance(Match match, DateTimeOffset now)
@@ -47,6 +98,21 @@ public static class MatchEngine
         {
             switch (match.Phase)
             {
+                case MatchPhase.VetoCoin:
+                    match.Phase = MatchPhase.VetoBan;
+                    if (match.Veto!.FinalTwo is null) match.PhaseDeadline = deadline.AddSeconds(GameRules.VetoBanSeconds);
+                    else AfterBan(match, deadline);
+                    break;
+                case MatchPhase.VetoBan:
+                    Veto.AutoBan(match.Veto!, VetoRandom(match));
+                    AfterBan(match, deadline);
+                    break;
+                case MatchPhase.VetoPick:
+                    // The deck needs the database: the caller attaches it (AttachDeck) and advances again.
+                    if (match.Questions.Count == 0) return recorded;
+                    match.Phase = MatchPhase.Lobby;
+                    match.PhaseDeadline = deadline.AddSeconds(GameRules.LobbySeconds);
+                    break;
                 case MatchPhase.Lobby:
                     StartQuestion(match, 0, deadline);
                     break;
@@ -57,7 +123,7 @@ public static class MatchEngine
                     NextQuestionOrFinish(match, deadline);
                     break;
                 default:
-                    throw new InvalidOperationException($"Phase {match.Phase} is not handled yet.");
+                    throw new InvalidOperationException($"Phase {match.Phase} has no deadline.");
             }
         }
         return recorded;
@@ -118,6 +184,20 @@ public static class MatchEngine
         match.Phase = MatchPhase.Question;
         var question = match.Current;
         match.PhaseDeadline = match.Timed ? at.AddMilliseconds(question.TimeLimitMs + GameRules.ClientTimeToleranceMs) : null;
+
+        // A ghost replays its recording: the same answer, points and label, arriving at the recorded elapsed time
+        // (a recorded timeout arrives at this question's deadline).
+        foreach (var ghost in match.Players.Where(p => p.Kind == SeatKind.Ghost))
+        {
+            var recorded = match.Recording!.First(a => a.Index == index);
+            var elapsed = recorded.TimedOut ? question.TimeLimitMs : Math.Min(recorded.ElapsedMs, question.TimeLimitMs);
+            match.Answers.Add(new MatchAnswer
+            {
+                Seat = ghost.Seat, Index = index, Payload = recorded.Payload, IsCorrect = recorded.IsCorrect, Fraction = recorded.Fraction,
+                Points = recorded.Points, ElapsedMs = elapsed, TimedOut = recorded.TimedOut, Label = recorded.Label,
+                AnsweredAt = recorded.TimedOut ? match.PhaseDeadline!.Value : at.AddMilliseconds(elapsed),
+            });
+        }
 
         foreach (var bot in match.Players.Where(p => p.Kind == SeatKind.Bot))
         {

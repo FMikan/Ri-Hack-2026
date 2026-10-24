@@ -1,5 +1,9 @@
 using System.Text.Json;
 using App.Application.Content;
+using App.Application.Daily;
+using App.Application.Economy;
+using App.Domain.Economy;
+using App.Domain.Matches;
 using App.Domain.Progress;
 using App.Domain;
 using App.Domain.Users;
@@ -7,10 +11,41 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Me;
 
-public class MeService(IAppDbContext db, ContentService content, TimeProvider time)
+public class MeService(IAppDbContext db, ContentService content, DailyService daily, TimeProvider time)
 {
     public async Task<MeDto> GetAsync(Guid userId, CancellationToken cancellationToken) =>
-        ToDto(await LoadAsync(userId, cancellationToken));
+        await ToDtoAsync(await LoadAsync(userId, cancellationToken), cancellationToken);
+
+    // Slot → owned item id; null takes the slot off, a missing slot stays as it is. Stored as slot → assetKey,
+    // which is what every UserRefDto shows. Other keys (titleId arrives with titles in F5) are ignored.
+    public async Task<MeDto> SetEquipmentAsync(Guid userId, Dictionary<string, Guid?> slots, CancellationToken cancellationToken)
+    {
+        var user = await LoadAsync(userId, cancellationToken);
+        var equipment = JsonSerializer.Deserialize<Dictionary<string, string>>(user.EquipmentJson) ?? [];
+        var known = Enum.GetValues<ShopItemKind>().Select(ShopItem.SlotOf).OfType<string>().ToHashSet();
+        foreach (var (slot, itemId) in slots.Where(s => known.Contains(s.Key)))
+        {
+            if (itemId is not { } id)
+            {
+                equipment.Remove(slot);
+                continue;
+            }
+            var item = await db.ShopItems.Where(i => i.Id == id && db.UserItems.Any(o => o.UserId == userId && o.ItemId == id)).FirstOrDefaultAsync(cancellationToken);
+            if (item is null || ShopItem.SlotOf(item.Kind) != slot)
+                throw new AppException(ErrorCodes.ShopNotOwned, "Buy this item in the shop first.");
+            equipment[slot] = item.AssetKey;
+        }
+        user.EquipmentJson = JsonSerializer.Serialize(equipment);
+        await db.SaveChangesAsync(cancellationToken);
+        return await ToDtoAsync(user, cancellationToken);
+    }
+
+    public async Task<List<RewardEventDto>> GetRewardsAsync(Guid userId, int limit, CancellationToken cancellationToken) =>
+        await db.RewardEvents.Where(e => e.UserId == userId)
+            .OrderByDescending(e => e.CreatedAt).ThenByDescending(e => e.Id)
+            .Take(Math.Clamp(limit, 1, 100))
+            .Select(e => new RewardEventDto(e.Type, e.Coins, e.Xp, e.Sp, e.CreatedAt, e.ReferenceId))
+            .ToListAsync(cancellationToken);
 
     public async Task<MeDto> UpdateAsync(Guid userId, UpdateMeRequest request, CancellationToken cancellationToken)
     {
@@ -34,7 +69,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             user.NotificationsJson = JsonSerializer.Serialize(notifications);
         }
         await db.SaveChangesAsync(cancellationToken);
-        return ToDto(user);
+        return await ToDtoAsync(user, cancellationToken);
     }
 
     public async Task SetTopicsAsync(Guid userId, Guid[] topicIds, CancellationToken cancellationToken)
@@ -44,6 +79,9 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             throw new AppException(ErrorCodes.TopicsCount, $"Pick between {GameRules.MinTopics} and {GameRules.MaxTopics} topics.");
         if (await db.Topics.CountAsync(t => ids.Contains(t.Id), cancellationToken) != ids.Length)
             throw new AppException(ErrorCodes.TopicNotFound, "One of the topics does not exist.", 404);
+        // The queue matched on these topics; changing them means leaving it first (idea §4).
+        if (await InQueueAsync(userId, cancellationToken))
+            throw new AppException(ErrorCodes.TopicsLockedInQueue, "Leave the queue to change your topics.");
 
         var user = await LoadAsync(userId, cancellationToken);
         user.Topics.Clear();
@@ -53,7 +91,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
 
     public async Task<DashboardDto> GetDashboardAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var me = ToDto(await LoadAsync(userId, cancellationToken));
+        var me = await ToDtoAsync(await LoadAsync(userId, cancellationToken), cancellationToken);
         var topics = await content.ListTopicsAsync(cancellationToken);
         var progress = await TopicProgressAsync(userId, cancellationToken);
         var due = await DueQuery(userId).Select(m => new { m.ConceptId, m.TopicId }).ToListAsync(cancellationToken);
@@ -62,7 +100,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
         var suggestion = dueTopic is not null
             ? new SuggestionDto("review_due", dueTopic.Key, dueTopic.Select(d => d.ConceptId).Take(GameRules.QuestionsPerMatch).ToArray())
             : me.ActiveTopicIds.Length >= GameRules.MinTopics ? new SuggestionDto("play", null, null) : null;
-        // ponytail: rating history, daily tasks and the inbox stay empty until F3–F5 add the tables behind them.
+        // ponytail: the rating history and the friend challenge inbox stay empty until F5.
         return new DashboardDto(
             me,
             topics.Select(t =>
@@ -72,11 +110,11 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             }).ToArray(),
             [],
             due.Count,
-            [],
-            false,
+            (await daily.TasksAsync(userId, cancellationToken)).Tasks,
+            await daily.ChallengeAttemptedTodayAsync(userId, cancellationToken),
             suggestion,
-            new InboxDto(null, null),
-            false);
+            new InboxDto(await RematchInboxAsync(userId, cancellationToken), null),
+            me.InQueue);
     }
 
     public async Task<DueConceptsDto> GetDueAsync(Guid userId, CancellationToken cancellationToken)
@@ -131,6 +169,24 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
         }).ToArray());
     }
 
+    // The newest rematch someone asked me for that is still open (20 s).
+    private async Task<RematchInboxDto?> RematchInboxAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var openSince = time.GetUtcNow().AddSeconds(-GameRules.RematchSeconds);
+        var request = await db.MatchPlayers.Where(p => p.UserId == userId && p.Kind == SeatKind.Human)
+            .Join(db.Matches, p => p.MatchId, m => m.Id, (p, m) => new { p.Seat, Match = m })
+            .Where(x => x.Match.RematchStatus == RematchStatus.Pending && x.Match.RematchRequestedAt > openSince && x.Match.RematchRequestedBySeat != x.Seat)
+            .OrderByDescending(x => x.Match.RematchRequestedAt)
+            .Select(x => new
+            {
+                x.Match.Id,
+                At = x.Match.RematchRequestedAt!.Value,
+                From = db.MatchPlayers.Where(o => o.MatchId == x.Match.Id && o.Seat == x.Match.RematchRequestedBySeat).Select(o => o.User!).First(),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        return request is null ? null : new RematchInboxDto(request.Id, UserRefDto.From(request.From), request.At.AddSeconds(GameRules.RematchSeconds));
+    }
+
     private record TopicProgress(double? Mastery, int Graduated);
 
     // Topic mastery averages the answered concepts only: an unknown concept is not a weak one.
@@ -153,16 +209,22 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
 
     private static double Completion(int graduated, int concepts) => concepts == 0 ? 0 : 100.0 * graduated / concepts;
 
-    public MeDto ToDto(User user)
+    // ponytail: season points are the ledger's SP sum until seasons (F5) give them a season_id and a reset.
+    public async Task<MeDto> ToDtoAsync(User user, CancellationToken cancellationToken)
     {
         var self = UserRefDto.From(user);
+        var today = Clock.Today(time.GetUtcNow());
+        var seasonPoints = await db.RewardEvents.Where(e => e.UserId == user.Id).SumAsync(e => e.Sp, cancellationToken);
         return new(
             self.Id, self.Username, self.Avatar, self.Tier, self.Rating, self.IsProvisional, self.Title, self.Equipment,
             user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
-            user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), 0,
-            new StreakDto(user.StreakCount, user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == Clock.Today(time.GetUtcNow())),
-            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, false, user.CreatedAt);
+            user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), seasonPoints,
+            new StreakDto(Streaks.Current(user, today), user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == today),
+            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt);
     }
+
+    private Task<bool> InQueueAsync(Guid userId, CancellationToken cancellationToken) =>
+        db.QueueEntries.AnyAsync(q => q.UserId == userId, cancellationToken);
 
     private async Task<User> LoadAsync(Guid userId, CancellationToken cancellationToken) =>
         await db.Users.Include(u => u.Topics).FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)

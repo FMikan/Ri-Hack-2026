@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using App.Domain.Content;
+using App.Domain.Economy;
 using App.Domain.Matches;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,6 +80,18 @@ public class Seeder(AppDbContext db, TimeProvider time)
             var deck = DeckBuilder.Build(pool, [], targetingAllowed: false, (1, 2), now, new Random(0), degrade: false);
             topic.IsActive = DeckBuilder.IsComplete(deck);
         }
+
+        // The shop, upserted by key; prices and names follow the file.
+        var items = await db.ShopItems.ToDictionaryAsync(i => i.Key, ct);
+        foreach (var seed in Read<List<ShopSeed>>("App.Infrastructure.Seed.shop.json"))
+        {
+            if (!items.TryGetValue(seed.Key, out var item))
+            {
+                item = new ShopItem { Key = seed.Key, Kind = seed.Kind, Name = seed.Name, Price = seed.Price, AssetKey = seed.AssetKey };
+                db.ShopItems.Add(item);
+            }
+            (item.Kind, item.Name, item.Price, item.Rarity, item.AssetKey) = (seed.Kind, seed.Name, seed.Price, seed.Rarity, seed.AssetKey);
+        }
         await db.SaveChangesAsync(ct);
     }
 
@@ -98,6 +111,8 @@ public class Seeder(AppDbContext db, TimeProvider time)
         return JsonSerializer.Deserialize<T>(stream, Json) ?? throw new InvalidOperationException($"Seed file {resource} is empty.");
     }
 }
+
+public record ShopSeed(string Key, ShopItemKind Kind, string Name, int Price, string Rarity, string AssetKey);
 
 public record TopicSeed(string Slug, string Name, string Description, List<ConceptSeed> Concepts);
 

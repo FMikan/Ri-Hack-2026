@@ -70,10 +70,26 @@ public record MatchResultDto(
     int? WinnerSeat, MatchResultReason Reason, MyResultDto Mine, OpponentResultDto? Opponent, ResultCardsDto Cards,
     bool LessonAvailable, bool LessonRewardEligible, Guid? LessonId, bool RematchAvailable, bool ReviewAvailable);
 
-// question: in question and interstitial phases; interstitial: only in interstitial; result: only when finished or aborted.
+// Pool entries show my own mastery only, never the opponent's; chosenTopicId is known from the start of veto_pick.
+public record VetoTopicDto(TopicDto Topic, double? MyMastery, bool PickedByOpponent, int? BannedBySeat, bool? Auto);
+
+public record VetoDto(VetoTopicDto[] Pool, int CoinWinnerSeat, int? TurnSeat, int BansRemaining, Guid[]? FinalTwo, Guid? ChosenTopicId);
+
+public record BanTopicRequest
+{
+    [Required]
+    public required Guid TopicId { get; init; }
+}
+
+// veto: in the veto phases; question: in question and interstitial phases; interstitial: only in interstitial;
+// result: only when finished or aborted.
 public record MatchStateDto(
     Guid Id, MatchKind Kind, MatchStatus Status, MatchPhase Phase, DateTimeOffset ServerTime, DateTimeOffset? PhaseDeadline,
-    TopicDto? Topic, bool Timed, int MySeat, PlayerDto[] Players, QuestionTurnDto? Question, InterstitialDto? Interstitial, MatchResultDto? Result);
+    TopicDto? Topic, bool Timed, int MySeat, PlayerDto[] Players, VetoDto? Veto, QuestionTurnDto? Question, InterstitialDto? Interstitial,
+    MatchResultDto? Result);
+
+// GET/POST /api/matches/{id}/rematch. expiresAt = requested + 20 s; matchId once accepted.
+public record RematchDto(RematchStatus Status, int? RequestedBySeat, DateTimeOffset? ExpiresAt, Guid? MatchId);
 
 public record OpponentDto(SeatKind Kind, BotPersona? Persona, UserRefDto? User, int DisplayRating);
 

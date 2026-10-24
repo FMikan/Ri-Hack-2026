@@ -41,6 +41,28 @@ public static class MatchEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        // Ranked veto: the player on turn bans one topic of the pool (8 s per turn, then an automatic ban).
+        group.MapPost("/{id:guid}/veto/ban", (Guid id, BanTopicRequest request, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
+            matches.BanAsync(user.UserId(), id, request.TopicId, ct))
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // Rematch after a ranked match: 20 s to accept; the result screen polls GET every 2 s while rematchAvailable.
+        group.MapPost("/{id:guid}/rematch", (Guid id, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
+            matches.RequestRematchAsync(user.UserId(), id, ct))
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapGet("/{id:guid}/rematch", (Guid id, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
+            matches.GetRematchAsync(user.UserId(), id, ct))
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        group.MapPost("/{id:guid}/rematch/accept", (Guid id, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
+            matches.AcceptRematchAsync(user.UserId(), id, ct))
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         group.MapGet("/{id:guid}/review", (Guid id, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
             matches.ReviewAsync(user.UserId(), id, ct))
             .ProducesProblem(StatusCodes.Status403Forbidden)

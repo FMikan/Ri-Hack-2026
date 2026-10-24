@@ -1,7 +1,10 @@
 using App.Application;
 using App.Domain.Content;
+using App.Domain.Daily;
+using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
+using App.Domain.Matchmaking;
 using App.Domain.Progress;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +28,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MatchQuestion> MatchQuestions => Set<MatchQuestion>();
     public DbSet<MatchAnswer> MatchAnswers => Set<MatchAnswer>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
+    public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
+    public DbSet<MatchProposal> MatchProposals => Set<MatchProposal>();
+    public DbSet<GhostOffer> GhostOffers => Set<GhostOffer>();
+    public DbSet<RewardEvent> RewardEvents => Set<RewardEvent>();
+    public DbSet<ActivityDay> ActivityDays => Set<ActivityDay>();
+    public DbSet<UserDailyTask> UserDailyTasks => Set<UserDailyTask>();
+    public DbSet<DailyChallenge> DailyChallenges => Set<DailyChallenge>();
+    public DbSet<DailyChallengeAttempt> DailyChallengeAttempts => Set<DailyChallengeAttempt>();
+    public DbSet<ShopItem> ShopItems => Set<ShopItem>();
+    public DbSet<UserItem> UserItems => Set<UserItem>();
     public DbSet<ConceptLessonCards> ConceptLessonCards => Set<ConceptLessonCards>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
@@ -46,6 +59,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<SeatKind>().HaveConversion<SnakeCaseEnumConverter<SeatKind>>();
         builder.Properties<BotPersona>().HaveConversion<SnakeCaseEnumConverter<BotPersona>>();
         builder.Properties<LessonStatus>().HaveConversion<SnakeCaseEnumConverter<LessonStatus>>();
+        builder.Properties<QueueStatus>().HaveConversion<SnakeCaseEnumConverter<QueueStatus>>();
+        builder.Properties<ProposalStatus>().HaveConversion<SnakeCaseEnumConverter<ProposalStatus>>();
+        builder.Properties<RematchStatus>().HaveConversion<SnakeCaseEnumConverter<RematchStatus>>();
+        builder.Properties<RewardType>().HaveConversion<SnakeCaseEnumConverter<RewardType>>();
+        builder.Properties<ShopItemKind>().HaveConversion<SnakeCaseEnumConverter<ShopItemKind>>();
         builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
     }
 }

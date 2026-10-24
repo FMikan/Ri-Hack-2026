@@ -8,10 +8,27 @@ public static class GameRules
     public const string DayTimeZone = "Europe/Zagreb";
     public const int StartRating = 1000;
     public const int ProvisionalMatches = 10; // rating shows as "?" and stays off leaderboards until then
+
+    // Ranked play (idea §4, §5, §9, §14)
+    public const int ProfileAfterRankedMatches = 5; // targeted slots in ranked once both players have this many
+    public const int HighKMatches = 30, KHigh = 32, KLow = 16;
+    public const int MaxRatingGap = 400, QueueInitialRange = 100, QueueRangeStep = 50, QueueStepSeconds = 10;
+    public const int ProposalAcceptSeconds = 10, BotOfferAfterSeconds = 30, GhostOfferAfterSeconds = 30, GhostRecordingMaxDays = 30;
+    public const int RematchSeconds = 20, RematchOpponentSeenMinutes = 2;
+    public const int VetoAnimationSeconds = 3, VetoBanSeconds = 8, VetoPoolMax = 6;
+    public const int TierHysteresis = 25;
+    public static readonly int[] TierThresholds = [1100, 1300, 1500, 1700, 1900]; // silver, gold, platinum, diamond, master
     public const int MinTopics = 3, MaxTopics = 5;
     public const int UsernameMinLength = 3, UsernameMaxLength = 20;
     public const int PasswordMinLength = 8, PasswordMaxLength = 128;
     public const int MaxStreakFreezes = 2;
+
+    // Economy (idea §9, §13, §15). Coins, XP and SP only move through the ledger (Rewarder).
+    public const int CoinsWin = 15, CoinsLoss = 5, CoinsDraw = 10, CoinsLessonPassed = 50, CoinsWeeklyXpGoal = 100, CoinsPerLevel = 50;
+    public const int SpWin = 10, SpUpset = 5, SpUpsetGap = 100, SpDailyWinCap = 100, SpPatched = 2, SpDailyLearnCap = 10;
+    public const int XpAnswer = 5, XpMatch = 50, XpLesson = 100, WeeklyXpGoal = 500;
+    public const int PatchRewardCooldownDays = 7;
+    public static readonly (int Days, int Coins)[] StreakMilestones = [(7, 100), (30, 500), (100, 2000)];
     public static readonly TimeSpan AccessTokenLifetime = TimeSpan.FromMinutes(15);
     public static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(30);
     public static readonly TimeSpan PasswordResetTokenLifetime = TimeSpan.FromHours(1);

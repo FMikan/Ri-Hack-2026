@@ -41,6 +41,20 @@ export type AppErrorCode =
   | 'urn:app:lesson/nothing-missed'
   | 'urn:app:lesson/already-passed'
   | 'urn:app:lesson/retry-too-soon'
+  | 'urn:app:match/not-your-turn'
+  | 'urn:app:match/topic-not-in-pool'
+  | 'urn:app:queue/already-in'
+  | 'urn:app:proposal/expired' // the offer was declined by the other player or ran out: poll the queue again
+  | 'urn:app:match/rematch-unavailable'
+  | 'urn:app:queue/no-ghost-offer'
+  | 'urn:app:shop/insufficient-coins'
+  | 'urn:app:shop/already-owned'
+  | 'urn:app:shop/freeze-limit'
+  | 'urn:app:shop/not-owned'
+  | 'urn:app:shop/not-found'
+  | 'urn:app:daily/already-attempted'
+  | 'urn:app:daily/too-late' // the attempt is recorded as a timeout (5 coins); refetch the challenge
+  | 'urn:app:daily/not-found'
 
 export type Uuid = string
 export type Iso = string
@@ -338,6 +352,7 @@ export interface MatchStateDto {
   timed: boolean
   mySeat: 0 | 1
   players: PlayerDto[] // 2 in duels, 1 in practice
+  veto?: VetoDto | null // ranked, only in veto_coin, veto_ban and veto_pick
   question?: QuestionTurnDto | null
   interstitial?: InterstitialDto | null
   result?: MatchResultDto | null
@@ -377,6 +392,131 @@ export interface BotDto {
   persona: BotPersona
   displayRating: number
   recommended: boolean
+}
+
+// ---- Ranked: veto and queue (F3, docs §6.5 and §6.6) ----
+
+// veto_coin (3 s animation, coinWinnerSeat bans first) → veto_ban (8 s per turn; timeout = automatic random ban)
+// → veto_pick (3 s animation towards chosenTopicId, already known) → lobby.
+export interface VetoDto {
+  pool: {
+    topic: TopicDto
+    myMastery?: number | null // my own mastery bar; the opponent's is never sent
+    pickedByOpponent: boolean // icon: the opponent has this topic active
+    bannedBySeat?: 0 | 1 | null
+    auto?: boolean | null // banned automatically after the 8 s ran out
+  }[]
+  coinWinnerSeat: 0 | 1
+  turnSeat?: 0 | 1 | null // who bans now; null once two topics remain
+  bansRemaining: number
+  finalTwo?: Uuid[] | null
+  chosenTopicId?: Uuid | null
+}
+
+// POST /api/matches/{id}/veto/ban → MatchStateDto (409 urn:app:match/not-your-turn, urn:app:match/topic-not-in-pool, wrong-phase)
+export interface BanTopicRequest {
+  topicId: Uuid
+}
+
+export type QueueStatus = 'idle' | 'waiting' | 'proposed' | 'matched'
+
+// POST /api/queue (join; 409 topics/count, queue/already-in, match/already-in-match), GET /api/queue (poll 1 s),
+// DELETE /api/queue (leave; also declines an offer), POST /api/queue/proposals/{id}/accept (→ QueueStateDto).
+export interface QueueStateDto {
+  status: QueueStatus
+  enteredAt?: Iso | null
+  serverTime: Iso
+  rangeNow?: number | null // ± rating range right now: 100, +50 every 10 s, at most 400
+  topicIds: Uuid[] // locked while queued (PUT /api/me/topics → 409 topics/locked-in-queue)
+  proposal?: { id: Uuid; opponent: UserRefDto; expiresAt: Iso; iAccepted: boolean } | null // 10 s to accept
+  // After 30 s without an opponent, once per recording: POST /api/queue/ghost (→ 201 MatchStateDto, kind 'ghost', lobby)
+  // or POST /api/queue/ghost/decline (→ QueueStateDto; keeps waiting, the bot is offered instead).
+  ghostOffer?: { opponent: UserRefDto; recordedAt: Iso; topic: TopicDto } | null
+  botOffer: boolean // after 30 s when there is no ghost offer; POST /api/matches/bot leaves the queue
+  matchId?: Uuid | null // status 'matched': open this match
+}
+
+export type RematchStatus = 'none' | 'pending' | 'accepted' | 'declined' | 'expired'
+
+// POST /api/matches/{id}/rematch (ask; asking while the opponent's request waits accepts it), GET (poll every 2 s on
+// the result screen while result.rematchAvailable), POST .../rematch/accept (→ the new ranked MatchStateDto in veto_coin).
+// The other player sees the request in dashboard.inbox.rematch. 409 urn:app:match/rematch-unavailable once it expired.
+export interface RematchDto {
+  status: RematchStatus
+  requestedBySeat?: 0 | 1 | null
+  expiresAt?: Iso | null // requested + 20 s
+  matchId?: Uuid | null // the new match once accepted
+}
+
+// ---- Economy (F4, docs §6.8) ----
+
+export type RewardType =
+  | 'match_win' | 'match_loss' | 'match_draw' | 'rating_upset' | 'lesson_passed' | 'concept_patched' | 'daily_challenge'
+  | 'daily_task' | 'daily_task_bonus' | 'streak_milestone' | 'weekly_xp_goal' | 'level_up' | 'friend_match' | 'answer_xp'
+  | 'match_xp' | 'shop_purchase' | 'streak_freeze' | 'season_reset' | 'season_drop'
+
+// GET /api/me/rewards?limit=50, newest first. coins is negative for a purchase.
+export interface RewardEventDto {
+  type: RewardType
+  coins: number
+  xp: number
+  sp: number
+  at: Iso
+  referenceId?: Uuid | null // the match, lesson or item the reward belongs to
+}
+
+export type ShopItemKind = 'avatar_frame' | 'banner' | 'board_theme' | 'name_color' | 'card_background' | 'streak_freeze'
+
+// GET /api/shop: active items, cheapest first. assetKey names the image or CSS the frontend draws.
+export interface ShopItemDto {
+  id: Uuid
+  key: string
+  kind: ShopItemKind
+  name: string
+  price: number
+  rarity: string
+  assetKey: string
+  owned: boolean // always false for the streak freeze (see me.streak.freezes, at most 2)
+}
+
+export interface ShopDto {
+  items: ShopItemDto[]
+}
+
+// POST /api/shop/purchase → MeDto (409 shop/insufficient-coins, shop/already-owned, shop/freeze-limit; 404 shop/not-found)
+export interface PurchaseRequest {
+  itemId: Uuid
+}
+
+// PUT /api/me/equipment → MeDto. An owned item id puts it on, null takes it off, a missing slot stays (409 shop/not-owned).
+// UserRefDto.equipment then maps the slot to the item's assetKey.
+export type SetEquipmentRequest = Partial<Record<EquipmentSlot, Uuid | null>>
+
+// GET /api/me/daily-tasks (also dashboard.dailyTasks). A task that reached its target is paid 20 coins when this is next
+// read; all three pay 30 more (bonusAwarded).
+export interface DailyTasksDto {
+  tasks: DailyTaskDto[]
+  bonusAwarded: boolean
+}
+
+export interface DailyAttemptRequest {
+  payload: AnswerPayload // { line, fixId }
+  clientElapsedMs: number
+}
+
+// GET /api/daily-challenge: the first request of the day starts my 60 s (startedAt); count down from startedAt + 60 s
+// using serverTime. POST /api/daily-challenge/attempt → this DTO (409 daily/already-attempted, daily/too-late).
+// GET /api/daily-challenge/{yyyy-mm-dd}: the archive, never starts an attempt. key/explanation only after my attempt.
+export interface DailyChallengeDto {
+  day: string
+  question: QuestionPublicDto // find_bug, timeLimitMs 60000
+  startedAt?: Iso | null
+  serverTime: Iso
+  attempted: boolean
+  myAttempt?: (AnswerResultDto & { rank?: number | null }) | null
+  key?: AnswerKeyDto | null
+  explanation?: ExplanationDto | null // set only when cached; otherwise GET /api/questions/{id}/explanation
+  leaderboard: { rank: number; user: UserRefDto; isCorrect: boolean; elapsedMs: number }[] // top 20: correct first, then faster
 }
 
 export interface StartCalibrationRequest {

@@ -1,6 +1,9 @@
 using App.Domain.Content;
+using App.Domain.Daily;
+using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
+using App.Domain.Matchmaking;
 using App.Domain.Progress;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +29,16 @@ public interface IAppDbContext
     DbSet<MatchQuestion> MatchQuestions { get; }
     DbSet<MatchAnswer> MatchAnswers { get; }
     DbSet<Lesson> Lessons { get; }
+    DbSet<QueueEntry> QueueEntries { get; }
+    DbSet<MatchProposal> MatchProposals { get; }
+    DbSet<GhostOffer> GhostOffers { get; }
+    DbSet<RewardEvent> RewardEvents { get; }
+    DbSet<ActivityDay> ActivityDays { get; }
+    DbSet<UserDailyTask> UserDailyTasks { get; }
+    DbSet<DailyChallenge> DailyChallenges { get; }
+    DbSet<DailyChallengeAttempt> DailyChallengeAttempts { get; }
+    DbSet<ShopItem> ShopItems { get; }
+    DbSet<UserItem> UserItems { get; }
     DbSet<ConceptLessonCards> ConceptLessonCards { get; }
 
     DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)
