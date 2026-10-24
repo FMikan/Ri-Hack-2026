@@ -9,7 +9,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 WORKDIR /app
 COPY --from=build /app .
 # Npgsql probes for Kerberos (GSSAPI) on connect; without it every start logs a misleading library error.
-RUN apk add --no-cache krb5-libs
+# tzdata: game days are counted in Europe/Zagreb (App.Domain.Clock).
+RUN apk add --no-cache krb5-libs tzdata
 # Non-root user built into the .NET images. Listens on 8080 by default.
 USER $APP_UID
 ENTRYPOINT ["dotnet", "App.Api.dll"]

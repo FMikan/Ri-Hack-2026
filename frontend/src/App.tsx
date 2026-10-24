@@ -1,4 +1,3 @@
-import { NotesExample } from '@/features/notes/NotesExample'
 import { SystemStatus } from '@/features/status/SystemStatus'
 import { API_BASE_URL } from '@/lib/api-client'
 
@@ -15,7 +14,6 @@ export default function App() {
 
       <main className="grid items-start gap-6 md:grid-cols-2">
         <SystemStatus />
-        <NotesExample />
       </main>
 
       <footer className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-muted-foreground">

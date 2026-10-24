@@ -26,6 +26,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Default: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Database__MigrateOnStartup: "true"
+      Auth__JwtSigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in .env}
     depends_on:
       postgres:
         condition: service_healthy

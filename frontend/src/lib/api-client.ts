@@ -1,4 +1,4 @@
-import type { CreateNoteRequest, HealthResponse, Note, ProblemDetails } from '@/types/api'
+import type { HealthResponse, ProblemDetails, TopicDto } from '@/types/api'
 
 // The client always calls the API by its full origin (no Vite proxy); the backend allows this origin via CORS.
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5080').replace(/\/$/, '')
@@ -47,7 +47,6 @@ export const api = {
   health: (signal?: AbortSignal) => request<HealthResponse>('/health', { signal }),
   // Responds 503 (thrown as ApiError) when the API is up but PostgreSQL is not reachable.
   readiness: (signal?: AbortSignal) => request<HealthResponse>('/health/ready', { signal }),
-  listNotes: (signal?: AbortSignal) => request<Note[]>('/api/notes', { signal }),
-  createNote: (body: CreateNoteRequest) =>
-    request<Note>('/api/notes', { method: 'POST', body: JSON.stringify(body) }),
+  // ponytail: authenticated calls (me, dashboard, topics selection) arrive with the token store and refresh flow (docs §6.10).
+  listTopics: (signal?: AbortSignal) => request<TopicDto[]>('/api/topics', { signal }),
 }
