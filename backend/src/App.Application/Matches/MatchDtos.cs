@@ -88,6 +88,9 @@ public record MatchStateDto(
     TopicDto? Topic, bool Timed, int MySeat, PlayerDto[] Players, VetoDto? Veto, QuestionTurnDto? Question, InterstitialDto? Interstitial,
     MatchResultDto? Result);
 
+// GET/POST /api/matches/{id}/rematch. expiresAt = requested + 20 s; matchId once accepted.
+public record RematchDto(RematchStatus Status, int? RequestedBySeat, DateTimeOffset? ExpiresAt, Guid? MatchId);
+
 public record OpponentDto(SeatKind Kind, BotPersona? Persona, UserRefDto? User, int DisplayRating);
 
 public record MatchSummaryDto(

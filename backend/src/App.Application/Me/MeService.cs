@@ -1,5 +1,6 @@
 using System.Text.Json;
 using App.Application.Content;
+using App.Domain.Matches;
 using App.Domain.Progress;
 using App.Domain;
 using App.Domain.Users;
@@ -78,7 +79,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             [],
             false,
             suggestion,
-            new InboxDto(null, null),
+            new InboxDto(await RematchInboxAsync(userId, cancellationToken), null),
             me.InQueue);
     }
 
@@ -132,6 +133,24 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
                             .Select(a => new LastAnswerDto(a.QuestionId, a.QuestionType, prompts[a.QuestionId], a.IsCorrect, a.CreatedAt)).ToArray());
                 }).ToArray());
         }).ToArray());
+    }
+
+    // The newest rematch someone asked me for that is still open (20 s).
+    private async Task<RematchInboxDto?> RematchInboxAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var openSince = time.GetUtcNow().AddSeconds(-GameRules.RematchSeconds);
+        var request = await db.MatchPlayers.Where(p => p.UserId == userId && p.Kind == SeatKind.Human)
+            .Join(db.Matches, p => p.MatchId, m => m.Id, (p, m) => new { p.Seat, Match = m })
+            .Where(x => x.Match.RematchStatus == RematchStatus.Pending && x.Match.RematchRequestedAt > openSince && x.Match.RematchRequestedBySeat != x.Seat)
+            .OrderByDescending(x => x.Match.RematchRequestedAt)
+            .Select(x => new
+            {
+                x.Match.Id,
+                At = x.Match.RematchRequestedAt!.Value,
+                From = db.MatchPlayers.Where(o => o.MatchId == x.Match.Id && o.Seat == x.Match.RematchRequestedBySeat).Select(o => o.User!).First(),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        return request is null ? null : new RematchInboxDto(request.Id, UserRefDto.From(request.From), request.At.AddSeconds(GameRules.RematchSeconds));
     }
 
     private record TopicProgress(double? Mastery, int Graduated);

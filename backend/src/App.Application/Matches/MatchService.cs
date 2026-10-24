@@ -79,7 +79,87 @@ public class MatchService(IAppDbContext db, TimeProvider time)
         }, ct);
 
     // Both players accepted: the match begins with the coin flip; the veto pool is the union of their active topics.
-    public async Task<Guid> CreateRankedAsync(Guid userA, Guid userB, DateTimeOffset now, CancellationToken ct)
+    // The ghost duel (idea §4): the recording's topic, deck and band, no veto; seat 1 replays the recorded player.
+    public async Task<MatchStateDto> StartGhostAsync(Guid userId, Guid sourceMatchId, int recordedSeat, CancellationToken ct)
+    {
+        var now = time.GetUtcNow();
+        var user = await LoadUserAsync(userId, ct);
+        // Tracked on purpose: the source's questions become navigations of the new match.
+        var source = await db.Matches
+            .Include(m => m.Players).ThenInclude(p => p.User)
+            .Include(m => m.Questions).ThenInclude(q => q.Question)
+            .AsSplitQuery()
+            .FirstAsync(m => m.Id == sourceMatchId, ct);
+        var recorded = source.Players.First(p => p.Seat == recordedSeat);
+        MatchPlayer[] seats =
+        [
+            Human(user),
+            new() { Seat = 1, Kind = SeatKind.Ghost, UserId = recorded.UserId, User = recorded.User, DisplayRating = recorded.DisplayRating, GhostSourceMatchId = source.Id },
+        ];
+        var deck = source.Questions.OrderBy(q => q.Index).Select(q => new DeckSlot(new DeckQuestion(q.QuestionId, q.ConceptId, q.Type, q.Difficulty), q.Slot)).ToList();
+        var match = MatchEngine.Create(MatchKind.Ghost, source.TopicId!.Value, timed: true, (source.BandMin, source.BandMax), Random.Shared.Next(),
+            seats, deck, source.Questions.ToDictionary(q => q.QuestionId, q => q.Question!), now);
+        return await SaveNewAsync(userId, match, now, ct);
+    }
+
+    public async Task<RematchDto> GetRematchAsync(Guid userId, Guid matchId, CancellationToken ct)
+    {
+        var match = await LoadAsync(matchId, ct);
+        Seat(match, userId);
+        return RematchOf(match, time.GetUtcNow());
+    }
+
+    // Asking twice is harmless; asking while the other player's request waits accepts it.
+    public async Task<RematchDto> RequestRematchAsync(Guid userId, Guid matchId, CancellationToken ct)
+    {
+        var now = time.GetUtcNow();
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var match = await LockedAsync(matchId, ct);
+        var seat = Seat(match, userId).Seat;
+        if (Rematch.StatusOf(match, now) == RematchStatus.Pending && match.RematchRequestedBySeat != seat)
+            await StartRematchAsync(match, seat, now, ct);
+        else if (!(Rematch.StatusOf(match, now) == RematchStatus.Pending && match.RematchRequestedBySeat == seat))
+            Rematch.Request(match, seat, now);
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+        return RematchOf(match, now);
+    }
+
+    public async Task<MatchStateDto> AcceptRematchAsync(Guid userId, Guid matchId, CancellationToken ct)
+    {
+        var now = time.GetUtcNow();
+        Guid rematchId;
+        await using (var transaction = await db.Database.BeginTransactionAsync(ct))
+        {
+            var match = await LockedAsync(matchId, ct);
+            rematchId = await StartRematchAsync(match, Seat(match, userId).Seat, now, ct);
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        var rematch = await LoadAsync(rematchId, ct);
+        return await MapAsync(rematch, Seat(rematch, userId).Seat, now, ct);
+    }
+
+    // Skips the queue (and the same-opponent rule) and goes straight to a new veto.
+    private async Task<Guid> StartRematchAsync(Match match, int seat, DateTimeOffset now, CancellationToken ct)
+    {
+        Rematch.Accept(match, seat, now);
+        foreach (var player in match.Players) await db.LeaveQueueAsync(player.UserId!.Value, ct);
+        match.RematchMatchId = await CreateRankedAsync(match.Players[0].UserId!.Value, match.Players[1].UserId!.Value, now, ct, rematchOf: match.Id);
+        return match.RematchMatchId.Value;
+    }
+
+    private static RematchDto RematchOf(Match match, DateTimeOffset now) => new(
+        Rematch.StatusOf(match, now), match.RematchRequestedBySeat, match.RematchRequestedAt?.AddSeconds(GameRules.RematchSeconds), match.RematchMatchId);
+
+    private async Task<Match> LockedAsync(Guid matchId, CancellationToken ct)
+    {
+        var exists = await db.Database.SqlQuery<int>($"select 1 as \"Value\" from matches where id = {matchId} for update").ToListAsync(ct);
+        if (exists.Count == 0) throw MatchNotFound();
+        return await LoadAsync(matchId, ct);
+    }
+
+    public async Task<Guid> CreateRankedAsync(Guid userA, Guid userB, DateTimeOffset now, CancellationToken ct, Guid? rematchOf = null)
     {
         var users = await db.Users.Include(u => u.Topics).Where(u => u.Id == userA || u.Id == userB).ToListAsync(ct);
         var playable = (await db.Topics.Where(t => t.IsActive).Select(t => t.Id).ToListAsync(ct)).ToHashSet();
@@ -88,6 +168,7 @@ public class MatchService(IAppDbContext db, TimeProvider time)
 
         var seed = Random.Shared.Next();
         var match = MatchEngine.CreateRanked([Human(a, 0), Human(b, 1)], Veto.Start(Topics(a), Topics(b), new Random(seed)), seed, now);
+        match.RematchOfMatchId = rematchOf;
         db.Matches.Add(match);
         await db.SaveChangesAsync(ct);
         var claimed = await db.Users
@@ -131,6 +212,7 @@ public class MatchService(IAppDbContext db, TimeProvider time)
 
         var match = await LoadAsync(matchId, ct);
         var wasDone = match.Phase == MatchPhase.Done;
+        await LoadRecordingAsync(match, ct);
         var recorded = MatchEngine.Advance(match, now);
         // The veto just drew the topic: build the deck, then let the pick animation and the lobby run their course.
         if (await AttachDeckIfPickedAsync(match, now, ct)) recorded.AddRange(MatchEngine.Advance(match, now));
@@ -223,13 +305,19 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             throw new AppException(ErrorCodes.TopicNotPlayable, "This topic has no questions yet.");
 
         var match = MatchEngine.Create(kind, topicId, timed, band, seed, seats, deck, questions.ToDictionary(q => q.Id), now);
+        return await SaveNewAsync(user.Id, match, now, ct);
+    }
+
+    // Any match a player starts takes them out of the ranked queue and claims their single active-match slot
+    // (the claim fails while another match still runs: a double click, two tabs).
+    private async Task<MatchStateDto> SaveNewAsync(Guid userId, Match match, DateTimeOffset now, CancellationToken ct)
+    {
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        await db.LeaveQueueAsync(user.Id, ct); // any other match takes the player out of the ranked queue
+        await db.LeaveQueueAsync(userId, ct);
         db.Matches.Add(match);
         await db.SaveChangesAsync(ct);
-        // One active match per user: the claim fails while another match is still running (a double click, two tabs).
         var claimed = await db.Users
-            .Where(u => u.Id == user.Id && (u.CurrentMatchId == null || db.Matches.Any(m => m.Id == u.CurrentMatchId && m.Phase == MatchPhase.Done)))
+            .Where(u => u.Id == userId && (u.CurrentMatchId == null || db.Matches.Any(m => m.Id == u.CurrentMatchId && m.Phase == MatchPhase.Done)))
             .ExecuteUpdateAsync(s => s.SetProperty(u => u.CurrentMatchId, match.Id), ct);
         if (claimed == 0)
             throw new AppException(ErrorCodes.MatchAlreadyInMatch, "Finish or resign your current match first.");
@@ -241,10 +329,7 @@ public class MatchService(IAppDbContext db, TimeProvider time)
     {
         var now = time.GetUtcNow();
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        var exists = await db.Database.SqlQuery<int>($"select 1 as \"Value\" from matches where id = {matchId} for update").ToListAsync(ct);
-        if (exists.Count == 0) throw MatchNotFound();
-
-        var match = await LoadAsync(matchId, ct);
+        var match = await LockedAsync(matchId, ct);
         var seat = Seat(match, userId).Seat;
         var wasDone = match.Phase == MatchPhase.Done;
         var recorded = command(match, seat, now);
@@ -281,6 +366,15 @@ public class MatchService(IAppDbContext db, TimeProvider time)
                 CreatedAt = answer.AnsweredAt,
             }, match.Timed, ct);
         }
+    }
+
+    // The recorded player's answers in the source match, which the engine replays as each question starts.
+    private async Task LoadRecordingAsync(Match match, CancellationToken ct)
+    {
+        if (match.Players.FirstOrDefault(p => p.Kind == SeatKind.Ghost) is not { GhostSourceMatchId: { } source } ghost) return;
+        match.Recording = await db.MatchAnswers.AsNoTracking()
+            .Where(a => a.MatchId == source && db.MatchPlayers.Any(p => p.MatchId == source && p.Seat == a.Seat && p.UserId == ghost.UserId))
+            .ToListAsync(ct);
     }
 
     // Ranked: the deck of both players on the topic the veto drew, in the band of their average rating.
@@ -376,9 +470,12 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             ? await VetoAsync(v, me, ct)
             : null;
 
+        var ghostSources = match.Players.Where(p => p.GhostSourceMatchId is not null).Select(p => p.GhostSourceMatchId!.Value).ToList();
+        var recordedAt = await db.Matches.Where(m => ghostSources.Contains(m.Id)).ToDictionaryAsync(m => m.Id, m => m.FinishedAt, ct);
+
         return new MatchStateDto(
             match.Id, match.Kind, Status(match), match.Phase, now, match.PhaseDeadline, topic, match.Timed, seat,
-            match.Players.Select(p => Player(match, p, now)).ToArray(),
+            match.Players.Select(p => Player(match, p, now, p.GhostSourceMatchId is { } source ? recordedAt.GetValueOrDefault(source) : null)).ToArray(),
             veto, question, interstitial,
             match.Phase == MatchPhase.Done ? await ResultAsync(match, me, opponentSeat, ct) : null);
     }
@@ -435,7 +532,7 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             lessonAvailable,
             lessonAvailable && (lesson is null || LessonRules.RewardEligible(lesson, time.GetUtcNow())),
             lesson?.Id,
-            false, // rematch arrives in F3
+            Rematch.Available(match, me.Seat, time.GetUtcNow()),
             true);
     }
 
@@ -448,8 +545,8 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             QuestionView.Explanation(q.Question!.Explanation), reported);
     }
 
-    private static PlayerDto Player(Match match, MatchPlayer player, DateTimeOffset now) => new(
-        player.Seat, player.Kind, player.User is null ? null : UserRefDto.From(player.User), player.BotPersona, null, player.DisplayRating,
+    private static PlayerDto Player(Match match, MatchPlayer player, DateTimeOffset now, DateTimeOffset? ghostRecordedAt) => new(
+        player.Seat, player.Kind, player.User is null ? null : UserRefDto.From(player.User), player.BotPersona, ghostRecordedAt, player.DisplayRating,
         match.Phase == MatchPhase.Done ? player.Score : match.Answers.Where(a => a.Seat == player.Seat && match.IsRevealed(a.Index)).Sum(a => a.Points),
         player.IsConnected(now),
         match.Phase == MatchPhase.Question && match.AnswerOf(player.Seat, match.CurrentIndex) is { } a && a.AnsweredAt <= now);

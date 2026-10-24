@@ -27,6 +27,8 @@ public static class ErrorCodes
     public const string MatchNotFinished = "urn:app:match/not-finished";
     public const string MatchNotYourTurn = "urn:app:match/not-your-turn";
     public const string MatchTopicNotInPool = "urn:app:match/topic-not-in-pool";
+    public const string MatchRematchUnavailable = "urn:app:match/rematch-unavailable";
+    public const string QueueNoGhostOffer = "urn:app:queue/no-ghost-offer";
     public const string QueueAlreadyIn = "urn:app:queue/already-in";
     public const string QueueNotIn = "urn:app:queue/not-in";
     public const string ProposalExpired = "urn:app:proposal/expired";

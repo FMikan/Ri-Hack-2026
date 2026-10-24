@@ -391,6 +391,26 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("question_started_at");
 
+                    b.Property<Guid?>("RematchMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rematch_match_id");
+
+                    b.Property<Guid?>("RematchOfMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rematch_of_match_id");
+
+                    b.Property<DateTimeOffset?>("RematchRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rematch_requested_at");
+
+                    b.Property<int?>("RematchRequestedBySeat")
+                        .HasColumnType("integer")
+                        .HasColumnName("rematch_requested_by_seat");
+
+                    b.Property<string>("RematchStatus")
+                        .HasColumnType("text")
+                        .HasColumnName("rematch_status");
+
                     b.Property<string>("ResultReason")
                         .HasColumnType("text")
                         .HasColumnName("result_reason");
@@ -430,6 +450,12 @@ namespace App.Infrastructure.Migrations
                         .HasDatabaseName("ix_matches_phase_deadline")
                         .HasFilter("phase <> 'done'");
 
+                    b.HasIndex("RematchMatchId")
+                        .HasDatabaseName("ix_matches_rematch_match_id");
+
+                    b.HasIndex("RematchOfMatchId")
+                        .HasDatabaseName("ix_matches_rematch_of_match_id");
+
                     b.HasIndex("TopicId")
                         .HasDatabaseName("ix_matches_topic_id");
 
@@ -438,6 +464,8 @@ namespace App.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_matches_kind", "kind in ('ranked', 'ghost', 'bot', 'friend', 'practice', 'calibration')");
 
                             t.HasCheckConstraint("ck_matches_phase", "phase in ('veto_coin', 'veto_ban', 'veto_pick', 'lobby', 'question', 'interstitial', 'done')");
+
+                            t.HasCheckConstraint("ck_matches_rematch_status", "rematch_status in ('none', 'pending', 'accepted', 'declined', 'expired')");
 
                             t.HasCheckConstraint("ck_matches_result_reason", "result_reason in ('score', 'tiebreak_correct', 'tiebreak_time', 'draw', 'resign', 'disconnect', 'aborted')");
                         });
@@ -533,6 +561,10 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("display_rating");
 
+                    b.Property<Guid?>("GhostSourceMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ghost_source_match_id");
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasColumnType("text")
@@ -576,6 +608,9 @@ namespace App.Infrastructure.Migrations
 
                     b.HasKey("MatchId", "Seat")
                         .HasName("pk_match_players");
+
+                    b.HasIndex("GhostSourceMatchId")
+                        .HasDatabaseName("ix_match_players_ghost_source_match_id");
 
                     b.HasIndex("UserId", "MatchId")
                         .HasDatabaseName("ix_match_players_user_id_match_id");
@@ -647,6 +682,29 @@ namespace App.Infrastructure.Migrations
 
                             t.HasCheckConstraint("ck_match_questions_type", "type in ('true_false', 'multiple_choice', 'cloze', 'odd_one_out', 'output', 'match_pairs', 'order', 'find_bug')");
                         });
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.GhostOffer", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("SourceMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_match_id");
+
+                    b.Property<DateTimeOffset>("OfferedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("offered_at");
+
+                    b.HasKey("UserId", "SourceMatchId")
+                        .HasName("pk_ghost_offers");
+
+                    b.HasIndex("SourceMatchId")
+                        .HasDatabaseName("ix_ghost_offers_source_match_id");
+
+                    b.ToTable("ghost_offers", (string)null);
                 });
 
             modelBuilder.Entity("App.Domain.Matchmaking.MatchProposal", b =>
@@ -721,6 +779,18 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("entered_at");
 
+                    b.Property<bool>("GhostOfferDeclined")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ghost_offer_declined");
+
+                    b.Property<Guid?>("GhostOfferMatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ghost_offer_match_id");
+
+                    b.Property<int?>("GhostOfferSeat")
+                        .HasColumnType("integer")
+                        .HasColumnName("ghost_offer_seat");
+
                     b.Property<Guid?>("ProposalId")
                         .HasColumnType("uuid")
                         .HasColumnName("proposal_id");
@@ -741,6 +811,9 @@ namespace App.Infrastructure.Migrations
 
                     b.HasKey("UserId")
                         .HasName("pk_queue_entries");
+
+                    b.HasIndex("GhostOfferMatchId")
+                        .HasDatabaseName("ix_queue_entries_ghost_offer_match_id");
 
                     b.HasIndex("ProposalId")
                         .HasDatabaseName("ix_queue_entries_proposal_id");
@@ -1258,6 +1331,18 @@ namespace App.Infrastructure.Migrations
 
             modelBuilder.Entity("App.Domain.Matches.Match", b =>
                 {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("RematchMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_matches_matches_rematch_match_id");
+
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("RematchOfMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_matches_matches_rematch_of_match_id");
+
                     b.HasOne("App.Domain.Content.Topic", null)
                         .WithMany()
                         .HasForeignKey("TopicId")
@@ -1277,6 +1362,12 @@ namespace App.Infrastructure.Migrations
 
             modelBuilder.Entity("App.Domain.Matches.MatchPlayer", b =>
                 {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("GhostSourceMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_match_players_matches_ghost_source_match_id");
+
                     b.HasOne("App.Domain.Matches.Match", null)
                         .WithMany("Players")
                         .HasForeignKey("MatchId")
@@ -1319,6 +1410,23 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("Question");
                 });
 
+            modelBuilder.Entity("App.Domain.Matchmaking.GhostOffer", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("SourceMatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ghost_offers_matches_source_match_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ghost_offers_users_user_id");
+                });
+
             modelBuilder.Entity("App.Domain.Matchmaking.MatchProposal", b =>
                 {
                     b.HasOne("App.Domain.Matches.Match", null)
@@ -1344,6 +1452,12 @@ namespace App.Infrastructure.Migrations
 
             modelBuilder.Entity("App.Domain.Matchmaking.QueueEntry", b =>
                 {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("GhostOfferMatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_queue_entries_matches_ghost_offer_match_id");
+
                     b.HasOne("App.Domain.Matchmaking.MatchProposal", null)
                         .WithMany()
                         .HasForeignKey("ProposalId")

@@ -16,17 +16,20 @@ public static class Elo
 public static class RankedResult
 {
     // A finished ranked match moves both ratings (draw = 0.5), counts the match and re-derives the tiers.
+    // A ghost duel moves only the live player, against the rating the ghost had when it was recorded.
     // An aborted match (both players gone) changes nothing (idea §17).
     public static void Apply(Match match)
     {
-        if (match.Kind != MatchKind.Ranked || match.ResultReason == MatchResultReason.Aborted) return;
+        if (match.Kind is not (MatchKind.Ranked or MatchKind.Ghost) || match.ResultReason == MatchResultReason.Aborted) return;
         var (a, b) = (match.Players[0], match.Players[1]);
         var (userA, userB) = (a.User!, b.User!);
         var scoreA = match.WinnerSeat is null ? 0.5 : match.WinnerSeat == a.Seat ? 1 : 0;
-        var newA = Elo.Update(userA.Rating, userB.Rating, scoreA, userA.RankedMatches);
+        var opponentOfA = b.Kind == SeatKind.Ghost ? b.DisplayRating : userB.Rating;
+        var newA = Elo.Update(userA.Rating, opponentOfA, scoreA, userA.RankedMatches);
         var newB = Elo.Update(userB.Rating, userA.Rating, 1 - scoreA, userB.RankedMatches);
         foreach (var (player, user, rating) in new[] { (a, userA, newA), (b, userB, newB) })
         {
+            if (player.Kind != SeatKind.Human) continue;
             (player.RatingBefore, player.RatingAfter) = (user.Rating, rating);
             user.Rating = rating;
             user.RankedMatches++;

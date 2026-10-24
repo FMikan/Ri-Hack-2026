@@ -22,6 +22,14 @@ public static class QueueEndpoints
             return TypedResults.NoContent();
         });
 
+        group.MapPost("/ghost", async (ClaimsPrincipal user, QueueService queue, CancellationToken ct) =>
+            TypedResults.Created((string?)null, await queue.AcceptGhostAsync(user.UserId(), ct)))
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPost("/ghost/decline", (ClaimsPrincipal user, QueueService queue, CancellationToken ct) =>
+            queue.DeclineGhostAsync(user.UserId(), ct))
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         group.MapPost("/proposals/{id:guid}/accept", (Guid id, ClaimsPrincipal user, QueueService queue, CancellationToken ct) =>
             queue.AcceptAsync(user.UserId(), id, ct))
             .ProducesProblem(StatusCodes.Status409Conflict);

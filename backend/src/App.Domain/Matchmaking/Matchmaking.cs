@@ -13,6 +13,33 @@ public class QueueEntry
     public required DateTimeOffset EnteredAt { get; init; } // kept when a proposal falls through
     public QueueStatus Status { get; set; } = QueueStatus.Waiting;
     public Guid? ProposalId { get; set; }
+    public Guid? GhostOfferMatchId { get; set; } // the recording offered after 30 s: the source match and the recorded seat
+    public int? GhostOfferSeat { get; set; }
+    public bool GhostOfferDeclined { get; set; } // then the bot is offered and no other ghost in this wait
+}
+
+// A recording offered to a player; the same recording is offered to the same player only once.
+public class GhostOffer
+{
+    public required Guid UserId { get; init; }
+    public required Guid SourceMatchId { get; init; }
+    public required DateTimeOffset OfferedAt { get; init; }
+}
+
+// One player's side of a finished ranked or ghost match, playable again as a ghost.
+public record GhostCandidate(Guid SourceMatchId, Guid UserId, int DisplayRating, Guid TopicId, DateTimeOffset RecordedAt, IReadOnlyCollection<Guid> QuestionIds);
+
+public static class GhostOffers
+{
+    // In the same widening range as the queue, none of its questions seen in the last 30 days, the freshest first (idea §4).
+    public static GhostCandidate? Find(int rating, TimeSpan waited, IEnumerable<GhostCandidate> candidates, IReadOnlySet<Guid> seenQuestionIds)
+    {
+        var range = MatchmakingRules.Range(waited);
+        return candidates
+            .Where(c => Math.Abs(c.DisplayRating - rating) <= range && !c.QuestionIds.Any(seenQuestionIds.Contains))
+            .OrderByDescending(c => c.RecordedAt)
+            .FirstOrDefault();
+    }
 }
 
 // "Opponent found": both must accept within 10 s.

@@ -18,6 +18,9 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.HasIndex(m => m.PhaseDeadline).HasFilter("phase <> 'done'"); // the tick
         builder.HasIndex(m => m.FinishedAt).HasFilter("kind in ('ranked', 'ghost')"); // weekly board, ghost candidates
         builder.HasIndex(m => m.TopicId);
+        builder.Ignore(m => m.Recording);
+        builder.HasOne<Match>().WithMany().HasForeignKey(m => m.RematchOfMatchId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<Match>().WithMany().HasForeignKey(m => m.RematchMatchId).OnDelete(DeleteBehavior.SetNull);
         // The veto is one small document per match; compared by its JSON so in-place changes are saved.
         builder.Property(m => m.Veto).HasColumnType("jsonb").HasConversion(
             v => JsonSerializer.Serialize(v, JsonSerializerOptions.Web),
@@ -35,6 +38,7 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
             t.HasCheckConstraint("ck_matches_kind", $"kind in ({SnakeCaseEnumConverter<MatchKind>.SqlList()})");
             t.HasCheckConstraint("ck_matches_phase", $"phase in ({SnakeCaseEnumConverter<MatchPhase>.SqlList()})");
             t.HasCheckConstraint("ck_matches_result_reason", $"result_reason in ({SnakeCaseEnumConverter<MatchResultReason>.SqlList()})");
+            t.HasCheckConstraint("ck_matches_rematch_status", $"rematch_status in ({SnakeCaseEnumConverter<RematchStatus>.SqlList()})");
         });
     }
 }
@@ -46,6 +50,8 @@ public class MatchPlayerConfiguration : IEntityTypeConfiguration<MatchPlayer>
         builder.HasKey(p => new { p.MatchId, p.Seat });
         builder.HasIndex(p => new { p.UserId, p.MatchId }); // match history, "same opponent"
         builder.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(p => p.GhostSourceMatchId);
+        builder.HasOne<Match>().WithMany().HasForeignKey(p => p.GhostSourceMatchId).OnDelete(DeleteBehavior.SetNull);
         builder.ToTable(t =>
         {
             t.HasCheckConstraint("ck_match_players_seat", "seat in (0, 1)");

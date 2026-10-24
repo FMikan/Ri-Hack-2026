@@ -45,6 +45,8 @@ export type AppErrorCode =
   | 'urn:app:match/topic-not-in-pool'
   | 'urn:app:queue/already-in'
   | 'urn:app:proposal/expired' // the offer was declined by the other player or ran out: poll the queue again
+  | 'urn:app:match/rematch-unavailable'
+  | 'urn:app:queue/no-ghost-offer'
 
 export type Uuid = string
 export type Iso = string
@@ -419,9 +421,23 @@ export interface QueueStateDto {
   rangeNow?: number | null // ± rating range right now: 100, +50 every 10 s, at most 400
   topicIds: Uuid[] // locked while queued (PUT /api/me/topics → 409 topics/locked-in-queue)
   proposal?: { id: Uuid; opponent: UserRefDto; expiresAt: Iso; iAccepted: boolean } | null // 10 s to accept
-  ghostOffer?: { opponent: UserRefDto; recordedAt: Iso; topic: TopicDto } | null // F3b, always null until then
-  botOffer: boolean // after 30 s without an opponent; POST /api/matches/bot leaves the queue
+  // After 30 s without an opponent, once per recording: POST /api/queue/ghost (→ 201 MatchStateDto, kind 'ghost', lobby)
+  // or POST /api/queue/ghost/decline (→ QueueStateDto; keeps waiting, the bot is offered instead).
+  ghostOffer?: { opponent: UserRefDto; recordedAt: Iso; topic: TopicDto } | null
+  botOffer: boolean // after 30 s when there is no ghost offer; POST /api/matches/bot leaves the queue
   matchId?: Uuid | null // status 'matched': open this match
+}
+
+export type RematchStatus = 'none' | 'pending' | 'accepted' | 'declined' | 'expired'
+
+// POST /api/matches/{id}/rematch (ask; asking while the opponent's request waits accepts it), GET (poll every 2 s on
+// the result screen while result.rematchAvailable), POST .../rematch/accept (→ the new ranked MatchStateDto in veto_coin).
+// The other player sees the request in dashboard.inbox.rematch. 409 urn:app:match/rematch-unavailable once it expired.
+export interface RematchDto {
+  status: RematchStatus
+  requestedBySeat?: 0 | 1 | null
+  expiresAt?: Iso | null // requested + 20 s
+  matchId?: Uuid | null // the new match once accepted
 }
 
 export interface StartCalibrationRequest {

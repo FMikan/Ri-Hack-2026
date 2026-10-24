@@ -29,6 +29,7 @@ public interface IAppDbContext
     DbSet<Lesson> Lessons { get; }
     DbSet<QueueEntry> QueueEntries { get; }
     DbSet<MatchProposal> MatchProposals { get; }
+    DbSet<GhostOffer> GhostOffers { get; }
     DbSet<ConceptLessonCards> ConceptLessonCards { get; }
 
     DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)
