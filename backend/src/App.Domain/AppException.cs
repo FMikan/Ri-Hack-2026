@@ -25,6 +25,11 @@ public static class ErrorCodes
     public const string MatchWrongIndex = "urn:app:match/wrong-index";
     public const string MatchAlreadyAnswered = "urn:app:match/already-answered";
     public const string MatchNotFinished = "urn:app:match/not-finished";
+    public const string MatchNotYourTurn = "urn:app:match/not-your-turn";
+    public const string MatchTopicNotInPool = "urn:app:match/topic-not-in-pool";
+    public const string QueueAlreadyIn = "urn:app:queue/already-in";
+    public const string QueueNotIn = "urn:app:queue/not-in";
+    public const string ProposalExpired = "urn:app:proposal/expired";
     public const string MatchNothingToCalibrate = "urn:app:match/nothing-to-calibrate";
     public const string QuestionNotFound = "urn:app:question/not-found";
     public const string QuestionNotAnswered = "urn:app:question/not-answered";

@@ -363,3 +363,106 @@ public class BotPlayerTests
 
     public static TheoryData<QuestionType> AllTypes() => [.. Enum.GetValues<QuestionType>()];
 }
+
+public class RankedVetoFlowTests
+{
+    private static readonly TopicPool Topic = Pool(12, 1, 2);
+    private static readonly Guid[] T = Enumerable.Range(1, 4).Select(i => new Guid(i, 0, 0, new byte[8])).ToArray();
+
+    private static Match Ranked(int coinWinner = 0)
+    {
+        MatchPlayer[] players =
+        [
+            new() { Seat = 0, Kind = SeatKind.Human, UserId = Guid.NewGuid(), DisplayRating = 1000 },
+            new() { Seat = 1, Kind = SeatKind.Human, UserId = Guid.NewGuid(), DisplayRating = 1040 },
+        ];
+        var veto = new VetoState { Pool = [.. T], Picks = [[T[0], T[1], T[2]], [T[0], T[3], T[1]]], CoinWinnerSeat = coinWinner, TurnSeat = coinWinner };
+        return MatchEngine.CreateRanked(players, veto, seed: 3, Now);
+    }
+
+    private static void AttachDeck(Match match) =>
+        MatchEngine.AttachDeck(match, (1, 2), DeckBuilder.Build(Topic.Deck, [Player()], true, (1, 2), Now, new Random(1), degrade: false), Topic.ById);
+
+    [Fact]
+    public void Ranked_match_starts_in_veto_coin_without_topic_or_deck()
+    {
+        var match = Ranked();
+
+        Assert.Equal(MatchKind.Ranked, match.Kind);
+        Assert.Equal(MatchPhase.VetoCoin, match.Phase);
+        Assert.Equal(Now.AddSeconds(GameRules.VetoAnimationSeconds), match.PhaseDeadline);
+        Assert.Null(match.TopicId);
+        Assert.Empty(match.Questions);
+        Assert.All(match.Players, p => Assert.Equal(Now, p.LastSeenAt));
+    }
+
+    [Fact]
+    public void Coin_animation_opens_the_first_ban_for_the_coin_winner()
+    {
+        var match = Ranked(coinWinner: 1);
+
+        MatchEngine.Advance(match, Now.AddSeconds(3));
+
+        Assert.Equal(MatchPhase.VetoBan, match.Phase);
+        Assert.Equal(1, match.Veto!.TurnSeat);
+        Assert.Equal(Now.AddSeconds(3 + GameRules.VetoBanSeconds), match.PhaseDeadline);
+    }
+
+    [Fact]
+    public void Bans_pass_the_turn_and_the_last_one_picks_the_topic()
+    {
+        var match = Ranked();
+        MatchEngine.Advance(match, Now.AddSeconds(3));
+
+        MatchEngine.Ban(match, 0, T[2], Now.AddSeconds(5));
+        Assert.Equal(Now.AddSeconds(5 + GameRules.VetoBanSeconds), match.PhaseDeadline);
+        MatchEngine.Ban(match, 1, T[3], Now.AddSeconds(7));
+
+        Assert.Equal(MatchPhase.VetoPick, match.Phase);
+        Assert.Contains(match.Veto!.ChosenTopicId!.Value, new[] { T[0], T[1] });
+        Assert.Equal(match.Veto.ChosenTopicId, match.TopicId);
+        Assert.Equal(Now.AddSeconds(7 + GameRules.VetoAnimationSeconds), match.PhaseDeadline);
+    }
+
+    [Fact]
+    public void Ban_outside_the_ban_phase_is_rejected()
+    {
+        var match = Ranked();
+
+        Assert.Equal(ErrorCodes.MatchWrongPhase, Assert.Throws<AppException>(() => MatchEngine.Ban(match, 0, T[2], Now.AddSeconds(1))).Code);
+    }
+
+    [Fact]
+    public void Ban_timeout_auto_bans_and_passes_turn()
+    {
+        var match = Ranked();
+
+        MatchEngine.Advance(match, Now.AddSeconds(3 + GameRules.VetoBanSeconds));
+
+        var ban = Assert.Single(match.Veto!.Bans);
+        Assert.True(ban.Auto);
+        Assert.Equal(0, ban.Seat);
+        Assert.Equal(1, match.Veto.TurnSeat);
+        Assert.Equal(MatchPhase.VetoBan, match.Phase);
+    }
+
+    [Fact]
+    public void Pick_waits_for_the_deck_then_goes_to_the_lobby_and_the_first_question()
+    {
+        var match = Ranked();
+        var late = Now.AddSeconds(60); // a late tick runs every passed deadline, but stops where the deck is needed
+
+        MatchEngine.Advance(match, late);
+        Assert.Equal(MatchPhase.VetoPick, match.Phase);
+        Assert.Equal(2, match.Veto!.Bans.Count);
+
+        AttachDeck(match);
+        MatchEngine.Advance(match, late);
+
+        // coin 3 s + two auto-bans of 8 s + pick 3 s + lobby 5 s: the first question started at 27 s.
+        Assert.Equal(Now.AddSeconds(27), match.StartedAt);
+        Assert.Contains(match.Phase, new[] { MatchPhase.Question, MatchPhase.Interstitial });
+        Assert.Equal(10, match.Questions.Count);
+        Assert.Equal((1, 2), (match.BandMin, match.BandMax));
+    }
+}

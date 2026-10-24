@@ -27,6 +27,7 @@ public class Match
     public int BandMax { get; set; }
     public int CurrentIndex { get; set; }
     public DateTimeOffset? QuestionStartedAt { get; set; }
+    public VetoState? Veto { get; set; } // ranked: jsonb, from the coin flip to the chosen topic
     public required int RngSeed { get; init; }
     public int? WinnerSeat { get; set; }
     public MatchResultReason? ResultReason { get; set; }
@@ -64,6 +65,8 @@ public class MatchPlayer
     public User? User { get; init; }
     public BotPersona? BotPersona { get; init; }
     public required int DisplayRating { get; init; }
+    public int? RatingBefore { get; set; } // ranked humans, written when the match finishes
+    public int? RatingAfter { get; set; }
     public int Score { get; set; } // final totals, written when the match finishes
     public int CorrectCount { get; set; }
     public int TimeOnCorrectMs { get; set; }

@@ -41,6 +41,10 @@ export type AppErrorCode =
   | 'urn:app:lesson/nothing-missed'
   | 'urn:app:lesson/already-passed'
   | 'urn:app:lesson/retry-too-soon'
+  | 'urn:app:match/not-your-turn'
+  | 'urn:app:match/topic-not-in-pool'
+  | 'urn:app:queue/already-in'
+  | 'urn:app:proposal/expired' // the offer was declined by the other player or ran out: poll the queue again
 
 export type Uuid = string
 export type Iso = string
@@ -338,6 +342,7 @@ export interface MatchStateDto {
   timed: boolean
   mySeat: 0 | 1
   players: PlayerDto[] // 2 in duels, 1 in practice
+  veto?: VetoDto | null // ranked, only in veto_coin, veto_ban and veto_pick
   question?: QuestionTurnDto | null
   interstitial?: InterstitialDto | null
   result?: MatchResultDto | null
@@ -377,6 +382,46 @@ export interface BotDto {
   persona: BotPersona
   displayRating: number
   recommended: boolean
+}
+
+// ---- Ranked: veto and queue (F3, docs §6.5 and §6.6) ----
+
+// veto_coin (3 s animation, coinWinnerSeat bans first) → veto_ban (8 s per turn; timeout = automatic random ban)
+// → veto_pick (3 s animation towards chosenTopicId, already known) → lobby.
+export interface VetoDto {
+  pool: {
+    topic: TopicDto
+    myMastery?: number | null // my own mastery bar; the opponent's is never sent
+    pickedByOpponent: boolean // icon: the opponent has this topic active
+    bannedBySeat?: 0 | 1 | null
+    auto?: boolean | null // banned automatically after the 8 s ran out
+  }[]
+  coinWinnerSeat: 0 | 1
+  turnSeat?: 0 | 1 | null // who bans now; null once two topics remain
+  bansRemaining: number
+  finalTwo?: Uuid[] | null
+  chosenTopicId?: Uuid | null
+}
+
+// POST /api/matches/{id}/veto/ban → MatchStateDto (409 urn:app:match/not-your-turn, urn:app:match/topic-not-in-pool, wrong-phase)
+export interface BanTopicRequest {
+  topicId: Uuid
+}
+
+export type QueueStatus = 'idle' | 'waiting' | 'proposed' | 'matched'
+
+// POST /api/queue (join; 409 topics/count, queue/already-in, match/already-in-match), GET /api/queue (poll 1 s),
+// DELETE /api/queue (leave; also declines an offer), POST /api/queue/proposals/{id}/accept (→ QueueStateDto).
+export interface QueueStateDto {
+  status: QueueStatus
+  enteredAt?: Iso | null
+  serverTime: Iso
+  rangeNow?: number | null // ± rating range right now: 100, +50 every 10 s, at most 400
+  topicIds: Uuid[] // locked while queued (PUT /api/me/topics → 409 topics/locked-in-queue)
+  proposal?: { id: Uuid; opponent: UserRefDto; expiresAt: Iso; iAccepted: boolean } | null // 10 s to accept
+  ghostOffer?: { opponent: UserRefDto; recordedAt: Iso; topic: TopicDto } | null // F3b, always null until then
+  botOffer: boolean // after 30 s without an opponent; POST /api/matches/bot leaves the queue
+  matchId?: Uuid | null // status 'matched': open this match
 }
 
 export interface StartCalibrationRequest {

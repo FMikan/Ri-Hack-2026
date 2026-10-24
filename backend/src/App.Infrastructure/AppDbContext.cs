@@ -2,6 +2,7 @@ using App.Application;
 using App.Domain.Content;
 using App.Domain.Lessons;
 using App.Domain.Matches;
+using App.Domain.Matchmaking;
 using App.Domain.Progress;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MatchQuestion> MatchQuestions => Set<MatchQuestion>();
     public DbSet<MatchAnswer> MatchAnswers => Set<MatchAnswer>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
+    public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
+    public DbSet<MatchProposal> MatchProposals => Set<MatchProposal>();
     public DbSet<ConceptLessonCards> ConceptLessonCards => Set<ConceptLessonCards>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
@@ -46,6 +49,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<SeatKind>().HaveConversion<SnakeCaseEnumConverter<SeatKind>>();
         builder.Properties<BotPersona>().HaveConversion<SnakeCaseEnumConverter<BotPersona>>();
         builder.Properties<LessonStatus>().HaveConversion<SnakeCaseEnumConverter<LessonStatus>>();
+        builder.Properties<QueueStatus>().HaveConversion<SnakeCaseEnumConverter<QueueStatus>>();
+        builder.Properties<ProposalStatus>().HaveConversion<SnakeCaseEnumConverter<ProposalStatus>>();
         builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
     }
 }

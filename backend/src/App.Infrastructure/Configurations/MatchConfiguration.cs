@@ -1,8 +1,10 @@
+using System.Text.Json;
 using App.Domain.Content;
 using App.Domain.Matches;
 using App.Domain.Progress;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace App.Infrastructure.Configurations;
@@ -16,6 +18,14 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.HasIndex(m => m.PhaseDeadline).HasFilter("phase <> 'done'"); // the tick
         builder.HasIndex(m => m.FinishedAt).HasFilter("kind in ('ranked', 'ghost')"); // weekly board, ghost candidates
         builder.HasIndex(m => m.TopicId);
+        // The veto is one small document per match; compared by its JSON so in-place changes are saved.
+        builder.Property(m => m.Veto).HasColumnType("jsonb").HasConversion(
+            v => JsonSerializer.Serialize(v, JsonSerializerOptions.Web),
+            s => JsonSerializer.Deserialize<VetoState>(s, JsonSerializerOptions.Web),
+            new ValueComparer<VetoState?>(
+                (a, b) => JsonSerializer.Serialize(a, JsonSerializerOptions.Web) == JsonSerializer.Serialize(b, JsonSerializerOptions.Web),
+                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Web).GetHashCode(),
+                v => JsonSerializer.Deserialize<VetoState>(JsonSerializer.Serialize(v, JsonSerializerOptions.Web), JsonSerializerOptions.Web)));
         builder.HasOne<Topic>().WithMany().HasForeignKey(m => m.TopicId).OnDelete(DeleteBehavior.Restrict);
         builder.HasMany(m => m.Players).WithOne().HasForeignKey(p => p.MatchId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(m => m.Questions).WithOne().HasForeignKey(q => q.MatchId).OnDelete(DeleteBehavior.Cascade);

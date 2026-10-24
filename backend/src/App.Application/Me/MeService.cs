@@ -10,7 +10,7 @@ namespace App.Application.Me;
 public class MeService(IAppDbContext db, ContentService content, TimeProvider time)
 {
     public async Task<MeDto> GetAsync(Guid userId, CancellationToken cancellationToken) =>
-        ToDto(await LoadAsync(userId, cancellationToken));
+        ToDto(await LoadAsync(userId, cancellationToken), await InQueueAsync(userId, cancellationToken));
 
     public async Task<MeDto> UpdateAsync(Guid userId, UpdateMeRequest request, CancellationToken cancellationToken)
     {
@@ -44,6 +44,9 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             throw new AppException(ErrorCodes.TopicsCount, $"Pick between {GameRules.MinTopics} and {GameRules.MaxTopics} topics.");
         if (await db.Topics.CountAsync(t => ids.Contains(t.Id), cancellationToken) != ids.Length)
             throw new AppException(ErrorCodes.TopicNotFound, "One of the topics does not exist.", 404);
+        // The queue matched on these topics; changing them means leaving it first (idea §4).
+        if (await InQueueAsync(userId, cancellationToken))
+            throw new AppException(ErrorCodes.TopicsLockedInQueue, "Leave the queue to change your topics.");
 
         var user = await LoadAsync(userId, cancellationToken);
         user.Topics.Clear();
@@ -53,7 +56,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
 
     public async Task<DashboardDto> GetDashboardAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var me = ToDto(await LoadAsync(userId, cancellationToken));
+        var me = ToDto(await LoadAsync(userId, cancellationToken), await InQueueAsync(userId, cancellationToken));
         var topics = await content.ListTopicsAsync(cancellationToken);
         var progress = await TopicProgressAsync(userId, cancellationToken);
         var due = await DueQuery(userId).Select(m => new { m.ConceptId, m.TopicId }).ToListAsync(cancellationToken);
@@ -76,7 +79,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             false,
             suggestion,
             new InboxDto(null, null),
-            false);
+            me.InQueue);
     }
 
     public async Task<DueConceptsDto> GetDueAsync(Guid userId, CancellationToken cancellationToken)
@@ -153,7 +156,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
 
     private static double Completion(int graduated, int concepts) => concepts == 0 ? 0 : 100.0 * graduated / concepts;
 
-    public MeDto ToDto(User user)
+    public MeDto ToDto(User user, bool inQueue = false)
     {
         var self = UserRefDto.From(user);
         return new(
@@ -161,8 +164,11 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
             user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), 0,
             new StreakDto(user.StreakCount, user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == Clock.Today(time.GetUtcNow())),
-            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, false, user.CreatedAt);
+            user.Topics.Select(t => t.TopicId).ToArray(), null, user.CurrentMatchId, inQueue, user.CreatedAt);
     }
+
+    private Task<bool> InQueueAsync(Guid userId, CancellationToken cancellationToken) =>
+        db.QueueEntries.AnyAsync(q => q.UserId == userId, cancellationToken);
 
     private async Task<User> LoadAsync(Guid userId, CancellationToken cancellationToken) =>
         await db.Users.Include(u => u.Topics).FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
