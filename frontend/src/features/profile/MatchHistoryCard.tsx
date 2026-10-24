@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { Link } from 'react-router'
 import { BotAvatar } from '@/components/shared/BotAvatar'
+import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -64,8 +65,11 @@ export function MatchHistoryCard({ history, className }: { history: MatchSummary
                   <span className="font-mono text-sm tabular-nums">
                     {match.opponent ? `${match.myScore} : ${match.opponentScore}` : match.myScore}
                   </span>
-                  <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', OUTCOMES[match.outcome])}>
-                    {copy.outcomes[match.outcome]}
+                  <span className="flex items-center gap-1.5">
+                    <DeltaBadge value={match.ratingDelta ?? 0} />
+                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', OUTCOMES[match.outcome])}>
+                      {copy.outcomes[match.outcome]}
+                    </span>
                   </span>
                 </span>
               </li>

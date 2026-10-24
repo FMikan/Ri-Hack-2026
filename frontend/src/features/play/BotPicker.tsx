@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useStartMatch } from '@/features/match/use-start-match'
 import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
-import { demoBots } from '@/lib/fixtures/demo'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { topicIcon } from '@/lib/topic-icons'
 import { cn } from '@/lib/utils'
@@ -27,7 +26,7 @@ export function BotPicker() {
     <>
       <DialogHeading title={t.play.title} description={t.play.subtitle} />
       {data.data ? (
-        <BotForm bots={demoBots(data.data[0], data.data[1])} me={data.data[1]} topics={data.data[2]} />
+        <BotForm bots={data.data[0]} me={data.data[1]} topics={data.data[2]} />
       ) : data.error ? (
         <div role="alert" className="grid justify-items-start gap-3">
           <p>{t.play.loadFailed}</p>

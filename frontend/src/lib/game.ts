@@ -6,6 +6,9 @@ export const MIN_TOPICS = 3
 export const MAX_TOPICS = 5
 export const QUESTIONS_PER_MATCH = 10 // GameRules.QuestionsPerMatch
 
+// The first 10 ranked duels show "?" instead of the rating (docs §6.11 F3a).
+export const ratingText = (rating: number, provisional?: boolean) => (provisional ? '?' : String(rating))
+
 const TIERS = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master'] as const
 // Rating where each tier starts. Bronze has no floor, so its meter starts at the start rating.
 const TIER_FLOORS = [1000, 1100, 1300, 1500, 1700, 1900]

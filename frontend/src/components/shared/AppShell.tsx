@@ -30,7 +30,6 @@ import {
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
 import { AvatarDialog } from '@/features/profile/AvatarDialog'
-import { demoMe } from '@/lib/fixtures/demo'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
@@ -145,7 +144,7 @@ function TopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
   if (session.status !== 'authenticated') return null
-  const user = demoMe(session.user)
+  const user = session.user
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (

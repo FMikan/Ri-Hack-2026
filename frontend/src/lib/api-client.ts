@@ -1,6 +1,7 @@
 import type {
   AppErrorCode,
   AuthResponse,
+  BanTopicRequest,
   BotDto,
   DashboardDto,
   DueConceptsDto,
@@ -12,7 +13,9 @@ import type {
   MatchSummaryDto,
   MeDto,
   ProblemDetails,
+  QueueStateDto,
   RegisterRequest,
+  RematchDto,
   SetTopicsRequest,
   StartBotMatchRequest,
   StartCalibrationRequest,
@@ -178,6 +181,20 @@ export const api = {
   // Only after answering; the first request may take up to 8 s while the AI writes it.
   explanation: (questionId: string, signal?: AbortSignal) =>
     request<ExplanationDto>(`/api/questions/${questionId}/explanation`, { signal }),
+
+  ban: (id: string, body: BanTopicRequest) => request<MatchStateDto>(`/api/matches/${id}/veto/ban`, post(body)),
+  rematch: (id: string, signal?: AbortSignal) => request<RematchDto>(`/api/matches/${id}/rematch`, { signal }),
+  // Asking while the opponent's request waits starts the rematch at once (status accepted + matchId).
+  requestRematch: (id: string) => request<RematchDto>(`/api/matches/${id}/rematch`, { method: 'POST' }),
+  acceptRematch: (id: string) => request<MatchStateDto>(`/api/matches/${id}/rematch/accept`, { method: 'POST' }),
+
+  // Ranked queue (F3): join, poll once a second, accept the proposal; leaving also declines a pending proposal.
+  queue: (signal?: AbortSignal) => request<QueueStateDto>('/api/queue', { signal }),
+  joinQueue: () => request<QueueStateDto>('/api/queue', { method: 'POST' }),
+  leaveQueue: () => request<void>('/api/queue', { method: 'DELETE' }),
+  acceptProposal: (id: string) => request<QueueStateDto>(`/api/queue/proposals/${id}/accept`, { method: 'POST' }),
+  playGhost: () => request<MatchStateDto>('/api/queue/ghost', { method: 'POST' }),
+  declineGhost: () => request<QueueStateDto>('/api/queue/ghost/decline', { method: 'POST' }),
 
   myMatches: (signal?: AbortSignal) => request<MatchSummaryDto[]>('/api/me/matches?limit=50', { signal }),
   dueConcepts: (signal?: AbortSignal) => request<DueConceptsDto>('/api/me/progress/due', { signal }),
