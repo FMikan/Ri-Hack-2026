@@ -21,6 +21,9 @@
     --color-bot-junior: var(--bot-junior);
     --color-bot-mid: var(--bot-mid);
     --color-bot-senior: var(--bot-senior);
+    --color-tier-platinum: var(--tier-platinum);
+    --color-tier-master: var(--tier-master);
+    --color-board-midnight: var(--board-midnight);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -112,6 +115,10 @@
     --bot-junior: var(--green);
     --bot-mid: var(--sky);
     --bot-senior: #f0b24a;
+    /* shop cosmetics (src/lib/cosmetics.ts): season frames without a medal color, and the midnight duel board */
+    --tier-platinum: #6fd6c4;
+    --tier-master: #e64ccf;
+    --board-midnight: #0b0f1f;
     /* Input borders need 3:1 against the page (WCAG 1.4.11). */
     --border: rgb(255 255 255 / 0.07);
     --input: rgb(255 255 255 / 0.36);
@@ -142,4 +149,14 @@
   html {
     @apply font-sans antialiased;
     }
+}
+
+/* Shop cosmetics drawn as patterns, not gradients (PRAVILA.md §3): terminal scanlines and a blueprint grid. */
+@utility banner-terminal {
+    background-color: #0d1712;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='1' fill='%2333c37a' fill-opacity='.12'/%3E%3C/svg%3E");
+}
+@utility card-blueprint {
+    background-color: #0f1b2d;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M24 0H0V24' fill='none' stroke='%232ea6ff' stroke-opacity='.14'/%3E%3C/svg%3E");
 }

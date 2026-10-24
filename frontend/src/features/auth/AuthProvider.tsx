@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api, refreshSession, setUnauthenticatedHandler } from '@/lib/api-client'
+import type { MeDto } from '@/types/api'
 import { AuthContext, type AuthState, type Session } from './auth-context'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -12,6 +13,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       () => setSession({ status: 'error' }),
     )
   }, [])
+
+  // Same data, same session object: the top bar and every avatar read it, so a poll must not re-render them for nothing.
+  const setUser = useCallback(
+    (user: MeDto) =>
+      setSession((previous) =>
+        previous.status === 'authenticated' && JSON.stringify(previous.user) === JSON.stringify(user)
+          ? previous
+          : { status: 'authenticated', user },
+      ),
+    [],
+  )
+  const refreshUser = useCallback(async () => setUser(await api.me()), [setUser])
 
   useEffect(() => {
     setUnauthenticatedHandler(() => setSession({ status: 'anonymous' }))
@@ -37,12 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await api.logout()
         setSession({ status: 'anonymous' })
       },
-      updateMe: async (body) => {
-        const user = await api.updateMe(body)
-        setSession({ status: 'authenticated', user })
-      },
+      updateMe: async (body) => setUser(await api.updateMe(body)),
+      setUser,
+      refreshUser,
     }),
-    [session, restore],
+    [session, restore, setUser, refreshUser],
   )
 
   return <AuthContext value={value}>{children}</AuthContext>

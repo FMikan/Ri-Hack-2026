@@ -7,6 +7,7 @@ import { useAuth } from '@/features/auth/auth-context'
 import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
 import { demoLeaderboard, type LeaderboardBoard, type LeaderboardEntryDto } from '@/lib/fixtures/leaderboards'
+import { nameClass } from '@/lib/cosmetics'
 import { relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
@@ -76,7 +77,7 @@ export function LeaderboardsPage() {
                   {entry.rank}
                 </span>
                 <UserAvatar user={entry.user} className="size-12 sm:size-14" />
-                <p className="line-clamp-2 w-full text-xs font-medium [overflow-wrap:anywhere] sm:text-sm">{entry.user.username}</p>
+                <p className={cn('line-clamp-2 w-full text-xs font-medium [overflow-wrap:anywhere] sm:text-sm', nameClass(entry.user))}>{entry.user.username}</p>
                 <p className="hidden text-xs text-muted-foreground sm:block">{t.dashboard.tiers[entry.user.tier]}</p>
                 <p className="font-heading text-xl font-semibold tabular-nums sm:text-3xl">{entry.value}</p>
                 <p className="text-xs text-muted-foreground">{copy.values[board]}</p>
@@ -132,7 +133,7 @@ function Rows({ entries, meId, valueLabel }: { entries: LeaderboardEntryDto[]; m
             <UserAvatar user={entry.user} className="size-10" />
             <span className="grid min-w-0 flex-1">
               <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate text-sm font-medium">{entry.user.username}</span>
+                <span className={cn('truncate text-sm font-medium', nameClass(entry.user))}>{entry.user.username}</span>
                 {isMe && <Badge variant="outline">{t.leaderboards.you}</Badge>}
               </span>
               <span className="truncate text-xs text-muted-foreground">{t.dashboard.tiers[entry.user.tier]}</span>

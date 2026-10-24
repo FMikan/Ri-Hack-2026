@@ -4,9 +4,11 @@ import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuth } from '@/features/auth/auth-context'
 import { usePoll } from '@/hooks/use-poll'
 import { useTicker } from '@/hooks/use-ticker'
 import { api, ApiError } from '@/lib/api-client'
+import { boardClass } from '@/lib/cosmetics'
 import { relativeTime } from '@/lib/format'
 import { ratingText } from '@/lib/game'
 import type { Messages } from '@/lib/i18n/en'
@@ -36,6 +38,9 @@ export function MatchPage() {
 
 function MatchScreen({ id }: { id: string }) {
   const { t } = useLocale()
+  const { session } = useAuth()
+  // The duel board I equipped in the shop (it only changes my own screen).
+  const board = boardClass(session.status === 'authenticated' ? session.user : null)
   const load = useCallback(
     (signal: AbortSignal) => api.match(id, signal).then((match) => ({ match, at: performance.now() })),
     [id],
@@ -63,41 +68,43 @@ function MatchScreen({ id }: { id: string }) {
   )
 
   return (
-    <main className="mx-auto grid min-h-svh w-full max-w-3xl content-start gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-8">
-      <title>{`${t.match.documentTitle} · StackOff`}</title>
-      <h1 className="sr-only">{t.match.documentTitle}</h1>
-      {data ? (
-        <MatchView snapshot={data} command={command} />
-      ) : error ? (
-        <Card role="alert">
-          <CardContent className="grid justify-items-start gap-3">
-            <p>{t.match.loadFailed}</p>
-            <p className="text-sm text-muted-foreground">{error.message}</p>
-            <Button asChild variant="outline">
-              <Link to="/">{t.match.result.dashboard}</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div aria-busy="true" className="grid gap-4">
-          <p role="status" className="sr-only">
-            {t.common.loading}
+    <div className={cn('min-h-svh', board)}>
+      <main className="mx-auto grid min-h-svh w-full max-w-3xl content-start gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-8">
+        <title>{`${t.match.documentTitle} · StackOff`}</title>
+        <h1 className="sr-only">{t.match.documentTitle}</h1>
+        {data ? (
+          <MatchView snapshot={data} command={command} />
+        ) : error ? (
+          <Card role="alert">
+            <CardContent className="grid justify-items-start gap-3">
+              <p>{t.match.loadFailed}</p>
+              <p className="text-sm text-muted-foreground">{error.message}</p>
+              <Button asChild variant="outline">
+                <Link to="/">{t.match.result.dashboard}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div aria-busy="true" className="grid gap-4">
+            <p role="status" className="sr-only">
+              {t.common.loading}
+            </p>
+            <Skeleton className="h-20 rounded-xl" />
+            <Skeleton className="h-80 rounded-xl" />
+          </div>
+        )}
+        {data && error && (
+          <p role="status" className="justify-self-center rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
+            {t.match.reconnecting}
           </p>
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-80 rounded-xl" />
-        </div>
-      )}
-      {data && error && (
-        <p role="status" className="justify-self-center rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
-          {t.match.reconnecting}
-        </p>
-      )}
-      {commandError && (
-        <p role="alert" className="text-sm text-destructive">
-          {commandError}
-        </p>
-      )}
-    </main>
+        )}
+        {commandError && (
+          <p role="alert" className="text-sm text-destructive">
+            {commandError}
+          </p>
+        )}
+      </main>
+    </div>
   )
 }
 

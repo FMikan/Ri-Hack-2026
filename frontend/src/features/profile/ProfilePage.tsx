@@ -6,9 +6,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { SkillGraphCard } from '@/features/dashboard/SkillGraphCard'
 import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
+import { bannerClass, cardClass, nameClass } from '@/lib/cosmetics'
 import { monthYear } from '@/lib/format'
 import { PLACEMENT_MATCHES } from '@/lib/game'
 import { useLocale } from '@/lib/i18n/locale-context'
+import { cn } from '@/lib/utils'
 import type { KnowledgeMapDto, MatchSummaryDto, MeDto } from '@/types/api'
 import { KnowledgeMapCard } from './KnowledgeMapCard'
 import { MatchHistoryCard } from './MatchHistoryCard'
@@ -77,12 +79,13 @@ function ProfileCard({ me, history, className }: { me: MeDto; history: MatchSumm
   ]
 
   return (
-    <Card className={className}>
+    <Card className={cn(className, cardClass(me))}>
       <CardContent className="grid gap-6">
+        {bannerClass(me) && <div aria-hidden="true" className={cn('-mb-2 h-14 rounded-lg', bannerClass(me))} />}
         <div className="flex flex-wrap items-center gap-4">
           <UserAvatar user={me} className="size-16" />
           <div className="grid min-w-0 gap-1">
-            <h1 className="truncate font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{me.username}</h1>
+            <h1 className={cn('truncate font-heading text-2xl font-semibold tracking-tight sm:text-3xl', nameClass(me))}>{me.username}</h1>
             {me.title && <p className="text-sm font-medium text-primary">{me.title}</p>}
             <p className="text-sm text-muted-foreground">{copy.since(monthYear(me.createdAt, locale))}</p>
           </div>
