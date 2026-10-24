@@ -32,6 +32,25 @@ public class SeedTests(TestApp app) : ApiTestBase(app)
         Assert.Equal(Seeder.ReadQuestions().Count, second.Item3);
     }
 
+    // A content update that adds a concept to a topic the database already has (a live database, not a fresh one).
+    [Fact]
+    public async Task Seed_adds_a_new_concept_to_an_existing_topic()
+    {
+        await SeedAsync();
+        var slug = Seeder.ReadTopics()[0].Concepts[0].Slug;
+        await App.InDbAsync(async db =>
+        {
+            var conceptId = await db.Concepts.Where(c => c.Slug == slug).Select(c => c.Id).SingleAsync();
+            await db.Questions.Where(q => q.ConceptId == conceptId).ExecuteDeleteAsync();
+            return await db.Concepts.Where(c => c.Id == conceptId).ExecuteDeleteAsync();
+        });
+
+        await SeedAsync();
+
+        Assert.True(await App.InDbAsync(db => db.Concepts.AnyAsync(c => c.Slug == slug)));
+        Assert.Equal(Seeder.ReadQuestions().Count, await App.InDbAsync(db => db.Questions.CountAsync()));
+    }
+
     [Fact]
     public async Task Every_listed_topic_is_playable_and_nothing_else_is()
     {
