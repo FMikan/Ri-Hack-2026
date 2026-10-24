@@ -1,6 +1,7 @@
 using App.Api.Endpoints;
 using App.Application.Notes;
 using App.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 LoadDotEnv();
@@ -21,6 +22,13 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<NoteService>();
 
 var app = builder.Build();
+
+// Production (single instance on the VPS) applies pending migrations at startup. Locally, run `dotnet ef database update`.
+if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

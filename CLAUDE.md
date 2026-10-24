@@ -3,6 +3,12 @@
 Hackathon starter: React/Vite frontend (`frontend/`), ASP.NET Core .NET 10 API (`backend/`), PostgreSQL in
 Docker. See README.md for setup, URLs and troubleshooting.
 
+## Branches
+
+Commit to `development` (or a feature branch). `main` is production: every push to it deploys to the VPS via
+`.github/workflows/ci-cd.yml`. Never commit or push to `main` directly; release through a PR
+`development -> main`. Deployment details: `deploy/README.md`.
+
 ## Commands
 
 ```bash
@@ -32,7 +38,7 @@ cd frontend && npx shadcn@latest add <component>
 - Async everywhere; pass the endpoint `CancellationToken` down.
 - Connection string comes only from configuration (`ConnectionStrings__Default` in the root `.env`, loaded
   by `LoadDotEnv` in Program.cs). Never hardcode credentials in code or appsettings.
-- After changing entities, add a migration; commit the migration files.
+- After changing entities, add a migration; commit the migration files. Production applies them on startup.
 - Health: `/health` = liveness (no checks), `/health/ready` = checks tagged `"ready"` (database).
 
 ## Frontend

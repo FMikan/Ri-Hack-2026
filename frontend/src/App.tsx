@@ -19,13 +19,15 @@ export default function App() {
       </main>
 
       <footer className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-muted-foreground">
-        <span>API {API_BASE_URL}</span>
-        <a
-          href={`${API_BASE_URL}/scalar`}
-          className="underline underline-offset-4 hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          API reference (Scalar, dev only)
-        </a>
+        <span>API {API_BASE_URL || 'same origin'}</span>
+        {import.meta.env.DEV && (
+          <a
+            href={`${API_BASE_URL}/scalar`}
+            className="underline underline-offset-4 hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            API reference (Scalar)
+          </a>
+        )}
       </footer>
     </div>
   )

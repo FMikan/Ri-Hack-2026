@@ -1,0 +1,16 @@
+# Serves the built frontend and proxies API traffic to the api container.
+# Plain HTTP: TLS is terminated by the server's existing web server in front of this container.
+:80 {
+	encode
+
+	@api path /api/* /health /health/*
+	handle @api {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
