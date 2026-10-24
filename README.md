@@ -17,7 +17,7 @@ merging a pull request `development -> main`. Server setup, secrets and operatio
 
 | Layer    | Tech |
 |----------|------|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui (Radix), lucide-react |
+| Frontend | React 19, TypeScript, Vite, React Router, Tailwind CSS v4, shadcn/ui (Radix), lucide-react |
 | Backend  | ASP.NET Core minimal APIs on .NET 10, EF Core 10, Npgsql, built-in OpenAPI + Scalar |
 | Database | PostgreSQL 18 (Docker Compose) |
 
@@ -28,6 +28,7 @@ frontend/                     Vite app
   src/lib/api-client.ts       every API call goes through here
   src/types/api.ts            TypeScript types for API contracts
   src/hooks/use-async.ts      tiny loading/error/data hook
+  src/lib/i18n/               UI copy: English (default) and Croatian
   src/features/<feature>/     feature components
   src/components/ui/          shadcn/ui components (generated, restyle freely)
   src/components/shared/      small shared components
@@ -50,7 +51,7 @@ Dependencies point inward: `Api -> Application, Infrastructure`, `Infrastructure
 ## Prerequisites
 
 - .NET SDK 10 (`dotnet --list-sdks` shows `10.0.x`)
-- Node.js 22.12+ (24 LTS recommended) and npm
+- Node.js 22.22+ (24 LTS recommended) and npm
 - Docker with the Compose plugin
 
 ## First-time setup
@@ -119,6 +120,7 @@ Compose network.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `VITE_API_BASE_URL` | `http://localhost:5080` | Full API origin. The browser calls it directly (no Vite proxy) |
+| `VITE_DEMO_DATA` | unset | `true` fills dashboard stats with test numbers until the backend serves them |
 
 Everything prefixed with `VITE_` is bundled into the browser build and is public. Never put secrets there.
 
