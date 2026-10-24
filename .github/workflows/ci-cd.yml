@@ -97,7 +97,13 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
         run: |
+          for pair in SSH_KEY=DEPLOY_SSH_KEY KNOWN_HOSTS=DEPLOY_KNOWN_HOSTS HOST=DEPLOY_HOST USER_NAME=DEPLOY_USER; do
+            var=${pair%%=*}
+            [ -n "${!var}" ] || { echo "::error::Repository secret ${pair#*=} is missing (Settings > Secrets and variables > Actions)"; exit 1; }
+          done
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
