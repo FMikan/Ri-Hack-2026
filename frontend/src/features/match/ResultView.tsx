@@ -1,4 +1,4 @@
-import { BookOpen, Flame, Target } from 'lucide-react'
+import { Award, BookOpen, Flame, Target } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/auth-context'
 import { useStartLesson } from '@/features/lesson/use-start-lesson'
+import { useAsync } from '@/hooks/use-async'
+import { api } from '@/lib/api-client'
 import { QUESTIONS_PER_MATCH, ratingText } from '@/lib/game'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
@@ -24,7 +26,7 @@ interface ResultViewProps {
 }
 
 // Where "Play again" goes for each kind of duel; practice has its own button.
-const AGAIN: Partial<Record<MatchKind, string>> = { ranked: '/?play=ranked', ghost: '/?play=ranked', bot: '/?play=bot' }
+const AGAIN: Partial<Record<MatchKind, string>> = { ranked: '/?play=ranked', ghost: '/?play=ranked', bot: '/?play=bot', friend: '/friends' }
 
 // Outcome, final score, rating change, rewards and the three cards from the game idea (§10).
 export function ResultView({ match, me, opponent, opponentName }: ResultViewProps) {
@@ -122,6 +124,7 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
         </ul>
       )}
 
+      <Unlocked match={match} />
       {result.rematchAvailable && opponent && <RematchPanel match={match} opponentName={opponentName} />}
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -148,6 +151,28 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
         </Button>
       </div>
     </section>
+  )
+}
+
+// Loading the list records any new achievement (docs §6.11 F5b); the ones earned during this duel are shown here.
+const DUEL_WINDOW_MS = 15 * 60_000
+
+function Unlocked({ match }: { match: MatchStateDto }) {
+  const { t } = useLocale()
+  const { data } = useAsync(api.achievements)
+  const since = Date.parse(match.serverTime) - DUEL_WINDOW_MS
+  const fresh = data?.filter((achievement) => achievement.earnedAt && Date.parse(achievement.earnedAt) >= since) ?? []
+  if (!fresh.length) return null
+
+  return (
+    <ul aria-live="polite" className="flex flex-wrap justify-center gap-2">
+      {fresh.map((achievement) => (
+        <li key={achievement.key} className="flex items-center gap-2 rounded-full bg-warning/15 px-3 py-1.5 text-sm font-medium text-warning">
+          <Award aria-hidden="true" className="size-4" />
+          {t.match.result.unlocked(t.achievements[achievement.key as keyof typeof t.achievements] ?? achievement.name)}
+        </li>
+      ))}
+    </ul>
   )
 }
 
