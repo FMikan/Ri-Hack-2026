@@ -47,7 +47,7 @@ F0b dolazi nakon F1 namjerno: prvi igrivi demo (bot duel) je najvažniji rizik. 
 App.Api            Endpoints/<Feature>Endpoints.cs, auth, rate limit, forwarded headers, GameTickService registracija, Program.cs
 App.Application    use case klase po featureu, DTO-i (DataAnnotations), IAppDbContext, sučelja za vanjski svijet
 App.Domain         entiteti + čista pravila igre (GameRules, Scoring, Elo, Grader, Mastery, DeckBuilder, Veto, Matchmaking, BotPlayer, Clock, ...)
-App.Infrastructure AppDbContext + Configurations/, migracije, JwtTokenService, SmtpEmailSender, ClaudeClient, Seeder, GameTickService
+App.Infrastructure AppDbContext + Configurations/, migracije, EmailSender, ClaudeClient, Seeder
 ```
 
 Ovisnosti ostaju `Api → Application, Infrastructure`; `Infrastructure → Application, Domain`; `Application → Domain`. `PasswordHasher<User>` (Microsoft.Extensions.Identity.Core, shared framework) se koristi iz Application kroz `IPasswordHasher` sučelje, Domain ga ne vidi.
@@ -83,7 +83,7 @@ App.Application/                   jedna servisna klasa po featureu (AuthService
   Seasons/      CloseSeason, CloseWeek, RefreshGrandmasters
 App.Infrastructure/
   AppDbContext.cs, Configurations/*.cs (jedna klasa po entitetu), SnakeCaseEnumConverter.cs
-  Email/SmtpEmailSender.cs + LogEmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
+  EmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
   Seed/Seeder.cs + Seed/topics.json + Seed/questions/<tema>.json (embedded resources, nema problema s putanjama u Dockeru)
 App.Api/
   Auth.cs (JWT izdavanje i validacija, PasswordHasher adapter, ClaimsPrincipal.UserId()), AppExceptionHandler.cs (AppException → Problem Details),
@@ -791,7 +791,7 @@ Finish(now)                                       §17: human s disconnected_at 
 | --- | --- | --- |
 | `ITokenService` | `JwtTokenService` (u `App.Api/Auth.cs`, uz JwtBearer paket) | HS256, ključ iz `Auth:JwtSigningKey` (env `Auth__JwtSigningKey`, ≥ 32 bajta, u `.env`), issuer/audience iz konfiguracije; `JwtBearerOptions.TimeProvider` = isti `TimeProvider` (testovi pomiču sat) |
 | `IPasswordHasher` | `PasswordHasherAdapter` nad `PasswordHasher<User>` (u `App.Api/Auth.cs`) | PBKDF2; nepoznati e-mail se provjerava protiv lažnog hasha da odgovor traje jednako |
-| `IEmailSender` | `LogEmailSender` (Development: logira link), `SmtpEmailSender` (`System.Net.Mail`, `Email:Smtp:*` iz env) | reset lozinke; slanje je fire-and-forget (`Task.Run` + log) da odgovor ne otkriva postoji li e-mail; testovi koriste `FakeEmailSender` |
+| `IEmailSender` | `EmailSender`: SMTP (`System.Net.Mail`, `Email:Smtp:Host/Port/Username/Password/From/EnableSsl` iz env) kad je `Email:Smtp:Host` postavljen, inače link ide u log (lokalni razvoj) | reset lozinke; link je `{Frontend:BaseUrl}/reset-password?token=...`; SMTP slanje je fire-and-forget (`Task.Run` + log greške) da odgovor ne otkriva postoji li e-mail; testovi koriste `FakeEmailSender` |
 | `IExplanationGenerator` | `ClaudeExplanationGenerator`, `StaticExplanationGenerator` (vraća `remember`) | `Ai:TimeoutMs` → fallback; rezultat se kešira u `questions.explanation`; nikad se ne zove iz `GET /api/matches/{id}` ni iz `SubmitAnswer` |
 | `ILessonGenerator` | `ClaudeLessonGenerator`, `FallbackLessonGenerator` (kartice iz `concepts.description`) | keš u `concept_lesson_cards` po (koncept, band) |
 | `TimeProvider` | `TimeProvider.System`; testovi `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) inicijaliziran na `DateTimeOffset.UtcNow` | |
@@ -862,8 +862,9 @@ POST /api/auth/register   { email; username; password }  → 201 AuthResponse   
 POST /api/auth/login      { email; password }            → 200 AuthResponse      // 401 invalid-credentials; rate limit 10/min po IP-u
 POST /api/auth/refresh    { refreshToken }               → 200 AuthResponse      // rotira; stari se opoziva; opozvani token ponovno → 401 i opoziv cijele obitelji
 POST /api/auth/logout     { refreshToken }               → 204
-POST /api/auth/forgot-password { email }                 → 202 uvijek (ne otkriva postoji li e-mail); šalje link `{Frontend:BaseUrl}/reset-password?token=...`
-POST /api/auth/reset-password  { token; newPassword }    → 204; 409 reset-token-invalid; opoziva sve refresh tokene korisnika
+POST /api/auth/forgot-password { email }                 → 202 uvijek (ne otkriva postoji li e-mail); šalje link `{Frontend:BaseUrl}/reset-password?token=...`; rate limit 10/min po IP-u
+POST /api/auth/reset-password  { token; newPassword }    → 204; 409 reset-token-invalid (nepoznat, iskorišten ili stariji od 1 h); opoziva sve refresh tokene i sve starije linkove korisnika; nakon 204 frontend vodi na login
+// 429 (rate limit): Problem Details { status: 429, title, detail } + header Retry-After (sekunde); frontend prikaže detail i ne ponavlja zahtjev sam
 
 interface AuthResponse { accessToken: string; accessTokenExpiresAt: Iso; refreshToken: string; user: MeDto }
 ```
@@ -1256,7 +1257,8 @@ F0b Auth ostatak
   Login_is_rate_limited                                                  vlastita factory s RateLimit:Enabled=true
   Forgot_password_always_202_and_sends_email_only_for_existing_user     (FakeEmailSender)
   Reset_password_with_valid_token_changes_password_and_revokes_sessions
-  Reset_token_is_single_use_and_expires_after_1h
+  Reset_token_is_single_use_and_expires_after_1h                       uz to: reset troši i starije linkove
+  Reset_with_short_password_is_400_validation
 F2 Analiza, poduka, mapa
   Review_lists_10_questions_with_labels_and_mastery_delta
   Review_before_finish_is_409
@@ -1359,7 +1361,7 @@ F5 Društveno i rang-liste
 ## 11. Sigurnost i rubovi
 
 - Lozinke: `PasswordHasher<User>` (PBKDF2), 8–128 znakova; nikad u logovima.
-- Proxy: API stoji iza host Caddyja i web kontejnera, pa `app.UseForwardedHeaders(XForwardedFor | XForwardedProto)` s `KnownNetworks` za compose mrežu ide prvi u pipeline; bez toga rate limit po IP-u vidi jedan IP za sve.
+- Proxy: API stoji iza host Caddyja i Caddyja u web kontejneru. Host Caddy odbacuje `X-Forwarded-For` koji pošalje klijent i postavlja pravi IP; web Caddy (`trusted_proxies static private_ranges` u `frontend/Caddyfile`) ga čuva i dodaje svoj hop. API (`UseForwardedHeaders`, prvi u pipelineu, `ForwardLimit = null`, `KnownIPNetworks` = privatni rasponi + loopback) ide zdesna dok ne naiđe na prvu javnu adresu, i to je IP igrača. Bez toga rate limit po IP-u vidi jedan IP za sve.
 - Rate limit (`AddRateLimiter`, stdlib): `/api/auth/login` i `/api/auth/forgot-password` 10/min, `/api/auth/register` 5/min po (proslijeđenom) IP-u; `/api/matches/*/answers` 5/s po korisniku; `RejectionStatusCode = 429` + Problem Details + `Retry-After`.
 - Refresh tokeni: rotacija s `family_id`; predočenje već opozvanog tokena opoziva cijelu obitelj (ukradeni token postaje beskoristan).
 - Ključ odgovora nikad ne napušta server prije međuekrana; `MatchStateMapper` je jedino mjesto koje gradi `QuestionPublicDto` i ima test `Match_state_hides_answer_key_until_interstitial`.

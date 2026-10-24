@@ -1,5 +1,13 @@
 # Serves the built frontend and proxies API traffic to the api container.
 # Plain HTTP: TLS is terminated by the server's existing web server in front of this container.
+{
+	servers {
+		# Keep X-Forwarded-For/-Proto from the host's proxy (it reaches us from the Docker network), so the API
+		# rate-limits by the player's IP instead of the proxy's.
+		trusted_proxies static private_ranges
+	}
+}
+
 :80 {
 	encode
 

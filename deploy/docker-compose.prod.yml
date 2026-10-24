@@ -28,6 +28,13 @@ services:
       Database__MigrateOnStartup: "true"
       Database__SeedOnStartup: "true"
       Auth__JwtSigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in .env}
+      # Password reset links. Without SMTP_HOST the link is only written to the api log (docker compose logs api).
+      Frontend__BaseUrl: ${FRONTEND_BASE_URL:-https://hack.fmikan.me}
+      Email__Smtp__Host: ${SMTP_HOST:-}
+      Email__Smtp__Port: ${SMTP_PORT:-587}
+      Email__Smtp__Username: ${SMTP_USERNAME:-}
+      Email__Smtp__Password: ${SMTP_PASSWORD:-}
+      Email__Smtp__From: ${SMTP_FROM:-}
     depends_on:
       postgres:
         condition: service_healthy
