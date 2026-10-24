@@ -185,6 +185,20 @@ public static class MatchEngine
         var question = match.Current;
         match.PhaseDeadline = match.Timed ? at.AddMilliseconds(question.TimeLimitMs + GameRules.ClientTimeToleranceMs) : null;
 
+        // A ghost replays its recording: the same answer, points and label, arriving at the recorded elapsed time
+        // (a recorded timeout arrives at this question's deadline).
+        foreach (var ghost in match.Players.Where(p => p.Kind == SeatKind.Ghost))
+        {
+            var recorded = match.Recording!.First(a => a.Index == index);
+            var elapsed = recorded.TimedOut ? question.TimeLimitMs : Math.Min(recorded.ElapsedMs, question.TimeLimitMs);
+            match.Answers.Add(new MatchAnswer
+            {
+                Seat = ghost.Seat, Index = index, Payload = recorded.Payload, IsCorrect = recorded.IsCorrect, Fraction = recorded.Fraction,
+                Points = recorded.Points, ElapsedMs = elapsed, TimedOut = recorded.TimedOut, Label = recorded.Label,
+                AnsweredAt = recorded.TimedOut ? match.PhaseDeadline!.Value : at.AddMilliseconds(elapsed),
+            });
+        }
+
         foreach (var bot in match.Players.Where(p => p.Kind == SeatKind.Bot))
         {
             var rng = new Random(match.RngSeed + 31 * index + bot.Seat);

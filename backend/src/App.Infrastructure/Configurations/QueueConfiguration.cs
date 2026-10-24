@@ -14,6 +14,7 @@ public class QueueEntryConfiguration : IEntityTypeConfiguration<QueueEntry>
         builder.HasIndex(q => q.ProposalId);
         builder.HasOne<User>().WithMany().HasForeignKey(q => q.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<MatchProposal>().WithMany().HasForeignKey(q => q.ProposalId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<Match>().WithMany().HasForeignKey(q => q.GhostOfferMatchId).OnDelete(DeleteBehavior.SetNull);
         builder.ToTable(t => t.HasCheckConstraint("ck_queue_entries_status", $"status in ({SnakeCaseEnumConverter<QueueStatus>.SqlList()})"));
     }
 }
@@ -29,5 +30,16 @@ public class MatchProposalConfiguration : IEntityTypeConfiguration<MatchProposal
         builder.HasOne<User>().WithMany().HasForeignKey(p => p.UserB).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<Match>().WithMany().HasForeignKey(p => p.MatchId).OnDelete(DeleteBehavior.SetNull);
         builder.ToTable(t => t.HasCheckConstraint("ck_match_proposals_status", $"status in ({SnakeCaseEnumConverter<ProposalStatus>.SqlList()})"));
+    }
+}
+
+public class GhostOfferConfiguration : IEntityTypeConfiguration<GhostOffer>
+{
+    public void Configure(EntityTypeBuilder<GhostOffer> builder)
+    {
+        builder.HasKey(o => new { o.UserId, o.SourceMatchId }); // a recording is offered to a player once
+        builder.HasIndex(o => o.SourceMatchId);
+        builder.HasOne<User>().WithMany().HasForeignKey(o => o.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<Match>().WithMany().HasForeignKey(o => o.SourceMatchId).OnDelete(DeleteBehavior.Cascade);
     }
 }

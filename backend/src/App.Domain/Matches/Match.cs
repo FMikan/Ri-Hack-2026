@@ -14,6 +14,8 @@ public enum SeatKind { Human, Bot, Ghost }
 
 public enum MatchSlot { Warmup, Targeted, Core, Review }
 
+public enum RematchStatus { None, Pending, Accepted, Declined, Expired }
+
 // One match of any kind (docs §3.4). The deck is frozen in Questions; every seat's answers are in Answers.
 public class Match
 {
@@ -28,6 +30,13 @@ public class Match
     public int CurrentIndex { get; set; }
     public DateTimeOffset? QuestionStartedAt { get; set; }
     public VetoState? Veto { get; set; } // ranked: jsonb, from the coin flip to the chosen topic
+    public Guid? RematchOfMatchId { get; set; }
+    public int? RematchRequestedBySeat { get; set; }
+    public DateTimeOffset? RematchRequestedAt { get; set; }
+    public RematchStatus? RematchStatus { get; set; } // stored as requested/accepted; "expired" is read from the time (Rematch.StatusOf)
+    public Guid? RematchMatchId { get; set; }
+    // Ghost duel: the recorded player's answers, loaded by the service before the engine starts a question (not stored here).
+    public List<MatchAnswer>? Recording { get; set; }
     public required int RngSeed { get; init; }
     public int? WinnerSeat { get; set; }
     public MatchResultReason? ResultReason { get; set; }
@@ -65,6 +74,7 @@ public class MatchPlayer
     public User? User { get; init; }
     public BotPersona? BotPersona { get; init; }
     public required int DisplayRating { get; init; }
+    public Guid? GhostSourceMatchId { get; init; } // ghost seat: the recorded match it replays
     public int? RatingBefore { get; set; } // ranked humans, written when the match finishes
     public int? RatingAfter { get; set; }
     public int Score { get; set; } // final totals, written when the match finishes
@@ -109,4 +119,42 @@ public class MatchAnswer
     public bool TimedOut { get; init; }
     public required DateTimeOffset AnsweredAt { get; init; } // bot and ghost answers are written ahead and arrive at this time
     public required AnswerLabel Label { get; init; }
+}
+
+// A rematch after a ranked match (idea §10): 20 s to accept, and only while the opponent is still around.
+public static class Rematch
+{
+    public static RematchStatus StatusOf(Match match, DateTimeOffset now) => match.RematchStatus switch
+    {
+        null => RematchStatus.None,
+        RematchStatus.Pending when match.RematchRequestedAt!.Value.AddSeconds(GameRules.RematchSeconds) <= now => RematchStatus.Expired,
+        var status => status.Value,
+    };
+
+    // Ranked only (a ghost cannot rematch), finished with a result, the opponent seen in the last 2 minutes,
+    // and nothing asked yet (or the other player asked and is waiting for this one).
+    public static bool Available(Match match, int seat, DateTimeOffset now)
+    {
+        var opponent = match.Players.FirstOrDefault(p => p.Seat != seat);
+        var status = StatusOf(match, now);
+        return match is { Kind: MatchKind.Ranked, Phase: MatchPhase.Done } && match.ResultReason != MatchResultReason.Aborted
+            && opponent is { Kind: SeatKind.Human } && opponent.LastSeenAt >= now.AddMinutes(-GameRules.RematchOpponentSeenMinutes)
+            && (status == RematchStatus.None || (status == RematchStatus.Pending && match.RematchRequestedBySeat != seat));
+    }
+
+    public static void Request(Match match, int seat, DateTimeOffset now)
+    {
+        if (!Available(match, seat, now) || match.RematchStatus is not null)
+            throw Unavailable();
+        (match.RematchStatus, match.RematchRequestedBySeat, match.RematchRequestedAt) = (RematchStatus.Pending, seat, now);
+    }
+
+    public static void Accept(Match match, int seat, DateTimeOffset now)
+    {
+        if (StatusOf(match, now) != RematchStatus.Pending || match.RematchRequestedBySeat == seat)
+            throw Unavailable();
+        match.RematchStatus = RematchStatus.Accepted;
+    }
+
+    private static AppException Unavailable() => new(ErrorCodes.MatchRematchUnavailable, "The rematch is no longer available.");
 }

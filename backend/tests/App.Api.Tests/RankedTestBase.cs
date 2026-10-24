@@ -44,6 +44,7 @@ public abstract class RankedTestBase(TestApp app) : MatchTestBase(app)
     protected async Task<MatchStateDto> RankedAsync(Session a, Session b)
     {
         (await JoinAsync(a)).EnsureSuccessStatusCode();
+        App.Clock.Advance(TimeSpan.FromMilliseconds(1)); // a waits longer, so a proposes and sits in seat 0
         (await JoinAsync(b)).EnsureSuccessStatusCode();
         await App.MatchmakeAsync();
         var proposal = (await QueueAsync(a)).Proposal!;

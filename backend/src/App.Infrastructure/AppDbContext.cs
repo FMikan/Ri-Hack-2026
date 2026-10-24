@@ -28,6 +28,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
     public DbSet<MatchProposal> MatchProposals => Set<MatchProposal>();
+    public DbSet<GhostOffer> GhostOffers => Set<GhostOffer>();
     public DbSet<ConceptLessonCards> ConceptLessonCards => Set<ConceptLessonCards>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
@@ -51,6 +52,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<LessonStatus>().HaveConversion<SnakeCaseEnumConverter<LessonStatus>>();
         builder.Properties<QueueStatus>().HaveConversion<SnakeCaseEnumConverter<QueueStatus>>();
         builder.Properties<ProposalStatus>().HaveConversion<SnakeCaseEnumConverter<ProposalStatus>>();
+        builder.Properties<RematchStatus>().HaveConversion<SnakeCaseEnumConverter<RematchStatus>>();
         builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
     }
 }

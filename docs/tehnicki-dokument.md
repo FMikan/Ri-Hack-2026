@@ -32,7 +32,7 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka | gotovo, u `development` |
 | **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, u `development` |
 | **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, u `development` (nagrade poduke se knjiže u F4) |
-| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | F3a gotov, PR `feature/f3-ranked` (red, prihvat, veto, živi duel, Elo, tierovi, odustajanje, prekid veze); F3b sljedeće (revanš, ghost duel); SP se knjiži u F4 |
+| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | F3a gotov, u `development` (red, prihvat, veto, živi duel, Elo, tierovi, odustajanje, prekid veze); F3b gotov, PR `feature/f3b-rematch-ghost` (revanš, ghost duel); SP se knjiži u F4 |
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | nije počelo |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
@@ -421,6 +421,8 @@ create table queue_entries (
   entered_at   timestamptz not null,
   status       text not null default 'waiting' check (status in ('waiting','proposed')),
   proposal_id  uuid references match_proposals(id) on delete set null,
+  ghost_offer_match_id uuid references matches(id) on delete set null,  -- trenutna ghost ponuda (izvorna partija)
+  ghost_offer_seat     smallint,                                           -- sjedalo snimljenog igrača u izvornoj partiji
   ghost_offer_declined boolean not null default false     -- nakon odbijanja: nudi se bot, ghost se više ne nudi u ovom čekanju
 );
 
@@ -817,7 +819,7 @@ urn:app:queue/already-in        urn:app:queue/not-in                 urn:app:pro
 urn:app:match/not-participant   urn:app:match/wrong-phase            urn:app:match/not-your-turn       urn:app:match/already-in-match
 urn:app:match/already-answered  urn:app:match/wrong-index            urn:app:match/topic-not-in-pool   urn:app:match/not-finished
 urn:app:lesson/already-passed   urn:app:lesson/retry-too-soon        urn:app:lesson/nothing-missed     urn:app:match/nothing-to-calibrate
-urn:app:question/not-answered (403)  urn:app:question/not-found (404)  urn:app:lesson/not-found (404)
+urn:app:question/not-answered (403)  urn:app:question/not-found (404)  urn:app:lesson/not-found (404)  urn:app:match/rematch-unavailable
 urn:app:shop/insufficient-coins urn:app:shop/already-owned           urn:app:shop/freeze-limit         urn:app:shop/not-owned
 urn:app:auth/invalid-credentials urn:app:auth/email-taken            urn:app:auth/username-taken       urn:app:auth/reset-token-invalid
 urn:app:friends/already         urn:app:challenge/expired            urn:app:daily/already-attempted   urn:app:daily/too-late
@@ -1084,10 +1086,14 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
 
+**F3b: revanš i ghost duel**
+- Revanš: na ekranu rezultata gumb kad je `result.rematchAvailable` (rangirana partija, protivnik viđen u zadnje 2 min). `POST /api/matches/{id}/rematch` vraća `RematchDto` (`pending`, `expiresAt` = +20 s); ekran polla `GET /api/matches/{id}/rematch` svake 2 s. Protivnik zahtjev vidi u `dashboard.inbox.rematch` (i na svom ekranu rezultata kroz isti GET) i prihvaća s `POST .../rematch/accept`, koji vraća novu partiju u `veto_coin`; kod onoga koji je pitao GET vrati `accepted` + `matchId`. Ako oba pritisnu revanš, drugi pritisak ga odmah pokreće. Istek: `expired`, gumb "Nova partija".
+- Ghost duel: nakon 30 s u redu `ghostOffer` (snimka igrača sličnog ratinga na jednoj od mojih tema; ista snimka se nudi jednom). `POST /api/queue/ghost` → 201 `MatchStateDto` (`kind: 'ghost'`, odmah lobby, bez veta); `players[1].kind = 'ghost'` s `user` snimljenog igrača i `ghostRecordedAt` (ikona duha i datum snimke). Ghost odgovara u svom snimljenom vremenu; međuekran prikazuje njegov snimljeni odgovor. Rating se mijenja samo živom igraču; revanša nakon ghosta nema. `POST /api/queue/ghost/decline` ostavlja igrača u redu i nudi bota.
+
 **F3a: red čekanja, veto, živi rangirani duel**
 - Igraj rangirano: `POST /api/queue` (treba 3–5 tema), zatim `GET /api/queue` svake 1 s. `rangeNow` raste (±100, +50 svakih 10 s). Teme su zaključane dok je igrač u redu (`PUT /api/me/topics` → 409 `urn:app:topics/locked-in-queue`; `me.inQueue`, `dashboard.queueLocked`). `DELETE /api/queue` = Odustani.
 - `status: 'proposed'`: "Protivnik pronađen" s `proposal.opponent` i odbrojavanjem do `proposal.expiresAt` (10 s, iz `serverTime`). `POST /api/queue/proposals/{id}/accept`; dok drugi nije prihvatio, `iAccepted: true`. Kad oba prihvate, `status: 'matched'` + `matchId`: otvori partiju. Ako drugi odbije ili istekne: `409 urn:app:proposal/expired` ili poll vrati `waiting` (vrijeme čekanja ostaje).
-- `botOffer: true` nakon 30 s: ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati". `ghostOffer` je `null` do F3b.
+- `botOffer: true` nakon 30 s kad nema ghost ponude (vidi F3b): ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati".
 - Partija počinje u `veto_coin` (3 s animacija novčića, `veto.coinWinnerSeat` banira prvi), pa `veto_ban`: igrač na potezu (`veto.turnSeat == mySeat`) bira temu iz `veto.pool` i šalje `POST /api/matches/{id}/veto/ban { topicId }`; 8 s po potezu, istek = automatski ban (`auto: true`). Uz temu: vlastiti `myMastery` i ikona `pickedByOpponent`. `veto_pick`: `chosenTopicId` je poznat odmah, animacija 3 s prema njemu, zatim lobby i duel kao s botom.
 - Kraj: `result.mine.ratingBefore/ratingAfter`, povijest ima `ratingDelta`. Tier (`user.tier`) i `isProvisional` (prvih 10 partija prikaži `?` umjesto ratinga) dolaze iz `UserRefDto`. Odustajanje i prekid veze (20 s bez pollanja) = poraz; oba odspojena = `aborted` bez promjene ratinga. SP, coini i XP ostaju 0 do F4.
 

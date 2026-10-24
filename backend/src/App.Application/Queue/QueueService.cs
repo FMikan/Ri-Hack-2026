@@ -1,3 +1,4 @@
+using App.Application.Content;
 using App.Application.Matches;
 using App.Application.Me;
 using App.Domain;
@@ -53,11 +54,33 @@ public class QueueService(IAppDbContext db, MatchService matches, TimeProvider t
             proposal = new QueueProposalDto(p.Id, UserRefDto.From(opponent), p.ExpiresAt, (p.UserA == userId ? p.AAcceptedAt : p.BAcceptedAt) is not null);
         }
         var waited = now - entry.EnteredAt;
-        // ponytail: the ghost offer arrives with ghost duels (F3b); until then 30 s without an opponent offers the bot.
+        var ghost = entry.GhostOfferMatchId is { } source ? await GhostOfferAsync(source, entry.GhostOfferSeat!.Value, ct) : null;
+        // After 30 s: the ghost when the matchmaker found a recording, otherwise (or once it is declined) the bot.
         return new QueueStateDto(
             entry.Status == QueueStatus.Proposed ? QueuePhase.Proposed : QueuePhase.Waiting, entry.EnteredAt, now,
-            MatchmakingRules.Range(waited), [.. entry.TopicIds], proposal, null,
-            entry.Status == QueueStatus.Waiting && waited >= TimeSpan.FromSeconds(GameRules.BotOfferAfterSeconds), null);
+            MatchmakingRules.Range(waited), [.. entry.TopicIds], proposal, ghost,
+            entry.Status == QueueStatus.Waiting && ghost is null && waited >= TimeSpan.FromSeconds(GameRules.BotOfferAfterSeconds), null);
+    }
+
+    // The ghost duel replaces waiting: the player leaves the queue and plays the recording.
+    public async Task<MatchStateDto> AcceptGhostAsync(Guid userId, CancellationToken ct)
+    {
+        var entry = await db.QueueEntries.AsNoTracking().FirstOrDefaultAsync(q => q.UserId == userId, ct);
+        if (entry is not { GhostOfferMatchId: { } source, GhostOfferSeat: { } seat })
+            throw NoGhostOffer();
+        return await matches.StartGhostAsync(userId, source, seat, ct);
+    }
+
+    // Keeps waiting; the bot is offered instead and no other ghost in this wait.
+    public async Task<QueueStateDto> DeclineGhostAsync(Guid userId, CancellationToken ct)
+    {
+        var updated = await db.QueueEntries.Where(q => q.UserId == userId && q.GhostOfferMatchId != null)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(q => q.GhostOfferMatchId, (Guid?)null)
+                .SetProperty(q => q.GhostOfferSeat, (int?)null)
+                .SetProperty(q => q.GhostOfferDeclined, true), ct);
+        if (updated == 0) throw NoGhostOffer();
+        return await StateAsync(userId, ct);
     }
 
     public Task LeaveAsync(Guid userId, CancellationToken ct) => db.LeaveQueueAsync(userId, ct);
@@ -119,6 +142,7 @@ public class QueueService(IAppDbContext db, MatchService matches, TimeProvider t
             .Select(u => u.Id).ToListAsync(ct);
         var open = waiting.Where(q => !busy.Contains(q.UserId)).ToList();
 
+        var unpaired = new List<QueueEntry>(open);
         while (open.Count > 1)
         {
             var me = open[0];
@@ -135,10 +159,62 @@ public class QueueService(IAppDbContext db, MatchService matches, TimeProvider t
             };
             db.MatchProposals.Add(proposal);
             foreach (var entry in new[] { me, other }) (entry.Status, entry.ProposalId) = (QueueStatus.Proposed, proposal.Id);
+            unpaired.Remove(me);
+            unpaired.Remove(other);
+        }
+
+        // Nobody for 30 s: offer a recording once (idea §4).
+        foreach (var entry in unpaired.Where(q => q.GhostOfferMatchId is null && !q.GhostOfferDeclined
+                     && now - q.EnteredAt >= TimeSpan.FromSeconds(GameRules.GhostOfferAfterSeconds)))
+        {
+            if (await FindGhostAsync(entry, now, ct) is not { } offer) continue;
+            (entry.GhostOfferMatchId, entry.GhostOfferSeat) = (offer.SourceMatchId, offer.Seat);
+            db.GhostOffers.Add(new GhostOffer { UserId = entry.UserId, SourceMatchId = offer.SourceMatchId, OfferedAt = now });
         }
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
     }
+
+    // A finished ranked or ghost match with a real result, on one of my topics, at most 30 days old, never offered
+    // to me before; GhostOffers.Find applies the rating range and the 30-day "seen" rule and takes the freshest.
+    private async Task<(Guid SourceMatchId, int Seat)?> FindGhostAsync(QueueEntry entry, DateTimeOffset now, CancellationToken ct)
+    {
+        var since = now.AddDays(-GameRules.GhostRecordingMaxDays);
+        var offered = db.GhostOffers.Where(o => o.UserId == entry.UserId).Select(o => o.SourceMatchId);
+        var topics = entry.TopicIds;
+        var rows = await db.MatchPlayers
+            .Where(p => p.Kind == SeatKind.Human && p.UserId != null && p.UserId != entry.UserId)
+            .Join(db.Matches, p => p.MatchId, m => m.Id, (p, m) => new { Player = p, Match = m })
+            .Where(x => (x.Match.Kind == MatchKind.Ranked || x.Match.Kind == MatchKind.Ghost) && x.Match.FinishedAt >= since
+                && (x.Match.ResultReason == MatchResultReason.Score || x.Match.ResultReason == MatchResultReason.TiebreakCorrect
+                    || x.Match.ResultReason == MatchResultReason.TiebreakTime || x.Match.ResultReason == MatchResultReason.Draw)
+                && x.Match.TopicId != null && topics.Contains(x.Match.TopicId.Value) && !offered.Contains(x.Match.Id))
+            .OrderByDescending(x => x.Match.FinishedAt)
+            .Take(50) // ponytail: newest 50 recordings; widen if the range and "seen" rule filter too many out
+            .Select(x => new { MatchId = x.Match.Id, x.Player.Seat, UserId = x.Player.UserId!.Value, x.Player.DisplayRating, TopicId = x.Match.TopicId!.Value, FinishedAt = x.Match.FinishedAt!.Value })
+            .ToListAsync(ct);
+        if (rows.Count == 0) return null;
+
+        var ids = rows.Select(r => r.MatchId).Distinct().ToList();
+        var decks = (await db.MatchQuestions.Where(q => ids.Contains(q.MatchId)).Select(q => new { q.MatchId, q.QuestionId }).ToListAsync(ct))
+            .ToLookup(q => q.MatchId, q => q.QuestionId);
+        var seenSince = now.AddDays(-GameRules.SeenQuestionDays);
+        var seen = (await db.Answers.Where(a => a.UserId == entry.UserId && a.CreatedAt >= seenSince).Select(a => a.QuestionId).Distinct().ToListAsync(ct)).ToHashSet();
+        var pick = GhostOffers.Find(entry.Rating, now - entry.EnteredAt,
+            rows.Select(r => new GhostCandidate(r.MatchId, r.UserId, r.DisplayRating, r.TopicId, r.FinishedAt, [.. decks[r.MatchId]])), seen);
+        return pick is null ? null : (pick.SourceMatchId, rows.First(r => r.MatchId == pick.SourceMatchId && r.UserId == pick.UserId).Seat);
+    }
+
+    private async Task<GhostOfferDto> GhostOfferAsync(Guid sourceMatchId, int seat, CancellationToken ct)
+    {
+        var source = await db.Matches.Where(m => m.Id == sourceMatchId)
+            .Select(m => new { m.FinishedAt, Topic = db.Topics.Where(t => t.Id == m.TopicId).Select(t => new TopicDto(t.Id, t.Slug, t.Name, t.Description, t.Concepts.Count)).First() })
+            .FirstAsync(ct);
+        var user = await db.MatchPlayers.Where(p => p.MatchId == sourceMatchId && p.Seat == seat).Select(p => p.User!).FirstAsync(ct);
+        return new GhostOfferDto(UserRefDto.From(user), source.FinishedAt!.Value, source.Topic);
+    }
+
+    private static AppException NoGhostOffer() => new(ErrorCodes.QueueNoGhostOffer, "There is no ghost duel on offer.");
 
     private static QueueCandidate Candidate(QueueEntry q) => new(q.UserId, q.Rating, q.TopicIds, q.EnteredAt);
 
