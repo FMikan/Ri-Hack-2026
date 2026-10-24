@@ -1,9 +1,11 @@
 using System.Text.Json.Nodes;
 using App.Application.Content;
+using App.Application.Economy;
 using App.Application.Me;
 using App.Application.Queue;
 using App.Domain;
 using App.Domain.Content;
+using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Progress;
@@ -14,7 +16,7 @@ namespace App.Application.Matches;
 
 // Every command that changes a match runs in a transaction that first locks the match row (SELECT ... FOR UPDATE),
 // so two answers, an answer and the tick, or a resign and the tick never interleave (docs §2.3).
-public class MatchService(IAppDbContext db, TimeProvider time)
+public class MatchService(IAppDbContext db, Rewarder rewarder, TimeProvider time)
 {
     public async Task<MatchStateDto> StartBotAsync(Guid userId, StartBotMatchRequest request, CancellationToken ct)
     {
@@ -377,6 +379,23 @@ public class MatchService(IAppDbContext db, TimeProvider time)
             .ToListAsync(ct);
     }
 
+    // The reward matrix for one player (docs §4.3) through the ledger; the seat keeps what this match paid for the result
+    // screen. Every finished match except calibration counts as the day's activity (streak).
+    private async Task PayAsync(Match match, MatchPlayer seat, CancellationToken ct)
+    {
+        var userId = seat.UserId!.Value;
+        var spFromWins = await rewarder.SpTodayAsync(userId, [RewardType.MatchWin, RewardType.RatingUpset], ct);
+        foreach (var grant in Rewards.ForMatch(match, seat, spFromWins))
+        {
+            if (!await rewarder.GrantAsync(userId, grant, ct)) continue;
+            seat.CoinsEarned += grant.Coins;
+            seat.XpEarned += grant.Xp;
+            seat.SpEarned += grant.Sp;
+        }
+        if (match.Kind != MatchKind.Calibration && match.ResultReason != MatchResultReason.Aborted)
+            await rewarder.RecordActivityAsync(seat.User!, ct);
+    }
+
     // Ranked: the deck of both players on the topic the veto drew, in the band of their average rating.
     private async Task<bool> AttachDeckIfPickedAsync(Match match, DateTimeOffset now, CancellationToken ct)
     {
@@ -396,7 +415,11 @@ public class MatchService(IAppDbContext db, TimeProvider time)
 
     private async Task SaveAsync(Match match, bool wasDone, CancellationToken ct)
     {
-        if (!wasDone && match.Phase == MatchPhase.Done) RankedResult.Apply(match);
+        if (!wasDone && match.Phase == MatchPhase.Done)
+        {
+            RankedResult.Apply(match);
+            foreach (var seat in match.Players.Where(p => p.Kind == SeatKind.Human)) await PayAsync(match, seat, ct);
+        }
         await db.SaveChangesAsync(ct);
         if (!wasDone && match.Phase == MatchPhase.Done)
             await db.Users.Where(u => u.CurrentMatchId == match.Id).ExecuteUpdateAsync(s => s.SetProperty(u => u.CurrentMatchId, (Guid?)null), ct);
@@ -522,8 +545,8 @@ public class MatchService(IAppDbContext db, TimeProvider time)
         var opponent = opponentSeat is { } seat ? match.Players.First(p => p.Seat == seat) : null;
         return new MatchResultDto(
             match.WinnerSeat, match.ResultReason!.Value,
-            // ponytail: SP, coins, XP and the streak stay zero until the economy (F4) credits them.
-            new MyResultDto(me.Score, me.CorrectCount, me.RatingBefore, me.RatingAfter, 0, 0, 0, false),
+            new MyResultDto(me.Score, me.CorrectCount, me.RatingBefore, me.RatingAfter, me.SpEarned, me.CoinsEarned, me.XpEarned,
+                me.User?.StreakLastActiveOn == Clock.Today(time.GetUtcNow())),
             opponent is null ? null : new OpponentResultDto(opponent.Score, opponent.CorrectCount),
             new ResultCardsDto(
                 cards.BlunderIndex is { } b ? Review(match, b, me.Seat, opponentSeat, concepts, false) : null,

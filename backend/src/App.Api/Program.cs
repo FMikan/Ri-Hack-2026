@@ -5,6 +5,8 @@ using App.Api.Endpoints;
 using App.Application;
 using App.Application.Auth;
 using App.Application.Content;
+using App.Application.Daily;
+using App.Application.Economy;
 using App.Application.Lessons;
 using App.Application.Matches;
 using App.Application.Me;
@@ -57,6 +59,9 @@ builder.Services.AddScoped<ContentService>();
 builder.Services.AddScoped<MatchService>();
 builder.Services.AddScoped<LessonService>();
 builder.Services.AddScoped<QueueService>();
+builder.Services.AddScoped<Rewarder>();
+builder.Services.AddScoped<DailyService>();
+builder.Services.AddScoped<ShopService>();
 // Live AI calls (explanations, lesson cards) give up after this and fall back (idea §16: 8 s).
 builder.Services.AddSingleton(new AiOptions(TimeSpan.FromMilliseconds(builder.Configuration.GetValue("Ai:TimeoutMs", 8000))));
 // Tests turn the tick off and advance matches themselves with a fake clock.
@@ -105,6 +110,7 @@ app.MapContentEndpoints();
 app.MapMatchEndpoints();
 app.MapLessonEndpoints();
 app.MapQueueEndpoints();
+app.MapEconomyEndpoints();
 
 app.Run();
 

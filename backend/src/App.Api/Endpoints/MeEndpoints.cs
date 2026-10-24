@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using App.Application.Daily;
 using App.Application.Me;
 
 namespace App.Api.Endpoints;
@@ -26,6 +27,17 @@ public static class MeEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapGet("/dashboard", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetDashboardAsync(user.UserId(), ct));
+
+        // The ledger, newest first: what paid how many coins, XP and SP, and for what (referenceId = match, lesson, ...).
+        group.MapGet("/rewards", (ClaimsPrincipal user, MeService me, CancellationToken ct, int limit = 50) =>
+            me.GetRewardsAsync(user.UserId(), limit, ct));
+
+        group.MapGet("/daily-tasks", (ClaimsPrincipal user, DailyService daily, CancellationToken ct) => daily.TasksAsync(user.UserId(), ct));
+
+        // { avatarFrame?, banner?, boardTheme?, nameColor?, cardBackground? }: an owned item id, or null to take it off.
+        group.MapPut("/equipment", (Dictionary<string, Guid?> slots, ClaimsPrincipal user, MeService me, CancellationToken ct) =>
+            me.SetEquipmentAsync(user.UserId(), slots, ct))
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapGet("/knowledge-map", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetKnowledgeMapAsync(user.UserId(), ct));
 
