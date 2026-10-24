@@ -8,11 +8,14 @@ import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards'
 import { DailyChallengePage } from '@/features/daily/DailyChallengePage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { ChallengePage } from '@/features/friends/ChallengePage'
+import { FriendsPage } from '@/features/friends/FriendsPage'
 import { LeaderboardsPage } from '@/features/leaderboards/LeaderboardsPage'
 import { LessonPage } from '@/features/lesson/LessonPage'
 import { MatchPage } from '@/features/match/MatchPage'
 import { PracticePage } from '@/features/practice/PracticePage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
+import { PublicProfilePage } from '@/features/profile/PublicProfilePage'
 import { ReviewPage } from '@/features/review/ReviewPage'
 import { ShopPage } from '@/features/shop/ShopPage'
 import { LocaleProvider } from '@/lib/i18n/LocaleProvider'
@@ -40,6 +43,10 @@ export default function App() {
                 <Route path="/lesson/:id" element={<LessonPage />} />
                 <Route path="/shop" element={<ShopPage />} />
                 <Route path="/daily" element={<DailyChallengePage />} />
+                <Route path="/friends" element={<FriendsPage />} />
+                <Route path="/u/:username" element={<PublicProfilePage />} />
+                {/* A shared challenge link; logged-out visitors come back here after logging in. */}
+                <Route path="/challenge/:code" element={<ChallengePage />} />
               </Route>
               {/* The duel takes the whole screen: no rail or top bar while the clock runs. */}
               <Route path="/match/:id" element={<MatchPage />} />

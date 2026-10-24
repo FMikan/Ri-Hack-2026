@@ -17,9 +17,10 @@ export function useOpenMatch() {
   )
 }
 
-// Starts a match (bot, practice, calibration, ghost) and opens it. When one is already running
+// Starts a match (bot, practice, calibration, ghost, friend challenge) and opens it. When one is already running
 // (409 already-in-match, another tab or a reload mid-duel) it opens that one instead of failing.
-export function useStartMatch() {
+// `describe` turns the caller's own error codes into words; anything it leaves out gets the server's message.
+export function useStartMatch(describe?: (error: ApiError) => string | undefined) {
   const openMatch = useOpenMatch()
   const { t } = useLocale()
   const [starting, setStarting] = useState(false)
@@ -36,7 +37,11 @@ export function useStartMatch() {
         const me = await api.me().catch(() => undefined)
         if (me?.activeMatchId) return openMatch(me.activeMatchId)
       }
-      setError(caught instanceof ApiError && caught.status === 0 ? t.common.serverUnreachable : String((caught as Error).message))
+      setError(
+        caught instanceof ApiError
+          ? (describe?.(caught) ?? (caught.status === 0 ? t.common.serverUnreachable : caught.message))
+          : String((caught as Error).message),
+      )
       setStarting(false)
     }
   }
