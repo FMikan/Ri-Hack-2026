@@ -29,6 +29,14 @@ public static class ErrorCodes
     public const string MatchTopicNotInPool = "urn:app:match/topic-not-in-pool";
     public const string MatchRematchUnavailable = "urn:app:match/rematch-unavailable";
     public const string QueueNoGhostOffer = "urn:app:queue/no-ghost-offer";
+    public const string ShopInsufficientCoins = "urn:app:shop/insufficient-coins";
+    public const string ShopAlreadyOwned = "urn:app:shop/already-owned";
+    public const string ShopFreezeLimit = "urn:app:shop/freeze-limit";
+    public const string ShopNotOwned = "urn:app:shop/not-owned";
+    public const string ShopItemNotFound = "urn:app:shop/not-found";
+    public const string DailyAlreadyAttempted = "urn:app:daily/already-attempted";
+    public const string DailyTooLate = "urn:app:daily/too-late";
+    public const string DailyNotFound = "urn:app:daily/not-found";
     public const string QueueAlreadyIn = "urn:app:queue/already-in";
     public const string QueueNotIn = "urn:app:queue/not-in";
     public const string ProposalExpired = "urn:app:proposal/expired";

@@ -33,6 +33,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<GhostOffer> GhostOffers => Set<GhostOffer>();
     public DbSet<RewardEvent> RewardEvents => Set<RewardEvent>();
     public DbSet<ActivityDay> ActivityDays => Set<ActivityDay>();
+    public DbSet<UserDailyTask> UserDailyTasks => Set<UserDailyTask>();
+    public DbSet<DailyChallenge> DailyChallenges => Set<DailyChallenge>();
+    public DbSet<DailyChallengeAttempt> DailyChallengeAttempts => Set<DailyChallengeAttempt>();
+    public DbSet<ShopItem> ShopItems => Set<ShopItem>();
+    public DbSet<UserItem> UserItems => Set<UserItem>();
     public DbSet<ConceptLessonCards> ConceptLessonCards => Set<ConceptLessonCards>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
@@ -58,6 +63,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<ProposalStatus>().HaveConversion<SnakeCaseEnumConverter<ProposalStatus>>();
         builder.Properties<RematchStatus>().HaveConversion<SnakeCaseEnumConverter<RematchStatus>>();
         builder.Properties<RewardType>().HaveConversion<SnakeCaseEnumConverter<RewardType>>();
+        builder.Properties<ShopItemKind>().HaveConversion<SnakeCaseEnumConverter<ShopItemKind>>();
         builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
     }
 }

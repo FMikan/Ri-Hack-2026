@@ -33,7 +33,7 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, u `development` |
 | **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, u `development` (nagrade poduke se knjiže u F4) |
 | **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | gotovo, u `development` (F3a red, veto, živi duel, Elo, tierovi; F3b revanš, ghost duel) |
-| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | F4a gotov, PR `feature/f4a-ledger` (ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak); F4b sljedeće (dnevni zadaci, dnevni izazov, shop, oprema) |
+| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | gotovo, PR `feature/f4a-ledger` (F4a ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak; F4b dnevni zadaci, dnevni izazov, shop, oprema) |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
@@ -553,6 +553,7 @@ create table daily_challenge_attempts (
   answered_at  timestamptz,
   payload      jsonb,
   is_correct   boolean,
+  fraction     double precision,           -- find_bug: 0.4 za točnu liniju s krivim fixom
   elapsed_ms   integer,
   primary key (user_id, day)
 );
@@ -1085,6 +1086,12 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - `/forgot-password` uvijek vraća 202: ekran uvijek kaže "ako račun postoji, poslali smo link", bez obzira na e-mail.
 - Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
+
+**F4b: dnevni zadaci, dnevni izazov, shop, oprema**
+- Dnevni zadaci: `GET /api/me/daily-tasks` (i `dashboard.dailyTasks`): tri zadatka dana, isti cijeli dan, s `progress/target`; `practice_weakest` nosi `topic` (gumb "Trening" na tu temu). Dovršen zadatak se isplaćuje (20 coina) kad se zadaci sljedeći put učitaju, sva tri još 30 (`bonusAwarded`). Ključevi: `play_2_ranked`, `patch_1_concept`, `daily_challenge`, `practice_weakest`, `3_brilliant`, `review_all_due`.
+- Dnevni izazov: `GET /api/daily-challenge` otvara pokušaj (`startedAt`); odbrojavanje 60 s od `startedAt` preko `serverTime`. Isto `find_bug` pitanje za sve; `POST /api/daily-challenge/attempt { payload, clientElapsedMs }` vraća rezultat, ključ i rang. 30 coina za točno, 5 za pokušaj, 30 XP uvijek; jedan pokušaj (`409 daily/already-attempted`), nakon 60 s `409 daily/too-late` (pokušaj se bilježi kao istek). `leaderboard` top 20: točni prvi, pa brži. Arhiva `GET /api/daily-challenge/{yyyy-mm-dd}`.
+- Shop: `GET /api/shop` (najjeftinije prvo, `owned`), `POST /api/shop/purchase { itemId }` vraća `MeDto` s novim stanjem coina. Zamrzavanje streaka: najviše 2 (`me.streak.freezes`). Oprema: `PUT /api/me/equipment { avatarFrame: itemId | null, ... }`; `UserRefDto.equipment` (svugdje uz ime) daje `assetKey` po slotu. Seed artikli: `frame-bronze-ring`, `frame-circuit`, `banner-terminal`, `name-amber`, `card-blueprint`, `board-midnight`, `streak-freeze` (frontend ih crta po `assetKey`).
+- `dashboard.dailyChallengeAttempted` je sada pravi.
 
 **F4a: nagrade i streak**
 - `result.mine.coins`, `xp`, `sp` sada imaju prave vrijednosti (rangirano: 15/5/10 coina za pobjedu/poraz/remi, 10 SP za pobjedu + 5 za upset protiv 100+ višeg, najviše 100 SP dnevno iz pobjeda; svaka partija osim kalibracije: 50 XP + 5 XP po odgovoru). `streakSecured` kaže je li ova partija osigurala današnji dan.

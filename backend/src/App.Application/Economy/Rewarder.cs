@@ -36,6 +36,19 @@ public class Rewarder(IAppDbContext db, TimeProvider time)
         return true;
     }
 
+    // A purchase: coins leave only when there are enough (one atomic update), with a negative ledger row.
+    public async Task<bool> SpendAsync(Guid userId, RewardType type, int coins, Guid reference, string dedupeKey, CancellationToken ct)
+    {
+        if (await db.Users.Where(u => u.Id == userId && u.Coins >= coins).ExecuteUpdateAsync(s => s.SetProperty(u => u.Coins, u => u.Coins - coins), ct) == 0)
+            return false;
+        await db.Database.ExecuteSqlAsync(
+            $"""
+            insert into reward_events (id, user_id, type, coins, xp, sp, reference_id, dedupe_key, created_at)
+            values ({Guid.CreateVersion7()}, {userId}, {Rewards.Name(type)}, {-coins}, 0, 0, {reference}, {dedupeKey}, {time.GetUtcNow()})
+            """, ct);
+        return true;
+    }
+
     // SP already earned today from these sources, for the daily caps (100 from wins, 10 from learning).
     public Task<int> SpTodayAsync(Guid userId, RewardType[] types, CancellationToken ct)
     {

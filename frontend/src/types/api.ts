@@ -47,6 +47,14 @@ export type AppErrorCode =
   | 'urn:app:proposal/expired' // the offer was declined by the other player or ran out: poll the queue again
   | 'urn:app:match/rematch-unavailable'
   | 'urn:app:queue/no-ghost-offer'
+  | 'urn:app:shop/insufficient-coins'
+  | 'urn:app:shop/already-owned'
+  | 'urn:app:shop/freeze-limit'
+  | 'urn:app:shop/not-owned'
+  | 'urn:app:shop/not-found'
+  | 'urn:app:daily/already-attempted'
+  | 'urn:app:daily/too-late' // the attempt is recorded as a timeout (5 coins); refetch the challenge
+  | 'urn:app:daily/not-found'
 
 export type Uuid = string
 export type Iso = string
@@ -455,6 +463,60 @@ export interface RewardEventDto {
   sp: number
   at: Iso
   referenceId?: Uuid | null // the match, lesson or item the reward belongs to
+}
+
+export type ShopItemKind = 'avatar_frame' | 'banner' | 'board_theme' | 'name_color' | 'card_background' | 'streak_freeze'
+
+// GET /api/shop: active items, cheapest first. assetKey names the image or CSS the frontend draws.
+export interface ShopItemDto {
+  id: Uuid
+  key: string
+  kind: ShopItemKind
+  name: string
+  price: number
+  rarity: string
+  assetKey: string
+  owned: boolean // always false for the streak freeze (see me.streak.freezes, at most 2)
+}
+
+export interface ShopDto {
+  items: ShopItemDto[]
+}
+
+// POST /api/shop/purchase → MeDto (409 shop/insufficient-coins, shop/already-owned, shop/freeze-limit; 404 shop/not-found)
+export interface PurchaseRequest {
+  itemId: Uuid
+}
+
+// PUT /api/me/equipment → MeDto. An owned item id puts it on, null takes it off, a missing slot stays (409 shop/not-owned).
+// UserRefDto.equipment then maps the slot to the item's assetKey.
+export type SetEquipmentRequest = Partial<Record<EquipmentSlot, Uuid | null>>
+
+// GET /api/me/daily-tasks (also dashboard.dailyTasks). A task that reached its target is paid 20 coins when this is next
+// read; all three pay 30 more (bonusAwarded).
+export interface DailyTasksDto {
+  tasks: DailyTaskDto[]
+  bonusAwarded: boolean
+}
+
+export interface DailyAttemptRequest {
+  payload: AnswerPayload // { line, fixId }
+  clientElapsedMs: number
+}
+
+// GET /api/daily-challenge: the first request of the day starts my 60 s (startedAt); count down from startedAt + 60 s
+// using serverTime. POST /api/daily-challenge/attempt → this DTO (409 daily/already-attempted, daily/too-late).
+// GET /api/daily-challenge/{yyyy-mm-dd}: the archive, never starts an attempt. key/explanation only after my attempt.
+export interface DailyChallengeDto {
+  day: string
+  question: QuestionPublicDto // find_bug, timeLimitMs 60000
+  startedAt?: Iso | null
+  serverTime: Iso
+  attempted: boolean
+  myAttempt?: (AnswerResultDto & { rank?: number | null }) | null
+  key?: AnswerKeyDto | null
+  explanation?: ExplanationDto | null // set only when cached; otherwise GET /api/questions/{id}/explanation
+  leaderboard: { rank: number; user: UserRefDto; isCorrect: boolean; elapsedMs: number }[] // top 20: correct first, then faster
 }
 
 export interface StartCalibrationRequest {

@@ -1,3 +1,4 @@
+using App.Domain.Daily;
 using App.Domain.Economy;
 using App.Domain.Matches;
 using App.Domain.Progress;
@@ -169,5 +170,44 @@ public class StreakTests
         Assert.Equal(4, Streaks.Current(Player(4, Day), Day.AddDays(1)));
         Assert.Equal(4, Streaks.Current(Player(4, Day, freezes: 1), Day.AddDays(2)));
         Assert.Equal(0, Streaks.Current(Player(4, Day), Day.AddDays(2)));
+    }
+}
+
+public class DailyTaskTests
+{
+    private static readonly DateOnly Day = new(2026, 10, 24);
+
+    [Fact]
+    public void Three_tasks_per_day_deterministic_per_user()
+    {
+        var user = Guid.NewGuid();
+
+        var today = DailyTasks.ForDay(Day, user, dueCount: 4, weakestTopicId: Guid.NewGuid());
+
+        Assert.Equal(3, today.Count);
+        Assert.Equal(3, today.Select(t => t.Key).Distinct().Count());
+        Assert.Equal(today.Select(t => t.Key), DailyTasks.ForDay(Day, user, 4, Guid.NewGuid()).Select(t => t.Key));
+        var differs = Enumerable.Range(1, 10).Any(d => !DailyTasks.ForDay(Day.AddDays(d), user, 4, Guid.NewGuid()).Select(t => t.Key).SequenceEqual(today.Select(t => t.Key)));
+        Assert.True(differs); // tasks rotate from day to day
+    }
+
+    [Fact]
+    public void Review_all_due_task_not_offered_when_nothing_due_and_practice_weakest_needs_a_topic()
+    {
+        foreach (var user in Enumerable.Range(0, 30).Select(_ => Guid.NewGuid()))
+        {
+            var keys = DailyTasks.ForDay(Day, user, dueCount: 0, weakestTopicId: null).Select(t => t.Key).ToList();
+            Assert.DoesNotContain(DailyTasks.ReviewAllDue, keys);
+            Assert.DoesNotContain(DailyTasks.PracticeWeakest, keys);
+        }
+    }
+
+    [Fact]
+    public void Review_all_due_targets_the_number_due_when_generated()
+    {
+        var withReview = Enumerable.Range(0, 50).Select(_ => DailyTasks.ForDay(Day, Guid.NewGuid(), dueCount: 6, weakestTopicId: null))
+            .SelectMany(t => t).First(t => t.Key == DailyTasks.ReviewAllDue);
+
+        Assert.Equal(6, withReview.Target);
     }
 }

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using App.Application.Content;
+using App.Application.Daily;
 using App.Application.Economy;
+using App.Domain.Economy;
 using App.Domain.Matches;
 using App.Domain.Progress;
 using App.Domain;
@@ -9,10 +11,34 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Me;
 
-public class MeService(IAppDbContext db, ContentService content, TimeProvider time)
+public class MeService(IAppDbContext db, ContentService content, DailyService daily, TimeProvider time)
 {
     public async Task<MeDto> GetAsync(Guid userId, CancellationToken cancellationToken) =>
         await ToDtoAsync(await LoadAsync(userId, cancellationToken), cancellationToken);
+
+    // Slot → owned item id; null takes the slot off, a missing slot stays as it is. Stored as slot → assetKey,
+    // which is what every UserRefDto shows. Other keys (titleId arrives with titles in F5) are ignored.
+    public async Task<MeDto> SetEquipmentAsync(Guid userId, Dictionary<string, Guid?> slots, CancellationToken cancellationToken)
+    {
+        var user = await LoadAsync(userId, cancellationToken);
+        var equipment = JsonSerializer.Deserialize<Dictionary<string, string>>(user.EquipmentJson) ?? [];
+        var known = Enum.GetValues<ShopItemKind>().Select(ShopItem.SlotOf).OfType<string>().ToHashSet();
+        foreach (var (slot, itemId) in slots.Where(s => known.Contains(s.Key)))
+        {
+            if (itemId is not { } id)
+            {
+                equipment.Remove(slot);
+                continue;
+            }
+            var item = await db.ShopItems.Where(i => i.Id == id && db.UserItems.Any(o => o.UserId == userId && o.ItemId == id)).FirstOrDefaultAsync(cancellationToken);
+            if (item is null || ShopItem.SlotOf(item.Kind) != slot)
+                throw new AppException(ErrorCodes.ShopNotOwned, "Buy this item in the shop first.");
+            equipment[slot] = item.AssetKey;
+        }
+        user.EquipmentJson = JsonSerializer.Serialize(equipment);
+        await db.SaveChangesAsync(cancellationToken);
+        return await ToDtoAsync(user, cancellationToken);
+    }
 
     public async Task<List<RewardEventDto>> GetRewardsAsync(Guid userId, int limit, CancellationToken cancellationToken) =>
         await db.RewardEvents.Where(e => e.UserId == userId)
@@ -74,7 +100,7 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
         var suggestion = dueTopic is not null
             ? new SuggestionDto("review_due", dueTopic.Key, dueTopic.Select(d => d.ConceptId).Take(GameRules.QuestionsPerMatch).ToArray())
             : me.ActiveTopicIds.Length >= GameRules.MinTopics ? new SuggestionDto("play", null, null) : null;
-        // ponytail: rating history, daily tasks and the inbox stay empty until F3–F5 add the tables behind them.
+        // ponytail: the rating history and the friend challenge inbox stay empty until F5.
         return new DashboardDto(
             me,
             topics.Select(t =>
@@ -84,8 +110,8 @@ public class MeService(IAppDbContext db, ContentService content, TimeProvider ti
             }).ToArray(),
             [],
             due.Count,
-            [],
-            false,
+            (await daily.TasksAsync(userId, cancellationToken)).Tasks,
+            await daily.ChallengeAttemptedTodayAsync(userId, cancellationToken),
             suggestion,
             new InboxDto(await RematchInboxAsync(userId, cancellationToken), null),
             me.InQueue);

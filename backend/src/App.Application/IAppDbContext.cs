@@ -34,6 +34,11 @@ public interface IAppDbContext
     DbSet<GhostOffer> GhostOffers { get; }
     DbSet<RewardEvent> RewardEvents { get; }
     DbSet<ActivityDay> ActivityDays { get; }
+    DbSet<UserDailyTask> UserDailyTasks { get; }
+    DbSet<DailyChallenge> DailyChallenges { get; }
+    DbSet<DailyChallengeAttempt> DailyChallengeAttempts { get; }
+    DbSet<ShopItem> ShopItems { get; }
+    DbSet<UserItem> UserItems { get; }
     DbSet<ConceptLessonCards> ConceptLessonCards { get; }
 
     DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)
