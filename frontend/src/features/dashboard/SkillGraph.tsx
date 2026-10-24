@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { topicIcon } from './topic-icons'
+import { topicIcon } from '@/lib/topic-icons'
 
 export interface Skill {
   id: string

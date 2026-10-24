@@ -1,13 +1,17 @@
 import type {
   AppErrorCode,
   AuthResponse,
+  BotDto,
   DashboardDto,
   HealthResponse,
   LoginRequest,
+  MatchStateDto,
   MeDto,
   ProblemDetails,
   RegisterRequest,
   SetTopicsRequest,
+  StartBotMatchRequest,
+  SubmitAnswerRequest,
   TopicDto,
 } from '@/types/api'
 
@@ -152,4 +156,11 @@ export const api = {
   dashboard: (signal?: AbortSignal) => request<DashboardDto>('/api/me/dashboard', { signal }),
   setTopics: (body: SetTopicsRequest) =>
     request<void>('/api/me/topics', { method: 'PUT', body: JSON.stringify(body) }),
+
+  bots: (signal?: AbortSignal) => request<BotDto[]>('/api/bots', { signal }),
+  startBotMatch: (body: StartBotMatchRequest) => request<MatchStateDto>('/api/matches/bot', post(body)),
+  // Every match command returns the same state as the poll, so the screen replaces its state with the response.
+  match: (id: string, signal?: AbortSignal) => request<MatchStateDto>(`/api/matches/${id}`, { signal }),
+  answer: (id: string, body: SubmitAnswerRequest) => request<MatchStateDto>(`/api/matches/${id}/answers`, post(body)),
+  resign: (id: string) => request<MatchStateDto>(`/api/matches/${id}/resign`, { method: 'POST' }),
 }

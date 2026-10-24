@@ -8,7 +8,7 @@ import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 import type { DashboardTopicDto } from '@/types/api'
-import { topicIcon } from './topic-icons'
+import { topicIcon } from '@/lib/topic-icons'
 
 interface TopicsCardProps {
   topics: DashboardTopicDto[]

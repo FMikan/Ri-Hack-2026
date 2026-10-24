@@ -1,9 +1,10 @@
-import type { Tier } from '@/types/api'
+import type { BotPersona, Tier } from '@/types/api'
 
 // Display constants from the game idea (§12 bots, §14 tiers) and GameRules. The server decides; these only draw it.
 export const PLACEMENT_MATCHES = 10 // GameRules.ProvisionalMatches
 export const MIN_TOPICS = 3
 export const MAX_TOPICS = 5
+export const QUESTIONS_PER_MATCH = 10 // GameRules.QuestionsPerMatch
 
 const TIERS = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master'] as const
 // Rating where each tier starts. Bronze has no floor, so its meter starts at the start rating.
@@ -26,15 +27,14 @@ export function levelProgress(level: number, xpToNext: number) {
   return clamp((span - xpToNext) / span)
 }
 
-const BOT_PERSONAS = [
-  { key: 'vince', rating: 1000 },
-  { key: 'jake', rating: 1200 },
-  { key: 'mike', rating: 1500 },
-  { key: 'sarah', rating: 1800 },
-] as const
+// Shown before /api/bots answers (the dashboard hint); the play screen uses the list and recommendation from the API.
+const BOT_PERSONAS: { persona: BotPersona; rating: number }[] = [
+  { persona: 'vibe_coder', rating: 1000 },
+  { persona: 'junior', rating: 1200 },
+  { persona: 'mid', rating: 1500 },
+  { persona: 'senior', rating: 1800 },
+]
 
 // The idea recommends the persona closest to the player's rating.
 export const recommendedBot = (rating: number) =>
-  BOT_PERSONAS.reduce<(typeof BOT_PERSONAS)[number]>((best, bot) =>
-    Math.abs(bot.rating - rating) < Math.abs(best.rating - rating) ? bot : best,
-  BOT_PERSONAS[0])
+  BOT_PERSONAS.reduce((best, bot) => (Math.abs(bot.rating - rating) < Math.abs(best.rating - rating) ? bot : best))

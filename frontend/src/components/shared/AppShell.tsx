@@ -25,7 +25,7 @@ type NavKey = 'dashboard' | 'play' | 'practice' | 'leaderboards' | 'profile'
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
-  { key: 'play', icon: Swords },
+  { key: 'play', icon: Swords, to: '/play' },
   { key: 'practice', icon: Target },
   { key: 'leaderboards', icon: Trophy },
   { key: 'profile', icon: UserRound },

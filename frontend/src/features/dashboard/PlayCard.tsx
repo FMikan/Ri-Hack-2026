@@ -1,4 +1,5 @@
-import { Bot, Flame, Lock, Swords, type LucideIcon } from 'lucide-react'
+import { ArrowRight, Bot, Flame, Lock, Swords, type LucideIcon } from 'lucide-react'
+import { Link } from 'react-router'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -36,12 +37,17 @@ export function PlayCard({ me, locked, className }: { me: MeDto; locked: boolean
           locked={locked}
           primary
         />
-        <PlayOption
-          icon={locked ? Lock : Bot}
-          label={copy.bot}
-          hint={locked ? copy.lockedHint : copy.botHint(t.dashboard.bots[bot.key], bot.rating)}
-          locked={locked}
-        />
+        {me.activeMatchId ? (
+          <PlayOption icon={Bot} label={copy.resume} hint={copy.resumeHint} locked={false} to={`/match/${me.activeMatchId}`} />
+        ) : (
+          <PlayOption
+            icon={locked ? Lock : Bot}
+            label={copy.bot}
+            hint={locked ? copy.lockedHint : copy.botHint(t.bots[bot.persona], bot.rating)}
+            locked={locked}
+            to={locked ? undefined : '/play'}
+          />
+        )}
         {locked && (
           <Button asChild variant="outline" className="justify-self-start">
             <a href="#topics">{copy.pickTopics}</a>
@@ -58,21 +64,19 @@ interface PlayOptionProps {
   hint: string
   locked: boolean
   primary?: boolean
+  to?: string // playable now; without it the tile is a placeholder that says "Soon"
 }
 
-// Bot duel lands in F1 and ranked in F3; until then the tiles show where play starts and say "Soon".
-function PlayOption({ icon: Icon, label, hint, locked, primary }: PlayOptionProps) {
+// Bot duels are live (F1); ranked lands in F3 and says "Soon" until then.
+function PlayOption({ icon: Icon, label, hint, locked, primary, to }: PlayOptionProps) {
   const { t } = useLocale()
-
-  return (
-    <button
-      type="button"
-      aria-disabled="true"
-      className={cn(
-        'flex min-h-24 cursor-not-allowed items-center gap-4 rounded-lg p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:p-5',
-        primary ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground ring-1 ring-border ring-inset',
-      )}
-    >
+  const className = cn(
+    'flex min-h-24 items-center gap-4 rounded-lg p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:p-5',
+    primary ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground ring-1 ring-border ring-inset',
+    to ? 'transition-[box-shadow,scale] hover:ring-primary active:scale-[0.98]' : 'cursor-not-allowed',
+  )
+  const body = (
+    <>
       <span
         className={cn(
           'grid size-12 shrink-0 place-items-center rounded-full',
@@ -87,7 +91,21 @@ function PlayOption({ icon: Icon, label, hint, locked, primary }: PlayOptionProp
           {hint}
         </span>
       </span>
-      {!locked && <span className="ml-auto shrink-0 self-start font-mono text-xs opacity-75">{t.shell.soon}</span>}
+      {to ? (
+        <ArrowRight aria-hidden="true" className="ml-auto size-5 shrink-0 text-primary" />
+      ) : (
+        !locked && <span className="ml-auto shrink-0 self-start font-mono text-xs opacity-75">{t.shell.soon}</span>
+      )}
+    </>
+  )
+
+  return to ? (
+    <Link to={to} className={className}>
+      {body}
+    </Link>
+  ) : (
+    <button type="button" aria-disabled="true" className={className}>
+      {body}
     </button>
   )
 }

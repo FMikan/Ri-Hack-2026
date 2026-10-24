@@ -4,7 +4,7 @@ import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 import type { DashboardTopicDto } from '@/types/api'
 import { SkillGraph, type Skill } from './SkillGraph'
-import { topicIcon } from './topic-icons'
+import { topicIcon } from '@/lib/topic-icons'
 
 // Radar of mastery per topic with the same numbers as a list next to it: the list names every axis (the radar
 // only has icons) and doubles as the accessible table.

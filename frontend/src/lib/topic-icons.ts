@@ -9,7 +9,7 @@ const ICONS: Record<string, LucideIcon> = {
   networking: Globe,
   security: ShieldCheck,
   algorithms: GitBranch,
-  ai: Brain,
+  'how-ai-works': Brain,
 }
 
 export const topicIcon = (slug: string) => ICONS[slug] ?? BookOpen
