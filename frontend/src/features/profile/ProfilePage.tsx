@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { SkillGraphCard } from '@/features/dashboard/SkillGraphCard'
 import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
-import { demoMe, demoTopics } from '@/lib/fixtures/demo'
 import { monthYear } from '@/lib/format'
 import { PLACEMENT_MATCHES } from '@/lib/game'
 import { useLocale } from '@/lib/i18n/locale-context'
@@ -29,7 +28,7 @@ export function ProfilePage() {
     <main className="mx-auto grid w-full max-w-7xl content-start gap-5 px-4 pb-10 sm:px-6 lg:px-8">
       <title>{`${t.profile.documentTitle} · StackOff`}</title>
       {profile.data ? (
-        <ProfileView me={demoMe(profile.data[0])} map={profile.data[1]} history={profile.data[2]} />
+        <ProfileView me={profile.data[0]} map={profile.data[1]} history={profile.data[2]} />
       ) : profile.error ? (
         <Card role="alert">
           <CardContent className="grid justify-items-start gap-3">
@@ -58,7 +57,7 @@ function ProfileView({ me, map, history }: { me: MeDto; map: KnowledgeMapDto; hi
   return (
     <div className={GRID}>
       <ProfileCard me={me} history={history} className="xl:col-span-2" />
-      <SkillGraphCard topics={demoTopics(map.topics)} className="xl:col-span-2 xl:row-start-2" />
+      <SkillGraphCard topics={map.topics} className="xl:col-span-2 xl:row-start-2" />
       <MatchHistoryCard history={history} className="xl:col-start-3 xl:row-span-2 xl:row-start-1" />
       <KnowledgeMapCard map={map} className="xl:col-span-3" />
     </div>

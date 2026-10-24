@@ -60,6 +60,17 @@
     --radius-2xl: calc(var(--radius) * 3);
     --radius-3xl: calc(var(--radius) * 4);
     --radius-4xl: calc(var(--radius) * 5);
+
+    /* Ranked veto: the coin toss that decides who bans first (runs once, 1.2 s of the 3 s phase). */
+    --animate-coin: coin-flip 1.2s cubic-bezier(0.2, 0, 0, 1) both;
+    @keyframes coin-flip {
+        from {
+            transform: rotateY(0);
+        }
+        to {
+            transform: rotateY(1080deg);
+        }
+    }
 }
 
 /* Palette (PRAVILA.md §3): charcoal surfaces, sky accent, green and red for change. Dark UI only. */

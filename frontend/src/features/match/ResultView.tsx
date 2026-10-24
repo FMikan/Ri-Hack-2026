@@ -1,14 +1,16 @@
 import { Target } from 'lucide-react'
 import { Link } from 'react-router'
+import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { QUESTIONS_PER_MATCH } from '@/lib/game'
+import { QUESTIONS_PER_MATCH, ratingText } from '@/lib/game'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
-import type { MatchStateDto, PlayerDto, ReviewQuestionDto } from '@/types/api'
+import type { MatchKind, MatchStateDto, PlayerDto, ReviewQuestionDto } from '@/types/api'
 import { AnswerChip } from './AnswerChip'
 import { PlayerAvatar } from './PlayerAvatar'
 import { promptOf } from './question-utils'
+import { RematchPanel } from './RematchPanel'
 
 interface ResultViewProps {
   match: MatchStateDto
@@ -17,8 +19,10 @@ interface ResultViewProps {
   opponentName: string
 }
 
-// Outcome, final score and the three cards from the game idea (§10). Rating, coins and XP stay 0 until F3/F4,
-// so they are not shown yet.
+// Where "Play again" goes for each kind of duel; practice has its own button.
+const AGAIN: Partial<Record<MatchKind, string>> = { ranked: '/?play=ranked', ghost: '/?play=ranked', bot: '/?play=bot' }
+
+// Outcome, final score, the rating change of a ranked duel and the three cards from the game idea (§10).
 export function ResultView({ match, me, opponent, opponentName }: ResultViewProps) {
   const { t } = useLocale()
   const copy = t.match.result
@@ -33,6 +37,8 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
           ? 'win'
           : 'loss'
   const { blunder, brilliant, practiceConcept } = result.cards
+  const { ratingBefore, ratingAfter } = result.mine
+  const again = AGAIN[match.kind]
 
   const side = (name: string, score: number, correct: number | undefined, player?: PlayerDto) => (
     <div className="grid justify-items-center gap-1 text-center">
@@ -40,7 +46,9 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
       <p className="max-w-full truncate text-sm font-medium">{name}</p>
       <p className="font-heading text-4xl font-semibold tabular-nums sm:text-5xl">{score}</p>
       {correct !== undefined && <p className="text-xs text-muted-foreground">{copy.correct(correct, match.question?.total ?? QUESTIONS_PER_MATCH)}</p>}
-      {opponent && <p className="font-mono text-xs text-muted-foreground">{player?.displayRating}</p>}
+      {opponent && player && (
+        <p className="font-mono text-xs text-muted-foreground">{ratingText(player.displayRating, player.user?.isProvisional)}</p>
+      )}
     </div>
   )
 
@@ -52,6 +60,19 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
           {copy[outcome]}
         </h2>
         {outcome !== 'completed' && <p className="text-sm text-muted-foreground">{copy.reasons[result.reason]}</p>}
+        {ratingBefore != null && ratingAfter != null && (
+          <p className="flex flex-wrap items-center justify-center gap-2 text-sm">
+            {me?.user?.isProvisional ? (
+              <span className="text-muted-foreground">{copy.placement}</span>
+            ) : (
+              <>
+                <span className="text-muted-foreground">{copy.rating}</span>
+                <span className="font-mono font-medium">{ratingAfter}</span>
+              </>
+            )}
+            <DeltaBadge value={ratingAfter - ratingBefore} />
+          </p>
+        )}
       </header>
 
       <Card>
@@ -85,10 +106,20 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
         </ul>
       )}
 
+      {result.rematchAvailable && opponent && <RematchPanel match={match} opponentName={opponentName} />}
+
       <div className="flex flex-wrap justify-center gap-3 pt-2">
-        <Button asChild size="lg">
-          {opponent ? <Link to="/?play=bot">{copy.playAgain}</Link> : <Link to="/practice">{copy.practiceAgain}</Link>}
-        </Button>
+        {!opponent ? (
+          <Button asChild size="lg">
+            <Link to="/practice">{copy.practiceAgain}</Link>
+          </Button>
+        ) : (
+          again && (
+            <Button asChild size="lg">
+              <Link to={again}>{copy.playAgain}</Link>
+            </Button>
+          )
+        )}
         <Button asChild size="lg" variant="outline">
           <Link to="/">{copy.dashboard}</Link>
         </Button>

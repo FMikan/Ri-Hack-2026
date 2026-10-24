@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/features/auth/auth-context'
 import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
-import { demoMe } from '@/lib/fixtures/demo'
 import { demoLeaderboard, type LeaderboardBoard, type LeaderboardEntryDto } from '@/lib/fixtures/leaderboards'
 import { relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
@@ -25,7 +24,7 @@ export function LeaderboardsPage() {
   const [topicSlug, setTopicSlug] = useState<string>()
   if (session.status !== 'authenticated') return null
 
-  const me = demoMe(session.user)
+  const me = session.user
   const slug = topicSlug ?? topics.data?.[0]?.slug ?? ''
   const data = demoLeaderboard(board, me, board === 'topic' ? slug : '')
   const podium = data.entries.slice(0, 3)
