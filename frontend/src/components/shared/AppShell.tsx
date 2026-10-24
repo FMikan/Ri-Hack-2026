@@ -4,6 +4,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  Store,
   Target,
   Trophy,
   UserRound,
@@ -33,13 +34,14 @@ import { AvatarDialog } from '@/features/profile/AvatarDialog'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'shop' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
   { key: 'practice', icon: Target, to: '/practice' },
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
+  { key: 'shop', icon: Store, to: '/shop' },
   { key: 'profile', icon: UserRound, to: '/profile' },
 ]
 

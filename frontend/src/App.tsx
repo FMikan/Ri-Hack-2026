@@ -6,6 +6,7 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { RegisterPage } from '@/features/auth/RegisterPage'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards'
+import { DailyChallengePage } from '@/features/daily/DailyChallengePage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { LeaderboardsPage } from '@/features/leaderboards/LeaderboardsPage'
 import { LessonPage } from '@/features/lesson/LessonPage'
@@ -13,6 +14,7 @@ import { MatchPage } from '@/features/match/MatchPage'
 import { PracticePage } from '@/features/practice/PracticePage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { ReviewPage } from '@/features/review/ReviewPage'
+import { ShopPage } from '@/features/shop/ShopPage'
 import { LocaleProvider } from '@/lib/i18n/LocaleProvider'
 
 export default function App() {
@@ -36,6 +38,8 @@ export default function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/match/:id/review" element={<ReviewPage />} />
                 <Route path="/lesson/:id" element={<LessonPage />} />
+                <Route path="/shop" element={<ShopPage />} />
+                <Route path="/daily" element={<DailyChallengePage />} />
               </Route>
               {/* The duel takes the whole screen: no rail or top bar while the clock runs. */}
               <Route path="/match/:id" element={<MatchPage />} />

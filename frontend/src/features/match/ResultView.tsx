@@ -1,8 +1,11 @@
-import { BookOpen, Target } from 'lucide-react'
+import { BookOpen, Flame, Target } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
+import { Rewards } from '@/components/shared/Rewards'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useAuth } from '@/features/auth/auth-context'
 import { useStartLesson } from '@/features/lesson/use-start-lesson'
 import { QUESTIONS_PER_MATCH, ratingText } from '@/lib/game'
 import { useLocale } from '@/lib/i18n/locale-context'
@@ -23,7 +26,7 @@ interface ResultViewProps {
 // Where "Play again" goes for each kind of duel; practice has its own button.
 const AGAIN: Partial<Record<MatchKind, string>> = { ranked: '/?play=ranked', ghost: '/?play=ranked', bot: '/?play=bot' }
 
-// Outcome, final score, the rating change of a ranked duel and the three cards from the game idea (§10).
+// Outcome, final score, rating change, rewards and the three cards from the game idea (§10).
 export function ResultView({ match, me, opponent, opponentName }: ResultViewProps) {
   const { t } = useLocale()
   const copy = t.match.result
@@ -40,6 +43,11 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
   const { blunder, brilliant, practiceConcept } = result.cards
   const { ratingBefore, ratingAfter } = result.mine
   const again = AGAIN[match.kind]
+  const { refreshUser } = useAuth()
+  // Coins, XP and the rating just changed on the server; the top bar reads them from the session.
+  useEffect(() => {
+    refreshUser().catch(() => {})
+  }, [refreshUser])
 
   const side = (name: string, score: number, correct: number | undefined, player?: PlayerDto) => (
     <div className="grid justify-items-center gap-1 text-center">
@@ -72,6 +80,13 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
               </>
             )}
             <DeltaBadge value={ratingAfter - ratingBefore} />
+          </p>
+        )}
+        <Rewards coins={result.mine.coins} xp={result.mine.xp} sp={result.mine.sp} className="pt-1" />
+        {result.mine.streakSecured && (
+          <p className="flex items-center gap-1.5 text-sm text-warning">
+            <Flame aria-hidden="true" className="size-4" />
+            {copy.streakSecured}
           </p>
         )}
       </header>

@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuth } from '@/features/auth/auth-context'
 import { usePoll } from '@/hooks/use-poll'
 import { api } from '@/lib/api-client'
 import { MIN_TOPICS } from '@/lib/game'
@@ -12,6 +14,7 @@ import { LevelTile, TierTile } from './ProgressTiles'
 import { RatingCard } from './RatingCard'
 import { SkillGraphCard } from './SkillGraphCard'
 import { Suggestion } from './Suggestion'
+import { TodayCard } from './TodayCard'
 import { TopicsCard } from './TopicsCard'
 
 // xl: three columns. Play spans the first two with tier and level under it, rating fills the right column,
@@ -50,7 +53,10 @@ export function DashboardPage() {
 function DashboardView({ data, reload }: { data: DashboardDto; reload: () => void }) {
   const { t } = useLocale()
   const { me } = data
+  const { setUser } = useAuth()
   const needsTopics = me.activeTopicIds.length < MIN_TOPICS
+  // The top bar shows coins from the session; the poll keeps them current after duels, lessons and tasks.
+  useEffect(() => setUser(me), [me, setUser])
   const topics = (
     <TopicsCard
       id="topics"
@@ -69,6 +75,7 @@ function DashboardView({ data, reload }: { data: DashboardDto; reload: () => voi
       <Suggestion data={data} />
       <div className={GRID}>
         <PlayCard me={me} locked={needsTopics} className="col-span-2 xl:col-start-1 xl:row-start-1" />
+        {!needsTopics && data.dailyTasks.length > 0 && <TodayCard data={data} className="col-span-2 xl:col-span-3 xl:row-start-4" />}
         {/* A new player picks topics right after the play card; everyone else sees them further down. */}
         {needsTopics && topics}
         <RatingCard
