@@ -7,7 +7,9 @@ using App.Application.Content;
 using App.Application.Lessons;
 using App.Application.Matches;
 using App.Application.Queue;
+using App.Application.Seasons;
 using App.Domain.Content;
+using App.Domain.Seasons;
 using App.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -29,7 +31,9 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine").Build();
 
-    public FakeTimeProvider Clock { get; } = new(DateTimeOffset.UtcNow);
+    // Today 10:00 UTC (midday in Europe/Zagreb), not the real time: the run moves the clock by hours in total, and tests
+    // about "the same day" must not cross a local midnight just because the suite started late in the evening.
+    public FakeTimeProvider Clock { get; } = new(new DateTimeOffset(DateTime.UtcNow.Date.AddHours(10), TimeSpan.Zero));
 
     public FakeEmailSender Emails { get; } = new();
 
@@ -90,6 +94,10 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
 #pragma warning disable EF1002
         await db.Database.ExecuteSqlRawAsync($"truncate {string.Join(", ", tables.Select(t => $"\"{t}\""))} cascade");
 #pragma warning restore EF1002
+        // A season that started a month ago, so patched concepts pay normal SP unless a test moves the start.
+        var now = Clock.GetUtcNow();
+        db.Seasons.Add(new Season { Number = 1, StartsAt = now.AddDays(-30), EndsAt = now.AddDays(60) });
+        await db.SaveChangesAsync();
     }
 
     public async Task<T> InDbAsync<T>(Func<AppDbContext, Task<T>> action)
@@ -116,6 +124,13 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
     {
         using var scope = Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<QueueService>().RunMatchmakingAsync(default);
+    }
+
+    // What GameTickService does every minute: grandmasters, the weekly and seasonal snapshots, titles, cleanup.
+    public async Task HousekeepAsync()
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<HousekeepingService>().RunAsync(default);
     }
 
     public async Task AdvanceAsync(TimeSpan by)

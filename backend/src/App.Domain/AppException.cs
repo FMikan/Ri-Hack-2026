@@ -47,4 +47,14 @@ public static class ErrorCodes
     public const string LessonNothingMissed = "urn:app:lesson/nothing-missed";
     public const string LessonAlreadyPassed = "urn:app:lesson/already-passed";
     public const string LessonRetryTooSoon = "urn:app:lesson/retry-too-soon";
+    public const string UserNotFound = "urn:app:users/not-found";
+    public const string ProfilePrivate = "urn:app:users/profile-private";
+    public const string FriendsAlready = "urn:app:friends/already";
+    public const string FriendsSelf = "urn:app:friends/self";
+    public const string FriendsNotFriends = "urn:app:friends/not-friends";
+    public const string FriendRequestNotFound = "urn:app:friends/request-not-found";
+    public const string ChallengeNotFound = "urn:app:challenge/not-found";
+    public const string ChallengeExpired = "urn:app:challenge/expired";
+    public const string ChallengeOwn = "urn:app:challenge/own";
+    public const string LeaderboardNotFound = "urn:app:leaderboards/not-found";
 }

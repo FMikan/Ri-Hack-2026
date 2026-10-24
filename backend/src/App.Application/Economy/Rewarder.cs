@@ -1,3 +1,4 @@
+using App.Application.Seasons;
 using App.Domain;
 using App.Domain.Economy;
 using App.Domain.Users;
@@ -14,13 +15,22 @@ public class Rewarder(IAppDbContext db, TimeProvider time)
     {
         if (grant is { Coins: 0, Xp: 0, Sp: 0 }) return false;
         var now = time.GetUtcNow();
+        // SP count for the current season: the row carries the season and user_seasons.sp is its cached sum.
+        var seasonId = grant.Sp != 0 ? (await db.CurrentSeasonAsync(now, ct)).Id : (Guid?)null;
         var inserted = await db.Database.ExecuteSqlAsync(
             $"""
-            insert into reward_events (id, user_id, type, coins, xp, sp, reference_id, dedupe_key, created_at)
-            values ({Guid.CreateVersion7()}, {userId}, {Rewards.Name(grant.Type)}, {grant.Coins}, {grant.Xp}, {grant.Sp}, {grant.ReferenceId}, {grant.DedupeKey}, {now})
+            insert into reward_events (id, user_id, type, coins, xp, sp, season_id, reference_id, dedupe_key, created_at)
+            values ({Guid.CreateVersion7()}, {userId}, {Rewards.Name(grant.Type)}, {grant.Coins}, {grant.Xp}, {grant.Sp}, {seasonId}, {grant.ReferenceId}, {grant.DedupeKey}, {now})
             on conflict (dedupe_key) do nothing
             """, ct);
         if (inserted == 0) return false;
+
+        if (seasonId is { } season)
+        {
+            await db.JoinSeasonAsync(userId, season, ct);
+            await db.UserSeasons.Where(s => s.UserId == userId && s.SeasonId == season)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Sp, x => x.Sp + grant.Sp), ct);
+        }
 
         var oldXp = await db.Users.Where(u => u.Id == userId).Select(u => u.Xp).FirstAsync(ct);
         if (grant.Coins != 0 || grant.Xp != 0)

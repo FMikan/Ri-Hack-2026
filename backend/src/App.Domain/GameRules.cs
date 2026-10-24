@@ -23,8 +23,14 @@ public static class GameRules
     public const int PasswordMinLength = 8, PasswordMaxLength = 128;
     public const int MaxStreakFreezes = 2;
 
+    // Social and leaderboards (idea §12, §14)
+    public const int FriendChallengeMinutes = 10, OnlineMinutes = 2, LastSeenThrottleSeconds = 30;
+    public const int LeaderboardSize = 100, LeaderboardAround = 2, GrandmasterTop = 100;
+    public const int SeasonMonths = 3, SeasonLearningBoostDays = 14, WeeklyTitleTop = 10;
+    public static readonly int[] SeasonTitleRanks = [5, 50, 100];
+
     // Economy (idea §9, §13, §15). Coins, XP and SP only move through the ledger (Rewarder).
-    public const int CoinsWin = 15, CoinsLoss = 5, CoinsDraw = 10, CoinsLessonPassed = 50, CoinsWeeklyXpGoal = 100, CoinsPerLevel = 50;
+    public const int CoinsWin = 15, CoinsLoss = 5, CoinsDraw = 10, CoinsFriendMatch = 5, CoinsLessonPassed = 50, CoinsWeeklyXpGoal = 100, CoinsPerLevel = 50;
     public const int SpWin = 10, SpUpset = 5, SpUpsetGap = 100, SpDailyWinCap = 100, SpPatched = 2, SpDailyLearnCap = 10;
     public const int XpAnswer = 5, XpMatch = 50, XpLesson = 100, WeeklyXpGoal = 500;
     public const int PatchRewardCooldownDays = 7;
@@ -54,6 +60,8 @@ public static class GameRules
     public static readonly TimeSpan LessonRetryAfter = TimeSpan.FromMinutes(10);
     public const int CalibrationQuestions = 5;
     public const int ReportsToQuarantine = 3; // distinct players
+    public const int CalibrationMinAnswers = 50;
+    public const double CalibrationEasyRatio = 0.85, CalibrationHardRatio = 0.30;
 
     // Difficulty band by rating (idea §3): D1 < 1100, D2 < 1400, D3 < 1700, D4 1700+.
     public static readonly int[] DifficultyThresholds = [1100, 1400, 1700];

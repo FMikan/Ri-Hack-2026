@@ -101,7 +101,7 @@ public class QueueService(IAppDbContext db, MatchService matches, TimeProvider t
             if (proposal is { AAcceptedAt: not null, BAcceptedAt: not null })
             {
                 proposal.Status = ProposalStatus.Matched;
-                proposal.MatchId = await matches.CreateRankedAsync(proposal.UserA, proposal.UserB, now, ct);
+                proposal.MatchId = await matches.CreateDuelAsync(proposal.UserA, proposal.UserB, MatchKind.Ranked, now, ct);
                 await db.QueueEntries.Where(q => q.ProposalId == proposal.Id).ExecuteDeleteAsync(ct);
             }
             await db.SaveChangesAsync(ct);

@@ -21,6 +21,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasMany(u => u.Topics).WithOne().HasForeignKey(t => t.UserId);
         // One active match per user; set atomically when a match starts and cleared when it finishes.
         builder.HasOne<Domain.Matches.Match>().WithMany().HasForeignKey(u => u.CurrentMatchId).OnDelete(DeleteBehavior.SetNull);
+        // The equipped title travels with every loaded user, so every UserRefDto can show its name.
+        builder.HasOne(u => u.EquippedTitle).WithMany().HasForeignKey(u => u.EquippedTitleId).OnDelete(DeleteBehavior.SetNull);
+        builder.Navigation(u => u.EquippedTitle).AutoInclude();
         builder.ToTable(t =>
         {
             t.HasCheckConstraint("ck_users_username_length", $"length(username) between {GameRules.UsernameMinLength} and {GameRules.UsernameMaxLength}");

@@ -14,12 +14,15 @@ public class User
     public int Rating { get; set; } = GameRules.StartRating;
     public int RankedMatches { get; set; }
     public Tier Tier { get; set; } = Tier.Bronze;
+    public bool IsGrandmaster { get; set; } // global top 100 (Housekeeping); shown instead of the tier
     public int Coins { get; set; }
     public int Xp { get; set; }
     public int StreakCount { get; set; }
     public DateOnly? StreakLastActiveOn { get; set; }
     public int StreakFreezes { get; set; }
     public string EquipmentJson { get; set; } = "{}";
+    public Guid? EquippedTitleId { get; set; }
+    public Seasons.Title? EquippedTitle { get; set; } // always loaded with the user (AutoInclude): UserRefDto shows its name
     public Guid? CurrentMatchId { get; set; } // one active match per user
     public DateTimeOffset? LastSeenAt { get; set; }
     public required DateTimeOffset CreatedAt { get; init; }

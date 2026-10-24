@@ -34,7 +34,7 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, u `development` (nagrade poduke se knjiže u F4) |
 | **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | gotovo, u `development` (F3a red, veto, živi duel, Elo, tierovi; F3b revanš, ghost duel) |
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | gotovo, PR `feature/f4a-ledger` (F4a ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak; F4b dnevni zadaci, dnevni izazov, shop, oprema) |
-| **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
+| **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | gotovo, PR `feature/f5-social` (F5a prijatelji, izazov prijatelja, javni profil, statistika, rang-liste, Grandmaster; F5b sezone, titule, achievementi, tjedni i sezonski snapshot, povlačenje i auto-kalibracija pitanja) |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
 Stupac "Stanje backenda" se ažurira u PR-u svake faze; što frontend može spojiti po fazama je u §6.11.
@@ -74,7 +74,7 @@ App.Application/                   jedna servisna klasa po featureu (AuthService
   IAppDbContext.cs, AppException.cs (ErrorCodes)
   Auth/         AuthService (register, login, refresh, logout; F0b: forgot/reset), ITokenService + IPasswordHasher, IEmailSender, AuthDtos
   Me/           MeService (get, update, topics, dashboard; kasnije knowledge map, stats, matches), MeDtos
-  Content/      ContentService (topics, concepts, question, explanation, report; kasnije RetireQuestion, RecalibrateDifficulty), IExplanationGenerator, QuestionView
+  Content/      ContentService (topics, concepts, question, explanation, report), QuestionOps (RetireQuestion, RecalibrateDifficulty), IExplanationGenerator, QuestionView
   Matches/      StartBotMatch, StartPracticeMatch, StartCalibration, GetMatchState, BanTopic, SubmitAnswer, NextQuestion, ResignMatch, AdvanceMatches, FinishMatch, GetMatchReview, RequestRematch, AcceptRematch, MatchStateMapper, MatchLock
   Matchmaking/  JoinQueue, GetQueueState, LeaveQueue, AcceptProposal, RunMatchmaking, AcceptGhostOffer, DeclineGhostOffer
   Lessons/      LessonService (start, get, check), ILessonGenerator, LessonDtos
@@ -336,7 +336,6 @@ create table matches (
   question_started_at  timestamptz,
   veto                 jsonb,                                     -- {"pool":[topicId..],"pickedBy":{topicId:[seat..]},"coinWinnerSeat":0,"turnSeat":0,"bans":[{"topicId","seat","auto"}],"finalTwo":[..],"chosenTopicId"}
   rng_seed             integer not null,
-  season_id            uuid references seasons(id),
   rematch_of_match_id  uuid references matches(id),
   rematch_requested_by_seat smallint,
   rematch_requested_at timestamptz,
@@ -351,7 +350,6 @@ create table matches (
 create index on matches (phase_deadline) where phase <> 'done';                      -- tick
 create index on matches (finished_at) where kind in ('ranked','ghost');              -- tjedni leaderboard, ghost kandidati
 create index on matches (topic_id);
-create index on matches (season_id);
 
 create table match_players (
   match_id              uuid not null references matches(id) on delete cascade,
@@ -733,7 +731,7 @@ public static class GameRules
 | `Tier.Of` | `(int rating, Tier current) → Tier` | pragovi §14 (bronze..master); pad tek ispod `prag - 25`; Grandmaster nije ovdje nego `users.is_grandmaster` (Housekeeping, top 100 s ≥ 10 partija) |
 | `Mastery.Next` | `(double m, int n, double r, double w) → double` | `m + α(r-m)w`, `α = max(0.15, 1/(n+1))`, clamp 0–100 (§8); `r = 100 · fraction` |
 | `Mastery.Weight` | `(difficulty, type, double fraction, label, timed) → double` | težina D × pogodivost (samo kad fraction > 0) × 1.2 ako Blunder × 0.5 bez vremena |
-| `Mastery.Apply` | `(ConceptMastery, answer, now) → ConceptMastery` | Next + Weight; `answer_count++`; ako `is_graduated` i mastery < 70 → `is_graduated = false` + ponovno u red (step 1) + znanje-titula `active = false`; ako je koncept u redu ponavljanja i fraction < 1 → `ReviewSchedule.Fail`; ako je `review_due_at <= now` i fraction = 1 → `ReviewSchedule.Success` |
+| `Mastery.Apply` | `(ConceptMastery, answer, now) → ConceptMastery` | Next + Weight; `answer_count++`; ako `is_graduated` i mastery < 70 → `is_graduated = false` + ponovno u red (step 1) (znanje-titulu gasi Housekeeping u roku od minute); ako je koncept u redu ponavljanja i fraction < 1 → `ReviewSchedule.Fail`; ako je `review_due_at <= now` i fraction = 1 → `ReviewSchedule.Success` |
 | `ConceptState.Of` | `(ConceptMastery) → Unknown/Weak/InProgress/Solid/Graduated` | n=0 unknown; <40 weak; <70 in progress; ≥70 solid; graduated flag (§11) |
 | `ReviewSchedule.Success` | `(ConceptMastery, bool questionWasD1, now)` | `consecutive++`; na koraku 5 uz mastery ≥ 85 → graduated, step/due null; inače step = min(step+1, 5), due = now + interval[step-1] (D1 pitanje: pola) |
 | `ReviewSchedule.Fail` | `(ConceptMastery, now)` | step 1, due now+1d, consecutive 0 (bilo koji izvor, bilo koji slot) |
@@ -754,7 +752,9 @@ public static class GameRules
 | `Level.Of` | `(int xp) → int` | novi korisnik level 1; level n (n ≥ 2) traži 100·n XP od prethodnog, kumulativno `50·n·(n+1) - 100`; `XpToNext = 50·(n+1)(n+2) - 100 - xp`; level-up nagrada `50·n` za dosegnuti n |
 | `Streak.Apply` | `(Streak s, DateOnly today) → Streak` | isti dan: ništa; jučer: +1; rupa ≤ freezes: troši freezes, +1; inače 1 |
 | `DailyTasks.ForDay` | `(DateOnly day, Guid userId, int dueCount, Guid? weakestTopic) → Task[3]` | deterministički izbor; bez `review_all_due` kad `dueCount = 0` |
-| `AchievementRules.Evaluate` | `(UserSnapshot) → string[] newKeys` | lista pravila nad brojčanim snapshotom |
+| `AchievementRules.Evaluate` | `(UserSnapshot, earned) → string[] newKeys` | lista pravila nad brojčanim snapshotom povijesti (pobjede, Brilliant, najbolji streak iz ledgera, zakrpani koncepti, pobjede protiv 200+ jačih, aktivne teme > 50, najdulji niz dnevnih izazova); već osvojeni se ne vraćaju |
+| `QuestionCalibration.Next` | `(difficulty, answers, correctRatio) → int` | ≥ 50 odgovora na trenutnoj težini: > 85 % točnih → D-1, < 30 % → D+1, unutar D1–D4 |
+| `Season.First / Next / DoubleLearningSp` | | prva sezona počinje danas (lokalna ponoć), svaka iduća gdje je prošla stala, traje 3 mjeseca; prvih 14 dana dvostruki SP za zakrpane koncepte (i dnevni cap učenja 20) |
 
 ### 4.3 `MatchEngine` (agregat partije)
 
@@ -789,10 +789,10 @@ Finish(now)                                       §17: human s disconnected_at 
 | SP 10 pobjeda (cap 100/dan) + 5 upset (protivnik ≥ 100 viši) | da | da | ne | ne | ne | ne |
 | XP: 5 po odgovoru + 50 po partiji | da | da | da | da | da | ne |
 | Tjedni leaderboard (bodovi) | da | da | ne | ne | ne | ne |
-| Aktivni dan (streak), dnevni zadaci, achievementi | da | da | da | da | da | ne |
+| Aktivni dan (streak), dnevni zadaci | da | da | da | da | da | ne |
 | `current_match_id = null` oboma, rematch dostupan | da | ne | ne | da | — | — |
 
-`dedupe_key` čini ponovni poziv bezopasnim.
+`dedupe_key` čini ponovni poziv bezopasnim. Achievementi se ne računaju u `FinishMatch`: sva pravila mjere povijest (partije, `answers`, ledger, poduke, dnevni izazov), pa se novi upisuju kad ih se pročita (`GET /api/me/achievements`, javni profil); `earnedAt` je trenutak prvog čitanja.
 
 ## 5. Vanjske ovisnosti i sučelja
 
@@ -824,6 +824,9 @@ urn:app:question/not-answered (403)  urn:app:question/not-found (404)  urn:app:l
 urn:app:shop/insufficient-coins urn:app:shop/already-owned           urn:app:shop/freeze-limit         urn:app:shop/not-owned
 urn:app:auth/invalid-credentials urn:app:auth/email-taken            urn:app:auth/username-taken       urn:app:auth/reset-token-invalid
 urn:app:friends/already         urn:app:challenge/expired            urn:app:daily/already-attempted   urn:app:daily/too-late
+urn:app:friends/self            urn:app:friends/not-friends          urn:app:challenge/own
+urn:app:users/not-found (404)   urn:app:users/profile-private (403)  urn:app:friends/request-not-found (404)
+urn:app:challenge/not-found (404)  urn:app:leaderboards/not-found (404)
 ```
 
 Za `409 match/already-answered|wrong-phase|wrong-index` klijent ne prikazuje grešku: refetcha stanje i nastavlja (zakašnjeli klik ili dupli zahtjev).
@@ -1036,20 +1039,20 @@ interface DailyTaskDto { key: string; progress: number; target: number; complete
 ```ts
 GET /api/leaderboards/{board}?topic={slug}   board: 'global'|'season'|'weekly'|'topic'|'friends'   → LeaderboardDto
 GET /api/seasons/current                     → { id; number; startsAt; endsAt; doubleLearningSp: boolean }
-GET /api/me/achievements                     → { key: string; name: string; earnedAt?: Iso; progress?: number; target?: number }[]
-GET /api/me/titles                           → { id: Uuid; key: string; name: string; kind: string; count: number; active: boolean }[]
-GET    /api/friends                          → FriendDto[]
-POST   /api/friends/requests  { username }   → 201 FriendDto     (409 friends/already)
-POST   /api/friends/requests/{userId}/accept → FriendDto
-DELETE /api/friends/{userId}                 → 204
-POST   /api/friend-challenges { friendUserId?: Uuid }  → 201 { code: string; expiresAt: Iso }   // s friendUserId: pojavi se u njegovom DashboardDto.inbox
-GET    /api/friend-challenges/{code}         → { code; host: UserRefDto; matchId?: Uuid; expiresAt: Iso }
-POST   /api/friend-challenges/{code}/join    → 201 MatchStateDto  (veto; 409 challenge/expired)
+GET /api/me/achievements                     → { key: string; name: string; earnedAt?: Iso; progress?: number; target?: number }[]   // progress/target samo dok nije osvojen
+GET /api/me/titles                           → { id: Uuid; key: string; name: string; kind: 'season'|'knowledge'|'weekly'; count: number; active: boolean }[]   // najnovije prvo
+GET    /api/friends                          → FriendDto[]       (zahtjevi meni, pa prijatelji (online prvi), pa moji zahtjevi)
+POST   /api/friends/requests  { username }   → 201 FriendDto     (409 friends/already, friends/self; 404 users/not-found; zahtjev onome tko je već pitao mene = prihvat)
+POST   /api/friends/requests/{userId}/accept → FriendDto         (404 friends/request-not-found)
+DELETE /api/friends/{userId}                 → 204               (makni prijatelja, povuci ili odbij zahtjev)
+POST   /api/friend-challenges { friendUserId?: Uuid }  → 201 { code: string; expiresAt: Iso }   // s friendUserId (samo prihvaćeni prijatelj, inače 409 friends/not-friends): pojavi se u njegovom DashboardDto.inbox
+GET    /api/friend-challenges/{code}         → { code; host: UserRefDto; matchId?: Uuid; expiresAt: Iso }   (host polla dok ne dobije matchId)
+POST   /api/friend-challenges/{code}/join    → 201 MatchStateDto  (kind 'friend', veto; 409 challenge/expired, challenge/own, topics/count, match/already-in-match)
 
-interface LeaderboardDto { board: string; entries: LeaderboardEntryDto[]; me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] } ; resetsAt?: Iso }
+interface LeaderboardDto { board: 'global'|'season'|'weekly'|'topic'|'friends'; entries: LeaderboardEntryDto[]; me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] /* uključuje moj red */ } ; resetsAt?: Iso }
 interface LeaderboardEntryDto { rank: number; user: UserRefDto; value: number }    // value = Elo | SP | tjedni bodovi | graduirani koncepti
-interface FriendDto { user: UserRefDto; status: 'pending_in'|'pending_out'|'accepted'; online: boolean }
-interface StatsDto { matches: number; wins: number; losses: number; draws: number; winRate: number; accuracyByType: Record<QuestionType, number>; avgTimeMsByType: Record<QuestionType, number>; mostCommonBlunderType?: QuestionType; brilliantCount: number; conceptsPatched: number; conceptsGraduated: number; ratingHistory: { at: Iso; rating: number }[] }
+interface FriendDto { user: UserRefDto; status: 'pending_in'|'accepted'|'pending_out'; online: boolean }
+interface StatsDto { matches: number; wins: number; losses: number; draws: number; winRate: number; accuracyByType: Partial<Record<QuestionType, number>>; avgTimeMsByType: Partial<Record<QuestionType, number>>; mostCommonBlunderType?: QuestionType; brilliantCount: number; conceptsPatched: number; conceptsGraduated: number; ratingHistory: { at: Iso; rating: number }[] }   // postoci 0–100
 interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; mastery?: number; completion: number }[]; titles: string[]; achievements: string[]; stats: Pick<StatsDto, 'matches'|'winRate'|'conceptsGraduated'> }
 ```
 
@@ -1065,6 +1068,22 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 ### 6.11 Stanje po fazama: što frontend može spojiti sada
 
 Što backend već poslužuje (u `development`) i što ekrani trebaju znati, a ne piše u tipovima. Svaka faza dodaje svoj odlomak.
+
+**F5b: sezone, titule, achievementi**
+- Sezona: `GET /api/seasons/current` (`number`, `startsAt`, `endsAt`, `doubleLearningSp` prva dva tjedna). `me.seasonPoints` su SP tekuće sezone; nova sezona kreće od 0, Elo ostaje. U prva dva tjedna zakrpani koncept nosi 4 SP (dnevni cap učenja 20). Sezonska lista: `GET /api/leaderboards/season` (igrači s SP > 0, `resetsAt` = kraj sezone).
+- Kraj sezone (Housekeeping, ≤ 1 min nakon `endsAt`): konačni rang, titule `S1 Top 5` / `Top 50` / `Top 100` (najbolja koja vrijedi) i `S1 <najviši tier sezone>` za sve koji su u sezoni igrali rangirano ili skupili SP, i kozmetički drop tog tiera (okvir avatara `frame-season-<tier>` u `user_items`, ne prodaje se u shopu).
+- Tjedno (ponedjeljak): snapshot tjedne liste i titula `weekly.top10` ("Weekly Top 10") za top 10 s bodovima; `count` broji koliko puta.
+- Titula znanja `master.<slug>` ("<Tema> master") dok su svi koncepti teme graduirani; pad graduiranog koncepta ispod 70 je gasi (`active: false`) i skida s opreme.
+- `GET /api/me/titles`; opremanje `PUT /api/me/equipment { titleId }` (`null` skida; `409 shop/not-owned` za titulu koja nije osvojena ili je neaktivna). Ime opremljene titule je `UserRefDto.title` posvuda (lobby, rang-liste, prijatelji), `me.equippedTitleId` je njezin id.
+- `GET /api/me/achievements`: svih 9 (`first_win`, `brilliant_10`, `streak_7/30/100`, `patched_50`, `giant_slayer`, `all_topics_50`, `daily_30`) s `progress/target` dok nisu osvojeni i `earnedAt` kad jesu. Novi se upisuju kad se lista (ili javni profil) učita, pa ekran rezultata može pozvati listu i pokazati "otključano" za ključeve koji su prije bili bez `earnedAt`. Javni profil: `titles` su imena aktivnih titula, `achievements` ključevi osvojenih.
+
+**F5a: prijatelji, izazov prijatelja, javni profil, statistika, rang-liste**
+- Prijatelji: `GET /api/friends` (`pending_in` prvi, pa prihvaćeni s `online` (viđen u zadnje 2 min), pa `pending_out`), `POST /api/friends/requests { username }`, `POST /api/friends/requests/{userId}/accept`, `DELETE /api/friends/{userId}`. Zahtjev prema nekome tko je već poslao zahtjev meni odmah je prihvaćen. Online status puni svaki autentificirani zahtjev (`users.last_seen_at`, najviše jednom u 30 s), pa ga polling partije i dashboarda drže svježim.
+- Izazov prijatelja: `POST /api/friend-challenges {}` (otvoreni kod) ili `{ friendUserId }` (gumb "Izazovi" uz prijatelja; on ga vidi u `dashboard.inbox.friendChallenge`). Kod je 6 znakova (A–Z, 2–9), vrijedi 10 min; link `https://<domena>/challenge/{code}`. Host polla `GET /api/friend-challenges/{code}` dok ne dobije `matchId`; gost zove `POST .../{code}/join` i dobiva `MatchStateDto` u `veto_coin`. Oba igrača trebaju 3–5 tema. Partija je kao rangirana (veto, isti tok), ali `kind: 'friend'`: bez Elo-a i SP-a, 5 coina oboma, XP i streak kao inače, revanš radi (novi friend duel).
+- `GET /api/users/{username}` (javni profil): teme (aktivne i one s odgovorima) s `mastery`/`completion`, statistika (`matches`, `winRate`, `conceptsGraduated`); nikad mastery po konceptu. Profil `friends` je `403 urn:app:users/profile-private` za ne-prijatelje.
+- `GET /api/me/stats`: `winRate` i točnost su postoci 0–100; `accuracyByType`/`avgTimeMsByType` imaju samo tipove koje je igrač odgovarao (prosjek vremena samo za odgovore s vremenom). `dashboard.ratingHistory` i `stats.ratingHistory` su zadnjih 30 rangiranih/ghost partija, najstarija prva.
+- Rang-liste: `GET /api/leaderboards/global|weekly|friends` i `topic?topic=<slug>`. Top 100 + `me` (moj red s do 2 iznad i ispod, `around` uključuje moj red; `me` je `null` kad nisam na listi). Globalna: Elo, bez provizornih (< 10 rangiranih). Tjedna: zbroj bodova iz rangiranih i ghost partija od ponedjeljka 00:00 (Zagreb), `resetsAt` = idući ponedjeljak. Po temi: broj graduiranih koncepata, izjednačenje po masteryju teme; na listi je svatko tko je u temi nešto odgovorio. Prijatelji: ja + prihvaćeni prijatelji po Elo-u.
+- Grandmaster: top 100 globalne liste (≥ 10 partija) osvježava se svake minute; `UserRefDto.tier` je tada `'grandmaster'`.
 
 **F0: auth, onboarding, dashboard**
 - `register`, `login`, `refresh`, `logout`, `GET/PATCH /api/me`, `PUT /api/me/topics`, `GET /api/me/dashboard`, `GET /api/topics`, `GET /api/topics/{slug}/concepts`.
@@ -1096,7 +1115,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 **F4a: nagrade i streak**
 - `result.mine.coins`, `xp`, `sp` sada imaju prave vrijednosti (rangirano: 15/5/10 coina za pobjedu/poraz/remi, 10 SP za pobjedu + 5 za upset protiv 100+ višeg, najviše 100 SP dnevno iz pobjeda; svaka partija osim kalibracije: 50 XP + 5 XP po odgovoru). `streakSecured` kaže je li ova partija osigurala današnji dan.
 - Poduka: `LessonResultDto.rewards` je 50 coina + 100 XP + 2 SP po konceptu kad je nagrada podobna (isti koncept najviše jednom u 7 dana; najviše 10 SP dnevno iz učenja).
-- `me.coins`, `me.xp`, `me.level`, `me.xpToNextLevel`, `me.seasonPoints` (zbroj SP do sezona u F5) i `me.streak` (`count` je 0 kad je niz prekinut; `securedToday`) dolaze iz ledgera. Level-up donosi 50 × level coina, tjedni cilj od 500 XP 100 coina, streak od 7/30/100 dana 100/500/2000 coina.
+- `me.coins`, `me.xp`, `me.level`, `me.xpToNextLevel`, `me.seasonPoints` (od F5b SP tekuće sezone) i `me.streak` (`count` je 0 kad je niz prekinut; `securedToday`) dolaze iz ledgera. Level-up donosi 50 × level coina, tjedni cilj od 500 XP 100 coina, streak od 7/30/100 dana 100/500/2000 coina.
 - Povijest nagrada: `GET /api/me/rewards?limit=50` (najnovije prvo) za animacije "+15" i ekran povijesti.
 
 **F3b: revanš i ghost duel**
@@ -1121,9 +1140,11 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 ## 7. Seed sadržaja
 
-- `backend/src/App.Infrastructure/Seed/topics.json` (teme s konceptima: slug, name, description; redoslijed u datoteci je `sort_order`) i `Seed/questions/<tema>.json` (niz pitanja: `key`, `concept` (slug), `type`, `difficulty`, `language`, `content` s `answer`, `remember`). Kasnije `shop-items.json`, `titles.json`. Datoteke su embedded resources u Infrastructure assemblyju.
+- `backend/src/App.Infrastructure/Seed/topics.json` (teme s konceptima: slug, name, description; redoslijed u datoteci je `sort_order`) i `Seed/questions/<tema>.json` (niz pitanja: `key`, `concept` (slug), `type`, `difficulty`, `language`, `content` s `answer`, `remember`). `Seed/shop.json` (artikli shopa; s `seasonDropTier` je sezonski drop koji se ne prodaje). Titule se ne seedaju: stvaraju se kad se prvi put dodijele. Datoteke su embedded resources u Infrastructure assemblyju.
 - `Seeder` se pokreće na startu kad je `Database:SeedOnStartup=true` (Development i prod) i radi upsert po `slug`/`key` (`questions.seed_key`); nikad ne briše i ne vraća u igru pitanje koje je u karanteni ili povučeno. Na kraju postavi `topics.is_active` = tema gradi potpun ranked deck za novog igrača (D1–D2, ništa viđeno); `GET /api/topics` vraća samo aktivne teme.
 - Novo pitanje se dodaje u JSON i provjerava s `dotnet test` (`SeedTests`); format i primjer svakog tipa su u postojećim datotekama.
+- `difficulty` iz JSON-a vrijedi samo kad se pitanje prvi put upiše; poslije težinu vodi auto-kalibracija (§8), pa promjena težine u JSON-u ne dira postojeće pitanje.
+- Povlačenje pitanja: `"retired": true` u njegovom JSON-u. Seeder ga na idućem startu povuče (`QuestionOps.RetireQuestion`): izlazi iz svih novih deckova, rezultati završenih partija ostaju, a mastery promjena svakog odgovora na to pitanje se oduzme (`answers.reverted_at`, statistika i achievementi ih preskaču).
 - Hackathon pitanja se pišu kroz Claude Code sesije ravno u JSON (po konceptu, tipu, težini), a `SeedTests` su drugi prolaz validacije: točno jedan točan odgovor, svi ID-evi opcija jedinstveni, kod ≤ 25 linija i ≤ 60 znakova, `find_bug.line` unutar koda, koncept i tema postoje, `order` ima 4–5 koraka, `match_pairs` 4+4 i desna strana nije u redoslijedu ključa, svaki koncept ima ≥ 1 `find_bug` i ≥ 1 `output` u temi, i **svaka aktivna tema gradi ranked deck za band D1–D2 s praznom poviješću** (ograničenja decka §7/§8 ideje ispunjiva).
 - Offline batch generator s AI validacijom (§16 ideje) je roadmap: `tools/QuestionGen` konzolni projekt koji piše iste JSON datoteke.
 
@@ -1133,9 +1154,11 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 svake 1 s   AdvanceMatches(now)   matches gdje phase_deadline <= now (indeks), FOR UPDATE SKIP LOCKED, svaka partija u vlastitoj transakciji i try/catch;
                                   disconnect oznake za human sjedala u in_progress
 svake 2 s   RunMatchmaking(now)   parovi iz queue_entries (FOR UPDATE SKIP LOCKED, preskače current_match_id), ghost ponude nakon 30 s, istekli proposals, istekli rematch zahtjevi
-svake 60 s  Housekeeping(now)     istekli friend_challenges i refresh tokeni; RefreshGrandmasters (top 100 po ratingu s >= 10 partija);
-                                  ponedjeljak 00:00 → CloseWeek; kraj sezone → CloseSeason (snapshot, titule, season_drop, SP reset);
-                                  novi dan → daily_challenges za 7 dana unaprijed, RecalibrateDifficulty (>= 50 odgovora: > 85 % točnih → D-1, < 30 % → D+1, po answers)
+svake 60 s  Housekeeping(now)     friend_challenges istekli prije više od dana i istekli refresh tokeni; RefreshGrandmasters (top 100 po ratingu s >= 10 partija);
+                                  CloseWeek (prošli tjedan još nema weekly_results → snapshot + "Weekly Top 10" ×1 za top 10 s bodovima);
+                                  CloseSeason (sezona s ends_at <= now i bez closed_at → final_rank, titule Top 5/50/100 i najviši tier, season drop; SP kreću od 0 u novoj sezoni);
+                                  znanje-titule (sve teme sa svim konceptima graduiranim → "<Tema> master"; inače active = false i skida se s opreme)
+novi dan    Daily                 RecalibrateDifficulty (QuestionCalibration; broje se samo odgovori na trenutnoj težini). Dnevni izazov se ne stvara unaprijed: prvi zahtjev dana ga odabere
 ```
 
 `PeriodicTimer` petlja, novi DI scope po iteraciji, iznimka se logira i ne ruši host. `Game:TickEnabled=false` u testovima; testovi zovu use caseove direktno s `FakeTimeProvider`. Jedna instanca API-ja (VPS), pa nema distribuirane brave. `// ponytail: single-instance tick; add a leader lock (pg_advisory_lock) if a second API instance ever appears.`
@@ -1147,7 +1170,7 @@ svake 60 s  Housekeeping(now)     istekli friend_challenges i refresh tokeni; Re
 | Projekt | Što | Infrastruktura |
 | --- | --- | --- |
 | `tests/App.Domain.Tests` (novi, dodaje se u `App.slnx`) | čiste funkcije iz §4; `MatchEngine` nad in-memory agregatom | xUnit, bez baze, paralelno, < 1 s |
-| `tests/App.Api.Tests` (postojeći, proširen) | HTTP ugovor + use caseovi + baza; jedan test = jedan scenarij kroz API | `WebApplicationFactory<Program>` + `Testcontainers.PostgreSql` (collection fixture, jedan kontejner po runu, `TRUNCATE` svih tablica prije svakog testa, seed minimalnog sadržaja), `[assembly: CollectionBehavior(DisableTestParallelization = true)]`, `FakeTimeProvider` (start = `UtcNow`, isti instance u `JwtBearerOptions.TimeProvider`), `FakeEmailSender`, fake AI generatori, `Game:TickEnabled=false`, `RateLimit:Enabled=false` (jedan test ga uključuje vlastitom factoryjem), `Ai:TimeoutMs=50` |
+| `tests/App.Api.Tests` (postojeći, proširen) | HTTP ugovor + use caseovi + baza; jedan test = jedan scenarij kroz API | `WebApplicationFactory<Program>` + `Testcontainers.PostgreSql` (collection fixture, jedan kontejner po runu, `TRUNCATE` svih tablica prije svakog testa, seed minimalnog sadržaja), `[assembly: CollectionBehavior(DisableTestParallelization = true)]`, `FakeTimeProvider` (start = današnji dan u 10:00 UTC, da testovi "istog dana" ne prijeđu lokalnu ponoć kad se suite pokrene navečer; testovi sat pomiču naprijed, za "idući tjedan" cijelim danima, isti instance u `JwtBearerOptions.TimeProvider`), `FakeEmailSender`, fake AI generatori, `Game:TickEnabled=false`, `RateLimit:Enabled=false` (jedan test ga uključuje vlastitom factoryjem), `Ai:TimeoutMs=50` |
 
 Pomoćnici u Api testovima: `TestApp.RegisterAsync("ana") → AuthedClient` (klijent s tokenom; nakon `Clock.Advance` iznad 15 min sam ponovno logira), `Seed.Topic("sql", concepts: 10, questionsPerConcept: 8)`, `Clock.Advance(seconds)`, `Tick()` (zove `AdvanceMatches` + `RunMatchmaking`), `PlayThrough(match, answers)`.
 
@@ -1280,6 +1303,15 @@ Level / Streak / DailyTasks / AchievementRules
   Three_tasks_per_day_deterministic_per_user
   Review_all_due_task_not_offered_when_nothing_due
   First_win_achievement_fires_once
+Social
+  Friendship_pair_is_the_same_in_both_directions / Friend_challenge_code_is_6_characters_from_the_alphabet
+  Friend_match_pays_5_coins_to_both_whatever_the_result_and_no_sp / Friend_match_can_be_rematched
+Seasons
+  First_season_starts_today_and_doubles_learning_sp_for_two_weeks / Next_season_starts_where_the_last_one_ended
+  Patched_sp_doubles_with_the_season_boost_and_so_does_the_daily_cap
+  Season_rank_titles_go_to_top_5_50_100 / Season_tier_title_names_the_best_tier
+  All_topics_achievement_needs_every_active_topic_above_50
+  Question_difficulty_moves_a_band_after_enough_answers
 ```
 
 ### 9.3 API testovi po fazama
@@ -1404,9 +1436,10 @@ F5 Društveno i rang-liste
   Friend_request_accept_remove / Friend_request_in_both_directions_is_one_row / Online_status_from_last_seen
   Friend_challenge_code_joins_veto_unranked_5_coins_each / Targeted_friend_challenge_appears_in_inbox
   Public_profile_hides_concept_mastery / Friends_only_profile_is_403_for_strangers
-  Stats_accuracy_by_type_and_most_common_blunder
+  Stats_accuracy_by_type_and_most_common_blunder / Stats_and_dashboard_show_results_and_rating_history
   Retiring_question_reverts_its_mastery_deltas_and_keeps_match_result
   Question_moves_down_a_band_when_too_easy
+  Achievements_record_first_win_and_show_progress
 ```
 
 ### 9.4 Frontend provjere

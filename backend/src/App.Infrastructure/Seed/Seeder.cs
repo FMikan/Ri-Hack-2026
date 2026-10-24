@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using App.Application.Content;
 using App.Domain.Content;
 using App.Domain.Economy;
 using App.Domain.Matches;
@@ -10,7 +11,9 @@ namespace App.Infrastructure.Seed;
 
 // Upserts topics, concepts and questions from the JSON files embedded next to this class (Seed/topics.json,
 // Seed/questions/*.json). Never deletes, and never reactivates a question that was quarantined or retired.
-// A topic is offered only when its pool builds a complete ranked deck for a new player (D1–D2, nothing seen).
+// "retired": true in a question's JSON retires it (its mastery changes are taken back). The file sets a question's
+// difficulty once; after that auto-calibration owns it. A topic is offered only when its pool builds a complete ranked
+// deck for a new player (D1–D2, nothing seen).
 public class Seeder(AppDbContext db, TimeProvider time)
 {
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -50,25 +53,31 @@ public class Seeder(AppDbContext db, TimeProvider time)
 
         var concepts = topics.Values.SelectMany(t => t.Concepts).ToDictionary(c => c.Slug);
         var questions = await db.Questions.Where(q => q.SeedKey != null).ToDictionaryAsync(q => q.SeedKey!, ct);
+        var retire = new List<Question>();
         foreach (var seed in ReadQuestions())
         {
             var concept = concepts.GetValueOrDefault(seed.Concept)
                 ?? throw new InvalidOperationException($"Seed question {seed.Key} names unknown concept {seed.Concept}.");
             if (!questions.TryGetValue(seed.Key, out var question))
             {
-                question = new Question { SeedKey = seed.Key, Content = "{}", Remember = "", CreatedAt = now };
+                question = new Question { SeedKey = seed.Key, Content = "{}", Remember = "", Difficulty = seed.Difficulty, CreatedAt = now };
                 db.Questions.Add(question);
                 questions[seed.Key] = question;
             }
             question.TopicId = concept.TopicId;
             question.ConceptId = concept.Id;
             question.Type = seed.Type;
-            question.Difficulty = seed.Difficulty;
             question.Language = seed.Language;
             question.Content = seed.Content.ToJsonString();
             question.Remember = seed.Remember;
+            if (seed.Retired && question.Status != QuestionStatus.Retired) retire.Add(question);
         }
         await db.SaveChangesAsync(ct);
+        foreach (var question in retire)
+        {
+            await db.RetireQuestionAsync(question.Id, now, ct);
+            question.Status = QuestionStatus.Retired;
+        }
 
         foreach (var topic in topics.Values)
         {
@@ -91,6 +100,8 @@ public class Seeder(AppDbContext db, TimeProvider time)
                 db.ShopItems.Add(item);
             }
             (item.Kind, item.Name, item.Price, item.Rarity, item.AssetKey) = (seed.Kind, seed.Name, seed.Price, seed.Rarity, seed.AssetKey);
+            // A season drop is never sold: closing a season gives it to every player whose best tier it names.
+            (item.SeasonDropTier, item.IsActive) = (seed.SeasonDropTier, seed.SeasonDropTier is null);
         }
         await db.SaveChangesAsync(ct);
     }
@@ -112,10 +123,10 @@ public class Seeder(AppDbContext db, TimeProvider time)
     }
 }
 
-public record ShopSeed(string Key, ShopItemKind Kind, string Name, int Price, string Rarity, string AssetKey);
+public record ShopSeed(string Key, ShopItemKind Kind, string Name, int Price, string Rarity, string AssetKey, string? SeasonDropTier = null);
 
 public record TopicSeed(string Slug, string Name, string Description, List<ConceptSeed> Concepts);
 
 public record ConceptSeed(string Slug, string Name, string Description);
 
-public record QuestionSeed(string Key, string Concept, QuestionType Type, int Difficulty, string? Language, JsonObject Content, string Remember);
+public record QuestionSeed(string Key, string Concept, QuestionType Type, int Difficulty, string? Language, JsonObject Content, string Remember, bool Retired = false);

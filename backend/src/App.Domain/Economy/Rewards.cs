@@ -18,6 +18,7 @@ public class RewardEvent
     public int Coins { get; init; } // negative for a purchase
     public int Xp { get; init; }
     public int Sp { get; init; }
+    public Guid? SeasonId { get; init; } // set on rows with SP: the season they count for
     public Guid? ReferenceId { get; init; }
     public required string DedupeKey { get; init; } // unique: the same reward is never paid twice
     public required DateTimeOffset CreatedAt { get; init; }
@@ -38,6 +39,9 @@ public static class Rewards
             new(RewardType.MatchXp, 0, GameRules.XpMatch, 0, match.Id, Key(RewardType.MatchXp, match.Id, user)),
             new(RewardType.AnswerXp, 0, GameRules.XpAnswer * answered, 0, match.Id, Key(RewardType.AnswerXp, match.Id, user)),
         ];
+        // A friend duel is unranked: 5 coins for both whatever the result, no SP (idea §12).
+        if (match.Kind == MatchKind.Friend)
+            grants.Add(new Grant(RewardType.FriendMatch, GameRules.CoinsFriendMatch, 0, 0, match.Id, Key(RewardType.FriendMatch, match.Id, user)));
         if (match.Kind is not (MatchKind.Ranked or MatchKind.Ghost)) return grants;
 
         var opponent = match.Players.First(p => p.Seat != seat.Seat);
@@ -54,15 +58,15 @@ public static class Rewards
     }
 
     // A passed, reward-eligible lesson: 50 coins and 100 XP when at least one concept was not rewarded in the last 7 days,
-    // and 2 SP for each such concept, at most 10 SP a day from learning.
-    public static List<Grant> ForLesson(Guid user, Guid lessonId, IReadOnlyList<Guid> eligibleConceptIds, int spFromLearningToday)
+    // and 2 SP for each such concept, at most 10 SP a day from learning. The first two weeks of a season double both.
+    public static List<Grant> ForLesson(Guid user, Guid lessonId, IReadOnlyList<Guid> eligibleConceptIds, int spFromLearningToday, int spMultiplier = 1)
     {
         if (eligibleConceptIds.Count == 0) return [];
         List<Grant> grants = [new(RewardType.LessonPassed, GameRules.CoinsLessonPassed, GameRules.XpLesson, 0, lessonId, $"lesson_passed:{lessonId}")];
-        var spLeft = Math.Max(0, GameRules.SpDailyLearnCap - spFromLearningToday);
+        var spLeft = Math.Max(0, GameRules.SpDailyLearnCap * spMultiplier - spFromLearningToday);
         foreach (var concept in eligibleConceptIds)
         {
-            var sp = Math.Min(GameRules.SpPatched, spLeft);
+            var sp = Math.Min(GameRules.SpPatched * spMultiplier, spLeft);
             spLeft -= sp;
             grants.Add(new Grant(RewardType.ConceptPatched, 0, 0, sp, concept, $"concept_patched:{concept}:{user}:{lessonId}"));
         }

@@ -1,10 +1,12 @@
 using System.Security.Claims;
 using System.Text;
+using App.Application;
 using App.Application.Auth;
 using App.Domain;
 using App.Domain.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
@@ -43,6 +45,19 @@ public static class Auth
                     var now = time.GetUtcNow().UtcDateTime;
                     return (notBefore is null || notBefore <= now + parameters.ClockSkew)
                         && expires is not null && expires > now - parameters.ClockSkew;
+                },
+            };
+            // Online status (friends): every authenticated request marks the user as seen, at most once in 30 s.
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = async context =>
+                {
+                    var userId = context.Principal!.UserId();
+                    var now = time.GetUtcNow();
+                    var stale = now.AddSeconds(-GameRules.LastSeenThrottleSeconds);
+                    await context.HttpContext.RequestServices.GetRequiredService<IAppDbContext>().Users
+                        .Where(u => u.Id == userId && (u.LastSeenAt == null || u.LastSeenAt < stale))
+                        .ExecuteUpdateAsync(s => s.SetProperty(u => u.LastSeenAt, now), context.HttpContext.RequestAborted);
                 },
             };
         });

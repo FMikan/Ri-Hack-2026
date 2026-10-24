@@ -27,12 +27,12 @@ public static class MatchEngine
         return match;
     }
 
-    // Ranked: the coin flip animation first; the topic and the deck come out of the veto.
-    public static Match CreateRanked(IEnumerable<MatchPlayer> players, VetoState veto, int seed, DateTimeOffset now)
+    // Ranked and friend duels: the coin flip animation first; the topic and the deck come out of the veto.
+    public static Match CreateRanked(IEnumerable<MatchPlayer> players, VetoState veto, int seed, DateTimeOffset now, MatchKind kind = MatchKind.Ranked)
     {
         var match = new Match
         {
-            Kind = MatchKind.Ranked, RngSeed = seed, CreatedAt = now, Veto = veto,
+            Kind = kind, RngSeed = seed, CreatedAt = now, Veto = veto,
             Phase = MatchPhase.VetoCoin, PhaseDeadline = now.AddSeconds(GameRules.VetoAnimationSeconds),
         };
         Seat(match, players, now);

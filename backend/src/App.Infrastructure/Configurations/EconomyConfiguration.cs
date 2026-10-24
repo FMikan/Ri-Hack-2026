@@ -15,7 +15,9 @@ public class RewardEventConfiguration : IEntityTypeConfiguration<RewardEvent>
         builder.HasIndex(e => new { e.UserId, e.CreatedAt }).IsDescending(false, true);
         builder.HasIndex(e => new { e.UserId, e.Type, e.CreatedAt }).IsDescending(false, false, true); // daily SP caps, weekly XP goal
         builder.Property(e => e.DedupeKey).HasMaxLength(200);
+        builder.HasIndex(e => new { e.SeasonId, e.UserId }).HasFilter("sp <> 0"); // SP of a season
         builder.HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<Domain.Seasons.Season>().WithMany().HasForeignKey(e => e.SeasonId).OnDelete(DeleteBehavior.Restrict);
         builder.ToTable(t => t.HasCheckConstraint("ck_reward_events_type", $"type in ({SnakeCaseEnumConverter<RewardType>.SqlList()})"));
     }
 }
