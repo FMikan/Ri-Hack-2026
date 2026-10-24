@@ -65,15 +65,31 @@ No firewall changes are needed. Nothing new is exposed publicly.
 
 ```bash
 ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/ri-hack-deploy -N ""
-ssh-copy-id -i ~/.ssh/ri-hack-deploy.pub deploy@YOUR_SERVER     # or append the .pub to /home/deploy/.ssh/authorized_keys
-ssh-keyscan -H YOUR_SERVER > known_hosts.txt                     # for the DEPLOY_KNOWN_HOSTS secret
+cat ~/.ssh/ri-hack-deploy.pub                                     # copy this line
+ssh-keyscan -H YOUR_SERVER > known_hosts.txt                      # for DEPLOY_KNOWN_HOSTS (add -p PORT if SSH isn't on 22)
 ```
 
-**4. App directory and secrets.** As the `deploy` user on the server:
+`deploy` has no password, so `ssh-copy-id` won't work. Install the public key on the server with sudo:
 
 ```bash
-mkdir ~/ri-hack-2026 && cd ~/ri-hack-2026
-nano .env      # paste deploy/.env.example and set POSTGRES_PASSWORD=$(openssl rand -hex 24); WEB_PORT if not 8081
+sudo install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+echo "PASTE_THE_PUBLIC_KEY_LINE" | sudo tee -a /home/deploy/.ssh/authorized_keys
+sudo chown deploy:deploy /home/deploy/.ssh/authorized_keys && sudo chmod 600 /home/deploy/.ssh/authorized_keys
+```
+
+Check from your machine: `ssh -i ~/.ssh/ri-hack-deploy deploy@YOUR_SERVER docker ps`. It should list
+containers, with no password prompt and no permission error.
+
+**4. App directory and secrets.** As the `deploy` user on the server (`sudo -iu deploy`):
+
+```bash
+mkdir -p ~/ri-hack-2026 && cd ~/ri-hack-2026
+cat > .env <<EOF
+POSTGRES_DB=app
+POSTGRES_USER=app
+POSTGRES_PASSWORD=$(openssl rand -hex 24)
+WEB_PORT=8081
+EOF
 chmod 600 .env
 ```
 
