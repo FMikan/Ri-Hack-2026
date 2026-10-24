@@ -67,7 +67,8 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          printf 'POSTGRES_DB=app\nPOSTGRES_USER=app\nPOSTGRES_PASSWORD=smoke\nWEB_PORT=8081\n' > .env
+          # Throwaway credentials for a database that lives only inside this CI job.
+          printf 'POSTGRES_DB=app\nPOSTGRES_USER=app\nPOSTGRES_PASSWORD=%s\nWEB_PORT=8081\n' "$(openssl rand -hex 16)" > .env
           compose="docker compose -f docker-compose.prod.yml"
           $compose up -d --wait --wait-timeout 120 || { $compose logs; exit 1; }
           url=http://127.0.0.1:8081
