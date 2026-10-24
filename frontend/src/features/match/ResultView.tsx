@@ -22,8 +22,9 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
   const { t } = useLocale()
   const copy = t.match.result
   const result = match.result!
-  const outcome =
-    match.status === 'aborted'
+  const outcome = !opponent
+    ? 'completed'
+    : match.status === 'aborted'
       ? 'aborted'
       : result.winnerSeat == null
         ? 'draw'
@@ -36,8 +37,8 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
     <div className="grid justify-items-center gap-1 text-center">
       <p className="max-w-full truncate text-sm font-medium">{name}</p>
       <p className="font-heading text-4xl font-semibold tabular-nums sm:text-5xl">{score}</p>
-      {correct !== undefined && <p className="text-xs text-muted-foreground">{copy.correct(correct, QUESTIONS_PER_MATCH)}</p>}
-      <p className="font-mono text-xs text-muted-foreground">{player?.displayRating}</p>
+      {correct !== undefined && <p className="text-xs text-muted-foreground">{copy.correct(correct, match.question?.total ?? QUESTIONS_PER_MATCH)}</p>}
+      {opponent && <p className="font-mono text-xs text-muted-foreground">{player?.displayRating}</p>}
     </div>
   )
 
@@ -48,15 +49,19 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
         <h2 className={cn('font-heading text-4xl font-semibold tracking-tight sm:text-5xl', outcome === 'win' && 'text-success')}>
           {copy[outcome]}
         </h2>
-        <p className="text-sm text-muted-foreground">{copy.reasons[result.reason]}</p>
+        {outcome !== 'completed' && <p className="text-sm text-muted-foreground">{copy.reasons[result.reason]}</p>}
       </header>
 
       <Card>
-        <CardContent className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
-          {side(t.match.you, result.mine.score, result.mine.correct, me)}
-          <span className="font-mono text-sm text-muted-foreground">vs</span>
-          {result.opponent && side(opponentName, result.opponent.score, result.opponent.correct, opponent)}
-        </CardContent>
+        {opponent ? (
+          <CardContent className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
+            {side(t.match.you, result.mine.score, result.mine.correct, me)}
+            <span className="font-mono text-sm text-muted-foreground">vs</span>
+            {result.opponent && side(opponentName, result.opponent.score, result.opponent.correct, opponent)}
+          </CardContent>
+        ) : (
+          <CardContent>{side(t.match.you, result.mine.score, result.mine.correct, me)}</CardContent>
+        )}
       </Card>
 
       {(blunder || brilliant || practiceConcept) && (
@@ -80,7 +85,7 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <Button asChild size="lg">
-          <Link to="/play">{copy.playAgain}</Link>
+          {opponent ? <Link to="/play">{copy.playAgain}</Link> : <Link to="/practice">{copy.practiceAgain}</Link>}
         </Button>
         <Button asChild size="lg" variant="outline">
           <Link to="/">{copy.dashboard}</Link>

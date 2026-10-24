@@ -38,16 +38,19 @@ export function demoMe(me: MeDto): MeDto {
   }
 }
 
+// Topics nobody has answered yet get a made-up mastery, so the skill graph has a shape. Shared by dashboard and profile.
+export function demoTopics<T extends { topic: { slug: string }; mastery?: number | null }>(topics: T[]): T[] {
+  if (!DEMO_DATA) return topics
+  return topics.map((entry, index) => ({ ...entry, mastery: entry.mastery ?? MASTERY[entry.topic.slug] ?? 35 + ((index * 23) % 50) }))
+}
+
 export function demoDashboard(dashboard: DashboardDto): DashboardDto {
   if (!DEMO_DATA) return dashboard
   const now = Date.now()
   return {
     ...dashboard,
     me: demoMe(dashboard.me),
-    topics: dashboard.topics.map((entry, index) => ({
-      ...entry,
-      mastery: entry.mastery ?? MASTERY[entry.topic.slug] ?? 35 + ((index * 23) % 50),
-    })),
+    topics: demoTopics(dashboard.topics),
     ratingHistory: RATINGS.map((rating, index) => ({
       at: new Date(now - (RATINGS.length - 1 - index) * DAY).toISOString(),
       rating,

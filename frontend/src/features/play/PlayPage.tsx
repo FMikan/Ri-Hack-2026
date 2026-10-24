@@ -1,22 +1,20 @@
 import { Bot } from 'lucide-react'
 import { useState, type SubmitEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
+import { choiceTile } from '@/components/shared/choice-tile'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAsync } from '@/hooks/use-async'
-import { api, ApiError } from '@/lib/api-client'
+import { api } from '@/lib/api-client'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { topicIcon } from '@/lib/topic-icons'
 import { cn } from '@/lib/utils'
+import { useStartMatch } from '@/features/match/use-start-match'
 import type { BotDto, BotPersona, MeDto, TopicDto } from '@/types/api'
 
 const loadPlay = (signal: AbortSignal) => Promise.all([api.bots(signal), api.me(signal), api.listTopics(signal)])
-
-// Native radios styled as tiles: arrow keys and screen readers work without extra code.
-const tile =
-  'relative flex cursor-pointer gap-3 rounded-lg bg-secondary p-4 ring-1 ring-border transition-colors ring-inset hover:ring-input has-checked:bg-primary/10 has-checked:ring-2 has-checked:ring-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring'
 
 // Pick a bot and a topic, then start: the server answers with the new match and the duel screen takes over.
 export function PlayPage() {
@@ -57,37 +55,21 @@ export function PlayPage() {
 
 function PlayForm({ bots, me, topics }: { bots: BotDto[]; me: MeDto; topics: TopicDto[] }) {
   const { t } = useLocale()
-  const navigate = useNavigate()
   const mine = new Set(me.activeTopicIds)
   const ordered = [...topics].sort((a, b) => Number(mine.has(b.id)) - Number(mine.has(a.id)))
   const [persona, setPersona] = useState<BotPersona | undefined>(
     () => (bots.find((bot) => bot.recommended) ?? bots[0])?.persona,
   )
   const [topicId, setTopicId] = useState<string | undefined>(() => ordered[0]?.id)
-  const [starting, setStarting] = useState(false)
-  const [error, setError] = useState<string>()
+  const { start, starting, error } = useStartMatch()
 
-  async function start(event: SubmitEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!persona || !topicId || starting) return
-    setStarting(true)
-    setError(undefined)
-    try {
-      const match = await api.startBotMatch({ persona, topicId })
-      navigate(`/match/${match.id}`)
-    } catch (caught) {
-      // Already in a match (another tab, or a reload mid-duel): go back to it instead of failing.
-      if (caught instanceof ApiError && caught.code === 'urn:app:match/already-in-match') {
-        const fresh = await api.me().catch(() => undefined)
-        if (fresh?.activeMatchId) return navigate(`/match/${fresh.activeMatchId}`)
-      }
-      setError(caught instanceof ApiError && caught.status === 0 ? t.common.serverUnreachable : String((caught as Error).message))
-      setStarting(false)
-    }
+    if (persona && topicId) start(() => api.startBotMatch({ persona, topicId }))
   }
 
   return (
-    <form className="grid gap-5" onSubmit={start}>
+    <form className="grid gap-5" onSubmit={submit}>
       {me.activeMatchId && (
         <Card className="ring-2 ring-primary">
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
@@ -108,7 +90,7 @@ function PlayForm({ bots, me, topics }: { bots: BotDto[]; me: MeDto; topics: Top
         <CardContent>
           <div role="radiogroup" aria-labelledby="opponent-label" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {bots.map((bot) => (
-              <label key={bot.persona} className={cn(tile, 'items-start')}>
+              <label key={bot.persona} className={cn(choiceTile, 'items-start')}>
                 <input
                   type="radio"
                   name="persona"
@@ -148,7 +130,7 @@ function PlayForm({ bots, me, topics }: { bots: BotDto[]; me: MeDto; topics: Top
               {ordered.map((topic) => {
                 const Icon = topicIcon(topic.slug)
                 return (
-                  <label key={topic.id} className={cn(tile, 'items-center')}>
+                  <label key={topic.id} className={cn(choiceTile, 'items-center')}>
                     <input
                       type="radio"
                       name="topic"

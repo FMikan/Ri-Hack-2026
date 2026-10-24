@@ -3,14 +3,20 @@ import type {
   AuthResponse,
   BotDto,
   DashboardDto,
+  DueConceptsDto,
+  ExplanationDto,
+  KnowledgeMapDto,
   HealthResponse,
   LoginRequest,
   MatchStateDto,
+  MatchSummaryDto,
   MeDto,
   ProblemDetails,
   RegisterRequest,
   SetTopicsRequest,
   StartBotMatchRequest,
+  StartCalibrationRequest,
+  StartPracticeRequest,
   SubmitAnswerRequest,
   TopicDto,
 } from '@/types/api'
@@ -163,4 +169,15 @@ export const api = {
   match: (id: string, signal?: AbortSignal) => request<MatchStateDto>(`/api/matches/${id}`, { signal }),
   answer: (id: string, body: SubmitAnswerRequest) => request<MatchStateDto>(`/api/matches/${id}/answers`, post(body)),
   resign: (id: string) => request<MatchStateDto>(`/api/matches/${id}/resign`, { method: 'POST' }),
+  startPractice: (body: StartPracticeRequest) => request<MatchStateDto>('/api/matches/practice', post(body)),
+  startCalibration: (body: StartCalibrationRequest) => request<MatchStateDto>('/api/matches/calibration', post(body)),
+  // Untimed practice waits in the interstitial until the player moves on.
+  next: (id: string) => request<MatchStateDto>(`/api/matches/${id}/next`, { method: 'POST' }),
+  // Only after answering; the first request may take up to 8 s while the AI writes it.
+  explanation: (questionId: string, signal?: AbortSignal) =>
+    request<ExplanationDto>(`/api/questions/${questionId}/explanation`, { signal }),
+
+  myMatches: (signal?: AbortSignal) => request<MatchSummaryDto[]>('/api/me/matches?limit=50', { signal }),
+  dueConcepts: (signal?: AbortSignal) => request<DueConceptsDto>('/api/me/progress/due', { signal }),
+  knowledgeMap: (signal?: AbortSignal) => request<KnowledgeMapDto>('/api/me/knowledge-map', { signal }),
 }

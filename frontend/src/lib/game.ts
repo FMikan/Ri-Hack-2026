@@ -12,6 +12,9 @@ const TIER_FLOORS = [1000, 1100, 1300, 1500, 1700, 1900]
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 
+// Display tier for a rating; the server owns the real one (Grandmaster is the global top 100, not a rating).
+export const tierFor = (rating: number): Tier => TIERS[Math.max(0, TIER_FLOORS.findLastIndex((floor) => rating >= floor))]
+
 // Progress from the floor of the current tier to the next one. Master and Grandmaster have nowhere to go.
 export function tierProgress(tier: Tier, rating: number): { next?: Tier; remaining: number; progress: number } {
   const index = TIERS.indexOf(tier as (typeof TIERS)[number])

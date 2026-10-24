@@ -1,9 +1,10 @@
-import { Bot, Flag } from 'lucide-react'
+import { Bot, Flag, LoaderCircle } from 'lucide-react'
 import { createElement, useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAsync } from '@/hooks/use-async'
 import { usePoll } from '@/hooks/use-poll'
 import { api, ApiError } from '@/lib/api-client'
 import type { Messages } from '@/lib/i18n/en'
@@ -115,6 +116,7 @@ function MatchView({ snapshot, command }: { snapshot: Snapshot; command: Command
   const me = match.players.find((player) => player.seat === match.mySeat)
   const opponent = match.players.find((player) => player.seat !== match.mySeat)
   const opponentName = playerName(opponent, t)
+  const solo = !opponent // practice and calibration
 
   if (match.result) return <ResultView match={match} me={me} opponent={opponent} opponentName={opponentName} />
   if (!match.question || (match.phase !== 'question' && match.phase !== 'interstitial'))
@@ -129,7 +131,7 @@ function MatchView({ snapshot, command }: { snapshot: Snapshot; command: Command
           <span aria-hidden="true">·</span>
           <span className="shrink-0 font-mono text-xs">{t.match.question(match.question.index + 1, match.question.total)}</span>
         </p>
-        <ResignButton onResign={() => command(() => api.resign(match.id))} />
+        <ResignButton solo={solo} onResign={() => command(() => api.resign(match.id))} />
       </div>
       <Scoreboard
         me={me}
@@ -210,7 +212,7 @@ function Scoreboard({ me, opponent, opponentName, opponentAnswered }: Scoreboard
       <div className="grid min-w-0">
         <p className="truncate text-sm font-medium">{name}</p>
         <p className={cn('font-mono text-xs', answered ? 'text-success' : 'text-muted-foreground')}>
-          {answered ? t.match.answered : player?.displayRating}
+          {answered ? t.match.answered : opponent && player?.displayRating}
         </p>
       </div>
       <p className={cn('font-heading text-2xl font-semibold tabular-nums sm:text-3xl', end ? 'mr-auto' : 'ml-auto')}>
@@ -218,6 +220,9 @@ function Scoreboard({ me, opponent, opponentName, opponentAnswered }: Scoreboard
       </p>
     </div>
   )
+
+  if (!opponent)
+    return <div className="grid rounded-xl bg-card p-3 ring-1 ring-foreground/10 sm:p-4">{side(me, t.match.you, false)}</div>
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 sm:p-4">
@@ -231,8 +236,8 @@ function Scoreboard({ me, opponent, opponentName, opponentAnswered }: Scoreboard
   )
 }
 
-// Asks for a second tap within 3 seconds before resigning.
-function ResignButton({ onResign }: { onResign: () => void }) {
+// Asks for a second tap within 3 seconds before resigning (ending, in practice).
+function ResignButton({ solo, onResign }: { solo: boolean; onResign: () => void }) {
   const { t } = useLocale()
   const [confirming, setConfirming] = useState(false)
   useEffect(() => {
@@ -249,7 +254,7 @@ function ResignButton({ onResign }: { onResign: () => void }) {
       onClick={() => (confirming ? onResign() : setConfirming(true))}
     >
       <Flag aria-hidden="true" />
-      {confirming ? t.match.resignConfirm : t.match.resign}
+      {solo ? (confirming ? t.match.endConfirm : t.match.end) : confirming ? t.match.resignConfirm : t.match.resign}
     </Button>
   )
 }
@@ -271,9 +276,21 @@ function QuestionStage({ snapshot, command, opponentName }: QuestionStageProps) 
     () => performance.now() - (turn.deliveredAt ? Math.max(0, Date.parse(match.serverTime) - Date.parse(turn.deliveredAt)) : 0),
   )
   const [pending, setPending] = useState<AnswerPayload>()
-  const now = useTicker(!interstitial)
+  const [moving, setMoving] = useState(false)
+  const now = useTicker(!interstitial && match.timed)
   const limit = turn.question.timeLimitMs
-  const left = interstitial ? 0 : Math.max(0, Math.min(limit - (now - startedAt), msToDeadline(snapshot, now) - 500))
+  const left = interstitial
+    ? 0
+    : match.timed
+      ? Math.max(0, Math.min(limit - (now - startedAt), msToDeadline(snapshot, now) - 500))
+      : Infinity
+  // Untimed practice: no deadline in the interstitial, it waits until the player moves on.
+  const waitsForNext = !!interstitial && !match.phaseDeadline
+
+  async function next() {
+    setMoving(true)
+    if (!(await command(() => api.next(match.id)))) setMoving(false)
+  }
   const answered = !!turn.myAnswer || pending !== undefined
   const mine = interstitial ? interstitial.mine.payload : (turn.myAnswer?.payload ?? pending)
 
@@ -307,16 +324,53 @@ function QuestionStage({ snapshot, command, opponentName }: QuestionStageProps) 
             <AnswerChip who={t.match.you} result={interstitial.mine} />
             {interstitial.opponent && <AnswerChip who={opponentName} result={interstitial.opponent} />}
           </div>
+          {waitsForNext && <Explanation questionId={turn.question.id} />}
           <p className="text-sm text-pretty">
             <span className="font-medium text-primary">{t.match.remember}:</span> {interstitial.key.remember}
           </p>
+          {waitsForNext && (
+            <Button size="lg" className="justify-self-end" aria-disabled={moving} onClick={() => !moving && next()}>
+              {t.match.next}
+            </Button>
+          )}
         </div>
       ) : (
         <p aria-live="polite" className="min-h-5 text-center text-sm text-muted-foreground">
-          {answered ? t.match.waiting(opponentName) : left <= 0 ? t.match.timeUp : ''}
+          {answered && opponentName ? t.match.waiting(opponentName) : left <= 0 ? t.match.timeUp : ''}
         </p>
       )}
     </section>
+  )
+}
+
+// The AI explanation for untimed practice. Its first request can take a few seconds; when the AI is unavailable
+// (source 'static') only the "remember" line below it is shown.
+function Explanation({ questionId }: { questionId: string }) {
+  const { t } = useLocale()
+  const load = useCallback((signal: AbortSignal) => api.explanation(questionId, signal), [questionId])
+  const { data, loading } = useAsync(load)
+
+  if (loading)
+    return (
+      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+        <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
+        {t.match.explaining}
+      </p>
+    )
+  if (data?.source !== 'ai') return null
+  return (
+    <div className="grid gap-2 text-sm text-pretty">
+      {data.whyCorrect && (
+        <p>
+          <span className="font-medium text-success">{t.match.whyCorrect}:</span> {data.whyCorrect}
+        </p>
+      )}
+      {data.whyDistractor && (
+        <p>
+          <span className="font-medium text-destructive">{t.match.whyDistractor}:</span> {data.whyDistractor}
+        </p>
+      )}
+    </div>
   )
 }
 

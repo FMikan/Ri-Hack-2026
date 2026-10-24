@@ -40,9 +40,9 @@ type NavKey = 'dashboard' | 'play' | 'practice' | 'leaderboards' | 'profile'
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
   { key: 'play', icon: Swords, to: '/play' },
-  { key: 'practice', icon: Target },
-  { key: 'leaderboards', icon: Trophy },
-  { key: 'profile', icon: UserRound },
+  { key: 'practice', icon: Target, to: '/practice' },
+  { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
+  { key: 'profile', icon: UserRound, to: '/profile' },
 ]
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
