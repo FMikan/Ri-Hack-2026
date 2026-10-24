@@ -4,6 +4,7 @@ export const en = {
     language: 'Language',
     loading: 'Loading…',
     retry: 'Try again',
+    close: 'Close',
     serverUnreachable: 'Cannot reach the server. Check your connection and try again.',
   },
   auth: {
@@ -66,7 +67,6 @@ export const en = {
     soon: 'Soon',
     nav: {
       dashboard: 'Dashboard',
-      play: 'Play',
       practice: 'Practice',
       leaderboards: 'Ranking',
       profile: 'Profile',
@@ -75,8 +75,7 @@ export const en = {
     menu: 'Menu',
     settings: 'Settings',
     logOut: 'Log out',
-    demo: 'Demo data',
-    greeting: (name: string) => `Welcome back, ${name}`,
+    greeting: (name: string) => `Welcome back, ${name}!`,
   },
   dashboard: {
     documentTitle: 'Dashboard',
@@ -149,7 +148,6 @@ export const en = {
   },
   bots: { vibe_coder: 'Vibe Coder Vince', junior: 'Junior Jake', mid: 'Mid Mike', senior: 'Senior Sarah' },
   play: {
-    documentTitle: 'Play vs bot',
     title: 'Play vs bot',
     subtitle: 'Ten questions against a bot. No rating at stake; every answer still feeds your skill graph.',
     opponent: 'Opponent',
@@ -288,7 +286,6 @@ export const en = {
     documentTitle: 'Ranking',
     title: 'Ranking',
     subtitle: 'The top players and where you stand.',
-    preview: 'Sample players until the leaderboards go live.',
     board: 'Leaderboard',
     boards: { global: 'Global', season: 'Season', weekly: 'Weekly', topic: 'By topic', friends: 'Friends' },
     hints: {
@@ -303,6 +300,19 @@ export const en = {
     you: 'You',
     yourPosition: 'Your position',
     resets: (when: string) => `Resets ${when}`,
+  },
+  queue: {
+    title: 'Ranked duel',
+    searching: 'Looking for an opponent near your rating who shares a topic with you.',
+    elapsed: 'Searching for',
+    range: (min: number, max: number) => `Rating ${min}–${max}`,
+    topics: 'Your topics',
+    noOpponent: 'Nobody found yet. Play a bot instead, or keep waiting.',
+    playBot: 'Play a bot',
+    keepWaiting: 'Keep waiting',
+    cancel: 'Leave the queue',
+    locked: 'Pick 3 to 5 topics before a ranked duel.',
+    pickTopics: 'Pick topics',
   },
 }
 

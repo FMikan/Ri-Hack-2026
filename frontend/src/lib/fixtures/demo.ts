@@ -1,7 +1,8 @@
-import type { DashboardDto, MeDto } from '@/types/api'
+import { recommendedBot } from '@/lib/game'
+import type { BotDto, DashboardDto, MeDto } from '@/types/api'
 
 // Test numbers for the dashboard until the backend phases behind them exist (ranked matches F3, mastery F2,
-// economy F4). Opt in with VITE_DEMO_DATA=true in frontend/.env.local; the top bar then shows a "Demo data" badge.
+// economy F4). Opt in with VITE_DEMO_DATA=true in frontend/.env.local.
 // Only stats are faked: topics, the username and everything the player can change stay real.
 export const DEMO_DATA = import.meta.env.VITE_DEMO_DATA === 'true'
 
@@ -57,4 +58,12 @@ export function demoDashboard(dashboard: DashboardDto): DashboardDto {
     })),
     dueReviews: 4,
   }
+}
+
+// The server recommends a bot by the real rating; with demo stats the shown rating differs, so the recommendation follows
+// the shown one too and matches the dashboard's suggestion.
+export function demoBots(bots: BotDto[], me: MeDto): BotDto[] {
+  if (!DEMO_DATA) return bots
+  const { persona } = recommendedBot(demoMe(me).rating)
+  return bots.map((bot) => ({ ...bot, recommended: bot.persona === persona }))
 }

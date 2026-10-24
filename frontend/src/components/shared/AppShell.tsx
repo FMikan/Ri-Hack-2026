@@ -1,11 +1,9 @@
 import {
   ChevronDown,
-  FlaskConical,
   LayoutDashboard,
   LogOut,
   Menu,
   Settings,
-  Swords,
   Target,
   Trophy,
   UserRound,
@@ -28,18 +26,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/features/auth/auth-context'
-import { DEMO_DATA, demoMe } from '@/lib/fixtures/demo'
+import { PlayDialog } from '@/features/play/PlayDialog'
+import { demoMe } from '@/lib/fixtures/demo'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'play' | 'practice' | 'leaderboards' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
-  { key: 'play', icon: Swords, to: '/play' },
   { key: 'practice', icon: Target, to: '/practice' },
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
   { key: 'profile', icon: UserRound, to: '/profile' },
@@ -56,6 +53,7 @@ export function AppShell() {
         <TopBar />
         <Outlet />
       </div>
+      <PlayDialog />
     </div>
   )
 }
@@ -139,16 +137,12 @@ function TopBar() {
       <NavLink to="/" className={cn('rounded-sm lg:hidden', focusRing)}>
         <Wordmark className="h-6" />
       </NavLink>
-      <p className="hidden min-w-0 truncate font-heading text-lg font-semibold tracking-tight lg:block">
-        {t.shell.greeting(user.username)}
-      </p>
+      {pathname === '/' && (
+        <p className="hidden min-w-0 truncate font-heading text-lg font-medium tracking-tight text-muted-foreground lg:block">
+          {t.shell.greeting(user.username)}
+        </p>
+      )}
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
-        {DEMO_DATA && (
-          <Badge variant="outline">
-            <FlaskConical aria-hidden="true" />
-            {t.shell.demo}
-          </Badge>
-        )}
         <span className="flex h-9 items-center gap-2 rounded-lg bg-card px-3 font-mono text-sm font-medium">
           <img src={coinSmall} alt="" className="size-4" />
           <span className="sr-only">{t.shell.coins}:</span>

@@ -8,6 +8,7 @@ export const hr: Messages = {
     language: 'Jezik',
     loading: 'Učitavanje…',
     retry: 'Pokušaj ponovno',
+    close: 'Zatvori',
     serverUnreachable: 'Poslužitelj nije dostupan. Provjeri vezu i pokušaj ponovno.',
   },
   auth: {
@@ -70,7 +71,6 @@ export const hr: Messages = {
     soon: 'Uskoro',
     nav: {
       dashboard: 'Početna',
-      play: 'Igraj',
       practice: 'Trening',
       leaderboards: 'Ljestvice',
       profile: 'Profil',
@@ -79,8 +79,7 @@ export const hr: Messages = {
     menu: 'Izbornik',
     settings: 'Postavke',
     logOut: 'Odjava',
-    demo: 'Demo podaci',
-    greeting: (name: string) => `Bok, ${name}`,
+    greeting: (name: string) => `Bok, ${name}!`,
   },
   dashboard: {
     documentTitle: 'Početna',
@@ -153,7 +152,6 @@ export const hr: Messages = {
   },
   bots: { vibe_coder: 'Vibe Coder Vinko', junior: 'Junior Jura', mid: 'Mid Marko', senior: 'Senior Sanja' },
   play: {
-    documentTitle: 'Igraj protiv bota',
     title: 'Igraj protiv bota',
     subtitle: 'Deset pitanja protiv bota. Rating nije u igri, ali svaki odgovor puni tvoj graf vještina.',
     opponent: 'Protivnik',
@@ -292,7 +290,6 @@ export const hr: Messages = {
     documentTitle: 'Ljestvice',
     title: 'Ljestvice',
     subtitle: 'Najbolji igrači i gdje si ti.',
-    preview: 'Primjeri igrača dok ljestvice ne krenu uživo.',
     board: 'Ljestvica',
     boards: { global: 'Globalna', season: 'Sezona', weekly: 'Tjedna', topic: 'Po temi', friends: 'Prijatelji' },
     hints: {
@@ -307,5 +304,18 @@ export const hr: Messages = {
     you: 'Ti',
     yourPosition: 'Tvoja pozicija',
     resets: (when: string) => `Resetira se ${when}`,
+  },
+  queue: {
+    title: 'Rangirani duel',
+    searching: 'Tražimo protivnika blizu tvog ratinga s barem jednom zajedničkom temom.',
+    elapsed: 'Tražimo već',
+    range: (min: number, max: number) => `Rating ${min}–${max}`,
+    topics: 'Tvoje teme',
+    noOpponent: 'Još nikoga. Igraj protiv bota ili nastavi čekati.',
+    playBot: 'Igraj protiv bota',
+    keepWaiting: 'Nastavi čekati',
+    cancel: 'Izađi iz reda',
+    locked: 'Za rangirani duel odaberi 3 do 5 tema.',
+    pickTopics: 'Odaberi teme',
   },
 }

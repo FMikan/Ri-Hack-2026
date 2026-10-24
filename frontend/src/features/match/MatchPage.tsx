@@ -1,4 +1,4 @@
-import { Bot, Flag, LoaderCircle } from 'lucide-react'
+import { Flag, LoaderCircle } from 'lucide-react'
 import { createElement, useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAsync } from '@/hooks/use-async'
 import { usePoll } from '@/hooks/use-poll'
+import { useTicker } from '@/hooks/use-ticker'
 import { api, ApiError } from '@/lib/api-client'
 import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
@@ -13,6 +14,7 @@ import { topicIcon } from '@/lib/topic-icons'
 import { cn } from '@/lib/utils'
 import type { AnswerPayload, MatchStateDto, PlayerDto } from '@/types/api'
 import { AnswerChip } from './AnswerChip'
+import { PlayerAvatar } from './PlayerAvatar'
 import { QuestionBody } from './QuestionBody'
 import { ResultView } from './ResultView'
 
@@ -29,17 +31,6 @@ const msToDeadline = ({ match, at }: Snapshot, now: number) =>
 
 const playerName = (player: PlayerDto | undefined, t: Messages) =>
   player?.kind === 'bot' && player.persona ? t.bots[player.persona] : (player?.user?.username ?? '')
-
-// Re-renders every 100 ms while active, for countdowns.
-function useTicker(active: boolean) {
-  const [now, setNow] = useState(() => performance.now())
-  useEffect(() => {
-    if (!active) return
-    const id = window.setInterval(() => setNow(performance.now()), 100)
-    return () => window.clearInterval(id)
-  }, [active])
-  return now
-}
 
 // Full-screen duel: lobby, ten questions with interstitials, then the result. Polls the match once a second.
 export function MatchPage() {
@@ -141,21 +132,6 @@ function MatchView({ snapshot, command }: { snapshot: Snapshot; command: Command
       />
       <QuestionStage key={match.question.index} snapshot={snapshot} command={command} opponentName={opponentName} />
     </>
-  )
-}
-
-function PlayerAvatar({ player, className }: { player?: PlayerDto; className?: string }) {
-  return player?.kind === 'bot' ? (
-    <span className={cn('grid shrink-0 place-items-center rounded-full bg-secondary text-primary ring-1 ring-border', className)}>
-      <Bot aria-hidden="true" className="size-1/2" />
-    </span>
-  ) : (
-    <span
-      aria-hidden="true"
-      className={cn('grid shrink-0 place-items-center rounded-full bg-primary font-heading font-semibold text-primary-foreground', className)}
-    >
-      {player?.user?.username.charAt(0).toUpperCase()}
-    </span>
   )
 }
 

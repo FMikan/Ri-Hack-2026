@@ -17,6 +17,10 @@
     --color-medal-gold: var(--medal-gold);
     --color-medal-silver: var(--medal-silver);
     --color-medal-bronze: var(--medal-bronze);
+    --color-bot-vibe-coder: var(--bot-vibe-coder);
+    --color-bot-junior: var(--bot-junior);
+    --color-bot-mid: var(--bot-mid);
+    --color-bot-senior: var(--bot-senior);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -92,6 +96,11 @@
     --medal-gold: var(--warning); /* top three on the leaderboards; dark text on all three */
     --medal-silver: #c6c6d2;
     --medal-bronze: #d4935f;
+    /* each bot's accent in its portrait, used for the ring around it */
+    --bot-vibe-coder: var(--red);
+    --bot-junior: var(--green);
+    --bot-mid: var(--sky);
+    --bot-senior: #f0b24a;
     /* Input borders need 3:1 against the page (WCAG 1.4.11). */
     --border: rgb(255 255 255 / 0.07);
     --input: rgb(255 255 255 / 0.36);

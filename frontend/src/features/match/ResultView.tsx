@@ -7,6 +7,7 @@ import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 import type { MatchStateDto, PlayerDto, ReviewQuestionDto } from '@/types/api'
 import { AnswerChip } from './AnswerChip'
+import { PlayerAvatar } from './PlayerAvatar'
 import { promptOf } from './question-utils'
 
 interface ResultViewProps {
@@ -35,6 +36,7 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
 
   const side = (name: string, score: number, correct: number | undefined, player?: PlayerDto) => (
     <div className="grid justify-items-center gap-1 text-center">
+      <PlayerAvatar player={player} className="mb-1 size-14 text-xl" />
       <p className="max-w-full truncate text-sm font-medium">{name}</p>
       <p className="font-heading text-4xl font-semibold tabular-nums sm:text-5xl">{score}</p>
       {correct !== undefined && <p className="text-xs text-muted-foreground">{copy.correct(correct, match.question?.total ?? QUESTIONS_PER_MATCH)}</p>}
@@ -85,7 +87,7 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <Button asChild size="lg">
-          {opponent ? <Link to="/play">{copy.playAgain}</Link> : <Link to="/practice">{copy.practiceAgain}</Link>}
+          {opponent ? <Link to="/?play=bot">{copy.playAgain}</Link> : <Link to="/practice">{copy.practiceAgain}</Link>}
         </Button>
         <Button asChild size="lg" variant="outline">
           <Link to="/">{copy.dashboard}</Link>
