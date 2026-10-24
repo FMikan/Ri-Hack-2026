@@ -11,23 +11,6 @@ namespace App.Api.Tests;
 
 public class MatchFlowTests(TestApp app) : MatchTestBase(app)
 {
-    // Answers every question (right on even indexes, wrong on odd ones) and follows the deadlines to the end.
-    private async Task<MatchStateDto> PlayToEndAsync(Session session, MatchStateDto state)
-    {
-        for (var step = 0; step < 100 && state.Status != MatchStatus.Finished; step++)
-        {
-            if (state.Phase == MatchPhase.Question && state.Question!.MyAnswer is null)
-            {
-                var payload = state.Question.Index % 2 == 0 ? Right(state) : QuestionFixtures.WrongAnswer;
-                state = (await ReadAsync<MatchStateDto>(await AnswerAsync(session, state, payload)))!;
-                continue;
-            }
-            state = await ToDeadlineAsync(session, state);
-        }
-        Assert.Equal(MatchStatus.Finished, state.Status);
-        return state;
-    }
-
     [Fact]
     public async Task Full_bot_match_finishes_with_result_cards_and_no_rating_change()
     {

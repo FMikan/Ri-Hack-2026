@@ -40,4 +40,27 @@ public abstract class MatchTestBase(TestApp app) : ApiTestBase(app)
         await App.AdvanceAsync(TimeSpan.FromSeconds(5));
         return await StateAsync(session, started.Id);
     }
+
+    // Answers every open question (right where `right(index)` says so, by default on even indexes) and follows the
+    // deadlines to the end of the match.
+    protected async Task<MatchStateDto> PlayToEndAsync(Session session, MatchStateDto state, Func<int, bool>? right = null)
+    {
+        right ??= index => index % 2 == 0;
+        for (var step = 0; step < 100 && state.Status != MatchStatus.Finished; step++)
+        {
+            if (state.Phase == MatchPhase.Question && state.Question!.MyAnswer is null)
+            {
+                var payload = right(state.Question.Index) ? Right(state) : QuestionFixtures.WrongAnswer;
+                state = (await ReadAsync<MatchStateDto>(await AnswerAsync(session, state, payload)))!;
+                continue;
+            }
+            state = await ToDeadlineAsync(session, state);
+        }
+        Assert.Equal(MatchStatus.Finished, state.Status);
+        return state;
+    }
+
+    // A finished bot match: right on even questions, wrong on odd ones, unless `right` says otherwise.
+    protected async Task<MatchStateDto> FinishedBotMatchAsync(Session session, Guid topicId, Func<int, bool>? right = null) =>
+        await PlayToEndAsync(session, await FirstQuestionAsync(session, await StartBotAsync(session, topicId)), right);
 }

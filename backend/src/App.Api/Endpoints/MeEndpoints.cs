@@ -26,5 +26,10 @@ public static class MeEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapGet("/dashboard", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetDashboardAsync(user.UserId(), ct));
+
+        group.MapGet("/knowledge-map", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetKnowledgeMapAsync(user.UserId(), ct));
+
+        // "Due for review: n" with the concepts, most overdue first; practice them with POST /api/matches/practice { conceptIds }.
+        group.MapGet("/progress/due", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetDueAsync(user.UserId(), ct));
     }
 }

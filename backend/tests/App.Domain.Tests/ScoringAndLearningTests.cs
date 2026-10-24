@@ -184,7 +184,7 @@ public class MasteryTests
         Assert.Equal(100, Mastery.Next(95, 0, 100, 1.3));
     }
 
-    private static void Learning(ConceptMastery concept, double fraction, double weight) => Mastery.Apply(concept, fraction, weight, Now);
+    private static void Learning(ConceptMastery concept, double fraction, double weight) => Mastery.Apply(concept, fraction, weight, difficulty: 2, Now);
 }
 
 public class ConceptStateTests
@@ -200,5 +200,156 @@ public class ConceptStateTests
         var graduated = Concept(Guid.Empty, 30);
         graduated.IsGraduated = true;
         Assert.Equal(ConceptState.Graduated, ConceptStates.Of(graduated));
+    }
+}
+
+public class ReviewScheduleTests
+{
+    private static ConceptMastery InReview(int step, double mastery = 60, DateTimeOffset? dueAt = null) =>
+        new() { UserId = Guid.Empty, ConceptId = Guid.Empty, TopicId = Guid.Empty, Mastery = mastery, AnswerCount = 5, ReviewStep = step, ReviewDueAt = dueAt ?? Now, ConsecutiveReviewSuccesses = step - 1 };
+
+    [Fact]
+    public void Patch_sets_step_1_due_tomorrow()
+    {
+        var concept = Concept(Guid.Empty, 30);
+
+        ReviewSchedule.Patch(concept, Now);
+
+        Assert.Equal(1, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(1), concept.ReviewDueAt);
+        Assert.Equal(0, concept.ConsecutiveReviewSuccesses);
+    }
+
+    [Theory]
+    [InlineData(1, 2, 3)]
+    [InlineData(2, 3, 7)]
+    [InlineData(3, 4, 14)]
+    [InlineData(4, 5, 30)]
+    public void Success_moves_to_next_step_and_interval(int step, int nextStep, int days)
+    {
+        var concept = InReview(step);
+
+        ReviewSchedule.Success(concept, questionWasD1: false, Now);
+
+        Assert.Equal(nextStep, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(days), concept.ReviewDueAt);
+        Assert.Equal(step, concept.ConsecutiveReviewSuccesses);
+    }
+
+    [Fact]
+    public void D1_question_halves_interval()
+    {
+        var concept = InReview(2);
+
+        ReviewSchedule.Success(concept, questionWasD1: true, Now);
+
+        Assert.Equal(Now.AddDays(3.5), concept.ReviewDueAt);
+    }
+
+    [Fact]
+    public void Fail_resets_to_step_1_and_streak_0()
+    {
+        var concept = InReview(4);
+
+        ReviewSchedule.Fail(concept, Now);
+
+        Assert.Equal(1, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(1), concept.ReviewDueAt);
+        Assert.Equal(0, concept.ConsecutiveReviewSuccesses);
+    }
+
+    [Fact]
+    public void Step_5_success_with_85_plus_graduates()
+    {
+        var concept = InReview(5, mastery: 90);
+
+        ReviewSchedule.Success(concept, questionWasD1: false, Now);
+
+        Assert.True(concept.IsGraduated);
+        Assert.Null(concept.ReviewStep);
+        Assert.Null(concept.ReviewDueAt);
+        Assert.Equal(ConceptState.Graduated, concept.State);
+    }
+
+    [Fact]
+    public void Step_5_success_below_85_stays_at_step_5()
+    {
+        var concept = InReview(5, mastery: 80);
+
+        ReviewSchedule.Success(concept, questionWasD1: false, Now);
+
+        Assert.False(concept.IsGraduated);
+        Assert.Equal(5, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(30), concept.ReviewDueAt);
+    }
+
+    [Fact]
+    public void Wrong_answer_on_any_question_resets_review_to_step_1()
+    {
+        var concept = InReview(3, dueAt: Now.AddDays(5)); // not due yet: a miss still counts
+
+        Mastery.Apply(concept, 0, 1, difficulty: 2, Now);
+
+        Assert.Equal(1, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(1), concept.ReviewDueAt);
+    }
+
+    [Fact]
+    public void Correct_answer_on_a_due_concept_moves_it_forward()
+    {
+        var concept = InReview(1, dueAt: Now.AddMinutes(-1));
+
+        Mastery.Apply(concept, 1, 1, difficulty: 2, Now);
+
+        Assert.Equal(2, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(3), concept.ReviewDueAt);
+    }
+
+    [Fact]
+    public void Correct_answer_before_due_changes_nothing()
+    {
+        var concept = InReview(2, dueAt: Now.AddDays(2));
+
+        Mastery.Apply(concept, 1, 1, difficulty: 2, Now);
+
+        Assert.Equal(2, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(2), concept.ReviewDueAt);
+    }
+
+    [Fact]
+    public void Correct_answer_outside_the_review_queue_changes_nothing()
+    {
+        var concept = Concept(Guid.Empty, 50);
+
+        Mastery.Apply(concept, 1, 1, difficulty: 2, Now);
+
+        Assert.Null(concept.ReviewStep);
+        Assert.Null(concept.ReviewDueAt);
+    }
+
+    [Fact]
+    public void Graduated_concept_dropping_below_70_loses_graduation_and_reenters_review()
+    {
+        var concept = Concept(Guid.Empty, 72, answers: 20);
+        concept.IsGraduated = true;
+
+        Mastery.Apply(concept, 0, 1.3, difficulty: 3, Now);
+
+        Assert.True(concept.Mastery < 70);
+        Assert.False(concept.IsGraduated);
+        Assert.Equal(1, concept.ReviewStep);
+        Assert.Equal(Now.AddDays(1), concept.ReviewDueAt);
+    }
+
+    [Fact]
+    public void Graduated_concept_staying_above_70_stays_graduated()
+    {
+        var concept = Concept(Guid.Empty, 95, answers: 20);
+        concept.IsGraduated = true;
+
+        Mastery.Apply(concept, 0, 0.7, difficulty: 1, Now);
+
+        Assert.True(concept.IsGraduated);
+        Assert.Null(concept.ReviewStep);
     }
 }

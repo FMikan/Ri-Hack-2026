@@ -33,6 +33,14 @@ export type AppErrorCode =
   | 'urn:app:match/wrong-phase' // late or duplicate request: refetch the state, do not show an error
   | 'urn:app:match/wrong-index'
   | 'urn:app:match/already-answered'
+  | 'urn:app:match/not-finished'
+  | 'urn:app:match/nothing-to-calibrate'
+  | 'urn:app:question/not-found'
+  | 'urn:app:question/not-answered'
+  | 'urn:app:lesson/not-found'
+  | 'urn:app:lesson/nothing-missed'
+  | 'urn:app:lesson/already-passed'
+  | 'urn:app:lesson/retry-too-soon'
 
 export type Uuid = string
 export type Iso = string
@@ -141,7 +149,7 @@ export interface DashboardTopicDto {
   topic: TopicDto
   active: boolean
   mastery?: number | null // average of answered concepts; null until any concept is answered
-  completion: number
+  completion: number // % of the topic's concepts graduated (0–100)
 }
 
 export interface DailyTaskDto {
@@ -240,6 +248,9 @@ export interface AnswerResultDto {
   label: AnswerLabel
 }
 
+// GET /api/questions/{id}/explanation (only after answering the question; 403 urn:app:question/not-answered otherwise).
+// The first request may take up to 8 s while the AI writes it; after that it is cached for everyone.
+// source 'static' = the AI was unavailable: whyCorrect and whyDistractor are empty, show only `remember`.
 export interface ExplanationDto {
   whyCorrect: string
   whyDistractor: string
@@ -366,4 +377,99 @@ export interface BotDto {
   persona: BotPersona
   displayRating: number
   recommended: boolean
+}
+
+export interface StartCalibrationRequest {
+  topicId: Uuid // 409 urn:app:match/nothing-to-calibrate when every concept already has answers
+}
+
+// ---- Analysis, lessons and progress (F2, docs §6.4, §6.5, §6.7) ----
+
+// GET /api/matches/{id}/review (409 urn:app:match/not-finished while the match runs)
+export interface MatchReviewDto {
+  match: MatchSummaryDto
+  questions: ReviewQuestionDto[] // explanation is set only once someone has opened it (fetch it with the explanation endpoint)
+  masteryDelta: { concept: ConceptDto; before: number; after: number }[]
+}
+
+// GET /api/questions/{id}: key only when I have answered this question
+export interface QuestionDetailDto extends QuestionPublicDto {
+  key?: AnswerKeyDto | null
+}
+
+// POST /api/questions/{id}/report → 204 (once per player; the third player's report removes the question from new decks)
+export interface ReportQuestionRequest {
+  reason: string // 1–500 characters
+}
+
+export type LessonStatus = 'generated' | 'passed' | 'failed'
+
+export interface LessonCardDto {
+  conceptId: Uuid
+  title: string
+  why: string
+  code?: string | null
+  language?: string | null
+  misconception: string // empty when the AI was unavailable and the card was built from the concept description
+}
+
+export interface LessonCheckResultDto {
+  questionId: Uuid
+  isCorrect: boolean
+  key: AnswerKeyDto
+  isVariantOfMissed: boolean
+}
+
+// POST /api/lessons { matchId } → 201 (409 urn:app:lesson/nothing-missed); GET /api/lessons/{id}
+// One card per concept (up to 3 missed + up to 2 chronic gaps). check[0] is the variant of the missed question.
+// After a failed check the next attempt asks fresh questions; it opens at retryAfter.
+export interface LessonDto {
+  id: Uuid
+  matchId?: Uuid | null
+  status: LessonStatus
+  concepts: ConceptDto[]
+  cards: LessonCardDto[]
+  check: { question: QuestionPublicDto; isVariantOfMissed: boolean }[]
+  attempt: number
+  rewardEligible: boolean
+  retryAfter?: Iso | null
+  lastResults?: LessonCheckResultDto[] | null
+}
+
+// POST /api/lessons/{id}/check (409 urn:app:lesson/already-passed, urn:app:lesson/retry-too-soon). Untimed.
+export interface SubmitLessonCheckRequest {
+  answers: { questionId: Uuid; payload: AnswerPayload }[]
+}
+
+export interface LessonResultDto {
+  passed: boolean // the variant right and at least one of the other two
+  results: LessonCheckResultDto[]
+  patchedConcepts: ConceptDto[] // all lesson concepts on a pass; they enter the review queue, due tomorrow
+  rewards: { coins: number; sp: number; xp: number } // 0 until the economy (F4)
+  retryAfter?: Iso | null
+}
+
+// GET /api/me/progress/due: most overdue first; practice them with POST /api/matches/practice { topicId, conceptIds }
+export interface DueConceptsDto {
+  concepts: (ConceptDto & { reviewDueAt: Iso; reviewStep: number; topic: TopicDto })[]
+}
+
+// GET /api/me/knowledge-map: every playable topic, concepts in display order.
+// mastery: average of answered concepts (null until one is answered); completion: % of concepts graduated (0–100).
+export interface KnowledgeMapDto {
+  topics: {
+    topic: TopicDto
+    active: boolean
+    mastery?: number | null
+    completion: number
+    calibrationAvailable: boolean // after the first answer in the topic, while some concept is still unknown
+    concepts: {
+      concept: ConceptDto
+      mastery: number // 50 while unknown
+      state: ConceptState
+      reviewDueAt?: Iso | null
+      reviewStep?: number | null
+      lastAnswers: { questionId: Uuid; type: QuestionType; prompt: string; isCorrect: boolean; at: Iso }[] // newest first, up to 3
+    }[]
+  }[]
 }

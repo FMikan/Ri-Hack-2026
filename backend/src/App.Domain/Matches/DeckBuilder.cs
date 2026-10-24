@@ -80,6 +80,15 @@ public static class DeckBuilder
         return draft.Slots;
     }
 
+    // Calibration (idea §11): one D1–D2 question for each of up to five concepts the player has never answered.
+    public static List<DeckSlot> BuildCalibration(IReadOnlyList<DeckQuestion> pool, DeckPlayer player, Random rng)
+    {
+        var draft = new Draft(pool, player.SeenQuestionIds, (1, 2), rng, enforceMinimums: false);
+        var unknown = pool.Select(q => q.ConceptId).Distinct().Where(c => player.Mastery.GetValueOrDefault(c) is not { AnswerCount: > 0 }).ToList();
+        draft.AddUpTo(Shuffle(unknown, rng), MatchSlot.Core, GameRules.CalibrationQuestions);
+        return draft.Slots;
+    }
+
     // A ranked deck must be complete: 10 questions and every type minimum met.
     public static bool IsComplete(IReadOnlyList<DeckSlot> deck) =>
         deck.Count == GameRules.QuestionsPerMatch

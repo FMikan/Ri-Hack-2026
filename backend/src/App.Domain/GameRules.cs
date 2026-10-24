@@ -29,6 +29,14 @@ public static class GameRules
     public const double MasteryStart = 50, MasteryAlphaMin = 0.15, BlunderWeight = 1.2, UntimedWeight = 0.5;
     public const double WeakMastery = 40, SolidMastery = 70, GraduationMastery = 85, TargetedMaxGap = 20;
     public static readonly double[] DifficultyWeight = [0, 0.7, 0.9, 1.1, 1.3]; // index = D
+    // Review steps 1–5 (idea §11); a D1 question halves the interval.
+    public static readonly TimeSpan[] ReviewIntervals = [TimeSpan.FromDays(1), TimeSpan.FromDays(3), TimeSpan.FromDays(7), TimeSpan.FromDays(14), TimeSpan.FromDays(30)];
+
+    // Lessons (idea §10) and calibration (idea §11)
+    public const int LessonMissedConcepts = 3, LessonChronicConcepts = 2, LessonOtherChecks = 2;
+    public static readonly TimeSpan LessonRetryAfter = TimeSpan.FromMinutes(10);
+    public const int CalibrationQuestions = 5;
+    public const int ReportsToQuarantine = 3; // distinct players
 
     // Difficulty band by rating (idea §3): D1 < 1100, D2 < 1400, D3 < 1700, D4 1700+.
     public static readonly int[] DifficultyThresholds = [1100, 1400, 1700];

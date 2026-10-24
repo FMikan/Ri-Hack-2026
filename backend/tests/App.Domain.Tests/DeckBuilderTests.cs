@@ -195,3 +195,37 @@ public class DeckBuilderTests
         Assert.Equal(3, deck.Select(s => s.Question.ConceptId).Distinct().Count());
     }
 }
+
+public class CalibrationDeckTests
+{
+    [Fact]
+    public void Calibration_uses_5_D1_D2_questions_on_unknown_concepts()
+    {
+        var topic = Pool(8, 1, 2, 3);
+        var c = topic.Concepts;
+        var player = Player(new()
+        {
+            [c[0]] = Concept(c[0], 60),
+            [c[1]] = Concept(c[1], 30),
+            [c[2]] = Concept(c[2], 50, answers: 0), // a row without answers is still unknown
+        });
+
+        var deck = DeckBuilder.BuildCalibration(topic.Deck, player, new Random(4));
+
+        Assert.Equal(5, deck.Count);
+        Assert.All(deck, s => Assert.InRange(s.Question.Difficulty, 1, 2));
+        Assert.Equal(5, deck.Select(s => s.Question.ConceptId).Distinct().Count());
+        Assert.DoesNotContain(deck, s => s.Question.ConceptId == c[0] || s.Question.ConceptId == c[1]);
+    }
+
+    [Fact]
+    public void Calibration_is_shorter_when_fewer_concepts_are_unknown()
+    {
+        var topic = Pool(3, 1, 2);
+        var c = topic.Concepts;
+
+        var deck = DeckBuilder.BuildCalibration(topic.Deck, Player(new() { [c[0]] = Concept(c[0], 60) }), new Random(4));
+
+        Assert.Equal(2, deck.Count);
+    }
+}
