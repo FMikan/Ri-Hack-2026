@@ -1,4 +1,4 @@
-using App.Application;
+using App.Domain;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 

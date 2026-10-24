@@ -1,0 +1,126 @@
+[
+  {
+    "slug": "javascript",
+    "name": "JavaScript & runtime",
+    "description": "Async code that works until it doesn't: how the runtime really schedules, scopes and copies things.",
+    "concepts": [
+      { "slug": "js.event-loop", "name": "Event loop", "description": "The call stack runs to completion; then microtasks (promise callbacks) drain before the next macrotask (timers, I/O)." },
+      { "slug": "js.promises", "name": "Promises", "description": "A promise is a placeholder for a future value; then/catch callbacks run as microtasks and chains pass values along." },
+      { "slug": "js.async-await", "name": "async/await", "description": "await pauses only the async function, not the thread; every async function returns a promise." },
+      { "slug": "js.closures", "name": "Closures", "description": "A function keeps access to the variables of the scope where it was created, even after that scope has returned." },
+      { "slug": "js.this", "name": "this binding", "description": "this is decided by how a function is called, not where it is written; arrow functions take this from the enclosing scope." },
+      { "slug": "js.equality", "name": "== vs ===", "description": "=== compares without type conversion; == converts types first, which produces surprising results." },
+      { "slug": "js.mutation", "name": "Mutation vs copy", "description": "Objects and arrays are passed by reference; spreading copies only one level deep." },
+      { "slug": "js.hoisting", "name": "Hoisting", "description": "var and function declarations are hoisted; let and const are hoisted too but unusable before their line (temporal dead zone)." },
+      { "slug": "js.scope", "name": "var, let and const", "description": "var is function-scoped, let and const are block-scoped; const forbids reassignment, not mutation." },
+      { "slug": "js.array-methods", "name": "Array methods", "description": "map, filter and reduce return new values; sort and splice mutate in place, and sort compares strings by default." },
+      { "slug": "js.coercion", "name": "Types and coercion", "description": "typeof, truthy and falsy values, and the implicit conversions JavaScript performs with + and comparisons." },
+      { "slug": "js.errors", "name": "Error handling", "description": "try/catch only catches what is thrown synchronously or awaited; an unawaited rejected promise escapes it." }
+    ]
+  },
+  {
+    "slug": "frontend",
+    "name": "Frontend",
+    "description": "Components that render forty times: the browser and framework mechanics behind a UI.",
+    "concepts": [
+      { "slug": "fe.dom-reflow", "name": "DOM and reflow", "description": "Reading layout after writing styles forces the browser to recalculate layout synchronously." },
+      { "slug": "fe.state-rerender", "name": "State and re-render", "description": "A component re-renders when its state or props change; derived values should be computed, not stored." },
+      { "slug": "fe.flex-grid", "name": "Flexbox and grid", "description": "Flexbox lays out one dimension, grid two; both replace float and table layout hacks." },
+      { "slug": "fe.css-specificity", "name": "CSS specificity", "description": "IDs beat classes, classes beat elements; later rules win ties, and !important overrides the normal order." },
+      { "slug": "fe.accessibility", "name": "Accessibility", "description": "Semantic elements, labels and keyboard focus make an interface usable with assistive technology." },
+      { "slug": "fe.memo-lazy", "name": "Memo and lazy loading", "description": "Memoization skips repeated work; lazy loading defers code until it is needed." }
+    ]
+  },
+  {
+    "slug": "backend",
+    "name": "Backend, APIs & architecture",
+    "description": "Endpoints without validation and layers without purpose: how a server should behave.",
+    "concepts": [
+      { "slug": "be.http-status", "name": "HTTP semantics and status codes", "description": "Methods carry meaning (safe, idempotent) and status codes tell the client what happened." },
+      { "slug": "be.rest-design", "name": "REST design", "description": "Resources are nouns in URLs; the method says what to do with them." },
+      { "slug": "be.validation", "name": "Validation", "description": "Validate every input at the boundary and reject it with a clear 400 before any work happens." },
+      { "slug": "be.error-handling", "name": "Error handling", "description": "Return consistent error bodies and never leak stack traces or internal messages to clients." },
+      { "slug": "be.auth-flow", "name": "Authentication flow", "description": "Authentication proves who you are; authorization decides what you may do." },
+      { "slug": "be.middleware", "name": "Middleware", "description": "Middleware runs in order around every request; its position in the pipeline matters." },
+      { "slug": "be.coupling", "name": "Coupling", "description": "Modules that know too much about each other change together; dependencies should point inward." }
+    ]
+  },
+  {
+    "slug": "sql",
+    "name": "Databases & SQL",
+    "description": "The query that works on a hundred rows and dies on a million.",
+    "concepts": [
+      { "slug": "sql.joins", "name": "JOIN types", "description": "INNER JOIN keeps matching rows only; LEFT JOIN keeps every left row and fills missing right columns with NULL." },
+      { "slug": "sql.indexes", "name": "Indexes", "description": "An index turns a full table scan into a lookup, at the cost of slower writes and extra storage." },
+      { "slug": "sql.n-plus-one", "name": "N+1 queries", "description": "Loading a list and then querying once per item sends N+1 queries where one join or batch would do." },
+      { "slug": "sql.transactions", "name": "Transactions and ACID", "description": "A transaction makes several statements succeed or fail together." },
+      { "slug": "sql.normalization", "name": "Normalization", "description": "Store each fact once; duplicated data drifts apart when only one copy is updated." },
+      { "slug": "sql.null", "name": "NULL semantics", "description": "NULL means unknown: comparisons with NULL are neither true nor false, so use IS NULL." },
+      { "slug": "sql.aggregates", "name": "GROUP BY and HAVING", "description": "GROUP BY collapses rows into groups; WHERE filters rows before grouping, HAVING filters groups after." },
+      { "slug": "sql.subqueries", "name": "Subqueries", "description": "A subquery can produce a value, a list for IN, or a table; EXISTS stops at the first match." },
+      { "slug": "sql.constraints", "name": "Keys and constraints", "description": "Primary keys, foreign keys, UNIQUE and CHECK let the database reject bad data itself." },
+      { "slug": "sql.isolation", "name": "Isolation and locking", "description": "Concurrent transactions can see each other's changes depending on the isolation level; locks prevent lost updates." },
+      { "slug": "sql.query-order", "name": "Logical query order", "description": "SQL runs FROM, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT, in that order, not as written." },
+      { "slug": "sql.views", "name": "Views", "description": "A view is a stored query used like a table; it holds no data unless it is materialized." }
+    ]
+  },
+  {
+    "slug": "networking",
+    "name": "Networking & web protocols",
+    "description": "The CORS error that goes straight into ChatGPT: what happens between browser and server.",
+    "concepts": [
+      { "slug": "net.tcp-udp", "name": "TCP vs UDP", "description": "TCP delivers ordered, reliable streams; UDP sends independent packets with no delivery guarantee." },
+      { "slug": "net.dns", "name": "DNS", "description": "DNS translates names into IP addresses through a chain of cached lookups." },
+      { "slug": "net.http-caching", "name": "HTTP methods, caching and cookies", "description": "Cache headers decide who may reuse a response and for how long; cookies travel with every matching request." },
+      { "slug": "net.cors", "name": "CORS", "description": "The browser blocks reading cross-origin responses unless the server allows the origin." },
+      { "slug": "net.tls", "name": "TLS", "description": "TLS encrypts the connection and proves the server's identity with a certificate." },
+      { "slug": "net.websocket", "name": "WebSocket vs HTTP", "description": "WebSocket keeps one connection open for messages in both directions; HTTP is request and response." }
+    ]
+  },
+  {
+    "slug": "security",
+    "name": "Cybersecurity",
+    "description": "AI writes vulnerable code and nobody reads it: the mistakes attackers look for first.",
+    "concepts": [
+      { "slug": "sec.sqli", "name": "SQL injection", "description": "Concatenating input into SQL lets it become code; parameters keep data as data." },
+      { "slug": "sec.xss", "name": "XSS", "description": "Inserting untrusted text into HTML without escaping lets it run as script in other users' browsers." },
+      { "slug": "sec.csrf", "name": "CSRF", "description": "A forged request from another site rides on the victim's cookies unless the server checks its origin." },
+      { "slug": "sec.hashing", "name": "Hashing vs encryption", "description": "Encryption is reversible with a key; password hashing is one-way and deliberately slow." },
+      { "slug": "sec.secrets", "name": "Secrets in code", "description": "Keys committed to a repository are public forever; load them from the environment." },
+      { "slug": "sec.jwt", "name": "JWT pitfalls", "description": "A JWT is signed, not encrypted; the server must verify the signature, algorithm and expiry." },
+      { "slug": "sec.input-validation", "name": "Input validation", "description": "Validate on the server with allow-lists; client-side checks are a convenience, not protection." }
+    ]
+  },
+  {
+    "slug": "algorithms",
+    "name": "Algorithms & data structures",
+    "description": "It works, but it's O(n²): choosing the structure that keeps code fast.",
+    "concepts": [
+      { "slug": "alg.complexity", "name": "Complexity", "description": "Big O describes how work grows with input size; nested loops over the same data are usually O(n²)." },
+      { "slug": "alg.hashmap-vs-list", "name": "Hash map vs list", "description": "A hash map finds a key in constant time on average; searching a list is linear." },
+      { "slug": "alg.recursion", "name": "Recursion", "description": "A recursive function needs a base case; each call uses stack space until it returns." },
+      { "slug": "alg.sorting", "name": "Sorting", "description": "Good general sorts are O(n log n); a stable sort keeps the order of equal elements." },
+      { "slug": "alg.bfs-dfs", "name": "BFS and DFS", "description": "Breadth-first search explores level by level with a queue; depth-first goes deep with a stack." },
+      { "slug": "alg.stack-queue", "name": "Stack and queue", "description": "A stack is last in, first out; a queue is first in, first out." }
+    ]
+  },
+  {
+    "slug": "how-ai-works",
+    "name": "How AI works",
+    "description": "Used every day, rarely understood: how language models work and when they are wrong.",
+    "concepts": [
+      { "slug": "ai.tokens", "name": "Tokens", "description": "Models read and write tokens, pieces of words; limits and prices are counted in tokens, not characters." },
+      { "slug": "ai.context-window", "name": "Context window", "description": "The model sees only what is in the current request, up to a fixed number of tokens." },
+      { "slug": "ai.hallucinations", "name": "Hallucinations", "description": "A model produces likely-sounding text, so it can state wrong facts and invent sources with full confidence." },
+      { "slug": "ai.temperature", "name": "Temperature and sampling", "description": "Sampling picks the next token from a probability distribution; temperature makes the choice more or less random." },
+      { "slug": "ai.embeddings", "name": "Embeddings", "description": "An embedding is a vector that places similar meanings close together, so similarity becomes distance." },
+      { "slug": "ai.rag", "name": "Retrieval-augmented generation", "description": "RAG retrieves relevant documents and puts them into the prompt so answers are grounded in them." },
+      { "slug": "ai.prompting", "name": "Prompt structure", "description": "Instructions, context and examples in clear sections; the system prompt sets the rules for the conversation." },
+      { "slug": "ai.fine-tuning", "name": "Prompting vs fine-tuning", "description": "Fine-tuning changes the model's weights with examples; prompting changes only the input." },
+      { "slug": "ai.verification", "name": "When not to trust it", "description": "Check generated code, numbers and citations; the model has no built-in way to know it is wrong." },
+      { "slug": "ai.structured-output", "name": "Structured output", "description": "Asking for JSON is not a guarantee; validate and parse the output, or use a schema-constrained mode." },
+      { "slug": "ai.llm-api", "name": "Calling an LLM API", "description": "The API is stateless: you resend the conversation each call and set limits such as max_tokens yourself." },
+      { "slug": "ai.training-vs-inference", "name": "Training vs inference", "description": "Knowledge comes from training data up to a cutoff; at inference the model only predicts, it does not learn." }
+    ]
+  }
+]

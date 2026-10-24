@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Application.Auth;
+using App.Application.Matches;
 using App.Domain.Content;
 using App.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -56,6 +57,8 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
     {
         builder.UseSetting("ConnectionStrings:Default", _postgres.GetConnectionString());
         builder.UseSetting("Auth:JwtSigningKey", JwtSigningKey);
+        builder.UseSetting("Game:TickEnabled", "false");
+        builder.UseSetting("Database:SeedOnStartup", "false");
         builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(Clock));
     }
 
@@ -66,13 +69,35 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         var tables = await db.Database
             .SqlQueryRaw<string>("select tablename as \"Value\" from pg_tables where schemaname = 'public' and tablename <> '__ef_migrations_history'")
             .ToListAsync();
+        // Table names come from pg_tables, not from input; identifiers cannot be SQL parameters.
+#pragma warning disable EF1002
         await db.Database.ExecuteSqlRawAsync($"truncate {string.Join(", ", tables.Select(t => $"\"{t}\""))} cascade");
+#pragma warning restore EF1002
     }
 
     public async Task<T> InDbAsync<T>(Func<AppDbContext, Task<T>> action)
     {
         using var scope = Services.CreateScope();
         return await action(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+    }
+
+    // What GameTickService does every second; tests call it after moving the clock.
+    public async Task TickAsync()
+    {
+        List<Guid> due;
+        using (var scope = Services.CreateScope())
+            due = await scope.ServiceProvider.GetRequiredService<MatchService>().DueMatchIdsAsync(default);
+        foreach (var matchId in due)
+        {
+            using var scope = Services.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<MatchService>().AdvanceAsync(matchId, default);
+        }
+    }
+
+    public async Task AdvanceAsync(TimeSpan by)
+    {
+        Clock.Advance(by);
+        await TickAsync();
     }
 }
 

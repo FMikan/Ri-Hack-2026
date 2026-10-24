@@ -1,0 +1,1430 @@
+[
+  {
+    "key": "js.event-loop.tf.01",
+    "concept": "js.event-loop",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "setTimeout(fn, 0) runs fn immediately, before the rest of the current synchronous code.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A zero-delay timer still waits until the call stack is empty and all microtasks have run."
+  },
+  {
+    "key": "js.event-loop.mc.01",
+    "concept": "js.event-loop",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A script calls setTimeout(fn, 0), then starts a promise chain in which every .then callback schedules another .then callback, forever. What happens to fn?",
+      "options": [
+        {
+          "id": "a",
+          "text": "fn never runs, because the microtask queue never empties"
+        },
+        {
+          "id": "b",
+          "text": "fn runs first, because it was scheduled before the promises"
+        },
+        {
+          "id": "c",
+          "text": "fn runs once its delay has passed, between two promise callbacks"
+        },
+        {
+          "id": "d",
+          "text": "fn runs after a fixed number of microtasks, when the runtime yields"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "The microtask queue drains completely, including newly added microtasks, before the next timer can run."
+  },
+  {
+    "key": "js.event-loop.out.01",
+    "concept": "js.event-loop",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "console.log(1);\nsetTimeout(() => console.log(2), 0);\nPromise.resolve().then(() => {\n  console.log(3);\n  setTimeout(() => console.log(4), 0);\n});\nconsole.log(5);",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 5 2 3 4"
+        },
+        {
+          "id": "b",
+          "text": "1 3 5 2 4"
+        },
+        {
+          "id": "c",
+          "text": "1 5 3 4 2"
+        },
+        {
+          "id": "d",
+          "text": "1 5 3 2 4"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A timer scheduled from a microtask still queues behind timers that were scheduled earlier."
+  },
+  {
+    "key": "js.event-loop.order.01",
+    "concept": "js.event-loop",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A script calls setTimeout(T1, 0), then Promise.resolve().then(P1), then logs \"end\". T1 schedules Promise.resolve().then(P2). P1 schedules setTimeout(T2, 0). In what order do these run?",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Callback T1"
+        },
+        {
+          "id": "s2",
+          "text": "The log \"end\""
+        },
+        {
+          "id": "s3",
+          "text": "Callback T2"
+        },
+        {
+          "id": "s4",
+          "text": "Callback P1"
+        },
+        {
+          "id": "s5",
+          "text": "Callback P2"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s5",
+          "s3"
+        ]
+      }
+    },
+    "remember": "After every macrotask the microtask queue drains, so P2 runs right after T1 and before T2."
+  },
+  {
+    "key": "js.promises.tf.01",
+    "concept": "js.promises",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Calling resolve a second time with a new value replaces the value of an already fulfilled promise.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A promise settles only once; later resolve or reject calls are ignored."
+  },
+  {
+    "key": "js.promises.mc.01",
+    "concept": "js.promises",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "You call Promise.all([a, b, c]) and b rejects while a and c are still pending. What happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It rejects with b's error right away; a and c keep running"
+        },
+        {
+          "id": "b",
+          "text": "It waits for a and c, then rejects with an array of all errors"
+        },
+        {
+          "id": "c",
+          "text": "It resolves with the values of a and c, and undefined for b"
+        },
+        {
+          "id": "d",
+          "text": "It rejects with b's error and cancels a and c"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Promise.all rejects on the first rejection and cancels nothing; use Promise.allSettled to wait for every result."
+  },
+  {
+    "key": "js.promises.order.01",
+    "concept": "js.promises",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A script runs three lines in a row: Promise.resolve().then(a1).then(a2); Promise.resolve().then(b1).then(b2); setTimeout(t, 0). All callbacks are plain synchronous functions. In what order do they run?",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "b2"
+        },
+        {
+          "id": "s2",
+          "text": "a1"
+        },
+        {
+          "id": "s3",
+          "text": "t"
+        },
+        {
+          "id": "s4",
+          "text": "a2"
+        },
+        {
+          "id": "s5",
+          "text": "b1"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Each .then is queued only when the step before it settles, so two chains interleave one step at a time."
+  },
+  {
+    "key": "js.promises.bug.01",
+    "concept": "js.promises",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "\"all saved\" is logged and the connection is closed before the inserts finish. Find the bug.",
+      "code": "function saveAll(items) {\n  return db.connect()\n    .then((conn) => {\n      const writes = items.map((it) => conn.insert(it));\n      Promise.all(writes);\n    })\n    .then(() => {\n      console.log(\"all saved\");\n      return db.close();\n    })\n    .catch((err) => {\n      console.error(\"save failed\", err);\n    });\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Mark the first then callback as async"
+        },
+        {
+          "id": "f2",
+          "text": "Return Promise.all(writes) from the callback"
+        },
+        {
+          "id": "f3",
+          "text": "Add .catch(console.error) to Promise.all(writes)"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Inside a then callback, return the promise you start; otherwise the chain moves on without waiting for it."
+  },
+  {
+    "key": "js.async-await.tf.01",
+    "concept": "js.async-await",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "An async function always returns a promise, even when its body returns a plain value like 42.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "async wraps the return value in a promise, so callers must await it or use then."
+  },
+  {
+    "key": "js.async-await.mc.01",
+    "concept": "js.async-await",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "fetchUser() and fetchOrders() each take about 1 second and do not depend on each other. About how long until load() resolves?",
+      "code": "async function load() {\n  const user = await fetchUser();\n  const orders = await fetchOrders();\n  return { user, orders };\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "About 1 second: the two awaits run in parallel"
+        },
+        {
+          "id": "b",
+          "text": "About 1 second: async functions run on a worker thread"
+        },
+        {
+          "id": "c",
+          "text": "Immediately: await does not block the thread"
+        },
+        {
+          "id": "d",
+          "text": "About 2 seconds: fetchOrders waits for fetchUser"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Sequential awaits run one after another; start independent work first and await Promise.all to run it in parallel."
+  },
+  {
+    "key": "js.async-await.bug.01",
+    "concept": "js.async-await",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "checkStock(cart) is async and resolves to true or false. Orders are created even when items are out of stock. Find the bug.",
+      "code": "async function placeOrder(cart) {\n  const inStock = checkStock(cart);\n  if (!inStock) {\n    throw new Error(\"Out of stock\");\n  }\n  const order = await api.createOrder(cart);\n  return order.id;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Compare strictly: if (inStock !== true)"
+        },
+        {
+          "id": "f2",
+          "text": "Remove async from placeOrder"
+        },
+        {
+          "id": "f3",
+          "text": "Add await before checkStock(cart)"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f3"
+      }
+    },
+    "remember": "A promise object is always truthy; await it to get the value it resolves to."
+  },
+  {
+    "key": "js.async-await.out.01",
+    "concept": "js.async-await",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "async function a() {\n  console.log(\"a1\");\n  await null;\n  console.log(\"a2\");\n}\nasync function b() {\n  console.log(\"b1\");\n  await a();\n  console.log(\"b2\");\n}\nb();\nPromise.resolve().then(() => console.log(\"p\"));\nconsole.log(\"end\");",
+      "options": [
+        {
+          "id": "a",
+          "text": "b1 a1 end a2 b2 p"
+        },
+        {
+          "id": "b",
+          "text": "b1 end a1 a2 p b2"
+        },
+        {
+          "id": "c",
+          "text": "b1 a1 end a2 p b2"
+        },
+        {
+          "id": "d",
+          "text": "b1 a1 end p a2 b2"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "An async function runs synchronously up to its first await; its caller resumes only in a later microtask, after the awaited call settles."
+  },
+  {
+    "key": "js.closures.tf.01",
+    "concept": "js.closures",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A function returned from another function can still read and update the outer function's local variables after the outer function has returned.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Closures keep outer variables alive; they capture the variable itself, not a snapshot of its value."
+  },
+  {
+    "key": "js.closures.mc.01",
+    "concept": "js.closures",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What is a closure?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A function that is called immediately after it is defined"
+        },
+        {
+          "id": "b",
+          "text": "A function bundled with the scope it was created in"
+        },
+        {
+          "id": "c",
+          "text": "A function that cannot access variables outside its own body"
+        },
+        {
+          "id": "d",
+          "text": "An object whose fields are hidden with the # prefix"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A closure is a function plus the scope it was created in; that is how inner functions keep their outer variables."
+  },
+  {
+    "key": "js.closures.out.01",
+    "concept": "js.closures",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "function makeCounter() {\n  let count = 0;\n  return () => ++count;\n}\nconst a = makeCounter();\nconst b = makeCounter();\na();\na();\nconsole.log(a(), b());",
+      "options": [
+        {
+          "id": "a",
+          "text": "3 1"
+        },
+        {
+          "id": "b",
+          "text": "3 3"
+        },
+        {
+          "id": "c",
+          "text": "1 1"
+        },
+        {
+          "id": "d",
+          "text": "2 1"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Each call to the outer function creates a fresh scope, so every returned closure has its own count."
+  },
+  {
+    "key": "js.closures.bug.01",
+    "concept": "js.closures",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Each counter should keep its own value, so the last line should log 0. Find the bug.",
+      "code": "let count = 0;\n\nfunction makeCounter() {\n  return {\n    increment: () => ++count,\n    value: () => count,\n  };\n}\n\nconst likes = makeCounter();\nconst views = makeCounter();\nviews.increment();\nconsole.log(likes.value()); // expected 0",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Move let count = 0 into makeCounter"
+        },
+        {
+          "id": "f2",
+          "text": "Reset count = 0 as the first line of makeCounter"
+        },
+        {
+          "id": "f3",
+          "text": "Use regular methods instead of arrow functions"
+        }
+      ],
+      "answer": {
+        "line": 1,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Closures share the variable they capture; to give each object its own state, declare it inside the factory."
+  },
+  {
+    "key": "js.this.tf.01",
+    "concept": "js.this",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Inside an arrow function, this is the object the arrow function was called on.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Arrow functions have no this of their own; they use this from the scope where they were written."
+  },
+  {
+    "key": "js.this.mc.01",
+    "concept": "js.this",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What happens on the last line?",
+      "code": "\"use strict\";\nconst user = {\n  name: \"Ana\",\n  greet() {\n    return `Hi, ${this.name}`;\n  },\n};\nconst greet = user.greet;\ngreet();",
+      "options": [
+        {
+          "id": "a",
+          "text": "It returns \"Hi, Ana\""
+        },
+        {
+          "id": "b",
+          "text": "It returns \"Hi, undefined\""
+        },
+        {
+          "id": "c",
+          "text": "It throws a TypeError"
+        },
+        {
+          "id": "d",
+          "text": "It returns \"Hi, \" with an empty name"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Calling a method without its object loses this; in strict mode this is undefined. Use bind or an arrow wrapper."
+  },
+  {
+    "key": "js.this.cloze.01",
+    "concept": "js.this",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so seconds goes up by one every second.",
+      "code": "class Clock {\n  constructor() {\n    this.seconds = 0;\n    setInterval(____, 1000);\n  }\n  tick() {\n    this.seconds++;\n  }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "() => this.tick()"
+        },
+        {
+          "id": "b",
+          "text": "this.tick"
+        },
+        {
+          "id": "c",
+          "text": "function () { this.tick(); }"
+        },
+        {
+          "id": "d",
+          "text": "tick"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Passing this.tick hands over the function without its object; wrap it in an arrow function or bind it."
+  },
+  {
+    "key": "js.this.out.01",
+    "concept": "js.this",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "class Timer {\n  ticks = 0;\n  tickArrow = () => {\n    this.ticks++;\n  };\n  tickMethod() {\n    this.ticks++;\n  }\n}\nconst t = new Timer();\nconst { tickArrow, tickMethod } = t;\ntickArrow();\ntry {\n  tickMethod();\n} catch (e) {\n  console.log(e.name);\n}\nconsole.log(t.ticks);",
+      "options": [
+        {
+          "id": "a",
+          "text": "2"
+        },
+        {
+          "id": "b",
+          "text": "TypeError 1"
+        },
+        {
+          "id": "c",
+          "text": "1"
+        },
+        {
+          "id": "d",
+          "text": "TypeError 0"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "An arrow class field keeps this from construction; a detached method loses it, and class code is always strict."
+  },
+  {
+    "key": "js.equality.tf.01",
+    "concept": "js.equality",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "null == undefined evaluates to true.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "With ==, null and undefined are equal to each other and to nothing else."
+  },
+  {
+    "key": "js.equality.mc.01",
+    "concept": "js.equality",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "How do you reliably check whether x is NaN?",
+      "options": [
+        {
+          "id": "a",
+          "text": "x === NaN"
+        },
+        {
+          "id": "b",
+          "text": "x == NaN"
+        },
+        {
+          "id": "c",
+          "text": "typeof x === \"NaN\""
+        },
+        {
+          "id": "d",
+          "text": "Number.isNaN(x)"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "NaN is not equal to anything, including itself; test for it with Number.isNaN."
+  },
+  {
+    "key": "js.equality.odd.01",
+    "concept": "js.equality",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these comparisons evaluate to true. Which one evaluates to false?",
+      "items": [
+        {
+          "id": "a",
+          "text": "1 === \"1\""
+        },
+        {
+          "id": "b",
+          "text": "1 == \"1\""
+        },
+        {
+          "id": "c",
+          "text": "0 == false"
+        },
+        {
+          "id": "d",
+          "text": "\"\" == 0"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "=== never converts types; == converts both sides, usually to numbers, before comparing."
+  },
+  {
+    "key": "js.equality.match.01",
+    "concept": "js.equality",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each comparison with how it treats types, NaN and -0.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "a === b"
+        },
+        {
+          "id": "l2",
+          "text": "a == b"
+        },
+        {
+          "id": "l3",
+          "text": "Object.is(a, b)"
+        },
+        {
+          "id": "l4",
+          "text": "[a].includes(b)"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "No conversion; NaN equals NaN; 0 equals -0"
+        },
+        {
+          "id": "r2",
+          "text": "No conversion; NaN equals NaN; 0 differs from -0"
+        },
+        {
+          "id": "r3",
+          "text": "Converts types before comparing"
+        },
+        {
+          "id": "r4",
+          "text": "No conversion; NaN never equals NaN; 0 equals -0"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Object.is is === without the NaN and -0 exceptions; includes only fixes NaN."
+  },
+  {
+    "key": "js.mutation.tf.01",
+    "concept": "js.mutation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If a function calls push on an array it received as an argument, the caller's array changes too.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Arrays and objects are passed as references; changing them inside a function changes the caller's value."
+  },
+  {
+    "key": "js.mutation.mc.01",
+    "concept": "js.mutation",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Which copy lets you change copy.user.name without changing state.user.name?",
+      "options": [
+        {
+          "id": "a",
+          "text": "const copy = { ...state };"
+        },
+        {
+          "id": "b",
+          "text": "const copy = structuredClone(state);"
+        },
+        {
+          "id": "c",
+          "text": "const copy = Object.assign({}, state);"
+        },
+        {
+          "id": "d",
+          "text": "const copy = state;"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Spread and Object.assign copy one level, so nested objects stay shared; structuredClone makes a deep copy."
+  },
+  {
+    "key": "js.mutation.out.01",
+    "concept": "js.mutation",
+    "type": "output",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const a = [1, 2, 3];\nconst b = a;\nb.push(4);\nconsole.log(a.length, b.length);",
+      "options": [
+        {
+          "id": "a",
+          "text": "3 4"
+        },
+        {
+          "id": "b",
+          "text": "TypeError"
+        },
+        {
+          "id": "c",
+          "text": "4 4"
+        },
+        {
+          "id": "d",
+          "text": "3 3"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Assigning an array to another variable copies the reference, not the array."
+  },
+  {
+    "key": "js.mutation.bug.01",
+    "concept": "js.mutation",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "withDefaults should fill in missing options without changing the object it receives, but userOpts ends up with retries. Find the bug.",
+      "code": "function withDefaults(options) {\n  const result = options;\n  result.retries ??= 3;\n  result.timeout ??= 5000;\n  return result;\n}\n\nconst userOpts = { timeout: 1000 };\nconst opts = withDefaults(userOpts);\nconsole.log(Object.keys(userOpts)); // expected [\"timeout\"]",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Freeze the input first with Object.freeze(options)"
+        },
+        {
+          "id": "f2",
+          "text": "Copy it: const result = { ...options };"
+        },
+        {
+          "id": "f3",
+          "text": "Declare result with let instead of const"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Assigning an object to a new variable does not copy it; spread it first if you plan to change it."
+  },
+  {
+    "key": "js.hoisting.tf.01",
+    "concept": "js.hoisting",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A function declaration can be called on a line above the place where it is written, in the same scope.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Function declarations are hoisted together with their body, so they can be called before their line."
+  },
+  {
+    "key": "js.hoisting.mc.01",
+    "concept": "js.hoisting",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "What does this log?",
+      "code": "console.log(total);\nvar total = 5;",
+      "options": [
+        {
+          "id": "a",
+          "text": "5"
+        },
+        {
+          "id": "b",
+          "text": "ReferenceError"
+        },
+        {
+          "id": "c",
+          "text": "null"
+        },
+        {
+          "id": "d",
+          "text": "undefined"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "var declarations are hoisted and start as undefined; only the assignment stays on its line."
+  },
+  {
+    "key": "js.hoisting.out.01",
+    "concept": "js.hoisting",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "console.log(typeof greet, typeof hello);\nvar greet = function () {};\nfunction hello() {}",
+      "options": [
+        {
+          "id": "a",
+          "text": "function function"
+        },
+        {
+          "id": "b",
+          "text": "undefined function"
+        },
+        {
+          "id": "c",
+          "text": "undefined undefined"
+        },
+        {
+          "id": "d",
+          "text": "ReferenceError"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A function declaration is hoisted with its body; a function expression stored in a var is hoisted as undefined."
+  },
+  {
+    "key": "js.hoisting.odd.01",
+    "concept": "js.hoisting",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Each snippet runs on its own at the top level of a script. Three of them throw a ReferenceError. Which one runs without an error?",
+      "items": [
+        {
+          "id": "a",
+          "text": "console.log(typeof x); let x = 1;"
+        },
+        {
+          "id": "b",
+          "text": "const g = () => z; g(); let z = 1;"
+        },
+        {
+          "id": "c",
+          "text": "const f = () => y; let y = 1; f();"
+        },
+        {
+          "id": "d",
+          "text": "new Point(); class Point {}"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "The temporal dead zone is about time, not position: a function may read a later let if it runs after that line."
+  },
+  {
+    "key": "js.scope.tf.01",
+    "concept": "js.scope",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A variable declared with let inside an if block can still be used after the block ends.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "let and const are block-scoped: they exist only between the braces where they are declared."
+  },
+  {
+    "key": "js.scope.mc.01",
+    "concept": "js.scope",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which statement about var is true?",
+      "options": [
+        {
+          "id": "a",
+          "text": "var is block-scoped, like let"
+        },
+        {
+          "id": "b",
+          "text": "var cannot be declared twice in the same scope"
+        },
+        {
+          "id": "c",
+          "text": "Using a var before its line throws a ReferenceError"
+        },
+        {
+          "id": "d",
+          "text": "var is scoped to the function, not to the block"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "var belongs to the whole function; a var declared in a loop or an if is visible in the entire function."
+  },
+  {
+    "key": "js.scope.bug.01",
+    "concept": "js.scope",
+    "type": "find_bug",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "This should log 30, but it throws a TypeError. Find the bug.",
+      "code": "const prices = [5, 10, 15];\nconst total = 0;\nfor (const p of prices) {\n  total += p;\n}\nconsole.log(total);",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use let instead of const for p"
+        },
+        {
+          "id": "f2",
+          "text": "Move the total declaration inside the loop"
+        },
+        {
+          "id": "f3",
+          "text": "Declare total with let"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f3",
+        "acceptLines": [
+          4
+        ]
+      }
+    },
+    "remember": "const forbids reassignment, and += is a reassignment; use let for values that change."
+  },
+  {
+    "key": "js.scope.cloze.01",
+    "concept": "js.scope",
+    "type": "cloze",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so the loop logs every number and i does not exist after the loop.",
+      "code": "const nums = [1, 2, 3];\nfor (____ i = 0; i < nums.length; i++) {\n  console.log(nums[i]);\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "var"
+        },
+        {
+          "id": "b",
+          "text": "let"
+        },
+        {
+          "id": "c",
+          "text": "const"
+        },
+        {
+          "id": "d",
+          "text": "static"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "let gives the loop counter block scope; const cannot be incremented and var leaks out of the loop."
+  },
+  {
+    "key": "js.array-methods.tf.01",
+    "concept": "js.array-methods",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "[1, 10, 2].sort() returns [1, 2, 10].",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Without a compare function, sort compares values as strings; pass (a, b) => a - b to sort numbers."
+  },
+  {
+    "key": "js.array-methods.mc.01",
+    "concept": "js.array-methods",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which of these methods changes the array it is called on?",
+      "options": [
+        {
+          "id": "a",
+          "text": "splice"
+        },
+        {
+          "id": "b",
+          "text": "slice"
+        },
+        {
+          "id": "c",
+          "text": "map"
+        },
+        {
+          "id": "d",
+          "text": "filter"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "splice edits the array in place; slice, map and filter return new arrays."
+  },
+  {
+    "key": "js.array-methods.cloze.01",
+    "concept": "js.array-methods",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so the code logs 16.",
+      "code": "const cart = [\n  { name: \"pen\", price: 2, qty: 3 },\n  { name: \"book\", price: 10, qty: 1 },\n];\nconst total = cart.reduce(\n  (sum, item) => sum + item.price * item.qty,\n  ____\n);\nconsole.log(total);",
+      "options": [
+        {
+          "id": "a",
+          "text": "[]"
+        },
+        {
+          "id": "b",
+          "text": "undefined"
+        },
+        {
+          "id": "c",
+          "text": "0"
+        },
+        {
+          "id": "d",
+          "text": "1"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Give reduce an initial value of the type you are building, such as 0 for a sum."
+  },
+  {
+    "key": "js.array-methods.match.01",
+    "concept": "js.array-methods",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each array method with what it does to the array and what it returns.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "push"
+        },
+        {
+          "id": "l2",
+          "text": "splice"
+        },
+        {
+          "id": "l3",
+          "text": "slice"
+        },
+        {
+          "id": "l4",
+          "text": "sort"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Mutates; returns the removed elements"
+        },
+        {
+          "id": "r2",
+          "text": "Mutates; returns the same array"
+        },
+        {
+          "id": "r3",
+          "text": "Mutates; returns the new length"
+        },
+        {
+          "id": "r4",
+          "text": "Does not mutate; returns a copy of a portion"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "push, splice and sort change the array in place; slice leaves it alone and returns a new array."
+  },
+  {
+    "key": "js.coercion.tf.01",
+    "concept": "js.coercion",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "The string \"0\" is falsy.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "The empty string is the only falsy string; \"0\" and \"false\" are truthy."
+  },
+  {
+    "key": "js.coercion.mc.01",
+    "concept": "js.coercion",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "What are the values of \"5\" + 3 and \"5\" - 3?",
+      "options": [
+        {
+          "id": "a",
+          "text": "8 and 2"
+        },
+        {
+          "id": "b",
+          "text": "\"53\" and \"2\""
+        },
+        {
+          "id": "c",
+          "text": "\"53\" and 2"
+        },
+        {
+          "id": "d",
+          "text": "\"53\" and NaN"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "+ concatenates as soon as one side is a string; -, * and / always convert to numbers."
+  },
+  {
+    "key": "js.coercion.odd.01",
+    "concept": "js.coercion",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these expressions evaluate to \"object\". Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "typeof null"
+        },
+        {
+          "id": "b",
+          "text": "typeof []"
+        },
+        {
+          "id": "c",
+          "text": "typeof new Date()"
+        },
+        {
+          "id": "d",
+          "text": "typeof function () {}"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "typeof gives \"object\" for null, arrays and dates; only functions get their own \"function\" result."
+  },
+  {
+    "key": "js.coercion.match.01",
+    "concept": "js.coercion",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each expression with its result.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "\"3\" * \"4\""
+        },
+        {
+          "id": "l2",
+          "text": "\"3\" + 4 + 5"
+        },
+        {
+          "id": "l3",
+          "text": "3 + 4 + \"5\""
+        },
+        {
+          "id": "l4",
+          "text": "Number(\"12px\")"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "\"75\""
+        },
+        {
+          "id": "r2",
+          "text": "12"
+        },
+        {
+          "id": "r3",
+          "text": "NaN"
+        },
+        {
+          "id": "r4",
+          "text": "\"345\""
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "+ runs left to right and switches to concatenation once it meets a string; * always converts to numbers."
+  },
+  {
+    "key": "js.errors.tf.01",
+    "concept": "js.errors",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A try/catch catches an error thrown inside a setTimeout callback that was scheduled inside the try block.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A timer callback runs later on a fresh call stack, after the try block has finished, so that try/catch never sees it."
+  },
+  {
+    "key": "js.errors.mc.01",
+    "concept": "js.errors",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In current versions of Node.js, what happens by default when a promise rejects and no handler is ever attached to it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Nothing; the rejection is silently ignored"
+        },
+        {
+          "id": "b",
+          "text": "The process crashes with an unhandled rejection error"
+        },
+        {
+          "id": "c",
+          "text": "The error is caught by the nearest try/catch on the call stack"
+        },
+        {
+          "id": "d",
+          "text": "The process logs a warning and keeps running"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Since Node.js 15 an unhandled rejection crashes the process; always await a promise or attach a catch."
+  },
+  {
+    "key": "js.errors.order.01",
+    "concept": "js.errors",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Inside an async function, const res = await fetch(url) sits in a try block, and the request fails. Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The catch block runs with the error"
+        },
+        {
+          "id": "s2",
+          "text": "The function pauses at await and other code can run"
+        },
+        {
+          "id": "s3",
+          "text": "The fetch promise rejects"
+        },
+        {
+          "id": "s4",
+          "text": "fetch(url) returns a pending promise"
+        },
+        {
+          "id": "s5",
+          "text": "The rejection is thrown at the await line"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s3",
+          "s5",
+          "s1"
+        ]
+      }
+    },
+    "remember": "await turns a rejection into a throw at the await line, which is what lets try/catch handle it."
+  },
+  {
+    "key": "js.errors.bug.01",
+    "concept": "js.errors",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "When the request fails, the page should fall back to a Guest profile, but the error reaches the top level instead. Find the bug.",
+      "code": "async function fetchProfile(id) {\n  const res = await fetch(`/api/profiles/${id}`);\n  if (!res.ok) throw new Error(`HTTP ${res.status}`);\n  return res.json();\n}\n\nasync function loadProfile(id) {\n  try {\n    return fetchProfile(id);\n  } catch (err) {\n    console.warn(\"using default profile\", err);\n    return { id, name: \"Guest\" };\n  }\n}\n\nconst profile = await loadProfile(42);\nrender(profile);",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change it to: return await fetchProfile(id);"
+        },
+        {
+          "id": "f2",
+          "text": "Change it to: await fetchProfile(id);"
+        },
+        {
+          "id": "f3",
+          "text": "Remove async from loadProfile"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Inside try, return await: a promise returned without await settles after the try has ended, so catch never runs."
+  }
+]

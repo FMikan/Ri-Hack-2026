@@ -6,7 +6,12 @@ using App.Domain.Users;
 namespace App.Application.Me;
 
 // Mirrors docs/tehnicki-dokument.md §6.3. Keep frontend/src/types/api.ts in sync.
-public record UserRefDto(Guid Id, string Username, string Avatar, string Tier, int Rating, bool IsProvisional, string? Title, Dictionary<string, string> Equipment);
+public record UserRefDto(Guid Id, string Username, string Avatar, string Tier, int Rating, bool IsProvisional, string? Title, Dictionary<string, string> Equipment)
+{
+    // ponytail: no titles or cosmetics before F4/F5; then fill Title and map equipped item ids to asset keys here.
+    public static UserRefDto From(User user) =>
+        new(user.Id, user.Username, user.Avatar, user.Tier.ToString().ToLowerInvariant(), user.Rating, user.IsProvisional, null, []);
+}
 
 public record StreakDto(int Count, DateOnly? LastActiveOn, int Freezes, bool SecuredToday);
 

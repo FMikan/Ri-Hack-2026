@@ -5,7 +5,9 @@ Docker. See README.md for setup, URLs and troubleshooting.
 
 Product: a ranked 1v1 IT-knowledge quiz game. Spec is `docs/tehnicki-dokument.md` (schema §3, game rules §4,
 API contract §6, phases §1, test list §9); the game idea is `docs/Ri-Hack 4.0 — IDEJA IGRE v2.md`. Build
-test-first in the order of §9 and keep DTOs identical to §6.
+test-first in the order of §9 and keep DTOs identical to §6. Questions live in
+`backend/src/App.Infrastructure/Seed/questions/<topic>.json` (shapes in docs §3.2.1); `dotnet test` runs `SeedTests`,
+which reject malformed questions and topics that cannot build a full deck.
 
 ## Branches
 

@@ -1,11 +1,14 @@
+using App.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Content;
 
 public class ContentService(IAppDbContext db)
 {
+    // Only topics with enough questions to build a full deck are offered (the seeder sets is_active).
     public Task<List<TopicDto>> ListTopicsAsync(CancellationToken cancellationToken) =>
         db.Topics
+            .Where(t => t.IsActive)
             .OrderBy(t => t.SortOrder)
             .Select(t => new TopicDto(t.Id, t.Slug, t.Name, t.Description, t.Concepts.Count))
             .ToListAsync(cancellationToken);

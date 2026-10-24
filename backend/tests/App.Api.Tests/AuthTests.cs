@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using App.Application;
+using App.Domain;
 using App.Application.Auth;
 using Microsoft.AspNetCore.Mvc;
 

@@ -20,6 +20,7 @@ public static class DependencyInjection
             .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history"))
             .UseSnakeCaseNamingConvention());
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<Seed.Seeder>();
 
         // Tagged "ready" so only the readiness endpoint runs it; liveness never touches the database.
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database", tags: ["ready"]);

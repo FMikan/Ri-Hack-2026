@@ -19,6 +19,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.NotificationsJson).HasColumnName("notifications").HasColumnType("jsonb");
         builder.Property(u => u.EquipmentJson).HasColumnName("equipment").HasColumnType("jsonb");
         builder.HasMany(u => u.Topics).WithOne().HasForeignKey(t => t.UserId);
+        // One active match per user; set atomically when a match starts and cleared when it finishes.
+        builder.HasOne<Domain.Matches.Match>().WithMany().HasForeignKey(u => u.CurrentMatchId).OnDelete(DeleteBehavior.SetNull);
         builder.ToTable(t =>
         {
             t.HasCheckConstraint("ck_users_username_length", $"length(username) between {GameRules.UsernameMinLength} and {GameRules.UsernameMaxLength}");
