@@ -8,6 +8,15 @@ public static class GameRules
     public const string DayTimeZone = "Europe/Zagreb";
     public const int StartRating = 1000;
     public const int ProvisionalMatches = 10; // rating shows as "?" and stays off leaderboards until then
+
+    // Ranked play (idea §4, §5, §9, §14)
+    public const int ProfileAfterRankedMatches = 5; // targeted slots in ranked once both players have this many
+    public const int HighKMatches = 30, KHigh = 32, KLow = 16;
+    public const int MaxRatingGap = 400, QueueInitialRange = 100, QueueRangeStep = 50, QueueStepSeconds = 10;
+    public const int ProposalAcceptSeconds = 10, BotOfferAfterSeconds = 30;
+    public const int VetoAnimationSeconds = 3, VetoBanSeconds = 8, VetoPoolMax = 6;
+    public const int TierHysteresis = 25;
+    public static readonly int[] TierThresholds = [1100, 1300, 1500, 1700, 1900]; // silver, gold, platinum, diamond, master
     public const int MinTopics = 3, MaxTopics = 5;
     public const int UsernameMinLength = 3, UsernameMaxLength = 20;
     public const int PasswordMinLength = 8, PasswordMaxLength = 128;

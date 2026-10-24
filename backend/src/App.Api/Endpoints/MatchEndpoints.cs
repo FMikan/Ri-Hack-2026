@@ -41,6 +41,13 @@ public static class MatchEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        // Ranked veto: the player on turn bans one topic of the pool (8 s per turn, then an automatic ban).
+        group.MapPost("/{id:guid}/veto/ban", (Guid id, BanTopicRequest request, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
+            matches.BanAsync(user.UserId(), id, request.TopicId, ct))
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         group.MapGet("/{id:guid}/review", (Guid id, ClaimsPrincipal user, MatchService matches, CancellationToken ct) =>
             matches.ReviewAsync(user.UserId(), id, ct))
             .ProducesProblem(StatusCodes.Status403Forbidden)

@@ -31,8 +31,8 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F0 Auth i profil** | register, login, refresh (rotacija + opoziv obitelji), logout, `/api/me`, odabir 3–5 tema, teme i koncepti, dashboard | Korisnik se registrira i vidi dashboard s temama | gotovo, u `development` |
 | **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka | gotovo, u `development` |
 | **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, u `development` |
-| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, PR `feature/f2-review-lessons` (nagrade poduke se knjiže u F4) |
-| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | nije počelo |
+| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | gotovo, u `development` (nagrade poduke se knjiže u F4) |
+| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | F3a gotov, PR `feature/f3-ranked` (red, prihvat, veto, živi duel, Elo, tierovi, odustajanje, prekid veze); F3b sljedeće (revanš, ghost duel); SP se knjiži u F4 |
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | nije počelo |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
@@ -975,7 +975,7 @@ Tok na frontendu: `useMatch(id)` polla `GET /api/matches/{id}` svake 1 s dok `st
 ### 6.6 Red čekanja (F3)
 
 ```ts
-POST   /api/queue                               → QueueStateDto   (409 already-in, topics/count, match/already-in-match)
+POST   /api/queue                               → 200 QueueStateDto   (409 queue/already-in, topics/count, match/already-in-match)
 GET    /api/queue                               → QueueStateDto   (poll 1 s)
 DELETE /api/queue                               → 204             (dok je proposed: ponuda se odbija, drugi igrač ostaje u redu)
 POST   /api/queue/proposals/{id}/accept         → QueueStateDto
@@ -1083,6 +1083,13 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - `/forgot-password` uvijek vraća 202: ekran uvijek kaže "ako račun postoji, poslali smo link", bez obzira na e-mail.
 - Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
+
+**F3a: red čekanja, veto, živi rangirani duel**
+- Igraj rangirano: `POST /api/queue` (treba 3–5 tema), zatim `GET /api/queue` svake 1 s. `rangeNow` raste (±100, +50 svakih 10 s). Teme su zaključane dok je igrač u redu (`PUT /api/me/topics` → 409 `urn:app:topics/locked-in-queue`; `me.inQueue`, `dashboard.queueLocked`). `DELETE /api/queue` = Odustani.
+- `status: 'proposed'`: "Protivnik pronađen" s `proposal.opponent` i odbrojavanjem do `proposal.expiresAt` (10 s, iz `serverTime`). `POST /api/queue/proposals/{id}/accept`; dok drugi nije prihvatio, `iAccepted: true`. Kad oba prihvate, `status: 'matched'` + `matchId`: otvori partiju. Ako drugi odbije ili istekne: `409 urn:app:proposal/expired` ili poll vrati `waiting` (vrijeme čekanja ostaje).
+- `botOffer: true` nakon 30 s: ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati". `ghostOffer` je `null` do F3b.
+- Partija počinje u `veto_coin` (3 s animacija novčića, `veto.coinWinnerSeat` banira prvi), pa `veto_ban`: igrač na potezu (`veto.turnSeat == mySeat`) bira temu iz `veto.pool` i šalje `POST /api/matches/{id}/veto/ban { topicId }`; 8 s po potezu, istek = automatski ban (`auto: true`). Uz temu: vlastiti `myMastery` i ikona `pickedByOpponent`. `veto_pick`: `chosenTopicId` je poznat odmah, animacija 3 s prema njemu, zatim lobby i duel kao s botom.
+- Kraj: `result.mine.ratingBefore/ratingAfter`, povijest ima `ratingDelta`. Tier (`user.tier`) i `isProvisional` (prvih 10 partija prikaži `?` umjesto ratinga) dolaze iz `UserRefDto`. Odustajanje i prekid veze (20 s bez pollanja) = poraz; oba odspojena = `aborted` bez promjene ratinga. SP, coini i XP ostaju 0 do F4.
 
 **F2: analiza, objašnjenja, poduka, red ponavljanja, mapa znanja, kalibracija**
 - Rezultat: `reviewAvailable` je `true`; `lessonAvailable` kad je išta promašeno; `lessonId` je zadnja poduka za tu partiju (ako postoji, otvori nju s `GET /api/lessons/{id}` umjesto nove); `lessonRewardEligible` za gumb "Poduka (+50)".
@@ -1322,8 +1329,9 @@ F2 Analiza, poduka, mapa
   Knowledge_map_shows_states_completion_and_last_answers
   Topic_mastery_ignores_unknown_concepts
   Calibration_uses_5_D1_D2_questions_on_unknown_concepts_without_reward
-F3 Rangirano
+F3 Rangirano (F3a: do Tie_resolves..., F3b: revanš i ghost; SP i tjedni bodovi idu s ledgerom u F4/F5)
   Join_queue_requires_topics / Join_twice_is_409 / Join_while_in_match_is_409
+  Starting_a_bot_match_leaves_the_queue / Bot_is_offered_after_30s_without_an_opponent
   Set_topics_is_locked_while_in_queue
   Two_compatible_players_get_proposal_within_one_tick
   Incompatible_topics_never_match

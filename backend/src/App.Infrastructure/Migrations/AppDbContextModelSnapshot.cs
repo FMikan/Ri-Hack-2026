@@ -411,6 +411,10 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("topic_id");
 
+                    b.Property<string>("Veto")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("veto");
+
                     b.Property<int?>("WinnerSeat")
                         .HasColumnType("integer")
                         .HasColumnName("winner_seat");
@@ -538,6 +542,14 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_seen_at");
 
+                    b.Property<int?>("RatingAfter")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating_after");
+
+                    b.Property<int?>("RatingBefore")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating_before");
+
                     b.Property<DateTimeOffset?>("ResignedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("resigned_at");
@@ -634,6 +646,108 @@ namespace App.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_match_questions_slot", "slot in ('warmup', 'targeted', 'core', 'review')");
 
                             t.HasCheckConstraint("ck_match_questions_type", "type in ('true_false', 'multiple_choice', 'cloze', 'odd_one_out', 'output', 'match_pairs', 'order', 'find_bug')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.MatchProposal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AAcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("a_accepted_at");
+
+                    b.Property<DateTimeOffset?>("BAcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("b_accepted_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserA")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_a");
+
+                    b.Property<Guid>("UserB")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_b");
+
+                    b.HasKey("Id")
+                        .HasName("pk_match_proposals");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_match_proposals_expires_at")
+                        .HasFilter("status = 'pending'");
+
+                    b.HasIndex("MatchId")
+                        .HasDatabaseName("ix_match_proposals_match_id");
+
+                    b.HasIndex("UserA")
+                        .HasDatabaseName("ix_match_proposals_user_a");
+
+                    b.HasIndex("UserB")
+                        .HasDatabaseName("ix_match_proposals_user_b");
+
+                    b.ToTable("match_proposals", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_match_proposals_status", "status in ('pending', 'matched', 'expired', 'declined')");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.QueueEntry", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("EnteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("entered_at");
+
+                    b.Property<Guid?>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.PrimitiveCollection<List<Guid>>("TopicIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("topic_ids");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_queue_entries");
+
+                    b.HasIndex("ProposalId")
+                        .HasDatabaseName("ix_queue_entries_proposal_id");
+
+                    b.ToTable("queue_entries", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_queue_entries_status", "status in ('waiting', 'proposed')");
                         });
                 });
 
@@ -1203,6 +1317,45 @@ namespace App.Infrastructure.Migrations
                         .HasConstraintName("fk_match_questions_questions_question_id");
 
                     b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.MatchProposal", b =>
+                {
+                    b.HasOne("App.Domain.Matches.Match", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_match_proposals_matches_match_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserA")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_proposals_users_user_a");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserB")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_match_proposals_users_user_b");
+                });
+
+            modelBuilder.Entity("App.Domain.Matchmaking.QueueEntry", b =>
+                {
+                    b.HasOne("App.Domain.Matchmaking.MatchProposal", null)
+                        .WithMany()
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_queue_entries_match_proposals_proposal_id");
+
+                    b.HasOne("App.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_queue_entries_users_user_id");
                 });
 
             modelBuilder.Entity("App.Domain.Progress.Answer", b =>
