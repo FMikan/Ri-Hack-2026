@@ -12,6 +12,7 @@ public interface IAppDbContext
 {
     DbSet<User> Users { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
+    DbSet<PasswordResetToken> PasswordResetTokens { get; }
     DbSet<UserTopic> UserTopics { get; }
     DbSet<Topic> Topics { get; }
     DbSet<Concept> Concepts { get; }

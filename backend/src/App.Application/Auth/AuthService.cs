@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
 using App.Application.Me;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Auth;
 
-public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService tokens, MeService me, TimeProvider time)
+public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService tokens, IEmailSender emails, MeService me, TimeProvider time)
 {
     // Verified against when the e-mail is unknown, so a wrong e-mail takes as long as a wrong password.
     private static string? _dummyHash;
@@ -85,10 +86,57 @@ public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, now), cancellationToken);
     }
 
+    // Answers the same for every e-mail, so the endpoint never tells whether an account exists.
+    public async Task ForgotPasswordAsync(string email, CancellationToken cancellationToken)
+    {
+        email = email.Trim().ToLowerInvariant();
+        var userId = await db.Users.Where(u => u.Email == email).Select(u => (Guid?)u.Id).FirstOrDefaultAsync(cancellationToken);
+        if (userId is null) return;
+
+        var now = time.GetUtcNow();
+        var token = NewToken();
+        db.PasswordResetTokens.Add(new PasswordResetToken
+        {
+            UserId = userId.Value,
+            TokenHash = Hash(token),
+            ExpiresAt = now + GameRules.PasswordResetTokenLifetime,
+            CreatedAt = now,
+        });
+        await db.SaveChangesAsync(cancellationToken);
+        await emails.SendPasswordResetAsync(email, token, cancellationToken);
+    }
+
+    // Spends the link (and every older one), sets the password and logs the user out everywhere.
+    public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        var hash = Hash(request.Token);
+        var token = await db.PasswordResetTokens.AsNoTracking().FirstOrDefaultAsync(t => t.TokenHash == hash, cancellationToken);
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        // Claimed with a conditional update, so two requests with the same link cannot both succeed.
+        var claimed = token is not null && token.ExpiresAt > now && await db.PasswordResetTokens
+            .Where(t => t.Id == token.Id && t.UsedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.UsedAt, now), cancellationToken) == 1;
+        if (!claimed)
+            throw new AppException(ErrorCodes.AuthResetTokenInvalid, "This reset link is invalid or has expired. Request a new one.");
+
+        var userId = token!.UserId;
+        var passwordHash = hasher.Hash(request.NewPassword);
+        await db.PasswordResetTokens
+            .Where(t => t.UserId == userId && t.UsedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.UsedAt, now), cancellationToken);
+        await db.Users.Where(u => u.Id == userId).ExecuteUpdateAsync(s => s.SetProperty(u => u.PasswordHash, passwordHash), cancellationToken);
+        await db.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, now), cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     private async Task<AuthResponse> IssueAsync(User user, Guid familyId, CancellationToken cancellationToken, Guid? refreshTokenId = null)
     {
         var now = time.GetUtcNow();
-        var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        var refreshToken = NewToken();
         db.RefreshTokens.Add(new RefreshToken
         {
             Id = refreshTokenId ?? Guid.CreateVersion7(),
@@ -120,6 +168,9 @@ public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService
 
     private static AppException RefreshInvalid() =>
         new(ErrorCodes.AuthRefreshInvalid, "The session has expired. Log in again.", 401);
+
+    // 32 random bytes, URL-safe, so it also fits in the reset link's query string.
+    private static string NewToken() => Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32));
 
     private static string Hash(string token) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 }

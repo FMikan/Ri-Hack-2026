@@ -28,6 +28,22 @@ Content-Type: application/json
 
 ###
 
+# Always 202. Locally (no Email__Smtp__Host) the reset link is printed in the API log.
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{ "email": "ana@example.com" }
+
+###
+
+# Paste the token from the link.
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{ "token": "<token>", "newPassword": "new-secret-456" }
+
+###
+
 GET {{baseUrl}}/api/me
 Authorization: Bearer {{login.response.body.$.accessToken}}
 

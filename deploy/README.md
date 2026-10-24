@@ -169,6 +169,13 @@ docker compose up -d --wait               # restart with the deployed version (I
 docker compose exec postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > backup-$(date +%F).sql
 ```
 
+- **Password reset e-mails:** set `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD` (and `SMTP_FROM` if it differs)
+  in `.env` (see `.env.example`), then `docker compose up -d --wait`. Until then the reset link is only in
+  `docker compose logs api | grep 'reset link'`.
+- **Rate limits** (login, register, forgot password) count per player IP. They rely on the host proxy setting
+  `X-Forwarded-For`. Caddy and the nginx block above both do. Behind Cloudflare's proxy, every player would
+  share Cloudflare's IPs, so keep the record "DNS only".
+
 - **Redeploy:** open **Actions > CI/CD > Run workflow** and pick `main` as the branch. Other branches only
   run tests.
 - **Roll back:** open the older run of that commit on `main` in **Actions**, then click **Re-run jobs**. It

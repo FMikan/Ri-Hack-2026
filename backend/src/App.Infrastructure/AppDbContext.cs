@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<UserTopic> UserTopics => Set<UserTopic>();
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<Concept> Concepts => Set<Concept>();

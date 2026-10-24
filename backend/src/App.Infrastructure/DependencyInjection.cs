@@ -1,4 +1,5 @@
 using App.Application;
+using App.Application.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ public static class DependencyInjection
             .UseSnakeCaseNamingConvention());
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<Seed.Seeder>();
+        services.AddSingleton<IEmailSender, EmailSender>();
 
         // Tagged "ready" so only the readiness endpoint runs it; liveness never touches the database.
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database", tags: ["ready"]);

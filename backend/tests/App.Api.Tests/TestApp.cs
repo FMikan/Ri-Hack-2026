@@ -28,6 +28,8 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.UtcNow);
 
+    public FakeEmailSender Emails { get; } = new();
+
     public JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) },
@@ -59,11 +61,17 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:JwtSigningKey", JwtSigningKey);
         builder.UseSetting("Game:TickEnabled", "false");
         builder.UseSetting("Database:SeedOnStartup", "false");
-        builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(Clock));
+        builder.UseSetting("RateLimit:Enabled", "false");
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<TimeProvider>(Clock);
+            services.AddSingleton<IEmailSender>(Emails);
+        });
     }
 
     public async Task ResetAsync()
     {
+        Emails.Sent.Clear();
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var tables = await db.Database
@@ -98,6 +106,18 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
     {
         Clock.Advance(by);
         await TickAsync();
+    }
+}
+
+// Records reset e-mails instead of sending them; tests read the token from here.
+public sealed class FakeEmailSender : IEmailSender
+{
+    public List<(string To, string Token)> Sent { get; } = [];
+
+    public Task SendPasswordResetAsync(string to, string token, CancellationToken cancellationToken)
+    {
+        Sent.Add((to, token));
+        return Task.CompletedTask;
     }
 }
 

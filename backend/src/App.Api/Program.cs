@@ -7,6 +7,7 @@ using App.Application.Content;
 using App.Application.Matches;
 using App.Application.Me;
 using App.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
@@ -46,6 +47,7 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddAppAuth(builder.Configuration);
+builder.Services.AddAppRateLimits();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MeService>();
 builder.Services.AddScoped<ContentService>();
@@ -54,6 +56,12 @@ builder.Services.AddScoped<MatchService>();
 if (builder.Configuration.GetValue("Game:TickEnabled", true)) builder.Services.AddHostedService<GameTickService>();
 
 var app = builder.Build();
+
+// Production sits behind the host's Caddy and the web container's Caddy. X-Forwarded-* is trusted only from
+// private (Docker) and loopback addresses, walking back to the first public one, so rate limits see the player's IP.
+var forwarded = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto, ForwardLimit = null };
+foreach (var network in new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16" }) forwarded.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+app.UseForwardedHeaders(forwarded);
 
 // Production (single instance on the VPS) applies pending migrations at startup. Locally, run `dotnet ef database update`.
 if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
@@ -74,6 +82,8 @@ app.UseStatusCodePages();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+// Tests switch it off (one test switches it back on); everywhere else it is on.
+if (app.Configuration.GetValue("RateLimit:Enabled", true)) app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
 {

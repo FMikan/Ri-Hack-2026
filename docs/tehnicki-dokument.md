@@ -26,16 +26,18 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 
 ## 1. Opseg: što ide u hackathon, što je roadmap
 
-| Faza | Sadržaj | Rezultat koji se može pokazati |
-| --- | --- | --- |
-| **F0 Auth i profil** | register, login, refresh (rotacija + opoziv obitelji), logout, `/api/me`, odabir 3–5 tema, teme i koncepti, dashboard | Korisnik se registrira i vidi dashboard s temama |
-| **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka |
-| **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja |
-| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje |
-| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog |
-| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši |
-| **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje |
-| Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — |
+| Faza | Sadržaj | Rezultat koji se može pokazati | Stanje backenda |
+| --- | --- | --- | --- |
+| **F0 Auth i profil** | register, login, refresh (rotacija + opoziv obitelji), logout, `/api/me`, odabir 3–5 tema, teme i koncepti, dashboard | Korisnik se registrira i vidi dashboard s temama | gotovo, u `development` |
+| **F1 Sadržaj i bot duel** | seed pitanja, deck builder, grading svih 8 tipova, bodovanje, mastery, bot persone, ekran rezultata, povijest partija | Cijeli duel protiv bota od početka do kraja; jezgreni loop bez drugog čovjeka | gotovo, u `development` |
+| **F0b Auth ostatak** | forgot/reset lozinke, rate limit, forwarded headers | Zaboravljena lozinka radi; login je zaštićen od pogađanja | gotovo, PR `feature/f0b-password-reset` |
+| **F2 Analiza, poduka, mapa znanja** | match review s oznakama, AI objašnjenje s kešom i fallbackom, poduka s kontrolnim pitanjima, red ponavljanja, mapa znanja, kalibracija, trening (po temi i po konceptu) | *Duel → analiza → poduka → zakrpano* radi; žiri vidi učenje | sljedeće |
+| **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | nije počelo |
+| **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | nije počelo |
+| **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | nije počelo |
+| Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
+
+Stupac "Stanje backenda" se ažurira u PR-u svake faze; što frontend može spojiti po fazama je u §6.11.
 
 F0b dolazi nakon F1 namjerno: prvi igrivi demo (bot duel) je najvažniji rizik. Refresh je ušao u F0 jer ga frontend treba od prvog ekrana. Frontend može ići paralelno od prvog dana: svi DTO-i su u §6, a redoslijed endpointa prati faze.
 
@@ -47,7 +49,7 @@ F0b dolazi nakon F1 namjerno: prvi igrivi demo (bot duel) je najvažniji rizik. 
 App.Api            Endpoints/<Feature>Endpoints.cs, auth, rate limit, forwarded headers, GameTickService registracija, Program.cs
 App.Application    use case klase po featureu, DTO-i (DataAnnotations), IAppDbContext, sučelja za vanjski svijet
 App.Domain         entiteti + čista pravila igre (GameRules, Scoring, Elo, Grader, Mastery, DeckBuilder, Veto, Matchmaking, BotPlayer, Clock, ...)
-App.Infrastructure AppDbContext + Configurations/, migracije, JwtTokenService, SmtpEmailSender, ClaudeClient, Seeder, GameTickService
+App.Infrastructure AppDbContext + Configurations/, migracije, EmailSender, ClaudeClient, Seeder
 ```
 
 Ovisnosti ostaju `Api → Application, Infrastructure`; `Infrastructure → Application, Domain`; `Application → Domain`. `PasswordHasher<User>` (Microsoft.Extensions.Identity.Core, shared framework) se koristi iz Application kroz `IPasswordHasher` sučelje, Domain ga ne vidi.
@@ -83,7 +85,7 @@ App.Application/                   jedna servisna klasa po featureu (AuthService
   Seasons/      CloseSeason, CloseWeek, RefreshGrandmasters
 App.Infrastructure/
   AppDbContext.cs, Configurations/*.cs (jedna klasa po entitetu), SnakeCaseEnumConverter.cs
-  Email/SmtpEmailSender.cs + LogEmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
+  EmailSender.cs, Ai/ClaudeExplanationGenerator.cs + ClaudeLessonGenerator.cs
   Seed/Seeder.cs + Seed/topics.json + Seed/questions/<tema>.json (embedded resources, nema problema s putanjama u Dockeru)
 App.Api/
   Auth.cs (JWT izdavanje i validacija, PasswordHasher adapter, ClaimsPrincipal.UserId()), AppExceptionHandler.cs (AppException → Problem Details),
@@ -791,7 +793,7 @@ Finish(now)                                       §17: human s disconnected_at 
 | --- | --- | --- |
 | `ITokenService` | `JwtTokenService` (u `App.Api/Auth.cs`, uz JwtBearer paket) | HS256, ključ iz `Auth:JwtSigningKey` (env `Auth__JwtSigningKey`, ≥ 32 bajta, u `.env`), issuer/audience iz konfiguracije; `JwtBearerOptions.TimeProvider` = isti `TimeProvider` (testovi pomiču sat) |
 | `IPasswordHasher` | `PasswordHasherAdapter` nad `PasswordHasher<User>` (u `App.Api/Auth.cs`) | PBKDF2; nepoznati e-mail se provjerava protiv lažnog hasha da odgovor traje jednako |
-| `IEmailSender` | `LogEmailSender` (Development: logira link), `SmtpEmailSender` (`System.Net.Mail`, `Email:Smtp:*` iz env) | reset lozinke; slanje je fire-and-forget (`Task.Run` + log) da odgovor ne otkriva postoji li e-mail; testovi koriste `FakeEmailSender` |
+| `IEmailSender` | `EmailSender`: SMTP (`System.Net.Mail`, `Email:Smtp:Host/Port/Username/Password/From/EnableSsl` iz env) kad je `Email:Smtp:Host` postavljen, inače link ide u log (lokalni razvoj) | reset lozinke; link je `{Frontend:BaseUrl}/reset-password?token=...`; SMTP slanje je fire-and-forget (`Task.Run` + log greške) da odgovor ne otkriva postoji li e-mail; testovi koriste `FakeEmailSender` |
 | `IExplanationGenerator` | `ClaudeExplanationGenerator`, `StaticExplanationGenerator` (vraća `remember`) | `Ai:TimeoutMs` → fallback; rezultat se kešira u `questions.explanation`; nikad se ne zove iz `GET /api/matches/{id}` ni iz `SubmitAnswer` |
 | `ILessonGenerator` | `ClaudeLessonGenerator`, `FallbackLessonGenerator` (kartice iz `concepts.description`) | keš u `concept_lesson_cards` po (koncept, band) |
 | `TimeProvider` | `TimeProvider.System`; testovi `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) inicijaliziran na `DateTimeOffset.UtcNow` | |
@@ -862,8 +864,9 @@ POST /api/auth/register   { email; username; password }  → 201 AuthResponse   
 POST /api/auth/login      { email; password }            → 200 AuthResponse      // 401 invalid-credentials; rate limit 10/min po IP-u
 POST /api/auth/refresh    { refreshToken }               → 200 AuthResponse      // rotira; stari se opoziva; opozvani token ponovno → 401 i opoziv cijele obitelji
 POST /api/auth/logout     { refreshToken }               → 204
-POST /api/auth/forgot-password { email }                 → 202 uvijek (ne otkriva postoji li e-mail); šalje link `{Frontend:BaseUrl}/reset-password?token=...`
-POST /api/auth/reset-password  { token; newPassword }    → 204; 409 reset-token-invalid; opoziva sve refresh tokene korisnika
+POST /api/auth/forgot-password { email }                 → 202 uvijek (ne otkriva postoji li e-mail); šalje link `{Frontend:BaseUrl}/reset-password?token=...`; rate limit 10/min po IP-u
+POST /api/auth/reset-password  { token; newPassword }    → 204; 409 reset-token-invalid (nepoznat, iskorišten ili stariji od 1 h); opoziva sve refresh tokene i sve starije linkove korisnika; nakon 204 frontend vodi na login
+// 429 (rate limit): Problem Details { status: 429, title, detail } + header Retry-After (sekunde); frontend prikaže detail i ne ponavlja zahtjev sam
 
 interface AuthResponse { accessToken: string; accessTokenExpiresAt: Iso; refreshToken: string; user: MeDto }
 ```
@@ -1045,12 +1048,37 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 ### 6.10 Što frontend radi dok backend nije tu, i kako klijent radi
 
-- `src/types/api.ts`: ručno pisane unije iz §6.1 (`QuestionContent`, `AnswerPayload`, `AppErrorCode`) + re-export generiranog ostatka. `npm run api:types` = `openapi-typescript ../backend/src/App.Api/openapi/v1.json -o src/types/api.generated.ts` (datoteka nastaje pri `dotnet build` i commita se); CI korak pada ako je `api.generated.ts` zastario.
+- `src/types/api.ts`: ručno pisani tipovi svih DTO-a iz §6. Backend ga ažurira u istom PR-u u kojem mijenja DTO, pa je on izvor istine za frontend. Za provjeru uživo: `http://localhost:5080/scalar` i `http://localhost:5080/openapi/v1.json` dok API radi lokalno (Development).
 - `src/lib/api-client.ts`: access token samo u memoriji (`setAccessToken`), refresh token iza `tokenStore` (async `get/set/clear`; web `localStorage`, Android Capacitor Preferences). Na 401: jedan dijeljeni in-flight `refresh()` promise za sve pozivatelje, zatim jedan retry originalnog zahtjeva; `/api/auth/*` se nikad ne retrya; pad refresha → `tokenStore.clear()` + `onUnauthenticated()` (router na `/login` s return URL-om). `request<T>(path, init, { auth: false })` za javne rute. `ApiError.code` vraća `problem.type` kao `AppErrorCode`.
 - `src/hooks/use-poll.ts`: `usePoll(load, intervalMs, until)` zadržava zadnje podatke, nikad ne vraća `loading` nakon prvog uspjeha (postojeći `useAsync` bi treperio svake sekunde), staje kad `until(data)` vrati true, pauzira na `document.hidden`, refetcha odmah na `visibilitychange`/`appStateChange`.
 - `src/lib/fixtures/` drži po jedan primjer svakog DTO-a (kopirano iz ovog dokumenta) za razvoj ekrana prije endpointa; nema mock servera.
 - Konstante na klijentu: lista avatara, mapiranje `assetKey` → slika/CSS, lokalizirana imena bot persona, pragovi tierova za prikaz (iz `UserRefDto.tier`, ne računa se na klijentu).
 - Ekrani prate faze: F0 onboarding + dashboard, F1 duel + rezultat, F2 analiza + poduka + mapa + trening, F3 red + veto, F4 shop + zadaci + dnevni izazov, F5 rang-liste + prijatelji + profil.
+
+### 6.11 Stanje po fazama: što frontend može spojiti sada
+
+Što backend već poslužuje (u `development`) i što ekrani trebaju znati, a ne piše u tipovima. Svaka faza dodaje svoj odlomak.
+
+**F0: auth, onboarding, dashboard**
+- `register`, `login`, `refresh`, `logout`, `GET/PATCH /api/me`, `PUT /api/me/topics`, `GET /api/me/dashboard`, `GET /api/topics`, `GET /api/topics/{slug}/concepts`.
+- Validacija je `400` s `errors` po polju; ključevi su imena svojstava DTO-a u PascalCase (`Username`, `Password`), pa ih spajaj s poljima forme bez obzira na velika slova; `409` s `type` `urn:app:auth/email-taken` ili `urn:app:auth/username-taken` ide uz polje forme.
+- `GET /api/topics` vraća samo aktivne teme, one koje imaju dovoljno pitanja (zasad `javascript`, `sql`, `how-ai-works`). Onboarding traži 3–5 (`409 urn:app:topics/count`).
+- Token flow je opisan u §6.10 i još nije u `api-client.ts`; to je prvi posao frontenda.
+
+**F1: bot duel, trening, povijest**
+- `GET /api/bots` (persona s `recommended`), `POST /api/matches/bot`, `POST /api/matches/practice`, `GET /api/matches/{id}`, `POST .../answers`, `POST .../next`, `POST .../resign`, `GET /api/me/matches`.
+- Bot partija: `lobby` 5 s → 10 × (`question` → `interstitial` 2 s) → `done`. Poll svake 1 s; odbrojavanje iz `phaseDeadline - serverTime`, ne iz sata klijenta.
+- Ključ odgovora (`interstitial.key`) postoji tek u međuekranu; `question.question.content` ga nikad nema.
+- Kad odgovoriš prije bota, faza se zatvara čim bot "odgovori"; kad su svi odgovorili, međuekran dolazi odmah.
+- `find_bug`: linije koda broje se od 1 (`split('\n')`); ključ može imati `acceptLines` (druge linije iste naredbe) za isticanje.
+- `409 urn:app:match/already-in-match`: `me.activeMatchId` vodi natrag u partiju (i nakon reloada).
+- Trening bez vremena nema `phaseDeadline`; nakon međuekrana klijent zove `POST .../next`. Objašnjenje (`/api/questions/{id}/explanation`) dolazi tek u F2.
+- `result.cards` (blunder, brilliant, koncept za vježbu) je popunjen; rating, coins, XP i SP su 0 do F3/F4, a `lessonAvailable`, `reviewAvailable` i `rematchAvailable` su `false` do F2/F3.
+
+**F0b: reset lozinke i rate limit**
+- `/forgot-password` uvijek vraća 202: ekran uvijek kaže "ako račun postoji, poslali smo link", bez obzira na e-mail.
+- Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
+- `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
 
 ## 7. Seed sadržaja
 
@@ -1256,7 +1284,8 @@ F0b Auth ostatak
   Login_is_rate_limited                                                  vlastita factory s RateLimit:Enabled=true
   Forgot_password_always_202_and_sends_email_only_for_existing_user     (FakeEmailSender)
   Reset_password_with_valid_token_changes_password_and_revokes_sessions
-  Reset_token_is_single_use_and_expires_after_1h
+  Reset_token_is_single_use_and_expires_after_1h                       uz to: reset troši i starije linkove
+  Reset_with_short_password_is_400_validation
 F2 Analiza, poduka, mapa
   Review_lists_10_questions_with_labels_and_mastery_delta
   Review_before_finish_is_409
@@ -1337,7 +1366,7 @@ F5 Društveno i rang-liste
 
 ### 9.4 Frontend provjere
 
-`npm run build && npm run lint` ostaju jedina obavezna provjera, plus CI usporedba `api.generated.ts` s committanim `openapi/v1.json`. Dodatno (po želji tima): jedan Playwright smoke test "registracija → odabir tema → bot duel do rezultata" kad F1 bude gotov; `playwright-cli` skill je već instaliran.
+`npm run build && npm run lint` ostaju jedina obavezna provjera. Dodatno (po želji tima): jedan Playwright smoke test "registracija → odabir tema → bot duel do rezultata" kad F1 bude gotov; `playwright-cli` skill je već instaliran.
 
 ## 10. Proširivost: kako se dodaje...
 
@@ -1359,7 +1388,7 @@ F5 Društveno i rang-liste
 ## 11. Sigurnost i rubovi
 
 - Lozinke: `PasswordHasher<User>` (PBKDF2), 8–128 znakova; nikad u logovima.
-- Proxy: API stoji iza host Caddyja i web kontejnera, pa `app.UseForwardedHeaders(XForwardedFor | XForwardedProto)` s `KnownNetworks` za compose mrežu ide prvi u pipeline; bez toga rate limit po IP-u vidi jedan IP za sve.
+- Proxy: API stoji iza host Caddyja i Caddyja u web kontejneru. Host Caddy odbacuje `X-Forwarded-For` koji pošalje klijent i postavlja pravi IP; web Caddy (`trusted_proxies static private_ranges` u `frontend/Caddyfile`) ga čuva i dodaje svoj hop. API (`UseForwardedHeaders`, prvi u pipelineu, `ForwardLimit = null`, `KnownIPNetworks` = privatni rasponi + loopback) ide zdesna dok ne naiđe na prvu javnu adresu, i to je IP igrača. Bez toga rate limit po IP-u vidi jedan IP za sve.
 - Rate limit (`AddRateLimiter`, stdlib): `/api/auth/login` i `/api/auth/forgot-password` 10/min, `/api/auth/register` 5/min po (proslijeđenom) IP-u; `/api/matches/*/answers` 5/s po korisniku; `RejectionStatusCode = 429` + Problem Details + `Retry-After`.
 - Refresh tokeni: rotacija s `family_id`; predočenje već opozvanog tokena opoziva cijelu obitelj (ukradeni token postaje beskoristan).
 - Ključ odgovora nikad ne napušta server prije međuekrana; `MatchStateMapper` je jedino mjesto koje gradi `QuestionPublicDto` i ima test `Match_state_hides_answer_key_until_interstitial`.

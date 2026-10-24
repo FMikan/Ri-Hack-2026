@@ -14,6 +14,7 @@ public static class GameRules
     public const int MaxStreakFreezes = 2;
     public static readonly TimeSpan AccessTokenLifetime = TimeSpan.FromMinutes(15);
     public static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(30);
+    public static readonly TimeSpan PasswordResetTokenLifetime = TimeSpan.FromHours(1);
 
     // Match flow (idea §6, §17)
     public const int QuestionsPerMatch = 10;

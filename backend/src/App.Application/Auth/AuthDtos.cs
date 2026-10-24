@@ -37,4 +37,21 @@ public record RefreshRequest
     public required string RefreshToken { get; init; }
 }
 
+public record ForgotPasswordRequest
+{
+    [Required]
+    [EmailAddress]
+    public required string Email { get; init; }
+}
+
+public record ResetPasswordRequest
+{
+    [Required]
+    public required string Token { get; init; }
+
+    [Required]
+    [StringLength(GameRules.PasswordMaxLength, MinimumLength = GameRules.PasswordMinLength)]
+    public required string NewPassword { get; init; }
+}
+
 public record AuthResponse(string AccessToken, DateTimeOffset AccessTokenExpiresAt, string RefreshToken, MeDto User);

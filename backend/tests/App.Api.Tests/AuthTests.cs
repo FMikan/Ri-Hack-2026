@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using App.Domain;
 using App.Application.Auth;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Api.Tests;
@@ -158,5 +159,99 @@ public class AuthTests(TestApp app) : ApiTestBase(app)
 
         Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
+    }
+
+    [Fact]
+    public async Task Forgot_password_always_202_and_sends_email_only_for_existing_user()
+    {
+        await RegisterAsync("ana");
+
+        var known = await PostAsync(Client, "/api/auth/forgot-password", new ForgotPasswordRequest { Email = "ANA@example.com" });
+        var unknown = await PostAsync(Client, "/api/auth/forgot-password", new ForgotPasswordRequest { Email = "nobody@example.com" });
+
+        Assert.Equal(HttpStatusCode.Accepted, known.StatusCode);
+        Assert.Equal(HttpStatusCode.Accepted, unknown.StatusCode);
+        Assert.Equal("ana@example.com", Assert.Single(App.Emails.Sent).To);
+    }
+
+    [Fact]
+    public async Task Reset_password_with_valid_token_changes_password_and_revokes_sessions()
+    {
+        var session = await RegisterAsync("ana");
+        var token = await ForgotAsync("ana@example.com");
+
+        var reset = await ResetAsync(token, "new-secret-456");
+
+        Assert.Equal(HttpStatusCode.NoContent, reset.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await LoginAsync("ana@example.com", "secret-123")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await LoginAsync("ana@example.com", "new-secret-456")).StatusCode);
+        var refresh = await PostAsync(Client, "/api/auth/refresh", new RefreshRequest { RefreshToken = session.Auth.RefreshToken });
+        Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
+    }
+
+    [Fact]
+    public async Task Reset_token_is_single_use_and_expires_after_1h()
+    {
+        await RegisterAsync("ana");
+        var older = await ForgotAsync("ana@example.com");
+        var token = await ForgotAsync("ana@example.com");
+
+        Assert.Equal(HttpStatusCode.NoContent, (await ResetAsync(token, "new-secret-456")).StatusCode);
+        await AssertResetInvalidAsync(token);
+        await AssertResetInvalidAsync(older); // a reset also spends every link sent before it
+
+        var late = await ForgotAsync("ana@example.com");
+        App.Clock.Advance(TimeSpan.FromHours(1));
+        await AssertResetInvalidAsync(late);
+    }
+
+    [Fact]
+    public async Task Reset_with_short_password_is_400_validation()
+    {
+        await RegisterAsync("ana");
+        var token = await ForgotAsync("ana@example.com");
+
+        var response = await ResetAsync(token, "short");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await ResetAsync(token, "new-secret-456")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_is_rate_limited()
+    {
+        await using var limited = App.WithWebHostBuilder(builder => builder.UseSetting("RateLimit:Enabled", "true"));
+        var client = limited.CreateClient();
+
+        // 10 per minute: 21 attempts cannot all pass even if a window boundary falls between them.
+        var responses = new List<HttpResponseMessage>();
+        for (var i = 0; i < 21; i++)
+            responses.Add(await PostAsync(client, "/api/auth/login", new LoginRequest { Email = "ana@example.com", Password = "wrong-password" }));
+
+        var rejected = responses.First(r => r.StatusCode == HttpStatusCode.TooManyRequests);
+        Assert.NotNull(rejected.Headers.RetryAfter?.Delta);
+        Assert.Equal(429, (await ReadAsync<ProblemDetails>(rejected))!.Status);
+        Assert.All(responses.Take(10), r => Assert.Equal(HttpStatusCode.Unauthorized, r.StatusCode));
+    }
+
+    private async Task<string> ForgotAsync(string email)
+    {
+        var sent = App.Emails.Sent.Count;
+        (await PostAsync(Client, "/api/auth/forgot-password", new ForgotPasswordRequest { Email = email })).EnsureSuccessStatusCode();
+        Assert.Equal(sent + 1, App.Emails.Sent.Count);
+        return App.Emails.Sent[^1].Token;
+    }
+
+    private Task<HttpResponseMessage> ResetAsync(string token, string newPassword) =>
+        PostAsync(Client, "/api/auth/reset-password", new ResetPasswordRequest { Token = token, NewPassword = newPassword });
+
+    private Task<HttpResponseMessage> LoginAsync(string email, string password) =>
+        PostAsync(Client, "/api/auth/login", new LoginRequest { Email = email, Password = password });
+
+    private async Task AssertResetInvalidAsync(string token)
+    {
+        var response = await ResetAsync(token, "another-secret-789");
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(ErrorCodes.AuthResetTokenInvalid, (await ReadAsync<ProblemDetails>(response))!.Type);
     }
 }

@@ -107,6 +107,17 @@ export interface RefreshRequest {
   refreshToken: string
 }
 
+// POST /api/auth/forgot-password → 202 always. The e-mail links to /reset-password?token=...
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+// POST /api/auth/reset-password → 204, or 409 urn:app:auth/reset-token-invalid. Every session is logged out.
+export interface ResetPasswordRequest {
+  token: string
+  newPassword: string
+}
+
 export interface AuthResponse {
   accessToken: string
   accessTokenExpiresAt: Iso

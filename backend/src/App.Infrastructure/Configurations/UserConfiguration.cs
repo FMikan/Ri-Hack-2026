@@ -42,6 +42,16 @@ public class UserTopicConfiguration : IEntityTypeConfiguration<UserTopic>
     }
 }
 
+public class PasswordResetTokenConfiguration : IEntityTypeConfiguration<PasswordResetToken>
+{
+    public void Configure(EntityTypeBuilder<PasswordResetToken> builder)
+    {
+        builder.HasIndex(t => t.TokenHash).IsUnique();
+        builder.Property(t => t.TokenHash).HasMaxLength(64);
+        builder.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
