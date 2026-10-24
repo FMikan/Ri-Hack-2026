@@ -1,4 +1,17 @@
-import { ChevronDown, FlaskConical, LayoutDashboard, LogOut, Swords, Target, Trophy, UserRound, type LucideIcon } from 'lucide-react'
+import {
+  ChevronDown,
+  FlaskConical,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Settings,
+  Swords,
+  Target,
+  Trophy,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react'
+import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import coin from '@/assets/brand/stackoff-coin-on-dark.svg'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
@@ -7,6 +20,7 @@ import { Wordmark } from '@/components/shared/Wordmark'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -33,16 +47,15 @@ const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
 
-// Signed-in layout: icon rail on desktop, bottom tab bar on phones, top bar with coins and the account menu.
+// Signed-in layout: icon rail on desktop, top bar with coins and the menu. On phones the menu carries the navigation.
 export function AppShell() {
   return (
     <div className="min-h-svh lg:grid lg:grid-cols-[5rem_minmax(0,1fr)]">
       <SideRail />
-      <div className="flex min-w-0 flex-col pb-24 lg:pb-0">
+      <div className="flex min-w-0 flex-col">
         <TopBar />
         <Outlet />
       </div>
-      <BottomNav />
     </div>
   )
 }
@@ -112,61 +125,14 @@ function SideRail() {
   )
 }
 
-function BottomNav() {
-  const { t } = useLocale()
-
-  return (
-    <nav
-      aria-label={t.shell.mainNav}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
-    >
-      <ul className="mx-auto grid max-w-lg grid-cols-5">
-        {NAV.map((item) => {
-          const label = t.shell.nav[item.key]
-          const inner = (
-            <>
-              <item.icon aria-hidden="true" className="size-5" />
-              <span className="max-w-full truncate text-xs">{label}</span>
-            </>
-          )
-          const base = 'flex h-16 flex-col items-center justify-center gap-1 px-1'
-          return (
-            <li key={item.key}>
-              {item.to ? (
-                <NavLink
-                  to={item.to}
-                  end
-                  className={({ isActive }) =>
-                    cn(
-                      base,
-                      // Blue text on navy is too faint, so the active tab is white with a blue bar on top.
-                      isActive
-                        ? 'relative font-medium text-foreground before:absolute before:inset-x-5 before:top-0 before:h-0.5 before:rounded-full before:bg-primary'
-                        : 'text-muted-foreground hover:text-foreground',
-                      focusRing,
-                    )
-                  }
-                >
-                  {inner}
-                </NavLink>
-              ) : (
-                <span aria-disabled="true" aria-label={`${label} (${t.shell.soon})`} className={cn(base, 'text-muted-foreground/50')}>
-                  {inner}
-                </span>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </nav>
-  )
-}
-
 function TopBar() {
   const { session, logout } = useAuth()
   const { t, locale, setLocale } = useLocale()
+  const { pathname } = useLocation()
+  const [settingsOpen, setSettingsOpen] = useState(false)
   if (session.status !== 'authenticated') return null
   const user = demoMe(session.user)
+  const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (
     <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:py-5">
@@ -190,31 +156,77 @@ function TopBar() {
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger
-            aria-label={t.shell.account}
-            className={cn('flex items-center gap-2 rounded-full py-1 pr-2 pl-1 transition-colors hover:bg-card', focusRing)}
+            aria-label={t.shell.menu}
+            className={cn(
+              'flex shrink-0 items-center gap-2 rounded-lg transition-colors hover:bg-card max-lg:size-11 max-lg:justify-center lg:rounded-full lg:py-1 lg:pr-2 lg:pl-1',
+              focusRing,
+            )}
           >
-            <span className="grid size-8 place-items-center rounded-full bg-primary font-heading text-sm font-semibold text-primary-foreground">
+            <Menu aria-hidden="true" className="size-6 lg:hidden" />
+            <span className="hidden size-8 place-items-center rounded-full bg-primary font-heading text-sm font-semibold text-primary-foreground lg:grid">
               {user.username.charAt(0).toUpperCase()}
             </span>
-            <span className="hidden max-w-32 truncate text-sm font-medium sm:block">{user.username}</span>
-            <ChevronDown aria-hidden="true" className="size-4 text-muted-foreground" />
+            <span className="hidden max-w-32 truncate text-sm font-medium lg:block">{user.username}</span>
+            <ChevronDown aria-hidden="true" className="hidden size-4 text-muted-foreground lg:block" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-60">
+          <DropdownMenuContent align="end" className="w-64 lg:w-60">
             <DropdownMenuLabel className="grid gap-0.5">
               <span className="truncate">{user.username}</span>
               <span className="truncate text-xs font-normal text-muted-foreground">{user.email}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{t.common.language}</DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-              {(Object.keys(LOCALE_NAMES) as Locale[]).map((option) => (
-                <DropdownMenuRadioItem key={option} value={option} lang={option}>
-                  {LOCALE_NAMES[option]}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
+            {/* Phones have no rail, so the menu lists the screens too. */}
+            <DropdownMenuGroup className="lg:hidden">
+              {NAV.map((item) => {
+                const label = t.shell.nav[item.key]
+                return item.to ? (
+                  <DropdownMenuItem key={item.key} asChild className={cn(touch, pathname === item.to && 'text-primary')}>
+                    <NavLink to={item.to} end>
+                      <item.icon aria-hidden="true" />
+                      {label}
+                    </NavLink>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem key={item.key} disabled className={touch}>
+                    <item.icon aria-hidden="true" />
+                    {label}
+                    <span className="ml-auto font-mono text-xs">{t.shell.soon}</span>
+                  </DropdownMenuItem>
+                )
+              })}
+              <DropdownMenuSeparator />
+            </DropdownMenuGroup>
+            <DropdownMenuItem
+              aria-expanded={settingsOpen}
+              className={touch}
+              onSelect={(event) => {
+                event.preventDefault() // keep the menu open while the section folds out
+                setSettingsOpen((open) => !open)
+              }}
+            >
+              <Settings aria-hidden="true" />
+              {t.shell.settings}
+              <ChevronDown
+                aria-hidden="true"
+                className={cn('ml-auto transition-transform motion-reduce:transition-none', settingsOpen && 'rotate-180')}
+              />
+            </DropdownMenuItem>
+            {settingsOpen && (
+              <>
+                <DropdownMenuLabel inset className="font-normal">
+                  {t.common.language}
+                </DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={locale} onValueChange={(value) => setLocale(value as Locale)}>
+                  {(Object.keys(LOCALE_NAMES) as Locale[]).map((option) => (
+                    <DropdownMenuRadioItem key={option} value={option} lang={option} inset className={touch}>
+                      {LOCALE_NAMES[option]}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </>
+            )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={logout}>
+            <DropdownMenuItem onSelect={logout} className={touch}>
               <LogOut aria-hidden="true" />
               {t.shell.logOut}
             </DropdownMenuItem>
