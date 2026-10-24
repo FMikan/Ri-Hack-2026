@@ -1,6 +1,6 @@
 # Serves the built frontend and proxies API traffic to the api container.
-# SITE_ADDRESS: a domain (automatic HTTPS via Let's Encrypt) or ":80" for plain HTTP by IP.
-{$SITE_ADDRESS::80} {
+# Plain HTTP: TLS is terminated by the server's existing web server in front of this container.
+:80 {
 	encode
 
 	@api path /api/* /health /health/*

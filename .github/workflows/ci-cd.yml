@@ -62,13 +62,14 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          printf 'POSTGRES_DB=app\nPOSTGRES_USER=app\nPOSTGRES_PASSWORD=smoke\nSITE_ADDRESS=:80\n' > .env
+          printf 'POSTGRES_DB=app\nPOSTGRES_USER=app\nPOSTGRES_PASSWORD=smoke\nWEB_PORT=8081\n' > .env
           compose="docker compose -f docker-compose.prod.yml"
           $compose up -d --wait --wait-timeout 120 || { $compose logs; exit 1; }
-          curl -fsS http://localhost/health/ready
-          curl -fsS http://localhost/ | grep -q '<div id="root">'
-          curl -fsS -X POST http://localhost/api/notes -H 'Content-Type: application/json' -d '{"text":"smoke test"}'
-          curl -fsS http://localhost/api/notes | grep -q 'smoke test'
+          url=http://127.0.0.1:8081
+          curl -fsS "$url/health/ready"
+          curl -fsS "$url/" | grep -q '<div id="root">'
+          curl -fsS -X POST "$url/api/notes" -H 'Content-Type: application/json' -d '{"text":"smoke test"}'
+          curl -fsS "$url/api/notes" | grep -q 'smoke test'
           $compose down -v
 
       - name: Push images
@@ -115,5 +116,6 @@ jobs:
             export IMAGE_TAG='${GITHUB_SHA}'
             docker compose pull
             docker compose up -d --wait --wait-timeout 180 --remove-orphans || { docker compose logs --tail 100; exit 1; }
-            docker image prune -af --filter until=168h
+            # Shared server: prune only this repository's old images, never other apps' images.
+            docker image prune -af --filter 'label=org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}' --filter until=168h
           "
