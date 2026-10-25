@@ -245,7 +245,7 @@ function Conversation({ chatId, onSaved }: { chatId?: string; onSaved: (chat: Pr
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 cramped:gap-2">
       {/* relative: the screen-reader labels inside are absolutely positioned and would otherwise stretch the page. */}
-      <div ref={scroller} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
+      <div ref={scroller} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto pb-2">
         {status === 'loading' ? (
           <div aria-busy="true" className="grid gap-4">
             <p role="status" className="sr-only">

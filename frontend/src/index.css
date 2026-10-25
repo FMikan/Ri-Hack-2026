@@ -251,11 +251,13 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    overscroll-behavior: none;
     }
   body {
     @apply bg-background text-foreground;
     }
   html {
-    @apply font-sans antialiased;
+    /* Focused or linked elements scroll clear of the pinned phone top bar. */
+    @apply font-sans antialiased max-lg:scroll-pt-20;
     }
 }

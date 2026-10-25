@@ -175,7 +175,8 @@ function TopBar() {
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (
-    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:py-5 cramped:py-1">
+    // Phones keep the bar pinned (logo, coins, menu); desktop has the rail for navigation.
+    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 max-lg:sticky max-lg:top-0 max-lg:z-30 max-lg:border-b max-lg:border-border max-lg:bg-background sm:px-6 lg:px-8 lg:py-5 cramped:py-1">
       <NavLink to="/" className={cn('rounded-sm lg:hidden', focusRing)}>
         <Wordmark className="h-6" />
       </NavLink>

@@ -36,7 +36,7 @@ const errorText = (caught: unknown, t: Messages) => {
 
 // Coins buy looks only (game idea §13): frames, name colors, banners, card backgrounds, duel boards, streak freezes.
 export function ShopPage() {
-  const { t, locale } = useLocale()
+  const { t } = useLocale()
   const { session, refreshUser } = useAuth()
   const shop = useAsync(api.shop)
 
@@ -52,16 +52,9 @@ export function ShopPage() {
   return (
     <main className="mx-auto grid w-full max-w-7xl content-start gap-5 px-4 pb-10 sm:px-6 lg:px-8">
       <title>{`${t.shop.documentTitle} · StackOff`}</title>
-      <header className="flex flex-wrap items-end gap-3">
-        <div className="grid flex-1 gap-1">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{t.shop.title}</h1>
-          <p className="text-sm text-pretty text-muted-foreground">{t.shop.subtitle}</p>
-        </div>
-        <p className="flex items-center gap-2 rounded-lg bg-card px-3 py-2 font-mono text-lg font-medium ring-1 ring-border">
-          <img src={coinSmall} alt="" className="size-5" />
-          <span className="sr-only">{t.shell.coins}:</span>
-          {me.coins.toLocaleString(locale)}
-        </p>
+      <header className="grid gap-1">
+        <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{t.shop.title}</h1>
+        <p className="text-sm text-pretty text-muted-foreground">{t.shop.subtitle}</p>
       </header>
       {sections ? (
         <>
@@ -82,7 +75,7 @@ export function ShopPage() {
             ))}
           </nav>
           {sections.map(({ kind, items }) => (
-            <section key={kind} id={`shop-${kind}`} aria-labelledby={`shop-${kind}-title`} className="grid scroll-mt-20 gap-3">
+            <section key={kind} id={`shop-${kind}`} aria-labelledby={`shop-${kind}-title`} className="grid gap-3 lg:scroll-mt-20">
               <h2 id={`shop-${kind}-title`} className="font-heading text-lg font-semibold">
                 {t.shop.kinds[kind]}
               </h2>
