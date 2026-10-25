@@ -5,6 +5,9 @@ export const PLACEMENT_MATCHES = 10 // GameRules.ProvisionalMatches
 export const MIN_TOPICS = 3
 export const MAX_TOPICS = 5
 export const QUESTIONS_PER_MATCH = 10 // GameRules.QuestionsPerMatch
+export const DAY_TIME_ZONE = 'Europe/Zagreb' // GameRules.DayTimeZone: daily tasks and the challenge reset at its midnight
+export const DAILY_BONUS = 30 // DailyService: all three daily tasks pay 30 coins more
+export const DAILY_CHALLENGE_REWARD = { coins: 30, xp: 30 } // DailyService: for the right answer (5 coins for trying)
 
 // The first 10 ranked duels show "?" instead of the rating (docs §6.11 F3a).
 export const ratingText = (rating: number, provisional?: boolean) => (provisional ? '?' : String(rating))

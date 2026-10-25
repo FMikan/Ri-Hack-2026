@@ -55,19 +55,13 @@ public class DailyTests(TestApp app) : MatchTestBase(app)
         await App.InDbAsync(db =>
         {
             db.UserDailyTasks.AddRange(
-                new UserDailyTask { UserId = ana.Auth.User.Id, Day = today, TaskKey = DailyTasks.PatchConcept, Target = 1 },
+                new UserDailyTask { UserId = ana.Auth.User.Id, Day = today, TaskKey = DailyTasks.ReviewAllDue, Target = 1 },
                 new UserDailyTask { UserId = ana.Auth.User.Id, Day = today, TaskKey = DailyTasks.Challenge, Target = 1 },
                 new UserDailyTask { UserId = ana.Auth.User.Id, Day = today, TaskKey = DailyTasks.PracticeWeakest, Target = 1, TopicId = topic.Id });
             return db.SaveChangesAsync();
         });
 
-        var match = await FinishedBotMatchAsync(ana, topic.Id);
-        var lesson = (await ReadAsync<LessonDto>(await PostAsync(ana.Client, "/api/lessons", new StartLessonRequest { MatchId = match.Id })))!;
-        await PostAsync(ana.Client, $"/api/lessons/{lesson.Id}/check", new
-        {
-            answers = lesson.Check.Select(c => new { questionId = c.Question.Id, payload = QuestionFixtures.RightAnswer(c.Question.Type) }),
-        });
-        var halfway = await TasksAsync(ana);
+        var halfway = await TasksAsync(ana); // nothing is due, so "review all due" is done at once
         var practice = (await ReadAsync<App.Application.Matches.MatchStateDto>(await PostAsync(ana.Client, "/api/matches/practice", new { topicId = topic.Id, timed = true })))!;
         await PlayToEndAsync(ana, await FirstQuestionAsync(ana, practice));
         await ChallengeAsync(ana);
@@ -79,13 +73,32 @@ public class DailyTests(TestApp app) : MatchTestBase(app)
         await TasksAsync(ana);
 
         bool Completed(DailyTasksDto tasks, string key) => tasks.Tasks.Single(t => t.Key == key).Completed;
-        Assert.True(Completed(halfway, DailyTasks.PatchConcept));
+        Assert.True(Completed(halfway, DailyTasks.ReviewAllDue));
         Assert.False(Completed(halfway, DailyTasks.Challenge));
         Assert.All(done.Tasks, t => Assert.True(t.Completed));
         Assert.Equal(topic.Id, done.Tasks.Single(t => t.Key == DailyTasks.PracticeWeakest).Topic!.Id);
         Assert.True(done.BonusAwarded);
-        Assert.Equal(coinsBefore + 2 * 20 + 30, coinsAfter); // the lesson task was already paid when it completed halfway
+        Assert.Equal(coinsBefore + 2 * 20 + 30, coinsAfter); // the review task was already paid when it completed halfway
         Assert.Equal(coinsAfter, await CoinsAsync(ana)); // completion pays once
+    }
+
+    [Fact]
+    public async Task Retired_patch_task_generated_before_is_skipped()
+    {
+        var ana = await RegisterAsync("ana");
+        var today = Clock.Today(App.Clock.GetUtcNow());
+        await App.InDbAsync(db =>
+        {
+            db.UserDailyTasks.AddRange(
+                new UserDailyTask { UserId = ana.Auth.User.Id, Day = today, TaskKey = DailyTasks.PatchConcept, Target = 1 },
+                new UserDailyTask { UserId = ana.Auth.User.Id, Day = today, TaskKey = DailyTasks.Challenge, Target = 1 },
+                new UserDailyTask { UserId = ana.Auth.User.Id, Day = today, TaskKey = DailyTasks.Brilliant, Target = 3 });
+            return db.SaveChangesAsync();
+        });
+
+        var tasks = await TasksAsync(ana);
+
+        Assert.Equal([DailyTasks.Brilliant, DailyTasks.Challenge], tasks.Tasks.Select(t => t.Key).Order());
     }
 
     [Fact]

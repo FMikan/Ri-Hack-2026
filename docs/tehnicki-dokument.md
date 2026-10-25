@@ -560,7 +560,7 @@ create index on daily_challenge_attempts (day, is_correct desc, elapsed_ms);   -
 create table user_daily_tasks (
   user_id      uuid not null references users(id) on delete cascade,
   day          date not null,
-  task_key     text not null,              -- 'play_2_ranked','patch_1_concept','daily_challenge','practice_weakest','3_brilliant','review_all_due'
+  task_key     text not null,              -- 'play_2_ranked','daily_challenge','practice_weakest','3_brilliant','review_all_due'
   target       integer not null,           -- review_all_due: broj dospjelih pri generiranju; ostali: konstanta
   topic_id     uuid references topics(id), -- practice_weakest: najslabija tema u trenutku generiranja
   completed_at timestamptz,
@@ -1108,7 +1108,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
 
 **F4b: dnevni zadaci, dnevni izazov, shop, oprema**
-- Dnevni zadaci: `GET /api/me/daily-tasks` (i `dashboard.dailyTasks`): tri zadatka dana, isti cijeli dan, s `progress/target`; `practice_weakest` nosi `topic` (gumb "Trening" na tu temu). Dovršen zadatak se isplaćuje (20 coina) kad se zadaci sljedeći put učitaju, sva tri još 30 (`bonusAwarded`). Ključevi: `play_2_ranked`, `patch_1_concept`, `daily_challenge`, `practice_weakest`, `3_brilliant`, `review_all_due`.
+- Dnevni zadaci: `GET /api/me/daily-tasks` (i `dashboard.dailyTasks`): tri zadatka dana, isti cijeli dan, s `progress/target`; `practice_weakest` nosi `topic` (gumb "Trening" na tu temu). Dovršen zadatak se isplaćuje (20 coina) kad se zadaci sljedeći put učitaju, sva tri još 30 (`bonusAwarded`). Ključevi: `play_2_ranked`, `daily_challenge`, `practice_weakest`, `3_brilliant`, `review_all_due`. `patch_1_concept` se više ne dodjeljuje (lekcija kreće samo iz pregleda duela), a ranije generirani se preskaču.
 - Dnevni izazov: `GET /api/daily-challenge` otvara pokušaj (`startedAt`); odbrojavanje 60 s od `startedAt` preko `serverTime`. Isto `find_bug` pitanje za sve; `POST /api/daily-challenge/attempt { payload, clientElapsedMs }` vraća rezultat, ključ i rang. 30 coina za točno, 5 za pokušaj, 30 XP uvijek; jedan pokušaj (`409 daily/already-attempted`), nakon 60 s `409 daily/too-late` (pokušaj se bilježi kao istek). `leaderboard` top 20: točni prvi, pa brži. Arhiva `GET /api/daily-challenge/{yyyy-mm-dd}`.
 - Shop: `GET /api/shop` (najjeftinije prvo, `owned`), `POST /api/shop/purchase { itemId }` vraća `MeDto` s novim stanjem coina. Zamrzavanje streaka: najviše 2 (`me.streak.freezes`). Oprema: `PUT /api/me/equipment { avatarFrame: itemId | null, ... }`; `UserRefDto.equipment` (svugdje uz ime) daje `assetKey` po slotu. Ormarić na profilu: `GET /api/me/items` vraća sve moje kozmetike, i sezonske okvire koji se ne prodaju, najjeftinije prvo. Seed (`Seed/shop.json`): 10–13 artikala po slotu u četiri rariteta (`common` 150–450, `rare` 600–1400, `epic` 1800–3500, `legendary` 5000–9000 coina; samo legendarni se animiraju) i zamrzavanje streaka. Frontend crta `assetKey` kao istoimenu CSS klasu iz `src/cosmetics.css`; nepoznat ključ ne crta ništa. `SeedTests.Shop_seed_is_well_formed` traži 8–15 artikala za prodaju po slotu, jedinstvene ključeve i poznate raritete.
 - `dashboard.dailyChallengeAttempted` je sada pravi.

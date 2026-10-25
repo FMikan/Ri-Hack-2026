@@ -199,6 +199,7 @@ public class DailyTaskTests
             var keys = DailyTasks.ForDay(Day, user, dueCount: 0, weakestTopicId: null).Select(t => t.Key).ToList();
             Assert.DoesNotContain(DailyTasks.ReviewAllDue, keys);
             Assert.DoesNotContain(DailyTasks.PracticeWeakest, keys);
+            Assert.DoesNotContain(DailyTasks.PatchConcept, DailyTasks.ForDay(Day, user, dueCount: 4, Guid.NewGuid()).Select(t => t.Key));
         }
     }
 
