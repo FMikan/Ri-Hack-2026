@@ -7,7 +7,7 @@ public static class GameRules
 {
     public const string DayTimeZone = "Europe/Zagreb";
     public const int StartRating = 1000;
-    public const int ProvisionalMatches = 10; // rating shows as "?" and stays off leaderboards until then
+    public const int ProvisionalMatches = 10; // rating shows as "Placement" and stays off leaderboards until then
 
     // Ranked play (idea §4, §5, §9, §14)
     public const int ProfileAfterRankedMatches = 5; // targeted slots in ranked once both players have this many

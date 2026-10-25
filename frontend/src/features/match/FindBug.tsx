@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
-import type { Option } from '@/types/api'
+import type { Option, PlayerDto } from '@/types/api'
 import { CodeBlock } from './CodeBlock'
-import { OptionList } from './OptionList'
+import { OptionList, type Rival } from './OptionList'
 
 type Answer = { line: number; fixId: string }
 
@@ -14,11 +14,13 @@ interface FindBugProps {
   mine?: Answer
   correct?: Answer & { acceptLines?: number[] }
   locked: boolean
+  me?: PlayerDto
+  rival?: Rival
   onAnswer: (answer: Answer) => void
 }
 
 // Two steps: tap the line (1-based), then pick the fix, which sends the answer.
-export function FindBug({ code, language, fixes, mine, correct, locked, onAnswer }: FindBugProps) {
+export function FindBug({ code, language, fixes, mine, correct, locked, me, rival, onAnswer }: FindBugProps) {
   const { t } = useLocale()
   const [line, setLine] = useState<number>()
   const chosen = mine?.line ?? line
@@ -64,6 +66,8 @@ export function FindBug({ code, language, fixes, mine, correct, locked, onAnswer
           picked={mine?.fixId}
           correct={correct?.fixId}
           locked={locked || chosen === undefined}
+          me={me}
+          rival={rival}
           onPick={(fixId) => chosen !== undefined && onAnswer({ line: chosen, fixId })}
         />
       )}
