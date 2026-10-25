@@ -1,6 +1,7 @@
-import { ArrowUp, BookOpen, GraduationCap, ListChecks, LoaderCircle, MessagesSquare, Plus, Square } from 'lucide-react'
+import { ArrowUp, BookOpen, ListChecks, LoaderCircle, MessagesSquare, Plus, Square } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import professor from '@/assets/professor.png'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -10,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAsync, type AsyncState } from '@/hooks/use-async'
 import { useTicker } from '@/hooks/use-ticker'
 import { api } from '@/lib/api-client'
-import { relativeTime } from '@/lib/format'
+import { idleHover, markStyles } from '@/features/match/question-utils'
+import { clock, relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 import type { ProfessorChatSummaryDto, ProfessorMessageDto } from '@/types/api'
@@ -21,6 +23,11 @@ import { useCreateStudy, type Making, type StudyKind } from './use-create-study'
 const MAX_LENGTH = 2000 // SendProfessorMessageRequest.text
 const loadChats = (signal: AbortSignal) => api.professorChats(signal)
 const NO_MESSAGES: ProfessorMessageDto[] = []
+// One reading column (about 80 characters a line) for the header, the messages and the question box.
+const COLUMN = 'mx-auto w-full max-w-3xl'
+// Button styles only `disabled`; these buttons stay focusable while blocked, so they say so themselves.
+const blocked = 'aria-disabled:cursor-not-allowed aria-disabled:opacity-50'
+const label = 'font-mono text-xs font-medium tracking-wide text-muted-foreground uppercase'
 
 // The AI Professor (docs §6.12): a chat about IT next to the list of past chats. ?chat=<id> picks the chat, so the
 // first answer of a new chat can name it without remounting the conversation that holds it.
@@ -30,6 +37,7 @@ export function ProfessorPage() {
   const chatId = params.get('chat') ?? undefined
   const chats = useAsync(loadChats)
   const { reload } = chats
+  const title = chats.data?.find((chat) => chat.id === chatId)?.title
 
   const onSaved = useCallback(
     (chat: ProfessorChatSummaryDto) => {
@@ -47,26 +55,33 @@ export function ProfessorPage() {
       className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col px-4 sm:px-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-6 lg:px-8"
     >
       <title>{`${t.professor.documentTitle} · StackOff`}</title>
-      <aside className="hidden min-h-0 flex-col gap-4 pb-4 lg:flex">
-        <Button asChild variant="outline" className="shrink-0 justify-start">
-          <Link to="/professor">
-            <Plus aria-hidden="true" />
-            {t.professor.newChat}
-          </Link>
-        </Button>
+      {/* A panel: "New chat" is its first row, lit while you are in a new chat, so exactly one row is always current. */}
+      <aside className="mb-4 hidden min-h-0 flex-col gap-1 rounded-xl bg-card p-2 ring-1 ring-foreground/10 lg:flex">
+        <Link
+          to="/professor"
+          aria-current={chatId ? undefined : 'page'}
+          className={cn(
+            'flex h-11 shrink-0 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+            chatId ? 'hover:bg-secondary' : 'bg-primary/15 text-primary',
+          )}
+        >
+          <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Plus className="size-4" />
+          </span>
+          {t.professor.newChat}
+        </Link>
         <ChatList chats={chats} current={chatId} />
       </aside>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 cramped:gap-2">
-        <header className="flex shrink-0 flex-wrap items-center gap-3">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl cramped:sr-only">
-            {t.professor.title}
-          </h1>
-          <div className="ml-auto flex items-center gap-2 lg:hidden [@media(max-height:15rem)]:hidden">
+        <header className={cn(COLUMN, 'flex shrink-0 flex-wrap items-center gap-3')}>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight cramped:sr-only">{t.professor.title}</h1>
+          <div className="ml-auto flex min-w-0 items-center gap-2 lg:hidden [@media(max-height:15rem)]:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="cramped:h-8">
+                <Button variant="outline" className="min-w-0 cramped:h-8 max-sm:h-11">
                   <MessagesSquare aria-hidden="true" />
-                  {t.professor.chats}
+                  <span className="sr-only">{t.professor.chats}: </span>
+                  <span className="max-w-32 truncate sm:max-w-48">{title ?? t.professor.chats}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-2rem)]">
@@ -83,10 +98,10 @@ export function ProfessorPage() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild className="cramped:h-8">
+            <Button asChild className="cramped:h-8 max-sm:size-11 max-sm:px-0">
               <Link to="/professor">
                 <Plus aria-hidden="true" />
-                {t.professor.newChat}
+                <span className="max-sm:sr-only">{t.professor.newChat}</span>
               </Link>
             </Button>
           </div>
@@ -101,8 +116,8 @@ function ChatList({ chats, current }: { chats: AsyncState<ProfessorChatSummaryDt
   const { t, locale } = useLocale()
 
   return (
-    <nav aria-label={t.professor.chats} className="-mx-1 grid min-h-0 flex-1 content-start gap-2 overflow-y-auto p-1">
-      <h2 className="px-3 text-xs font-medium text-muted-foreground">{t.professor.chats}</h2>
+    <nav aria-label={t.professor.chats} className="-mx-1 mt-1 grid min-h-0 flex-1 content-start gap-2 overflow-y-auto border-t border-border p-1 pt-3">
+      <h2 className={cn(label, 'px-3')}>{t.professor.chats}</h2>
       {chats.data ? (
         chats.data.length === 0 ? (
           <p className="px-3 text-sm text-muted-foreground">{t.professor.noChats}</p>
@@ -244,75 +259,84 @@ function Conversation({ chatId, onSaved }: { chatId?: string; onSaved: (chat: Pr
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 cramped:gap-2">
-      {/* relative: the screen-reader labels inside are absolutely positioned and would otherwise stretch the page. */}
-      <div ref={scroller} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto pb-2">
-        {status === 'loading' ? (
-          <div aria-busy="true" className="grid gap-4">
-            <p role="status" className="sr-only">
-              {t.common.loading}
-            </p>
-            <Skeleton className="ml-auto h-12 w-2/3 rounded-2xl" />
-            <Skeleton className="h-40 rounded-2xl" />
-          </div>
-        ) : status === 'failed' ? (
-          <Card role="alert">
-            <CardContent className="grid justify-items-start gap-3">
-              <p>{t.professor.chatFailed}</p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFailedFor(undefined)
-                  setLoads((n) => n + 1)
-                }}
-              >
-                {t.common.retry}
-              </Button>
-            </CardContent>
-          </Card>
-        ) : messages.length === 0 && !turn ? (
-          <Welcome onAsk={send} />
-        ) : (
-          <ol className="grid gap-6">
-            {messages.map((message) => (
-              <li key={message.id}>
-                {message.role === 'user' ? (
-                  <Question text={message.text} />
-                ) : (
-                  <Answer>
-                    <Markdown text={message.text} />
-                    <StudyActions message={message} study={study} />
-                  </Answer>
-                )}
-              </li>
-            ))}
-            {turn && (
-              <>
-                <li>
-                  <Question text={turn.question} />
+      {/* relative: the screen-reader labels inside are absolutely positioned and would otherwise stretch the page.
+          The gutter on both edges keeps the column centred under the header whether or not a scrollbar shows, and
+          px-1 leaves room for focus outlines that overflow would clip. */}
+      <div
+        ref={scroller}
+        onScroll={onScroll}
+        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto px-1 [scrollbar-gutter:stable_both-edges]"
+      >
+        <div className={cn(COLUMN, 'flex flex-1 flex-col pb-2')}>
+          {status === 'loading' ? (
+            <div aria-busy="true" className="grid gap-4">
+              <p role="status" className="sr-only">
+                {t.common.loading}
+              </p>
+              <Skeleton className="ml-auto h-12 w-2/3 rounded-xl" />
+              <Skeleton className="h-40 rounded-xl" />
+            </div>
+          ) : status === 'failed' ? (
+            <Card role="alert">
+              <CardContent className="grid justify-items-start gap-3">
+                <p>{t.professor.chatFailed}</p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFailedFor(undefined)
+                    setLoads((n) => n + 1)
+                  }}
+                >
+                  {t.common.retry}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : messages.length === 0 && !turn ? (
+            <Welcome onAsk={send} />
+          ) : (
+            // A question sits close to its answer; the next question starts a new block.
+            <ol className="grid gap-3">
+              {messages.map((message) => (
+                <li key={message.id} className={cn(message.role === 'user' && 'not-first:pt-6')}>
+                  {message.role === 'user' ? (
+                    <Question text={message.text} />
+                  ) : (
+                    <Answer>
+                      <Markdown text={message.text} />
+                      <StudyActions message={message} study={study} />
+                    </Answer>
+                  )}
                 </li>
-                <li>
-                  <Answer busy={streaming}>
-                    {turn.answer && <Markdown text={turn.answer} />}
-                    {turn.error ? (
-                      <div role="alert" className="grid justify-items-start gap-3">
-                        <p className="text-sm text-destructive">{turn.error}</p>
-                        <Button variant="outline" onClick={() => send(turn.question)}>
-                          {t.professor.retry}
-                        </Button>
-                      </div>
-                    ) : turn.answer ? (
-                      <p role="status" className="sr-only">
-                        {t.professor.writing}
-                      </p>
-                    ) : (
-                      <Thinking />
-                    )}
-                  </Answer>
-                </li>
-              </>
-            )}
-          </ol>
-        )}
+              ))}
+              {turn && (
+                <>
+                  <li className="not-first:pt-6">
+                    <Question text={turn.question} />
+                  </li>
+                  <li>
+                    <Answer busy={streaming}>
+                      {turn.answer && <Markdown text={turn.answer} />}
+                      {turn.error ? (
+                        <div role="alert" className="grid justify-items-start gap-3">
+                          <p className="text-sm text-destructive">{turn.error}</p>
+                          <Button variant="outline" onClick={() => send(turn.question)}>
+                            {t.professor.retry}
+                          </Button>
+                        </div>
+                      ) : turn.answer ? (
+                        <p role="status" className="sr-only">
+                          {t.professor.writing}
+                        </p>
+                      ) : (
+                        <Thinking />
+                      )}
+                    </Answer>
+                  </li>
+                </>
+              )}
+            </ol>
+          )}
+        </div>
       </div>
       <Composer
         value={draft}
@@ -330,32 +354,40 @@ function Question({ text }: { text: string }) {
   const { t } = useLocale()
 
   return (
-    <div className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-primary/15 px-4 py-3 break-words whitespace-pre-wrap">
+    // Neutral, so sky stays for what can be done next.
+    <div className="ml-auto w-fit max-w-[min(85%,36rem)] rounded-xl rounded-br-md bg-secondary px-4 py-2.5 text-pretty break-words whitespace-pre-wrap ring-1 ring-border ring-inset">
       <span className="sr-only">{t.professor.you}: </span>
       {text}
     </div>
   )
 }
 
+// The speaker on its own row, then the answer as a card: full width on a phone, and code blocks keep their contrast.
 function Answer({ busy, children }: { busy?: boolean; children: ReactNode }) {
   const { t } = useLocale()
 
   return (
-    <div aria-busy={busy || undefined} className="flex gap-3">
-      <ProfessorMark />
-      <div className="grid min-w-0 flex-1 content-start gap-3">
-        <p className="text-xs font-medium text-muted-foreground">{t.professor.professor}</p>
+    <div aria-busy={busy || undefined} className="grid gap-2">
+      <p className={cn(label, 'flex items-center gap-2')}>
+        <ProfessorMark className="size-9" />
+        {t.professor.professor}
+      </p>
+      <div className="grid min-w-0 content-start gap-4 rounded-xl rounded-tl-md bg-card p-4 ring-1 ring-foreground/10 ring-inset sm:p-5">
         {children}
       </div>
     </div>
   )
 }
 
-function ProfessorMark() {
+// The professor's portrait, on the sky tint the cap icon had.
+function ProfessorMark({ className }: { className: string }) {
   return (
-    <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
-      <GraduationCap className="size-5" />
-    </span>
+    <img
+      src={professor}
+      alt=""
+      draggable={false}
+      className={cn('shrink-0 rounded-full bg-primary/15 object-cover ring-1 ring-primary/30', className)}
+    />
   )
 }
 
@@ -378,19 +410,28 @@ function Thinking() {
   )
 }
 
-// "Create lesson" and "Create quiz" under an answer about IT; the one that fits the answer comes first (a lesson for
-// a broad subject, a quiz for a concrete question). While one is written, its status takes their place.
+// The answer card's footer, edge to edge like a card footer.
+const studyBar = '-mx-4 -mb-4 grid gap-2 border-t border-border px-4 pt-3 pb-4 sm:-mx-5 sm:-mb-5 sm:px-5 sm:pb-5'
+
+// "Create lesson" and "Create quiz" under an answer about IT, next to its topic; the one that fits the answer comes
+// first (a lesson for a broad subject, a quiz for a concrete question). While one is written, its status takes their
+// place in the same bar, so nothing jumps.
 function StudyActions({ message, study }: { message: ProfessorMessageDto; study: ReturnType<typeof useCreateStudy> }) {
   const { t } = useLocale()
   const topic = message.topic
   if (!topic) return null
-  if (study.making?.messageId === message.id) return <MakingStatus making={study.making} />
+  if (study.making?.messageId === message.id)
+    return (
+      <div className={studyBar}>
+        <MakingStatus making={study.making} />
+      </div>
+    )
 
   const lessonFirst = message.scope === 'general'
   const action = (kind: StudyKind, primary: boolean) => {
     const id = kind === 'lesson' ? message.lessonId : message.quizId
     const Icon = kind === 'lesson' ? BookOpen : ListChecks
-    const variant = primary ? 'default' : 'outline'
+    const variant = primary ? 'default' : 'secondary'
     return id ? (
       <Button key={kind} asChild variant={variant}>
         <Link to={`/professor/${kind === 'lesson' ? 'lessons' : 'quizzes'}/${id}`}>
@@ -404,6 +445,7 @@ function StudyActions({ message, study }: { message: ProfessorMessageDto; study:
         variant={variant}
         aria-disabled={study.making !== undefined}
         onClick={() => study.make(kind, message.id, topic)}
+        className={blocked}
       >
         <Icon aria-hidden="true" />
         {kind === 'lesson' ? t.professor.createLesson : t.professor.createQuiz}
@@ -413,9 +455,12 @@ function StudyActions({ message, study }: { message: ProfessorMessageDto; study:
   const error = study.error?.messageId === message.id ? study.error.text : undefined
 
   return (
-    <div className="grid gap-2 pt-1">
-      <div className="flex flex-wrap gap-2">
-        {lessonFirst ? [action('lesson', true), action('quiz', false)] : [action('quiz', true), action('lesson', false)]}
+    <div className={studyBar}>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="max-w-full truncate rounded-md bg-secondary px-2 py-1 font-mono text-xs text-muted-foreground">{topic}</span>
+        <div className="grid w-full grid-cols-2 gap-2 sm:ml-auto sm:flex sm:w-auto">
+          {lessonFirst ? [action('lesson', true), action('quiz', false)] : [action('quiz', true), action('lesson', false)]}
+        </div>
       </div>
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -426,44 +471,51 @@ function StudyActions({ message, study }: { message: ProfessorMessageDto; study:
   )
 }
 
+// The time runs in its own slot on the right (0:12), the same clock as the ranked queue.
 function MakingStatus({ making }: { making: Making }) {
   const { t } = useLocale()
   const now = useTicker(true, 1000)
-  const seconds = Math.max(0, Math.floor((now - making.startedAt) / 1000))
 
   return (
-    <div role="status" className="flex items-start gap-3 rounded-xl bg-primary/10 p-4 ring-1 ring-primary/30 ring-inset">
-      <LoaderCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
-      <div className="grid gap-1">
-        <p className="font-medium text-pretty">
-          {making.kind === 'lesson' ? t.professor.makingLesson(making.topic) : t.professor.makingQuiz(making.topic)}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {t.professor.makingHint}{' '}
-          <span aria-hidden="true" className="font-mono tabular-nums">
-            {t.professor.elapsed(seconds)}
-          </span>
-        </p>
-      </div>
+    <div role="status" className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5">
+      <LoaderCircle aria-hidden="true" className="size-4 animate-spin text-primary motion-reduce:animate-none" />
+      <p className="text-sm font-medium text-pretty">
+        {making.kind === 'lesson' ? t.professor.makingLesson(making.topic) : t.professor.makingQuiz(making.topic)}
+      </p>
+      <span aria-hidden="true" className="font-mono text-xs text-muted-foreground tabular-nums">
+        {clock(Math.max(0, now - making.startedAt))}
+      </span>
+      <p className="col-start-2 text-xs text-muted-foreground">{t.professor.makingHint}</p>
     </div>
   )
 }
 
+// Centred in the empty conversation, right above the question box; the suggestions are tiles like the answers in a
+// duel, and the arrow says a tap sends them.
 function Welcome({ onAsk }: { onAsk: (question: string) => void }) {
   const { t } = useLocale()
 
   return (
-    <section className="grid justify-items-start gap-4 rounded-xl bg-card p-6 ring-1 ring-foreground/10">
-      <ProfessorMark />
-      <p className="max-w-prose text-lg text-pretty">{t.professor.subtitle}</p>
-      <p className="text-sm text-muted-foreground">{t.professor.practiceOnly}</p>
-      <h2 className="pt-2 text-xs font-medium text-muted-foreground">{t.professor.suggestionsLabel}</h2>
-      <ul className="flex flex-wrap gap-2">
+    <section className="my-auto grid justify-items-center gap-4 py-8 text-center">
+      <ProfessorMark className="size-16" />
+      <p className="max-w-xl font-heading text-xl font-semibold text-balance sm:text-2xl">{t.professor.subtitle}</p>
+      <p className="rounded-md bg-secondary px-2 py-1 font-mono text-xs text-muted-foreground">{t.professor.practiceOnly}</p>
+      <h2 className={cn(label, 'pt-4')}>{t.professor.suggestionsLabel}</h2>
+      <ul className="grid w-full auto-rows-fr gap-2 sm:grid-cols-2">
         {t.professor.suggestions.map((suggestion) => (
           <li key={suggestion}>
-            <Button variant="outline" className="h-auto min-h-10 py-2 text-left whitespace-normal" onClick={() => onAsk(suggestion)}>
-              {suggestion}
-            </Button>
+            <button
+              type="button"
+              onClick={() => onAsk(suggestion)}
+              className={cn(
+                'group flex h-full min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium ring-inset transition-[background-color,box-shadow,scale] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:active:scale-[0.98] motion-reduce:transition-none',
+                markStyles.idle,
+                idleHover,
+              )}
+            >
+              <span className="min-w-0 flex-1 text-pretty">{suggestion}</span>
+              <ArrowUp aria-hidden="true" className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+            </button>
           </li>
         ))}
       </ul>
@@ -496,7 +548,7 @@ function Composer({ value, onChange, onSend, onStop, streaming, disabled }: Comp
         event.preventDefault()
         onSend()
       }}
-      className="grid shrink-0 gap-2 pb-4 cramped:pb-2"
+      className={cn(COLUMN, 'grid shrink-0 gap-2 pb-4 cramped:pb-2')}
     >
       <Label htmlFor="professor-question" className="sr-only">
         {t.professor.inputLabel}
@@ -521,13 +573,14 @@ function Composer({ value, onChange, onSend, onStop, streaming, disabled }: Comp
             {t.professor.stop}
           </Button>
         ) : (
-          <Button key="send" type="submit" className="cramped:h-8" aria-disabled={disabled || !value.trim()}>
+          <Button key="send" type="submit" className={cn('cramped:h-8', blocked)} aria-disabled={disabled || !value.trim()}>
             <ArrowUp aria-hidden="true" />
             {t.professor.send}
           </Button>
         )}
       </div>
-      <p id="professor-question-hint" className="text-xs text-muted-foreground cramped:sr-only">
+      {/* Touch keyboards have no Shift+Enter; aria-describedby still reads the hint when it is hidden. */}
+      <p id="professor-question-hint" className="text-xs text-muted-foreground cramped:sr-only pointer-coarse:hidden">
         {t.professor.sendHint}
       </p>
     </form>

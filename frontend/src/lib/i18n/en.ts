@@ -608,7 +608,6 @@ export const en = {
     makingLesson: (topic: string) => `AI Professor is writing your lesson on ${topic}…`,
     makingQuiz: (topic: string) => `AI Professor is writing your quiz on ${topic}…`,
     makingHint: 'This usually takes 10 to 30 seconds.',
-    elapsed: (seconds: number) => `${seconds} s`,
     backToChat: 'Back to the chat',
     lesson: {
       documentTitle: 'Lesson',

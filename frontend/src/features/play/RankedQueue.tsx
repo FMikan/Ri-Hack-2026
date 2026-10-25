@@ -15,7 +15,7 @@ import { useTicker } from '@/hooks/use-ticker'
 import { api, ApiError } from '@/lib/api-client'
 import { AVATARS } from '@/lib/avatars'
 import { nameClass } from '@/lib/cosmetics'
-import { relativeTime } from '@/lib/format'
+import { clock, relativeTime } from '@/lib/format'
 import { MIN_TOPICS, ratingText } from '@/lib/game'
 import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
@@ -310,11 +310,6 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
       {footer}
     </div>
   )
-}
-
-const clock = (ms: number) => {
-  const seconds = Math.floor(ms / 1000)
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 }
 
 // Me on the left, the opponent's seat on the right ("?" and the rating range while searching), the swords between.

@@ -612,7 +612,6 @@ export const hr: Messages = {
     makingLesson: (topic: string) => `AI Profesor piše tvoju poduku: ${topic}…`,
     makingQuiz: (topic: string) => `AI Profesor piše tvoj kviz: ${topic}…`,
     makingHint: 'Obično traje 10 do 30 sekundi.',
-    elapsed: (seconds: number) => `${seconds} s`,
     backToChat: 'Natrag na razgovor',
     lesson: {
       documentTitle: 'Poduka',
