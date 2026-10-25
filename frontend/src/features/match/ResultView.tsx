@@ -1,6 +1,7 @@
 import { Award, BookOpen, Flame, Target } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link } from 'react-router'
+import { AiWorking } from '@/components/shared/AiWorking'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { Rewards } from '@/components/shared/Rewards'
 import { Button } from '@/components/ui/button'
@@ -193,6 +194,7 @@ function LessonButton({ match }: { match: MatchStateDto }) {
           {lesson.error}
         </span>
       )}
+      <AiWorking open={lesson.starting} title={t.lesson.preparing} description={t.lesson.preparingHint} />
     </span>
   )
 }
