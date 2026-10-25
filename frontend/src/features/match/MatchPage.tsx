@@ -1,41 +1,46 @@
-import { Flag, LoaderCircle } from 'lucide-react'
+import { Flag, Ghost, WifiOff } from 'lucide-react'
 import { createElement, useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAsync } from '@/hooks/use-async'
+import { useAuth } from '@/features/auth/auth-context'
 import { usePoll } from '@/hooks/use-poll'
 import { useTicker } from '@/hooks/use-ticker'
 import { api, ApiError } from '@/lib/api-client'
+import { boardClass } from '@/lib/cosmetics'
+import { relativeTime } from '@/lib/format'
+import { ratingText } from '@/lib/game'
 import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { topicIcon } from '@/lib/topic-icons'
-import { cn } from '@/lib/utils'
-import type { AnswerPayload, MatchStateDto, PlayerDto } from '@/types/api'
+import { cn, skyOutline } from '@/lib/utils'
+import type { AnswerPayload, PlayerDto } from '@/types/api'
 import { AnswerChip } from './AnswerChip'
+import { Explanation } from './Explanation'
 import { PlayerAvatar } from './PlayerAvatar'
 import { QuestionBody } from './QuestionBody'
 import { ResultView } from './ResultView'
-
-// A poll response plus when it arrived, so countdowns run on (phaseDeadline - serverTime), never the device clock.
-interface Snapshot {
-  match: MatchStateDto
-  at: number
-}
-type Command = (run: () => Promise<MatchStateDto>) => Promise<boolean>
+import { msToDeadline, type Command, type Snapshot } from './snapshot'
+import { VetoView } from './VetoView'
 
 const isOver = ({ match }: Snapshot) => match.status === 'finished' || match.status === 'aborted'
-const msToDeadline = ({ match, at }: Snapshot, now: number) =>
-  match.phaseDeadline ? Date.parse(match.phaseDeadline) - Date.parse(match.serverTime) - (now - at) : Infinity
 
 const playerName = (player: PlayerDto | undefined, t: Messages) =>
   player?.kind === 'bot' && player.persona ? t.bots[player.persona] : (player?.user?.username ?? '')
 
-// Full-screen duel: lobby, ten questions with interstitials, then the result. Polls the match once a second.
+// Full-screen duel: veto (ranked and friend), lobby, ten questions with interstitials, then the result.
+// Keyed by id, so a rematch starts with a fresh poll and no leftovers from the last duel.
 export function MatchPage() {
   const { id = '' } = useParams()
+  return <MatchScreen key={id} id={id} />
+}
+
+function MatchScreen({ id }: { id: string }) {
   const { t } = useLocale()
+  const { session } = useAuth()
+  // The duel board I equipped in the shop (it only changes my own screen).
+  const board = boardClass(session.status === 'authenticated' ? session.user : null)
   const load = useCallback(
     (signal: AbortSignal) => api.match(id, signal).then((match) => ({ match, at: performance.now() })),
     [id],
@@ -63,41 +68,43 @@ export function MatchPage() {
   )
 
   return (
-    <main className="mx-auto grid min-h-svh w-full max-w-3xl content-start gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-8">
-      <title>{`${t.match.documentTitle} · StackOff`}</title>
-      <h1 className="sr-only">{t.match.documentTitle}</h1>
-      {data ? (
-        <MatchView snapshot={data} command={command} />
-      ) : error ? (
-        <Card role="alert">
-          <CardContent className="grid justify-items-start gap-3">
-            <p>{t.match.loadFailed}</p>
-            <p className="text-sm text-muted-foreground">{error.message}</p>
-            <Button asChild variant="outline">
-              <Link to="/">{t.match.result.dashboard}</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div aria-busy="true" className="grid gap-4">
-          <p role="status" className="sr-only">
-            {t.common.loading}
+    <div className={cn('min-h-svh', board)}>
+      <main className="mx-auto grid min-h-svh w-full max-w-3xl content-start gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-8">
+        <title>{`${t.match.documentTitle} · StackOff`}</title>
+        <h1 className="sr-only">{t.match.documentTitle}</h1>
+        {data ? (
+          <MatchView snapshot={data} command={command} />
+        ) : error ? (
+          <Card role="alert">
+            <CardContent className="grid justify-items-start gap-3">
+              <p>{t.match.loadFailed}</p>
+              <p className="text-sm text-muted-foreground">{error.message}</p>
+              <Button asChild variant="outline">
+                <Link to="/">{t.match.result.dashboard}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div aria-busy="true" className="grid gap-4">
+            <p role="status" className="sr-only">
+              {t.common.loading}
+            </p>
+            <Skeleton className="h-20 rounded-xl" />
+            <Skeleton className="h-80 rounded-xl" />
+          </div>
+        )}
+        {data && error && (
+          <p role="status" className="justify-self-center rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
+            {t.match.reconnecting}
           </p>
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-80 rounded-xl" />
-        </div>
-      )}
-      {data && error && (
-        <p role="status" className="justify-self-center rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
-          {t.match.reconnecting}
-        </p>
-      )}
-      {commandError && (
-        <p role="alert" className="text-sm text-destructive">
-          {commandError}
-        </p>
-      )}
-    </main>
+        )}
+        {commandError && (
+          <p role="alert" className="text-sm text-destructive">
+            {commandError}
+          </p>
+        )}
+      </main>
+    </div>
   )
 }
 
@@ -110,6 +117,8 @@ function MatchView({ snapshot, command }: { snapshot: Snapshot; command: Command
   const solo = !opponent // practice and calibration
 
   if (match.result) return <ResultView match={match} me={me} opponent={opponent} opponentName={opponentName} />
+  if (match.veto && match.phase.startsWith('veto_'))
+    return <VetoView snapshot={snapshot} command={command} me={me} opponent={opponent} opponentName={opponentName} />
   if (!match.question || (match.phase !== 'question' && match.phase !== 'interstitial'))
     return <Lobby snapshot={snapshot} me={me} opponent={opponent} opponentName={opponentName} />
 
@@ -142,16 +151,27 @@ interface LobbyProps {
   opponentName: string
 }
 
-// 5 seconds to look at who you play and on what, then the first question.
+// 5 seconds to look at who you play and on what, then the first question. A ghost shows when it was recorded.
 function Lobby({ snapshot, me, opponent, opponentName }: LobbyProps) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const now = useTicker(true)
   const seconds = Math.max(0, Math.ceil(msToDeadline(snapshot, now) / 1000))
   const side = (player: PlayerDto | undefined, name: string) => (
     <div className="grid w-36 justify-items-center gap-2 sm:w-44">
-      <PlayerAvatar player={player} className="size-16 text-2xl sm:size-20" />
+      <span className="relative">
+        <PlayerAvatar player={player} className="size-16 sm:size-20" />
+        {player?.kind === 'ghost' && (
+          <Ghost aria-hidden="true" className="absolute -right-1 -bottom-1 size-7 rounded-full bg-card p-1 text-primary" />
+        )}
+      </span>
       <p className="font-heading text-lg leading-tight font-semibold text-balance">{name}</p>
-      <p className="font-mono text-xs text-muted-foreground">{player?.displayRating}</p>
+      <p className="font-mono text-xs text-muted-foreground">
+        {player?.user && `${t.dashboard.tiers[player.user.tier]} · `}
+        {player && ratingText(player.displayRating, player.user?.isProvisional)}
+      </p>
+      {player?.kind === 'ghost' && player.ghostRecordedAt && (
+        <p className="text-xs text-pretty text-muted-foreground">{t.match.ghostRecorded(relativeTime(player.ghostRecordedAt, locale))}</p>
+      )}
     </div>
   )
 
@@ -184,12 +204,19 @@ function Scoreboard({ me, opponent, opponentName, opponentAnswered }: Scoreboard
   const { t } = useLocale()
   const side = (player: PlayerDto | undefined, name: string, answered: boolean, end?: boolean) => (
     <div className={cn('flex min-w-0 items-center gap-3', end && 'flex-row-reverse text-right')}>
-      <PlayerAvatar player={player} className="hidden size-10 text-base sm:grid" />
+      <PlayerAvatar player={player} className="hidden size-10 sm:block" />
       <div className="grid min-w-0">
         <p className="truncate text-sm font-medium">{name}</p>
-        <p className={cn('font-mono text-xs', answered ? 'text-success' : 'text-muted-foreground')}>
-          {answered ? t.match.answered : opponent && player?.displayRating}
-        </p>
+        {player?.kind === 'human' && !player.connected ? (
+          <p className="flex items-center gap-1 text-xs text-warning">
+            <WifiOff aria-hidden="true" className="size-3" />
+            {t.match.disconnected}
+          </p>
+        ) : (
+          <p className={cn('font-mono text-xs', answered ? 'text-success' : 'text-muted-foreground')}>
+            {answered ? t.match.answered : opponent && player && ratingText(player.displayRating, player.user?.isProvisional)}
+          </p>
+        )}
       </div>
       <p className={cn('font-heading text-2xl font-semibold tabular-nums sm:text-3xl', end ? 'mr-auto' : 'ml-auto')}>
         {player?.score ?? 0}
@@ -198,10 +225,10 @@ function Scoreboard({ me, opponent, opponentName, opponentAnswered }: Scoreboard
   )
 
   if (!opponent)
-    return <div className="grid rounded-xl bg-card p-3 ring-1 ring-foreground/10 sm:p-4">{side(me, t.match.you, false)}</div>
+    return <div className={cn('grid rounded-xl bg-card p-3 sm:p-4', skyOutline)}>{side(me, t.match.you, false)}</div>
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 sm:p-4">
+    <div className={cn('grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-xl bg-card p-3 sm:p-4', skyOutline)}>
       {side(me, t.match.you, false)}
       <span className="font-mono text-xs text-muted-foreground">vs</span>
       {side(opponent, opponentName, opponentAnswered, true)}
@@ -283,10 +310,11 @@ function QuestionStage({ snapshot, command, opponentName }: QuestionStageProps) 
   return (
     <section className="grid gap-5">
       {match.timed && <TimerBar left={left} total={limit} hidden={!!interstitial} />}
-      <Card>
+      <Card className={skyOutline}>
         <CardContent>
           <QuestionBody
             content={turn.question.content}
+            language={turn.question.language}
             mine={mine}
             correct={interstitial?.key.answer}
             locked={answered || left <= 0 || !!interstitial}
@@ -316,37 +344,6 @@ function QuestionStage({ snapshot, command, opponentName }: QuestionStageProps) 
         </p>
       )}
     </section>
-  )
-}
-
-// The AI explanation for untimed practice. Its first request can take a few seconds; when the AI is unavailable
-// (source 'static') only the "remember" line below it is shown.
-function Explanation({ questionId }: { questionId: string }) {
-  const { t } = useLocale()
-  const load = useCallback((signal: AbortSignal) => api.explanation(questionId, signal), [questionId])
-  const { data, loading } = useAsync(load)
-
-  if (loading)
-    return (
-      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-        <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
-        {t.match.explaining}
-      </p>
-    )
-  if (data?.source !== 'ai') return null
-  return (
-    <div className="grid gap-2 text-sm text-pretty">
-      {data.whyCorrect && (
-        <p>
-          <span className="font-medium text-success">{t.match.whyCorrect}:</span> {data.whyCorrect}
-        </p>
-      )}
-      {data.whyDistractor && (
-        <p>
-          <span className="font-medium text-destructive">{t.match.whyDistractor}:</span> {data.whyDistractor}
-        </p>
-      )}
-    </div>
   )
 }
 

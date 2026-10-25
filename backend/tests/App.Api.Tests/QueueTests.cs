@@ -227,13 +227,13 @@ public class QueueTests(TestApp app) : RankedTestBase(app)
     }
 
     [Fact]
-    public async Task Bot_is_offered_after_30s_without_an_opponent()
+    public async Task Bot_is_offered_after_20s_without_an_opponent()
     {
         var ana = await PlayerAsync("ana", await SeedTopicsAsync(1, 2, 3));
         await JoinAsync(ana);
         var early = await QueueAsync(ana);
 
-        App.Clock.Advance(TimeSpan.FromSeconds(30));
+        App.Clock.Advance(TimeSpan.FromSeconds(20));
 
         Assert.False(early.BotOffer);
         Assert.True((await QueueAsync(ana)).BotOffer);

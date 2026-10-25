@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TodayCard } from '@/features/dashboard/TodayCard'
 import { useStartMatch } from '@/features/match/use-start-match'
 import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
@@ -32,6 +33,7 @@ export function PracticePage() {
         <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{t.practice.title}</h1>
         <p className="text-sm text-pretty text-muted-foreground">{t.practice.subtitle}</p>
       </header>
+      <TodaySection />
       {practice.data ? (
         <PracticeForm due={practice.data[0]} map={practice.data[1]} me={practice.data[2]} />
       ) : practice.error ? (
@@ -55,6 +57,28 @@ export function PracticePage() {
       )}
     </main>
   )
+}
+
+// Today's tasks and the daily challenge, moved here from the dashboard. They come from the dashboard read: the
+// challenge's own GET would open the attempt and start its 60 s clock.
+function TodaySection() {
+  const { t } = useLocale()
+  const today = useAsync(api.dashboard)
+
+  if (today.data) return today.data.dailyTasks.length > 0 ? <TodayCard data={today.data} /> : null
+  if (today.error)
+    return (
+      <Card role="alert">
+        <CardContent className="grid justify-items-start gap-3">
+          <p>{t.practice.todayFailed}</p>
+          <p className="text-sm text-muted-foreground">{today.error.message}</p>
+          <Button variant="outline" onClick={today.reload}>
+            {t.common.retry}
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  return <Skeleton aria-busy="true" className="h-44 rounded-xl" />
 }
 
 interface PracticeFormProps {
@@ -144,6 +168,7 @@ function PracticeForm({ due, map, me }: PracticeFormProps) {
           name="mode"
           value={mode}
           onChange={setMode}
+          toggle
           options={[
             { value: 'untimed', label: copy.modes.untimed },
             { value: 'timed', label: copy.modes.timed },

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { LoginRequest, MeDto, RegisterRequest } from '@/types/api'
+import type { LoginRequest, MeDto, RegisterRequest, UpdateMeRequest } from '@/types/api'
 
 export type Session =
   | { status: 'loading' }
@@ -10,9 +10,12 @@ export type Session =
 export interface AuthState {
   session: Session
   retry: () => void
-  login: (body: LoginRequest) => Promise<void>
+  login: (body: LoginRequest, remember: boolean) => Promise<void>
   register: (body: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
+  updateMe: (body: UpdateMeRequest) => Promise<void>
+  setUser: (user: MeDto) => void // a fresh MeDto from a purchase, the equipment or the dashboard
+  refreshUser: () => Promise<void> // after something changed coins, XP or rating on the server
 }
 
 export const AuthContext = createContext<AuthState | null>(null)

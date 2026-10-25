@@ -1,9 +1,12 @@
 import { Check, Crosshair, Star, Target, X } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { QuestionBody } from '@/features/match/QuestionBody'
 import { useStartMatch } from '@/features/match/use-start-match'
+import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
 import { relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
@@ -148,6 +151,7 @@ interface ConceptDetailProps {
 function ConceptDetail({ node, starting, error, onPractice }: ConceptDetailProps) {
   const { t, locale } = useLocale()
   const copy = t.profile.map
+  const [openAnswer, setOpenAnswer] = useState<string>()
 
   return (
     <section aria-label={node.concept.name} className="grid gap-4 rounded-xl bg-secondary/60 p-4 ring-1 ring-border">
@@ -165,19 +169,30 @@ function ConceptDetail({ node, starting, error, onPractice }: ConceptDetailProps
       <div className="grid gap-2">
         <p className="text-xs text-muted-foreground">{copy.lastAnswers}</p>
         {node.lastAnswers.length ? (
-          <ul className="grid gap-2">
-            {node.lastAnswers.map((answer) => (
-              <li key={`${answer.questionId}-${answer.at}`} className="flex items-start gap-2.5 text-sm">
-                {answer.isCorrect ? (
-                  <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-success" />
-                ) : (
-                  <X aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-destructive" />
-                )}
-                <span className="sr-only">{answer.isCorrect ? copy.correct : copy.wrong}:</span>
-                <span className="line-clamp-2 flex-1 text-pretty">{answer.prompt}</span>
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">{relativeTime(answer.at, locale)}</span>
-              </li>
-            ))}
+          <ul className="grid gap-1">
+            {node.lastAnswers.map((answer) => {
+              const key = `${answer.questionId}-${answer.at}`
+              return (
+                <li key={key} className="grid gap-2">
+                  <button
+                    type="button"
+                    aria-expanded={openAnswer === key}
+                    onClick={() => setOpenAnswer(openAnswer === key ? undefined : key)}
+                    className="flex items-start gap-2.5 rounded-md p-1.5 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    {answer.isCorrect ? (
+                      <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-success" />
+                    ) : (
+                      <X aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-destructive" />
+                    )}
+                    <span className="sr-only">{answer.isCorrect ? copy.correct : copy.wrong}:</span>
+                    <span className="line-clamp-2 flex-1 text-pretty">{answer.prompt}</span>
+                    <span className="shrink-0 font-mono text-xs text-muted-foreground">{relativeTime(answer.at, locale)}</span>
+                  </button>
+                  {openAnswer === key && <AnsweredQuestion questionId={answer.questionId} />}
+                </li>
+              )
+            })}
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">{copy.noAnswers}</p>
@@ -189,5 +204,30 @@ function ConceptDetail({ node, starting, error, onPractice }: ConceptDetailProps
         </p>
       )}
     </section>
+  )
+}
+
+// One of my last answers opened up: the question with its key (I answered it, so the API includes the key).
+function AnsweredQuestion({ questionId }: { questionId: string }) {
+  const { t } = useLocale()
+  const load = useCallback((signal: AbortSignal) => api.question(questionId, signal), [questionId])
+  const { data, error } = useAsync(load)
+
+  if (error)
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        {error.message}
+      </p>
+    )
+  if (!data) return <Skeleton aria-busy="true" className="h-40 rounded-lg" />
+  return (
+    <div className="grid gap-3 rounded-lg bg-card p-4 ring-1 ring-border">
+      <QuestionBody content={data.content} language={data.language} correct={data.key?.answer} locked onAnswer={() => {}} />
+      {data.key && (
+        <p className="text-sm text-pretty">
+          <span className="font-medium text-primary">{t.match.remember}:</span> {data.key.remember}
+        </p>
+      )}
+    </div>
   )
 }

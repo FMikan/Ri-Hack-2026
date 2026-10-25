@@ -15,7 +15,7 @@ interface OrderStepsProps {
   onAnswer: (orderedIds: string[]) => void
 }
 
-const row = 'flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ring-1 ring-inset'
+const row = 'flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ring-2 ring-inset'
 
 // Up and down buttons instead of drag and drop: they work the same with a thumb, a mouse and a keyboard.
 export function OrderSteps({ steps, mine, correct, locked, onAnswer }: OrderStepsProps) {
@@ -56,7 +56,7 @@ export function OrderSteps({ steps, mine, correct, locked, onAnswer }: OrderStep
       <p className="text-sm text-muted-foreground">{t.match.hints.order}</p>
       <ol className="grid gap-2">
         {order.map((id, index) => (
-          <li key={id} className={cn(row, 'bg-secondary py-1 pr-1 ring-border')}>
+          <li key={id} className={cn(row, 'bg-secondary py-1 pr-1 ring-primary/50')}>
             <span className="w-5 shrink-0 font-mono text-xs text-muted-foreground">{index + 1}</span>
             <span className="min-w-0 flex-1 break-words">{text(id)}</span>
             <button type="button" aria-label={t.match.moveUp(text(id))} disabled={index === 0} onClick={() => move(index, index - 1)} className={arrow}>

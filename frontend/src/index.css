@@ -21,6 +21,18 @@
     --color-bot-junior: var(--bot-junior);
     --color-bot-mid: var(--bot-mid);
     --color-bot-senior: var(--bot-senior);
+    --color-tier-platinum: var(--tier-platinum);
+    --color-tier-master: var(--tier-master);
+    --color-board-midnight: var(--board-midnight);
+    --color-code-keyword: var(--code-keyword);
+    --color-code-string: var(--code-string);
+    --color-code-number: var(--code-number);
+    --color-code-comment: var(--code-comment);
+    --color-code-function: var(--code-function);
+    --color-code-type: var(--code-type);
+    --color-code-attr: var(--code-attr);
+    --color-code-tag: var(--code-tag);
+    --color-code-meta: var(--code-meta);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -60,6 +72,106 @@
     --radius-2xl: calc(var(--radius) * 3);
     --radius-3xl: calc(var(--radius) * 4);
     --radius-4xl: calc(var(--radius) * 5);
+
+    /* Ranked veto: the coin toss that decides who bans first (runs once, 1.2 s of the 3 s phase). */
+    --animate-coin: coin-flip 1.2s cubic-bezier(0.2, 0, 0, 1) both;
+    @keyframes coin-flip {
+        from {
+            transform: rotateY(0);
+        }
+        to {
+            transform: rotateY(1080deg);
+        }
+    }
+
+    /* Ranked queue, while searching: every 2.9 s the swords lift apart, swing in and hit (21%), then rest crossed for 2 s.
+       Sparks and a shockwave ring run on the same cycle, so the three stay in step. */
+    --animate-clash-front: clash-front 2900ms 150ms infinite;
+    --animate-clash-back: clash-back 2900ms 150ms infinite;
+    --animate-clash-spark: clash-spark 2900ms 150ms infinite;
+    --animate-clash-wave: clash-wave 2900ms 150ms infinite;
+    @keyframes clash-front {
+        from {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        9% {
+            transform: translate(5px, 1px) rotate(35deg);
+            animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); /* accelerates into the hit */
+        }
+        21% {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        25% {
+            transform: translate(0.6px, 0) rotate(5deg);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        31%,
+        to {
+            transform: translate(0, 0) rotate(0);
+        }
+    }
+    @keyframes clash-back {
+        from {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        9% {
+            transform: translate(-5px, 1px) rotate(-35deg);
+            animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+        }
+        21% {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        25% {
+            transform: translate(-0.6px, 0) rotate(-5deg);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        31%,
+        to {
+            transform: translate(0, 0) rotate(0);
+        }
+    }
+    @keyframes clash-spark {
+        from,
+        21% {
+            opacity: 0;
+            transform: scale(0.5);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        24% {
+            opacity: 1;
+        }
+        37%,
+        to {
+            opacity: 0;
+            transform: scale(1.25);
+        }
+    }
+    /* The opponent's seat: the found player's portrait resolving in. */
+    --animate-seat-reveal: seat-reveal 300ms cubic-bezier(0.2, 0, 0, 1) both;
+    @keyframes seat-reveal {
+        from {
+            opacity: 0;
+            transform: scale(0.25);
+            filter: blur(4px);
+        }
+    }
+    @keyframes clash-wave {
+        from,
+        21% {
+            opacity: 1;
+            transform: scale(1);
+            animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+        }
+        47%,
+        to {
+            opacity: 0;
+            transform: scale(2);
+        }
+    }
 }
 
 /* Palette (PRAVILA.md §3): charcoal surfaces, sky accent, green and red for change. Dark UI only. */
@@ -101,6 +213,20 @@
     --bot-junior: var(--green);
     --bot-mid: var(--sky);
     --bot-senior: #f0b24a;
+    /* shop cosmetics (src/lib/cosmetics.ts): season frames without a medal color, and the midnight duel board */
+    --tier-platinum: #6fd6c4;
+    --tier-master: #e64ccf;
+    --board-midnight: #0b0f1f;
+    /* syntax colors in question code (src/features/match/highlight.ts); all 6.5:1+ on --ink */
+    --code-keyword: #c792ea;
+    --code-string: #a8d982;
+    --code-number: #f0b24a;
+    --code-comment: var(--text-muted);
+    --code-function: #7cc4ff;
+    --code-type: #6fd6c4;
+    --code-attr: #ffcb6b;
+    --code-tag: #ff8a8c;
+    --code-meta: #f59fd5;
     /* Input borders need 3:1 against the page (WCAG 1.4.11). */
     --border: rgb(255 255 255 / 0.07);
     --input: rgb(255 255 255 / 0.36);
@@ -131,4 +257,14 @@
   html {
     @apply font-sans antialiased;
     }
+}
+
+/* Shop cosmetics drawn as patterns, not gradients (PRAVILA.md §3): terminal scanlines and a blueprint grid. */
+@utility banner-terminal {
+    background-color: #0d1712;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='1' fill='%2333c37a' fill-opacity='.12'/%3E%3C/svg%3E");
+}
+@utility card-blueprint {
+    background-color: #0f1b2d;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M24 0H0V24' fill='none' stroke='%232ea6ff' stroke-opacity='.14'/%3E%3C/svg%3E");
 }

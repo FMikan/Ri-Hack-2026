@@ -6,9 +6,10 @@ import { LocaleContext, type Locale } from './locale-context'
 const STORAGE_KEY = 'locale'
 const messages = { en, hr }
 
-// shortcut: the choice lives in localStorage only; sync it with MeDto.locale when the settings screen exists.
+// The app always opens in English; a picked language lasts only for the tab (sessionStorage), so reloads keep it
+// but a fresh open does not. Sync it with MeDto.locale when the settings screen exists.
 function savedLocale(): Locale {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  const saved = sessionStorage.getItem(STORAGE_KEY)
   return saved === 'hr' ? 'hr' : 'en'
 }
 
@@ -24,7 +25,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       locale,
       t: messages[locale],
       setLocale: (next: Locale) => {
-        localStorage.setItem(STORAGE_KEY, next)
+        sessionStorage.setItem(STORAGE_KEY, next)
         setLocaleState(next)
       },
     }),

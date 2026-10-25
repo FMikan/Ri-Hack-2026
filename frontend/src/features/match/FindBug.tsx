@@ -9,6 +9,7 @@ type Answer = { line: number; fixId: string }
 
 interface FindBugProps {
   code: string
+  language?: string | null
   fixes: Option[]
   mine?: Answer
   correct?: Answer & { acceptLines?: number[] }
@@ -17,7 +18,7 @@ interface FindBugProps {
 }
 
 // Two steps: tap the line (1-based), then pick the fix, which sends the answer.
-export function FindBug({ code, fixes, mine, correct, locked, onAnswer }: FindBugProps) {
+export function FindBug({ code, language, fixes, mine, correct, locked, onAnswer }: FindBugProps) {
   const { t } = useLocale()
   const [line, setLine] = useState<number>()
   const chosen = mine?.line ?? line
@@ -28,7 +29,8 @@ export function FindBug({ code, fixes, mine, correct, locked, onAnswer }: FindBu
       {!locked && <p className="text-sm text-muted-foreground">{t.match.hints.bug}</p>}
       <CodeBlock
         code={code}
-        line={(text, number) => {
+        language={language}
+        line={(content, number) => {
           const tone = bugLines.includes(number)
             ? 'bg-success/15 text-success'
             : correct && number === chosen
@@ -51,7 +53,7 @@ export function FindBug({ code, fixes, mine, correct, locked, onAnswer }: FindBu
               <span aria-hidden="true" className="pr-3 text-right opacity-60 select-none">
                 {number}
               </span>
-              <code className="pr-4 whitespace-pre">{text}</code>
+              <code className="pr-4 whitespace-pre">{content}</code>
             </button>
           )
         }}

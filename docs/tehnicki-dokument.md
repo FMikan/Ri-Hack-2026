@@ -125,7 +125,7 @@ Isti lock koriste `BanTopic`, `NextQuestion`, `Resign`, `AcceptRematch`, `Finish
 
 ### 2.5 Mobilna spremnost (Capacitor, kasnije)
 
-- Token u `Authorization` headeru, nikad cookie; refresh token klijent čuva iza malog async `tokenStore` sučelja (web: `localStorage`; Android: Capacitor Preferences). Access token samo u memoriji.
+- Token u `Authorization` headeru, nikad cookie; refresh token klijent čuva iza malog async `tokenStore` sučelja (web: `localStorage`, ili `sessionStorage` kad je na loginu isključeno "Zapamti me", pa sesija završava zatvaranjem browsera; Android: Capacitor Preferences). Access token samo u memoriji.
 - `Cors:AllowedOrigins` dobiva `https://localhost`, `capacitor://localhost` i `http://localhost` kad dođe Android; Android build koristi apsolutni `VITE_API_BASE_URL` (produkcijski web ide preko Caddyja).
 - Polling i REST rade identično u WebViewu; SignalR (ako dođe) ima `@microsoft/signalr` koji radi u Capacitoru. Polling hook (§6.10) staje kad je `document.hidden`, a odmah refetcha na `visibilitychange`/Capacitor `appStateChange`; vrijeme se mjeri iz `performance.now()` zabilježenog na renderu, ne iz brojanja intervala (WebView u pozadini usporava timere).
 - Linkovi koji rade i na webu i u aplikaciji: `https://<domena>/challenge/{code}` i `https://<domena>/reset-password?token=...` kao Android App Links (jedan `assetlinks.json`); nema `app://` sheme.
@@ -993,7 +993,7 @@ interface QueueStateDto {
   enteredAt?: Iso; serverTime: Iso; rangeNow?: number; topicIds: Uuid[]
   proposal?: { id: Uuid; opponent: UserRefDto; expiresAt: Iso; iAccepted: boolean }
   ghostOffer?: { opponent: UserRefDto; recordedAt: Iso; topic: TopicDto }    // nakon 30 s
-  botOffer: boolean                                                          // nakon 30 s bez ghosta ili nakon odbijanja; POST /api/matches/bot napušta red
+  botOffer: boolean                                                          // nakon 20 s bez ghosta ili nakon odbijanja; POST /api/matches/bot napušta red
   matchId?: Uuid                                                             // status matched → navigiraj
 }
 ```
@@ -1059,7 +1059,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 ### 6.10 Što frontend radi dok backend nije tu, i kako klijent radi
 
 - `src/types/api.ts`: ručno pisani tipovi svih DTO-a iz §6. Backend ga ažurira u istom PR-u u kojem mijenja DTO, pa je on izvor istine za frontend. Za provjeru uživo: `http://localhost:5080/scalar` i `http://localhost:5080/openapi/v1.json` dok API radi lokalno (Development).
-- `src/lib/api-client.ts`: access token samo u memoriji (`setAccessToken`), refresh token iza `tokenStore` (async `get/set/clear`; web `localStorage`, Android Capacitor Preferences). Na 401: jedan dijeljeni in-flight `refresh()` promise za sve pozivatelje, zatim jedan retry originalnog zahtjeva; `/api/auth/*` se nikad ne retrya; pad refresha → `tokenStore.clear()` + `onUnauthenticated()` (router na `/login` s return URL-om). `request<T>(path, init, { auth: false })` za javne rute. `ApiError.code` vraća `problem.type` kao `AppErrorCode`.
+- `src/lib/api-client.ts`: access token samo u memoriji (`setAccessToken`), refresh token iza `tokenStore` (async `get/remembered/set/clear`; web `localStorage` ili `sessionStorage` bez "Zapamti me", rotirani token ostaje u istom spremištu; Android Capacitor Preferences). Na 401: jedan dijeljeni in-flight `refresh()` promise za sve pozivatelje, zatim jedan retry originalnog zahtjeva; `/api/auth/*` se nikad ne retrya; pad refresha → `tokenStore.clear()` + `onUnauthenticated()` (router na `/login` s return URL-om). `request<T>(path, init, { auth: false })` za javne rute. `ApiError.code` vraća `problem.type` kao `AppErrorCode`.
 - `src/hooks/use-poll.ts`: `usePoll(load, intervalMs, until)` zadržava zadnje podatke, nikad ne vraća `loading` nakon prvog uspjeha (postojeći `useAsync` bi treperio svake sekunde), staje kad `until(data)` vrati true, pauzira na `document.hidden`, refetcha odmah na `visibilitychange`/`appStateChange`.
 - `src/lib/fixtures/` drži po jedan primjer svakog DTO-a (kopirano iz ovog dokumenta) za razvoj ekrana prije endpointa; nema mock servera.
 - Konstante na klijentu: lista avatara, mapiranje `assetKey` → slika/CSS, lokalizirana imena bot persona, pragovi tierova za prikaz (iz `UserRefDto.tier`, ne računa se na klijentu).
@@ -1125,7 +1125,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 **F3a: red čekanja, veto, živi rangirani duel**
 - Igraj rangirano: `POST /api/queue` (treba 3–5 tema), zatim `GET /api/queue` svake 1 s. `rangeNow` raste (±100, +50 svakih 10 s). Teme su zaključane dok je igrač u redu (`PUT /api/me/topics` → 409 `urn:app:topics/locked-in-queue`; `me.inQueue`, `dashboard.queueLocked`). `DELETE /api/queue` = Odustani.
 - `status: 'proposed'`: "Protivnik pronađen" s `proposal.opponent` i odbrojavanjem do `proposal.expiresAt` (10 s, iz `serverTime`). `POST /api/queue/proposals/{id}/accept`; dok drugi nije prihvatio, `iAccepted: true`. Kad oba prihvate, `status: 'matched'` + `matchId`: otvori partiju. Ako drugi odbije ili istekne: `409 urn:app:proposal/expired` ili poll vrati `waiting` (vrijeme čekanja ostaje).
-- `botOffer: true` nakon 30 s kad nema ghost ponude (vidi F3b): ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati".
+- `botOffer: true` nakon 20 s kad nema ghost ponude (vidi F3b): ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati".
 - Partija počinje u `veto_coin` (3 s animacija novčića, `veto.coinWinnerSeat` banira prvi), pa `veto_ban`: igrač na potezu (`veto.turnSeat == mySeat`) bira temu iz `veto.pool` i šalje `POST /api/matches/{id}/veto/ban { topicId }`; 8 s po potezu, istek = automatski ban (`auto: true`). Uz temu: vlastiti `myMastery` i ikona `pickedByOpponent`. `veto_pick`: `chosenTopicId` je poznat odmah, animacija 3 s prema njemu, zatim lobby i duel kao s botom.
 - Kraj: `result.mine.ratingBefore/ratingAfter`, povijest ima `ratingDelta`. Tier (`user.tier`) i `isProvisional` (prvih 10 partija prikaži `?` umjesto ratinga) dolaze iz `UserRefDto`. Odustajanje i prekid veze (20 s bez pollanja) = poraz; oba odspojena = `aborted` bez promjene ratinga. SP, coini i XP ostaju 0 do F4.
 
@@ -1384,7 +1384,7 @@ F2 Analiza, poduka, mapa
   Calibration_uses_5_D1_D2_questions_on_unknown_concepts_without_reward
 F3 Rangirano (F3a: do Tie_resolves..., F3b: revanš i ghost; SP i tjedni bodovi idu s ledgerom u F4/F5)
   Join_queue_requires_topics / Join_twice_is_409 / Join_while_in_match_is_409
-  Starting_a_bot_match_leaves_the_queue / Bot_is_offered_after_30s_without_an_opponent
+  Starting_a_bot_match_leaves_the_queue / Bot_is_offered_after_20s_without_an_opponent
   Set_topics_is_locked_while_in_queue
   Two_compatible_players_get_proposal_within_one_tick
   Incompatible_topics_never_match

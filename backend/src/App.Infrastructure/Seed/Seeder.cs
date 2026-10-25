@@ -43,6 +43,9 @@ public class Seeder(AppDbContext db, TimeProvider time)
                 {
                     concept = new Concept { Slug = conceptSeed.Slug, Name = conceptSeed.Name, Description = conceptSeed.Description };
                     topic.Concepts.Add(concept);
+                    // Its Id is set on creation, so found only through an existing topic EF would take it for a stored
+                    // row and UPDATE it (0 rows, DbUpdateConcurrencyException); marking it Added makes it an INSERT.
+                    db.Concepts.Add(concept);
                 }
                 concept.Name = conceptSeed.Name;
                 concept.Description = conceptSeed.Description;

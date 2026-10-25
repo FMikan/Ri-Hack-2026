@@ -4,16 +4,19 @@ import {
   LogOut,
   Menu,
   Settings,
+  Store,
   Target,
   Trophy,
   UserRound,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import coin from '@/assets/brand/stackoff-coin-on-dark.svg'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
 import wordmark from '@/assets/brand/stackoff-wordmark-on-dark.svg'
+import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Wordmark } from '@/components/shared/Wordmark'
 import {
   DropdownMenu,
@@ -28,21 +31,29 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
-import { demoMe } from '@/lib/fixtures/demo'
+import { AvatarDialog } from '@/features/profile/AvatarDialog'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'friends' | 'shop' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
   { key: 'practice', icon: Target, to: '/practice' },
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
+  { key: 'friends', icon: Users, to: '/friends' },
+  { key: 'shop', icon: Store, to: '/shop' },
   { key: 'profile', icon: UserRound, to: '/profile' },
 ]
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+
+// A mouse click leaves focus on the link, which would keep the rail wide (focus-within) until a click elsewhere.
+// Keyboard activation has detail 0 and keeps focus, so tabbing through the rail still works.
+function releaseFocus(event: MouseEvent<HTMLElement>) {
+  if (event.detail > 0) event.currentTarget.blur()
+}
 
 // Signed-in layout: icon rail on desktop, top bar with coins and the menu. On phones the menu carries the navigation.
 export function AppShell() {
@@ -67,7 +78,12 @@ function SideRail() {
   return (
     <aside className="group/rail sticky top-0 z-40 hidden h-svh lg:block">
       <div className="absolute inset-y-0 left-0 flex w-20 flex-col gap-8 overflow-hidden border-r border-border bg-sidebar py-5 shadow-black/50 transition-[width,box-shadow] duration-200 ease-out group-focus-within/rail:w-60 group-focus-within/rail:shadow-2xl group-hover/rail:w-60 group-hover/rail:shadow-2xl motion-reduce:transition-none">
-        <NavLink to="/" aria-label="StackOff" className={cn('relative mx-5 flex h-10 items-center rounded-sm', focusRing)}>
+        <NavLink
+          to="/"
+          aria-label="StackOff"
+          onClick={releaseFocus}
+          className={cn('relative mx-5 flex h-10 items-center rounded-sm', focusRing)}
+        >
           <img
             src={coin}
             alt=""
@@ -93,6 +109,7 @@ function SideRail() {
                     <NavLink
                       to={item.to}
                       end
+                      onClick={releaseFocus}
                       className={cn(
                         base,
                         'transition-colors',
@@ -108,6 +125,7 @@ function SideRail() {
                     <button
                       type="button"
                       aria-disabled="true"
+                      onClick={releaseFocus}
                       className={cn(base, 'w-full cursor-not-allowed text-muted-foreground/60', focusRing)}
                     >
                       {inner}
@@ -128,8 +146,9 @@ function TopBar() {
   const { t, locale, setLocale } = useLocale()
   const { pathname } = useLocation()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
   if (session.status !== 'authenticated') return null
-  const user = demoMe(session.user)
+  const user = session.user
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (
@@ -157,9 +176,7 @@ function TopBar() {
             )}
           >
             <Menu aria-hidden="true" className="size-6 lg:hidden" />
-            <span className="hidden size-8 place-items-center rounded-full bg-primary font-heading text-sm font-semibold text-primary-foreground lg:grid">
-              {user.username.charAt(0).toUpperCase()}
-            </span>
+            <UserAvatar user={user} className="hidden size-8 lg:block" />
             <span className="hidden max-w-32 truncate text-sm font-medium lg:block">{user.username}</span>
             <ChevronDown aria-hidden="true" className="hidden size-4 text-muted-foreground lg:block" />
           </DropdownMenuTrigger>
@@ -207,16 +224,43 @@ function TopBar() {
             </DropdownMenuItem>
             {settingsOpen && (
               <>
-                <DropdownMenuLabel inset className="font-normal">
-                  {t.common.language}
-                </DropdownMenuLabel>
-                <DropdownMenuRadioGroup value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-                  {(Object.keys(LOCALE_NAMES) as Locale[]).map((option) => (
-                    <DropdownMenuRadioItem key={option} value={option} lang={option} inset className={touch}>
-                      {LOCALE_NAMES[option]}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
+                <DropdownMenuItem inset className={touch} onSelect={() => setAvatarOpen(true)}>
+                  {t.avatar.menu}
+                  <UserAvatar user={user} className="ml-auto size-5" />
+                </DropdownMenuItem>
+                {/* Language is a row like the others with a small EN | HR switch (the auth pages' look). Still radio
+                    items, so arrow keys reach them; the menu stays open to show the switch. */}
+                <div className="flex items-center gap-1.5 py-0.5 pr-1.5 pl-7 text-sm max-lg:py-1.5">
+                  <span id="menu-language">{t.common.language}</span>
+                  <DropdownMenuRadioGroup
+                    aria-labelledby="menu-language"
+                    value={locale}
+                    // Radix reports a click on the checked item too: that one flips to the other language (a toggle).
+                    onValueChange={(value) =>
+                      setLocale(value === locale ? (Object.keys(LOCALE_NAMES) as Locale[]).find((option) => option !== locale)! : (value as Locale))
+                    }
+                    className="relative ml-auto flex gap-0.5 rounded-lg bg-secondary p-0.5"
+                  >
+                    {/* The thumb behind the picked language slides over (segments are equal, 2.5rem plus the gap). */}
+                    <span
+                      aria-hidden="true"
+                      style={{ translate: `calc(${(Object.keys(LOCALE_NAMES) as Locale[]).indexOf(locale)} * (100% + 0.125rem))` }}
+                      className="absolute inset-y-0.5 left-0.5 w-10 rounded-md bg-primary/15 ring-1 ring-primary/40 ring-inset transition-[translate] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+                    />
+                    {(Object.keys(LOCALE_NAMES) as Locale[]).map((option) => (
+                      <DropdownMenuRadioItem
+                        key={option}
+                        value={option}
+                        lang={option}
+                        aria-label={LOCALE_NAMES[option]}
+                        onSelect={(event) => event.preventDefault()}
+                        className="relative h-7 w-10 justify-center px-0 font-mono text-xs font-medium text-muted-foreground uppercase transition-colors duration-200 focus:bg-foreground/5 focus:text-foreground data-[state=checked]:text-primary focus:data-[state=checked]:text-primary motion-reduce:transition-none *:data-[slot=dropdown-menu-radio-item-indicator]:hidden"
+                      >
+                        {option}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </div>
               </>
             )}
             <DropdownMenuSeparator />
@@ -226,6 +270,7 @@ function TopBar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <AvatarDialog user={user} open={avatarOpen} onOpenChange={setAvatarOpen} />
       </div>
     </header>
   )
