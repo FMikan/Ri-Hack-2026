@@ -214,11 +214,14 @@ export interface DashboardDto {
   dailyTasks: DailyTaskDto[]
   dailyChallengeAttempted: boolean
   suggestion?: { kind: 'review_due' | 'practice_after_losses' | 'calibrate' | 'play'; topicId?: Uuid | null; conceptIds?: Uuid[] | null } | null
-  inbox: {
-    rematch?: { matchId: Uuid; from: UserRefDto; expiresAt: Iso } | null
-    friendChallenge?: { code: string; host: UserRefDto; expiresAt: Iso } | null
-  }
+  inbox: InboxDto
   queueLocked: boolean
+}
+
+// Also on its own at GET /api/me/inbox, which the navigation polls for its dot.
+export interface InboxDto {
+  rematch?: { matchId: Uuid; from: UserRefDto; expiresAt: Iso } | null
+  friendChallenge?: { code: string; host: UserRefDto; expiresAt: Iso } | null
 }
 
 // ---- Content and matches (F1, docs §6.1 and §6.5) ----
@@ -666,7 +669,8 @@ export interface FriendRequest {
 }
 
 // POST /api/friend-challenges → 201 FriendChallengeCreatedDto. With friendUserId the challenge shows in that friend's
-// dashboard.inbox.friendChallenge (409 friends/not-friends otherwise); the code works for anyone for 10 minutes.
+// dashboard.inbox.friendChallenge for 60 s (409 friends/not-friends otherwise); an open code works for anyone for 10 minutes.
+// POST /api/friend-challenges/{code}/decline → 204: the friend it was sent to closes it (expiresAt becomes now).
 export interface CreateFriendChallengeRequest {
   friendUserId?: Uuid | null
 }

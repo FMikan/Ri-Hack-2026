@@ -16,7 +16,7 @@ interface AvatarDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-// Settings > Profile picture: one of the 30 portraits, saved on the account so other players see it too.
+// Opened from the portrait on the profile: one of the 30 portraits, saved on the account so other players see it too.
 export function AvatarDialog({ user, open, onOpenChange }: AvatarDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

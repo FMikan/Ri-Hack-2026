@@ -20,7 +20,7 @@ public class Friendship
 }
 
 // A room code for an unranked duel with the veto (idea §12): open to whoever has the code, or shown in one friend's
-// inbox. Valid for 10 minutes; the first guest starts the match.
+// inbox. Valid for 10 minutes, or a minute when sent to one friend; the first guest starts the match.
 public class FriendChallenge
 {
     public const string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789";

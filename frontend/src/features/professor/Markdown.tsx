@@ -44,7 +44,7 @@ function parse(text: string): Block[] {
 export function Inline({ text }: { text: string }) {
   return text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).map((part, i) =>
     part.startsWith('`') && part.endsWith('`') && part.length > 2 ? (
-      <code key={i} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
+      <code key={i} className="rounded bg-secondary px-1 py-0.5 font-mono text-[0.9em]">
         {part.slice(1, -1)}
       </code>
     ) : part.startsWith('**') && part.endsWith('**') && part.length > 4 ? (
@@ -61,13 +61,13 @@ export function Inline({ text }: { text: string }) {
 
 export function Markdown({ text }: { text: string }) {
   return (
-    <div className="grid gap-3 text-pretty">
+    <div className="grid gap-4 leading-relaxed text-pretty">
       {parse(text).map((block, i) =>
         block.kind === 'code' ? (
           <CodeBlock key={i} code={block.code} language={block.language} />
         ) : block.kind === 'list' ? (
           block.ordered ? (
-            <ol key={i} start={block.start} className="grid list-decimal gap-1 pl-6">
+            <ol key={i} start={block.start} className="grid list-decimal gap-1.5 pl-5 marker:font-mono marker:text-muted-foreground">
               {block.items.map((entry, j) => (
                 <li key={j}>
                   <Inline text={entry} />
@@ -75,7 +75,7 @@ export function Markdown({ text }: { text: string }) {
               ))}
             </ol>
           ) : (
-            <ul key={i} className="grid list-disc gap-1 pl-6">
+            <ul key={i} className="grid list-disc gap-1.5 pl-5 marker:text-muted-foreground">
               {block.items.map((entry, j) => (
                 <li key={j}>
                   <Inline text={entry} />

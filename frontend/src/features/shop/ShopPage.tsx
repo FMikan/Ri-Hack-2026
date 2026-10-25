@@ -1,16 +1,14 @@
 import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
-import { Rewards } from '@/components/shared/Rewards'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/auth-context'
 import { useAsync } from '@/hooks/use-async'
 import { api, ApiError } from '@/lib/api-client'
 import { byKind, SLOTS } from '@/lib/cosmetics'
-import { relativeTime } from '@/lib/format'
 import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
 import type { MeDto, ShopItemDto } from '@/types/api'
@@ -107,7 +105,6 @@ export function ShopPage() {
           ))}
         </div>
       )}
-      <RewardHistory />
     </main>
   )
 }
@@ -196,46 +193,5 @@ function ShopItem({ item, me, onBought }: { item: ShopItemDto; me: MeDto; onBoug
         </CardContent>
       </Card>
     </li>
-  )
-}
-
-// Where coins and XP came from: GET /api/me/rewards (newest first, purchases negative).
-function RewardHistory() {
-  const { t, locale } = useLocale()
-  const copy = t.shop.history
-  const rewards = useAsync(api.rewards)
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>{copy.title}</h2>
-        </CardTitle>
-        <CardDescription>{copy.subtitle}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {rewards.data ? (
-          rewards.data.length ? (
-            <ul className="grid max-h-96 gap-1.5 overflow-y-auto [scrollbar-width:thin]">
-              {rewards.data.map((reward, index) => (
-                <li key={`${reward.at}-${index}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-3 py-2 ring-1 ring-border ring-inset">
-                  <span className="min-w-0 flex-1 text-sm font-medium">{copy.types[reward.type] ?? reward.type}</span>
-                  <Rewards coins={reward.coins} xp={reward.xp} sp={reward.sp} className="justify-end [&_li]:px-2 [&_li]:py-0.5 [&_li]:text-xs" />
-                  <span className="w-28 text-right font-mono text-xs text-muted-foreground">{relativeTime(reward.at, locale)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">{copy.empty}</p>
-          )
-        ) : rewards.error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {rewards.error.message}
-          </p>
-        ) : (
-          <Skeleton aria-busy="true" className="h-40 rounded-lg" />
-        )}
-      </CardContent>
-    </Card>
   )
 }

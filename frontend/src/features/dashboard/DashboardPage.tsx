@@ -70,7 +70,7 @@ function DashboardView({ data, reload }: { data: DashboardDto; reload: () => voi
     <>
       {/* The greeting sits in the top bar; the page keeps its heading for screen readers. */}
       <h1 className="sr-only">{t.dashboard.documentTitle}</h1>
-      <Inbox inbox={data.inbox} />
+      <Inbox inbox={data.inbox} onChanged={reload} />
       {!needsTopics && <TodayNotice data={data} />}
       <div className={GRID}>
         <PlayCard me={me} locked={needsTopics} className="col-span-2 xl:col-start-1 xl:row-start-1" />
