@@ -96,7 +96,7 @@ export function TopicsCard({ topics, queueLocked, onSaved, id, className }: Topi
         {topics.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t.dashboard.skills.empty}</p>
         ) : (
-          <ul className="grid max-h-72 min-h-0 flex-1 content-start gap-2 overflow-y-auto [scrollbar-width:thin] sm:grid-cols-2 xl:max-h-none xl:grid-cols-1">
+          <ul className="relative grid max-h-72 min-h-0 flex-1 content-start gap-2 overflow-y-auto [scrollbar-width:thin] sm:grid-cols-2 xl:max-h-none xl:grid-cols-1">
             {ordered.map(({ topic, active }) => {
               const Icon = topicIcon(topic.slug)
               const on = selected.has(topic.id)

@@ -49,7 +49,7 @@ export function MatchHistoryCard({ history, className }: { history: MatchSummary
             </Button>
           </div>
         ) : (
-          <ul className="grid max-h-96 min-h-0 flex-1 content-start gap-2 overflow-y-auto [scrollbar-width:thin] xl:max-h-none">
+          <ul className="relative grid max-h-96 min-h-0 flex-1 content-start gap-2 overflow-y-auto [scrollbar-width:thin] xl:max-h-none">
             {history.map((match) => (
               <li key={match.id}>
                 <Link
