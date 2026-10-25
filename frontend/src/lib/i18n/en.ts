@@ -140,15 +140,6 @@ export const en = {
         open: 'Open Practice',
       },
     },
-    suggestion: {
-      text: {
-        review_due: (topic: string, due: number) =>
-          `${due} ${due === 1 ? 'concept is' : 'concepts are'} due for review in ${topic}. Reviews keep patched concepts from slipping.`,
-        practice_after_losses: (topic: string) => `A few losses in a row. Practice ${topic} without a clock before the next duel?`,
-        calibrate: (topic: string) => `Five quick questions on ${topic} tell us where you stand, so duels start at your level.`,
-      },
-      action: { review_due: 'Review now', practice_after_losses: 'Practice', calibrate: 'Calibrate' },
-    },
     loadFailed: 'Could not load the dashboard.',
     play: {
       title: 'Ready for a duel?',

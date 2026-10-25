@@ -144,15 +144,6 @@ export const hr: Messages = {
         open: 'Otvori Trening',
       },
     },
-    suggestion: {
-      text: {
-        review_due: (topic: string, due: number) =>
-          `Koncepata za ponavljanje u temi ${topic}: ${due}. Ponavljanje čuva zakrpane koncepte.`,
-        practice_after_losses: (topic: string) => `Nekoliko poraza zaredom. Treniraj ${topic} bez sata prije idućeg duela?`,
-        calibrate: (topic: string) => `Pet brzih pitanja iz teme ${topic} pokazuje gdje si, pa dueli kreću od tvoje razine.`,
-      },
-      action: { review_due: 'Ponovi sada', practice_after_losses: 'Treniraj', calibrate: 'Kalibriraj' },
-    },
     loadFailed: 'Početna stranica se nije učitala.',
     play: {
       title: 'Vrijeme je za duel',
