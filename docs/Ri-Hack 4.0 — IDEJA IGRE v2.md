@@ -108,7 +108,7 @@ Deck vuče iz banda prosjeka ratinga oba igrača, ±1 band za raznolikost.
 
 ## 4. Matchmaking
 
-Klik na *Igraj* stavlja igrača u red; par se traži po ratingu uz uvjet barem jedne zajedničke teme, a nakon 30 sekundi bez para nudi se bot.
+Klik na *Igraj* stavlja igrača u red; par se traži po ratingu uz uvjet barem jedne zajedničke teme, a nakon 20 sekundi bez para nudi se bot.
 
 **Pravila uparivanja**
 
@@ -118,7 +118,7 @@ Klik na *Igraj* stavlja igrača u red; par se traži po ratingu uz uvjet barem j
 4. Među valjanim kandidatima prednost ima najmanja razlika ratinga, zatim najviše zajedničkih tema, zatim dulje čekanje.
 5. Isti protivnik se ne uparuje tri rangirane partije zaredom, osim kroz revanš.
 6. Pronađen par: oba igrača vide *Protivnik pronađen* i imaju 10 s za *Prihvati*. Tko ne prihvati, ispada iz reda; drugi ostaje s očuvanim vremenom čekanja.
-7. Nakon 30 s bez para: ponuda ghost duela (rangirano, pravila dolje); ako nema prikladne snimke, ponuda *Igraj protiv bota* (nerangirano) ili *Nastavi čekati*. Red se ne napušta dok igrač sam ne odluči.
+7. Nakon 20 s bez para: ponuda *Igraj protiv bota* (nerangirano) ili *Nastavi čekati*; nakon 30 s ponuda ghost duela (rangirano, pravila dolje), koja zamjenjuje bota dok je aktivna. Red se ne napušta dok igrač sam ne odluči.
 
 **Što igrač vidi dok čeka:** proteklo vrijeme, trenutni raspon ratinga, svoje aktivne teme, gumb *Odustani*. Promjena tema nije moguća u redu; odustajanje otključava chipove.
 
@@ -646,7 +646,7 @@ Trinaest ekrana, jedan primarni gumb na dashboardu i glavni tok od pet koraka ko
 | --- | --- | --- |
 | Onboarding | registracija, odabir 3–5 tema, odabir jezika (EN zadano, HR opcija) | *Kreni* |
 | Dashboard | gumb Igraj; sekundarno Bot, Trening, Dnevni izazov, Prijatelji; chipovi tema; desno radar, streak, graf ratinga, *Za ponoviti: n*, dnevni zadaci | *Igraj* |
-| Red čekanja | vrijeme, raspon ratinga, teme, nakon 30 s ponuda ghosta pa bota | *Odustani* |
+| Red čekanja | vrijeme, raspon ratinga, teme, nakon 20 s ponuda bota, nakon 30 s ghosta | *Odustani* |
 | Prihvat para | protivnik (ime, tier, rating), 10 s | *Prihvati* |
 | Veto | pool tema s vlastitim masteryjem, coin flip, banovi s timerom, random odabir | ban |
 | Lobby | protivnik, tema, odbrojavanje | — |

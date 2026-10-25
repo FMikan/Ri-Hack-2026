@@ -1,5 +1,5 @@
-import { Ghost, LoaderCircle } from 'lucide-react'
-import { createElement, useEffect, useState } from 'react'
+import { Bot, Ghost, LoaderCircle } from 'lucide-react'
+import { createElement, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { DuelBadge } from '@/components/shared/RankedDuelIcon'
 import { UserAvatar } from '@/components/shared/UserAvatar'
@@ -12,12 +12,15 @@ import { useAsync } from '@/hooks/use-async'
 import { usePoll } from '@/hooks/use-poll'
 import { useTicker } from '@/hooks/use-ticker'
 import { api, ApiError } from '@/lib/api-client'
+import { AVATARS } from '@/lib/avatars'
+import { nameClass } from '@/lib/cosmetics'
 import { relativeTime } from '@/lib/format'
 import { MIN_TOPICS, ratingText } from '@/lib/game'
 import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { topicIcon } from '@/lib/topic-icons'
-import type { MeDto, QueueStateDto, TopicDto } from '@/types/api'
+import { cn } from '@/lib/utils'
+import type { MeDto, QueueStateDto, TopicDto, UserRefDto } from '@/types/api'
 import { dialogFooter } from './dialog-footer'
 import { DialogHeading, ResumeBanner } from './dialog-parts'
 
@@ -36,7 +39,7 @@ const errorText = (caught: unknown, t: Messages) =>
   caught instanceof ApiError && caught.status === 0 ? t.common.serverUnreachable : String((caught as Error).message)
 
 // Ranked duel: opening the dialog joins the queue (POST /api/queue) and polls it once a second. Closing the dialog
-// leaves it (PlayDialog). A proposal needs both players to accept within 10 s; after 30 s a ghost or a bot is offered.
+// leaves it (PlayDialog). A proposal needs both players to accept within 10 s; a bot is offered after 20 s, a ghost after 30 s.
 export function RankedQueue({ onPlayBot }: { onPlayBot: () => void }) {
   const { t } = useLocale()
   const data = useAsync(loadQueue)
@@ -131,7 +134,6 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
   const copy = t.queue
   const openMatch = useOpenMatch()
   const { data, error, replace, refresh } = usePoll(loadState, 1000, isMatched)
-  const [keepWaiting, setKeepWaiting] = useState(false)
   const [busy, setBusy] = useState(false)
   const [commandError, setCommandError] = useState<string>()
   const now = useTicker(!!data && data.state.status !== 'matched', 250)
@@ -185,13 +187,16 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
           {commandError}
         </p>
       )}
-      {keepWaiting && state.status === 'waiting' && (
-        <Button variant="ghost" className="mr-auto" onClick={onPlayBot}>
+      {/* After 20 s with nobody found: a quiet way out, not a prompt. Waiting on needs no click. */}
+      {state.status === 'waiting' && state.botOffer && (
+        // Tinted like the red leave button beside it, in sky: same weight, the color says which way it goes.
+        <Button size="lg" className="mr-auto bg-primary/20 text-primary animate-in fade-in hover:bg-primary/30" onClick={onPlayBot}>
+          <Bot aria-hidden="true" />
           {copy.playBot}
         </Button>
       )}
       <DialogClose asChild>
-        <Button variant="outline" size="lg" className="w-full sm:w-auto">
+        <Button variant="destructive" size="lg" className="w-full sm:w-auto">
           {copy.cancel}
         </Button>
       </DialogClose>
@@ -219,15 +224,9 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
     const left = Math.max(0, Math.ceil((Date.parse(proposal.expiresAt) - Date.parse(state.serverTime) - (now - data.at)) / 1000))
     return (
       <div className="grid gap-6">
-        <div aria-live="polite" className="grid justify-items-center gap-3 pt-2 text-center">
+        <Versus me={me} opponent={proposal.opponent} />
+        <div aria-live="polite" className="grid justify-items-center gap-3 text-center">
           <p className="font-heading text-2xl font-semibold tracking-tight">{copy.found}</p>
-          <UserAvatar user={proposal.opponent} className="size-20" />
-          <div className="grid gap-0.5">
-            <p className="font-medium">{proposal.opponent.username}</p>
-            <p className="text-sm text-muted-foreground">
-              {t.dashboard.tiers[proposal.opponent.tier]} · {ratingText(proposal.opponent.rating, proposal.opponent.isProvisional)}
-            </p>
-          </div>
           {proposal.iAccepted ? (
             <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
               <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
@@ -256,19 +255,17 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
 
   return (
     <div className="grid gap-6">
-      <div className="grid justify-items-center gap-3 pt-2 text-center">
-        <span className="relative grid size-24 place-items-center">
-          <span aria-hidden="true" className="absolute inset-2 animate-ping rounded-full bg-primary/25 motion-reduce:hidden" />
-          <DuelBadge className="relative size-20" />
-        </span>
+      <Versus me={me} range={range} />
+      <div className="grid justify-items-center gap-2 text-center">
         <p className="text-sm text-muted-foreground">{copy.elapsed}</p>
         <p role="timer" className="font-heading text-5xl font-semibold tabular-nums">
           {clock(waited)}
         </p>
-        {range > 0 && (
-          <Badge variant="secondary" className="font-mono">
-            {copy.range(me.rating - range, me.rating + range)}
-          </Badge>
+        {state.botOffer && (
+          <p role="status" className="flex items-center gap-1.5 text-sm text-muted-foreground animate-in fade-in">
+            <Bot aria-hidden="true" className="size-4 shrink-0" />
+            {copy.noOpponent}
+          </p>
         )}
       </div>
 
@@ -286,7 +283,7 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
         </ul>
       </section>
 
-      {ghost ? (
+      {ghost && (
         <div aria-live="polite" className="grid gap-3 rounded-lg bg-secondary p-4 ring-1 ring-border ring-inset sm:flex sm:items-center">
           <span className="relative shrink-0 self-start">
             <UserAvatar user={ghost.opponent} className="size-12" />
@@ -307,19 +304,6 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
             </Button>
           </div>
         </div>
-      ) : (
-        state.botOffer &&
-        !keepWaiting && (
-          <div aria-live="polite" className="grid gap-3 rounded-lg bg-secondary p-4 ring-1 ring-border ring-inset sm:flex sm:items-center">
-            <p className="flex-1 text-sm text-pretty">{copy.noOpponent}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={onPlayBot}>{copy.playBot}</Button>
-              <Button variant="outline" onClick={() => setKeepWaiting(true)}>
-                {copy.keepWaiting}
-              </Button>
-            </div>
-          </div>
-        )
       )}
 
       {footer}
@@ -330,4 +314,97 @@ function Searching({ me, topics, onPlayBot, onRejoin }: SearchingProps) {
 const clock = (ms: number) => {
   const seconds = Math.floor(ms / 1000)
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+const seat = 'size-16 sm:size-20'
+
+// Me on the left, the opponent's seat on the right ("?" and the rating range while searching), the swords between.
+// Searching and the proposal both render it first, so it stays mounted: only the right seat changes, the swords keep going.
+function Versus({ me, opponent, range = 0 }: { me: MeDto; opponent?: UserRefDto; range?: number }) {
+  const { t } = useLocale()
+  const tierLine = (user: UserRefDto) => `${t.dashboard.tiers[user.tier]} · ${ratingText(user.rating, user.isProvisional)}`
+
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-3 pt-2 sm:gap-6">
+      <Seat
+        avatar={
+          <SeatFrame>
+            <UserAvatar user={me} className="absolute inset-1.5" />
+          </SeatFrame>
+        }
+        name={me.username}
+        nameClassName={nameClass(me)}
+        detail={tierLine(me)}
+      />
+      <span className="relative grid place-items-center">
+        {/* A shockwave ring on every hit of the swords; same cycle as the clash. */}
+        <span aria-hidden="true" className="absolute inset-0 animate-clash-wave rounded-full bg-primary/25 motion-reduce:hidden" />
+        <DuelBadge clash className={cn('relative *:translate-y-0.5', seat)} />
+      </span>
+      {opponent ? (
+        <Seat
+          avatar={
+            <SeatFrame>
+              <UserAvatar user={opponent} className="absolute inset-1.5 animate-seat-reveal motion-reduce:animate-none" />
+            </SeatFrame>
+          }
+          name={opponent.username}
+          nameClassName={nameClass(opponent)}
+          detail={tierLine(opponent)}
+        />
+      ) : (
+        <Seat
+          avatar={<MysterySeat />}
+          name={t.queue.opponentSeat}
+          nameClassName="text-muted-foreground"
+          detail={range > 0 ? t.queue.range(me.rating - range, me.rating + range) : undefined}
+        />
+      )}
+    </div>
+  )
+}
+
+function Seat({ avatar, name, nameClassName, detail }: { avatar: ReactNode; name: string; nameClassName?: string; detail?: string }) {
+  return (
+    <div className="grid min-w-0 justify-items-center gap-2 text-center">
+      {avatar}
+      <div className="grid w-full gap-0.5">
+        <p className={cn('truncate text-sm font-medium sm:text-base', nameClassName)}>{name}</p>
+        {detail && <p className="truncate text-xs text-muted-foreground tabular-nums sm:text-sm">{detail}</p>}
+      </div>
+    </div>
+  )
+}
+
+// A seat's sky ring, drawn where the duel badge draws its own (2px outside the circle) so all three line up. The portrait
+// sits inside with a gap.
+function SeatFrame({ children }: { children: ReactNode }) {
+  return (
+    <span aria-hidden="true" className={cn('relative grid place-items-center', seat)}>
+      <span className="absolute -inset-0.5 rounded-full border-2 border-primary" />
+      {children}
+    </span>
+  )
+}
+
+// The empty seat while searching: blurred, grey portraits flick past behind a "?". With reduced motion one portrait stays.
+function MysterySeat() {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const now = useTicker(!reduced, 600)
+  const face = AVATARS[Math.floor(now / 600) % AVATARS.length]
+
+  return (
+    <SeatFrame>
+      <span className="absolute inset-1.5 overflow-hidden rounded-full bg-secondary">
+        <img
+          key={face.key}
+          src={face.url}
+          alt=""
+          draggable={false}
+          className="size-full opacity-40 blur-[2px] grayscale animate-in fade-in duration-300 motion-reduce:animate-none"
+        />
+      </span>
+      <span className="relative font-heading text-2xl font-semibold sm:text-3xl">?</span>
+    </SeatFrame>
+  )
 }

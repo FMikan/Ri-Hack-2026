@@ -53,7 +53,8 @@ export function LeaderboardsPage() {
           name="board"
           value={board}
           onChange={setBoard}
-          options={BOARDS.map((value) => ({ value, label: copy.boards[value] }))}
+          // No topic board on phones: five tabs wrap into two rows there.
+          options={BOARDS.map((value) => ({ value, label: copy.boards[value], className: value === 'topic' ? 'max-sm:hidden' : undefined }))}
           className="justify-self-start"
         />
         {board === 'topic' && topics.data && slug && (
