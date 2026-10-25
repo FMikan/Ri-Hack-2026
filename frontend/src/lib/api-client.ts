@@ -43,7 +43,6 @@ import type {
   QuestionDetailDto,
   QueueStateDto,
   RegisterRequest,
-  RewardEventDto,
   SeasonDto,
   ReportQuestionRequest,
   ResetPasswordRequest,
@@ -334,7 +333,6 @@ export const api = {
   purchase: (body: PurchaseRequest) => request<MeDto>('/api/shop/purchase', post(body)),
   myItems: (signal?: AbortSignal) => request<ShopItemDto[]>('/api/me/items', { signal }),
   equip: (body: SetEquipmentRequest) => request<MeDto>('/api/me/equipment', { method: 'PUT', body: JSON.stringify(body) }),
-  rewards: (signal?: AbortSignal) => request<RewardEventDto[]>('/api/me/rewards?limit=50', { signal }),
   // Opens today's attempt: the 60 s run from the first call. The archive (by day) never opens one.
   dailyChallenge: (signal?: AbortSignal) => request<DailyChallengeDto>('/api/daily-challenge', { signal }),
   dailyChallengeOn: (day: string, signal?: AbortSignal) => request<DailyChallengeDto>(`/api/daily-challenge/${day}`, { signal }),
