@@ -75,6 +75,8 @@ export const en = {
     google: {
       or: 'or',
       busy: 'Signing in with Google…',
+      continue: 'Continue with Google',
+      soon: 'Google sign-in is coming soon. Use your e-mail for now.',
     },
     errors: {
       emailRequired: 'Enter your email.',

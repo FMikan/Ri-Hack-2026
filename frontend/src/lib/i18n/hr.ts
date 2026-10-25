@@ -79,6 +79,8 @@ export const hr: Messages = {
     google: {
       or: 'ili',
       busy: 'Prijava preko Googlea…',
+      continue: 'Nastavi s Googleom',
+      soon: 'Prijava Googleom stiže uskoro. Zasad se prijavi e-mailom.',
     },
     errors: {
       emailRequired: 'Upiši e-mail.',
