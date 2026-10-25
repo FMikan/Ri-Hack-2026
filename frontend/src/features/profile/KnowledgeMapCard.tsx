@@ -222,7 +222,7 @@ function AnsweredQuestion({ questionId }: { questionId: string }) {
   if (!data) return <Skeleton aria-busy="true" className="h-40 rounded-lg" />
   return (
     <div className="grid gap-3 rounded-lg bg-card p-4 ring-1 ring-border">
-      <QuestionBody content={data.content} correct={data.key?.answer} locked onAnswer={() => {}} />
+      <QuestionBody content={data.content} language={data.language} correct={data.key?.answer} locked onAnswer={() => {}} />
       {data.key && (
         <p className="text-sm text-pretty">
           <span className="font-medium text-primary">{t.match.remember}:</span> {data.key.remember}

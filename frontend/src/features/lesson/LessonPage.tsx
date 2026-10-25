@@ -12,7 +12,7 @@ import { useAsync } from '@/hooks/use-async'
 import { api, ApiError } from '@/lib/api-client'
 import { relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
-import { cn } from '@/lib/utils'
+import { cn, skyOutline } from '@/lib/utils'
 import type { AnswerPayload, LessonCheckResultDto, LessonDto, LessonResultDto } from '@/types/api'
 
 // The lesson after a duel (game idea §11): one card per missed concept, then three untimed check questions.
@@ -91,7 +91,7 @@ function Cards({ lesson, onStart }: { lesson: LessonDto; onStart: () => void }) 
           </p>
           <h2 className="font-heading text-xl font-semibold text-balance sm:text-2xl">{card.title}</h2>
           <p className="text-pretty">{card.why}</p>
-          {card.code && <CodeBlock code={card.code} />}
+          {card.code && <CodeBlock code={card.code} language={card.language} />}
           {card.misconception && (
             <div className="grid gap-1 rounded-lg bg-warning/10 p-3 ring-1 ring-warning/40 ring-inset">
               <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
@@ -163,11 +163,12 @@ function CheckQuestions({ lesson, onBack, onResult }: CheckQuestionsProps) {
   return (
     <section className="grid gap-4">
       <p className="font-mono text-xs text-muted-foreground">{copy.questionOf(index + 1, lesson.check.length)}</p>
-      <Card>
+      <Card className={skyOutline}>
         <CardContent>
           <QuestionBody
             key={item.question.id}
             content={item.question.content}
+            language={item.question.language}
             mine={answer}
             locked={!!answer}
             onAnswer={(payload) => setAnswers((previous) => ({ ...previous, [item.question.id]: payload }))}
@@ -225,11 +226,12 @@ function CheckResult({ lesson, result, answers, onCards }: CheckResultProps) {
           const graded = result.results.find((entry) => entry.questionId === question.id)
           return (
             <li key={question.id}>
-              <Card>
+              <Card className={skyOutline}>
                 <CardContent className="grid gap-3">
                   <p className="font-mono text-xs text-muted-foreground">{copy.questionOf(index + 1, lesson.check.length)}</p>
                   <QuestionBody
                     content={question.content}
+                    language={question.language}
                     mine={answers[question.id]}
                     correct={graded?.key.answer}
                     locked

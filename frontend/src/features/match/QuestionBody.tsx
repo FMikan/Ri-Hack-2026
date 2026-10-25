@@ -9,6 +9,7 @@ import { promptOf } from './question-utils'
 
 interface QuestionBodyProps {
   content: QuestionContent
+  language?: string | null // QuestionPublicDto.language, for syntax colors
   mine?: AnswerPayload | null // what I sent; locks the question
   correct?: AnswerKeyDto['answer'] // the key, only in the interstitial
   locked: boolean
@@ -16,7 +17,9 @@ interface QuestionBodyProps {
 }
 
 // The prompt and the answer controls for each of the 8 question types. The same view shows the key afterwards.
-export function QuestionBody({ content, mine, correct, locked, onAnswer }: QuestionBodyProps) {
+// Zoomed 5% so prompt, code and answers read larger than the surrounding UI; zoom (unlike scale) reflows, so phones
+// don't scroll sideways.
+export function QuestionBody({ content, language, mine, correct, locked, onAnswer }: QuestionBodyProps) {
   const { t } = useLocale()
   const optionId = (payload?: AnswerPayload | null) => (payload && 'optionId' in payload ? payload.optionId : undefined)
   const choice = (options: { id: string; text: string }[], mono?: boolean) => (
@@ -31,7 +34,7 @@ export function QuestionBody({ content, mine, correct, locked, onAnswer }: Quest
   )
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-5 [zoom:1.05]">
       <h2 className="font-heading text-xl leading-snug font-semibold text-balance sm:text-2xl">{promptOf(content, t)}</h2>
       {content.type === 'true_false' ? (
         <OptionList
@@ -46,12 +49,12 @@ export function QuestionBody({ content, mine, correct, locked, onAnswer }: Quest
         />
       ) : content.type === 'multiple_choice' ? (
         <>
-          {content.code && <CodeBlock code={content.code} />}
+          {content.code && <CodeBlock code={content.code} language={language} />}
           {choice(content.options)}
         </>
       ) : content.type === 'cloze' || content.type === 'output' ? (
         <>
-          <CodeBlock code={content.code} />
+          <CodeBlock code={content.code} language={language} />
           {choice(content.options, true)}
         </>
       ) : content.type === 'odd_one_out' ? (
@@ -83,6 +86,7 @@ export function QuestionBody({ content, mine, correct, locked, onAnswer }: Quest
       ) : (
         <FindBug
           code={content.code}
+          language={language}
           fixes={content.fixes}
           mine={mine && 'line' in mine ? mine : undefined}
           correct={correct && 'line' in correct ? correct : undefined}

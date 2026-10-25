@@ -18,7 +18,7 @@ interface MatchPairsProps {
   onAnswer: (pairs: Pairs) => void
 }
 
-const tile = 'flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ring-1 ring-inset'
+const tile = 'flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ring-2 ring-inset'
 
 // Tap a left item, then its match on the right; a number ties the two together. Locked, it lists the pairs.
 export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: MatchPairsProps) {
@@ -87,7 +87,7 @@ export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: Mat
                 className={cn(
                   tile,
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                  active === item.id ? markStyles.picked : 'bg-secondary ring-border hover:ring-input',
+                  active === item.id ? markStyles.picked : 'bg-secondary ring-primary/50 hover:ring-primary',
                 )}
               >
                 {pairs[item.id] ? badge(number(item.id)) : <span aria-hidden="true" className="size-6 shrink-0 rounded-full ring-1 ring-border" />}
@@ -107,8 +107,8 @@ export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: Mat
                   onClick={() => pick(item.id)}
                   className={cn(
                     tile,
-                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:hover:ring-input disabled:cursor-default',
-                    owner ? 'bg-primary/10 ring-primary/50' : 'bg-secondary ring-border',
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:hover:ring-primary disabled:cursor-default',
+                    owner ? 'bg-primary/10 ring-primary' : 'bg-secondary ring-primary/50',
                   )}
                 >
                   {owner && badge(number(owner))}
