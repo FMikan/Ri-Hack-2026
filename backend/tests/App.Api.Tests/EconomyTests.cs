@@ -93,8 +93,8 @@ public class EconomyTests(TestApp app) : RankedTestBase(app)
         var first = await WithRewarderAsync((r, _) => r.GrantAsync(ana.Auth.User.Id, grant, default));
         var second = await WithRewarderAsync((r, _) => r.GrantAsync(ana.Auth.User.Id, grant, default));
 
-        Assert.True(first);
-        Assert.False(second);
+        Assert.Equal(grant, first);
+        Assert.Null(second);
         Assert.Single(await LedgerAsync(ana));
         Assert.Equal(15, (await UserAsync(ana)).Coins);
     }

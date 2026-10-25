@@ -253,7 +253,8 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
             user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
             user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), seasonPoints,
             new StreakDto(Streaks.Current(user, today), user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == today),
-            user.Topics.Select(t => t.TopicId).ToArray(), user.EquippedTitleId, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt);
+            user.Topics.Select(t => t.TopicId).ToArray(), user.EquippedTitleId, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt,
+            user.PlanAt(now), user.PremiumUntil);
     }
 
     private Task<bool> InQueueAsync(Guid userId, CancellationToken cancellationToken) =>

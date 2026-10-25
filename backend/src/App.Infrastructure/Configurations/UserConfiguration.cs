@@ -18,6 +18,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.UsernameNormalized).HasMaxLength(GameRules.UsernameMaxLength);
         builder.Property(u => u.Avatar).HasMaxLength(40);
         builder.Property(u => u.Locale).HasMaxLength(5);
+        builder.Property(u => u.PremiumInterval).HasMaxLength(10);
+        builder.Property(u => u.PremiumCardLast4).HasMaxLength(4);
         builder.Property(u => u.NotificationsJson).HasColumnName("notifications").HasColumnType("jsonb");
         builder.Property(u => u.EquipmentJson).HasColumnName("equipment").HasColumnType("jsonb");
         builder.HasMany(u => u.Topics).WithOne().HasForeignKey(t => t.UserId);
@@ -34,6 +36,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             t.HasCheckConstraint("ck_users_tier", $"tier in ({SnakeCaseEnumConverter<Tier>.SqlList()})");
             t.HasCheckConstraint("ck_users_coins", "coins >= 0");
             t.HasCheckConstraint("ck_users_streak_freezes", $"streak_freezes between 0 and {GameRules.MaxStreakFreezes}");
+            t.HasCheckConstraint("ck_users_premium_interval", "premium_interval is null or premium_interval in ('monthly', 'yearly')");
         });
     }
 }

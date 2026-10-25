@@ -25,3 +25,9 @@ export const clock = (ms: number) => {
 
 export const monthYear = (iso: string, locale: Locale) =>
   new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(iso))
+
+export const longDate = (iso: string, locale: Locale) => new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date(iso))
+
+// Prices come from the API in cents (EUR).
+export const euros = (cents: number, locale: Locale) =>
+  new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' }).format(cents / 100)

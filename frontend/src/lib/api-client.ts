@@ -57,6 +57,8 @@ import type {
   StartCalibrationRequest,
   StartPracticeRequest,
   SubmitAnswerRequest,
+  SubscribeRequest,
+  SubscriptionDto,
   SubmitLessonCheckRequest,
   TitleDto,
   TopicDto,
@@ -376,4 +378,12 @@ export const api = {
   professorQuiz: (id: string, signal?: AbortSignal) => request<ProfessorQuizDto>(`/api/professor/quizzes/${id}`, { signal }),
   answerProfessorQuiz: (id: string, body: ProfessorQuizAnswerRequest) =>
     request<ProfessorQuizResultDto>(`/api/professor/quizzes/${id}/answers`, post(body)),
+
+  // The Senior developer subscription (docs §6.13). The card payment is simulated: nothing is charged.
+  subscription: (signal?: AbortSignal) => request<SubscriptionDto>('/api/subscription', { signal }),
+  subscribe: (body: SubscribeRequest) => request<SubscriptionDto>('/api/subscription', post(body)),
+  // Turns the renewal off; Senior stays until premiumUntil.
+  cancelSubscription: () => request<SubscriptionDto>('/api/subscription', { method: 'DELETE' }),
+  // 25 coins once a day for a Senior developer; answers with the updated MeDto.
+  claimDailyCoins: () => request<MeDto>('/api/subscription/daily-coins', { method: 'POST' }),
 }

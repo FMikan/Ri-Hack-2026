@@ -2,10 +2,12 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using App.Application.Content;
+using App.Application.Subscription;
 using App.Domain;
 using App.Domain.Content;
 using App.Domain.Matches;
 using App.Domain.Professor;
+using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -39,6 +41,7 @@ public class ProfessorService(IAppDbContext db, IProfessorAi ai, ILogger<Profess
     public async Task<ProfessorTurn> PrepareTurnAsync(Guid userId, SendProfessorMessageRequest request, CancellationToken ct)
     {
         EnsureAvailable();
+        await EnsureQuotaAsync(userId, u => (u.QuestionsUsed, u.QuestionsLimit), ct);
         ProfessorChat? chat = null;
         List<ProfessorTurnInput> history = [];
         if (request.ChatId is { } chatId)
@@ -124,6 +127,7 @@ public class ProfessorService(IAppDbContext db, IProfessorAi ai, ILogger<Profess
         if (await db.ProfessorLessons.AsNoTracking().FirstOrDefaultAsync(l => l.MessageId == messageId && l.UserId == userId, ct) is { } existing)
             return await MapAsync(existing, ct);
         var (source, input) = await SourceAsync(userId, messageId, ct);
+        await EnsureQuotaAsync(userId, u => (u.LessonsUsed, u.LessonsLimit), ct);
 
         var generated = await GenerateAsync(token => ai.LessonAsync(input, token), "lesson", ct);
         var cards = generated.Cards
@@ -171,6 +175,7 @@ public class ProfessorService(IAppDbContext db, IProfessorAi ai, ILogger<Profess
         if (await db.ProfessorQuizzes.AsNoTracking().FirstOrDefaultAsync(q => q.MessageId == messageId && q.UserId == userId, ct) is { } existing)
             return await MapAsync(existing, ct);
         var (source, input) = await SourceAsync(userId, messageId, ct);
+        await EnsureQuotaAsync(userId, u => (u.QuizzesUsed, u.QuizzesLimit), ct);
 
         var generated = await GenerateAsync(token => ai.QuizAsync(input, token), "quiz", ct);
         var rng = new Random();
@@ -229,6 +234,28 @@ public class ProfessorService(IAppDbContext db, IProfessorAi ai, ILogger<Profess
         }
         await transaction.CommitAsync(ct);
         return Result(questions[request.Index], answer);
+    }
+
+    // Today's use against the Junior developer allowance (2 questions, 1 lesson, 1 quiz a day, Europe/Zagreb); a Senior
+    // developer has no limit (docs/premium-pretplata.md). A failed answer saves nothing, so it costs nothing.
+    public async Task<ProfessorUsageDto> UsageAsync(Guid userId, CancellationToken ct)
+    {
+        var now = time.GetUtcNow();
+        var since = Clock.StartOf(Clock.Today(now));
+        var senior = await db.Users.Where(u => u.Id == userId).Select(u => u.PremiumUntil > now).FirstAsync(ct);
+        var questions = await db.ProfessorMessages.CountAsync(
+            m => m.Role == ProfessorRole.User && m.CreatedAt >= since && db.ProfessorChats.Any(c => c.Id == m.ChatId && c.UserId == userId), ct);
+        var lessons = await db.ProfessorLessons.CountAsync(l => l.UserId == userId && l.CreatedAt >= since, ct);
+        var quizzes = await db.ProfessorQuizzes.CountAsync(q => q.UserId == userId && q.CreatedAt >= since, ct);
+        int? Limit(int junior) => senior ? null : junior;
+        return new ProfessorUsageDto(
+            questions, Limit(Premium.JuniorProfessorQuestionsPerDay), lessons, Limit(Premium.JuniorProfessorLessonsPerDay), quizzes, Limit(Premium.JuniorProfessorQuizzesPerDay));
+    }
+
+    private async Task EnsureQuotaAsync(Guid userId, Func<ProfessorUsageDto, (int Used, int? Limit)> of, CancellationToken ct)
+    {
+        var (used, limit) = of(await UsageAsync(userId, ct));
+        if (used >= limit) throw new AppException(ErrorCodes.ProfessorQuota, "You have used today's AI Professor allowance. Senior developers have no limit.");
     }
 
     private async Task<ProfessorTurnDto> SaveTurnAsync(ProfessorTurn turn, string answer, string? topic, ProfessorScope? scope, CancellationToken ct)

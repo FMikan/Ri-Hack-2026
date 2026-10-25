@@ -12,6 +12,8 @@ export function professorError(caught: unknown, t: Messages) {
       return t.professor.failed
     case 'urn:app:professor/declined':
       return t.professor.declined
+    case 'urn:app:professor/quota':
+      return t.professor.quota
     default:
       return caught.message
   }

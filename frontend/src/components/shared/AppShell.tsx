@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  Crown,
   GraduationCap,
   LayoutDashboard,
   LogOut,
@@ -18,6 +19,7 @@ import coin from '@/assets/brand/stackoff-coin-on-dark.svg'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
 import wordmark from '@/assets/brand/stackoff-wordmark-on-dark.svg'
 import { UserAvatar } from '@/components/shared/UserAvatar'
+import { Badge } from '@/components/ui/badge'
 import { Wordmark } from '@/components/shared/Wordmark'
 import {
   DropdownMenu,
@@ -37,7 +39,7 @@ import { api } from '@/lib/api-client'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'practice' | 'professor' | 'leaderboards' | 'friends' | 'shop' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'professor' | 'leaderboards' | 'friends' | 'shop' | 'senior' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
@@ -47,6 +49,7 @@ const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
   { key: 'friends', icon: Users, to: '/friends' },
   { key: 'shop', icon: Store, to: '/shop' },
+  { key: 'senior', icon: Crown, to: '/senior' },
   { key: 'profile', icon: UserRound, to: '/profile' },
 ]
 
@@ -214,7 +217,15 @@ function TopBar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64 lg:w-60">
             <DropdownMenuLabel className="grid gap-0.5">
-              <span className="truncate">{user.username}</span>
+              <span className="flex items-center gap-2">
+                <span className="truncate">{user.username}</span>
+                {user.plan === 'senior' && (
+                  <Badge variant="outline" className="shrink-0 border-warning/60 text-warning">
+                    <Crown aria-hidden="true" />
+                    {t.subscription.badge}
+                  </Badge>
+                )}
+              </span>
               <span className="truncate text-xs font-normal text-muted-foreground">{user.email}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

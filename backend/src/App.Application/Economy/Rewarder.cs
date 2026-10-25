@@ -8,13 +8,16 @@ namespace App.Application.Economy;
 
 // The only writer of the ledger (docs §3.7). Every grant is one reward_events row, once per dedupe key, and the cached
 // users.coins / users.xp move with it in the caller's transaction. XP may cross levels and the weekly goal, which pay
-// coins on their own keys.
+// coins on their own keys. Returns what was paid (a Senior developer's XP grows here), or null when nothing was.
 public class Rewarder(IAppDbContext db, TimeProvider time)
 {
-    public async Task<bool> GrantAsync(Guid userId, Grant grant, CancellationToken ct)
+    public async Task<Grant?> GrantAsync(Guid userId, Grant grant, CancellationToken ct)
     {
-        if (grant is { Coins: 0, Xp: 0, Sp: 0 }) return false;
+        if (grant is { Coins: 0, Xp: 0, Sp: 0 }) return null;
         var now = time.GetUtcNow();
+        var user = await db.Users.Where(u => u.Id == userId).Select(u => new { u.Xp, u.PremiumUntil }).FirstAsync(ct);
+        // Senior developer: every XP gain is 20 % larger (docs/premium-pretplata.md).
+        if (grant.Xp > 0 && user.PremiumUntil > now) grant = grant with { Xp = Premium.Boost(grant.Xp, Premium.XpMultiplier) };
         // SP count for the current season: the row carries the season and user_seasons.sp is its cached sum.
         var seasonId = grant.Sp != 0 ? (await db.CurrentSeasonAsync(now, ct)).Id : (Guid?)null;
         var inserted = await db.Database.ExecuteSqlAsync(
@@ -23,7 +26,7 @@ public class Rewarder(IAppDbContext db, TimeProvider time)
             values ({Guid.CreateVersion7()}, {userId}, {Rewards.Name(grant.Type)}, {grant.Coins}, {grant.Xp}, {grant.Sp}, {seasonId}, {grant.ReferenceId}, {grant.DedupeKey}, {now})
             on conflict (dedupe_key) do nothing
             """, ct);
-        if (inserted == 0) return false;
+        if (inserted == 0) return null;
 
         if (seasonId is { } season)
         {
@@ -32,18 +35,18 @@ public class Rewarder(IAppDbContext db, TimeProvider time)
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.Sp, x => x.Sp + grant.Sp), ct);
         }
 
-        var oldXp = await db.Users.Where(u => u.Id == userId).Select(u => u.Xp).FirstAsync(ct);
+        var oldXp = user.Xp;
         if (grant.Coins != 0 || grant.Xp != 0)
             await db.Users.Where(u => u.Id == userId)
                 .ExecuteUpdateAsync(s => s.SetProperty(u => u.Coins, u => u.Coins + grant.Coins).SetProperty(u => u.Xp, u => u.Xp + grant.Xp), ct);
-        if (grant.Xp <= 0) return true;
+        if (grant.Xp <= 0) return grant;
 
         foreach (var levelUp in Rewards.LevelUps(userId, oldXp, oldXp + grant.Xp)) await GrantAsync(userId, levelUp, ct);
         var week = Clock.WeekStart(now);
         var weekStart = Clock.StartOf(week);
         if (await db.RewardEvents.Where(e => e.UserId == userId && e.CreatedAt >= weekStart).SumAsync(e => e.Xp, ct) >= GameRules.WeeklyXpGoal)
             await GrantAsync(userId, new Grant(RewardType.WeeklyXpGoal, GameRules.CoinsWeeklyXpGoal, 0, 0, null, $"weekly_xp_goal:{week:yyyy-MM-dd}:{userId}"), ct);
-        return true;
+        return grant;
     }
 
     // A purchase: coins leave only when there are enough (one atomic update), with a negative ledger row.

@@ -141,8 +141,8 @@ public class LessonService(IAppDbContext db, ILessonGenerator generator, AiOptio
             var spFromLearning = await rewarder.SpTodayAsync(userId, [RewardType.ConceptPatched], ct);
             var boost = (await db.CurrentSeasonAsync(now, ct)).DoubleLearningSp(now) ? 2 : 1;
             foreach (var grant in Rewards.ForLesson(userId, lesson.Id, eligible, spFromLearning, boost))
-                if (await rewarder.GrantAsync(userId, grant, ct))
-                    rewards = new RewardsDto(rewards.Coins + grant.Coins, rewards.Sp + grant.Sp, rewards.Xp + grant.Xp);
+                if (await rewarder.GrantAsync(userId, grant, ct) is { } paid)
+                    rewards = new RewardsDto(rewards.Coins + paid.Coins, rewards.Sp + paid.Sp, rewards.Xp + paid.Xp);
             await rewarder.RecordActivityAsync(await db.Users.FirstAsync(u => u.Id == userId, ct), ct);
             patched = await ConceptsAsync(lesson.ConceptIds, ct);
         }

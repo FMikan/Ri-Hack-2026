@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/auth-context'
+import { SeniorDailyCard } from '@/features/subscription/SeniorDailyCard'
 import { usePoll } from '@/hooks/use-poll'
 import { api } from '@/lib/api-client'
 import { MIN_TOPICS } from '@/lib/game'
@@ -71,6 +72,7 @@ function DashboardView({ data, reload }: { data: DashboardDto; reload: () => voi
       {/* The greeting sits in the top bar; the page keeps its heading for screen readers. */}
       <h1 className="sr-only">{t.dashboard.documentTitle}</h1>
       <Inbox inbox={data.inbox} onChanged={reload} />
+      {me.plan === 'senior' && <SeniorDailyCard />}
       {!needsTopics && <TodayNotice data={data} />}
       <div className={GRID}>
         <PlayCard me={me} locked={needsTopics} className="col-span-2 xl:col-start-1 xl:row-start-1" />

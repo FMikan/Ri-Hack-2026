@@ -36,7 +36,8 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | gotovo, PR `feature/f4a-ledger` (F4a ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak; F4b dnevni zadaci, dnevni izazov, shop, oprema) |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | gotovo, PR `feature/f5-social` (F5a prijatelji, izazov prijatelja, javni profil, statistika, rang-liste, Grandmaster; F5b sezone, titule, achievementi, tjedni i sezonski snapshot, povlačenje i auto-kalibracija pitanja) |
 | **F6 AI Profesor** | chat s AI profesorom o IT-u (odgovor se streama), poduka i kviz za vježbu napravljeni iz jednog odgovora, spremljena povijest razgovora | Pitanje → odgovor uživo → "Napravi poduku" / "Napravi kviz" → kartice i kviz s objašnjenjima | gotovo, PR `feature/ai-professor` (bez nagrada, mastery i poola: samo za učenje) |
-| Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
+| **F7 Premium pretplata** | planovi Junior developer (besplatno) i Senior developer (4,99 €/mj, 39,99 €/god): ×1,2 na dobitak ratinga i XP, AI Profesor bez dnevne kvote (Junior 2 pitanja, 1 poduka, 1 kviz), 25 novčića dnevno, paket animirane kozmetike, značka; simulirano plaćanje karticom | Stranica *Senior* → *Pay with card* → *Use this card* → Senior status, paket u ormariću, dnevni novčići na početnoj | gotovo, grana `feature/subscription-premium` (`docs/premium-pretplata.md`, biznis model u `docs/biznis-model.md`) |
+| Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium roadmap (tutor u poduci, objasni svojim riječima, napredna statistika, mjesečni drop; `premium-pretplata.md` §9), pravi naplatni sustav (Stripe, Play Billing), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
 Stupac "Stanje backenda" se ažurira u PR-u svake faze; što frontend može spojiti po fazama je u §6.11.
 
@@ -163,6 +164,10 @@ create table users (
   equipped_title_id     uuid references titles(id) on delete set null,
   equipment             jsonb not null default '{}',          -- {"avatarFrame":itemId,"banner":...,"boardTheme":...,"nameColor":...,"cardBackground":...}
   last_seen_at          timestamptz,                           -- online status, ažurira se najviše jednom u 30 s
+  premium_until         timestamptz,                           -- F7: Senior developer dok je u budućnosti (plan je izvedenica, nema stupca)
+  premium_interval      text check (premium_interval is null or premium_interval in ('monthly','yearly')),
+  premium_auto_renew    boolean not null default false,        -- otkaz = false; Senior ostaje do premium_until
+  premium_card_last4    text,                                  -- jedino što se od kartice čuva (plaćanje je simulirano)
   created_at            timestamptz not null
 );
 
@@ -496,7 +501,7 @@ Pravila sastavljanja (`StartLesson`, `LessonRules`):
 create table reward_events (               -- ledger; jedini način da se promijene coins/xp/sp
   id           uuid primary key,
   user_id      uuid not null references users(id) on delete cascade,
-  type         text not null,              -- 'match_win','match_loss','match_draw','rating_upset','lesson_passed','concept_patched','daily_challenge','daily_task','daily_task_bonus','streak_milestone','weekly_xp_goal','level_up','friend_match','answer_xp','match_xp','shop_purchase','streak_freeze','season_reset','season_drop'
+  type         text not null,              -- 'match_win','match_loss','match_draw','rating_upset','lesson_passed','concept_patched','daily_challenge','daily_task','daily_task_bonus','streak_milestone','weekly_xp_goal','level_up','friend_match','answer_xp','match_xp','shop_purchase','streak_freeze','season_reset','season_drop','premium_daily'
   coins        integer not null default 0, -- može biti negativan (kupnja)
   xp           integer not null default 0,
   sp           integer not null default 0,
@@ -956,6 +961,7 @@ interface MeDto extends UserRefDto {
   rankedMatches: number; coins: number; xp: number; level: number; xpToNextLevel: number; seasonPoints: number
   streak: { count: number; lastActiveOn?: string; freezes: number; securedToday: boolean }
   activeTopicIds: Uuid[]; equippedTitleId?: Uuid; activeMatchId?: Uuid; inQueue: boolean; createdAt: Iso
+  plan: 'junior'|'senior'; premiumUntil?: Iso                                            // F7 (§6.13)
 }
 interface DashboardDto {
   me: MeDto
@@ -1129,6 +1135,12 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 Što backend već poslužuje (u `development`) i što ekrani trebaju znati, a ne piše u tipovima. Svaka faza dodaje svoj odlomak.
 
+**F7: Premium pretplata**
+- Ekran `/senior`: `GET /api/subscription` daje plan, istek, cijene (`plans`, u centima) i današnju potrošnju Profesora. *Pay with card* otvara dijalog kartice; *Use this card* upisuje testnu karticu `4242 4242 4242 4242 · 12/28 · 123`; `POST /api/subscription` vraća novo stanje (402 `payment/declined` za broj koji završava na 0002). Nakon plaćanja osvježi `me` (`plan`, paket u ormariću). *Otkaži obnovu* je `DELETE`; Senior ostaje do `premiumUntil`.
+- Početna: Senior vidi karticu *Pokupi 25* (`POST /api/subscription/daily-coins` vraća `MeDto`, saldo u gornjoj traci se odmah mijenja); `dailyCoinsClaimed` skriva gumb do sutra. Renderiraj samo kad je `me.plan === 'senior'`.
+- AI Profesor: Junior vidi *Danas: n/2 pitanja · n/1 poduke · n/1 kviza* s linkom na `/senior`; 409 `professor/quota` ima svoju poruku. Senior ne vidi ništa od toga.
+- Značka *Senior* uz ime u izborniku; na ekranu rezultata redak *Senior bonus ×1,2 uračunat* kad je `me.plan === 'senior'` i bilo je dobitka (rating ili XP su već uvećani na serveru, frontend ne množi ništa).
+
 **F6: AI Profesor**
 - Ekran `/professor` (`?chat=<id>` bira razgovor). Pitanje: `POST /api/professor/messages { chatId?, text }` odgovara server-sent eventsima kroz `fetch` (EventSource ne može poslati tijelo ni token): `delta` dijelovi odgovora, zatim `done` sa spremljenim potezom (novi razgovor dobiva `chat.id`) ili `error` (Problem Details) i ništa nije spremljeno. Greške prije streama (400, 404, 429, 503) dolaze kao obični Problem Details. Do prve `delta` prikaži "AI Profesor razmišlja…".
 - Ispod odgovora s `topic` dva gumba, "Napravi poduku" i "Napravi kviz" (prvi je onaj koji paše: `scope: 'general'` poduka, `specific` kviz). Pisanje traje 10–30 s: prikaži status "AI Profesor piše…" na mjestu gumba. Odgovor s `lessonId`/`quizId` nudi "Otvori".
@@ -1228,6 +1240,26 @@ interface ProfessorQuizResultDto { index: number; payload: AnswerPayload; isCorr
 ```
 
 Tekst odgovora koristi mali podskup Markdowna (odlomci, `- ` i `1. ` liste, `**bold**`, `*kurziv*`, `` `kod` ``, ``` blokovi s jezikom); frontend ga prikazuje kao tekst, nikad kao HTML.
+
+Junior developer (F7) ima dnevnu kvotu: `POST /messages`, `POST /lessons` i `POST /quizzes` odgovaraju 409 `professor/quota` kad su današnja 2 pitanja, 1 poduka odnosno 1 kviz potrošeni (dan po `Europe/Zagreb`; neuspio odgovor se ne broji; već napisana poduka/kviz za isti odgovor vraća postojeće). Senior developer nema kvotu. Stanje je u `GET /api/subscription`.
+
+### 6.13 Premium pretplata (F7)
+
+```ts
+GET    /api/subscription               → SubscriptionDto
+POST   /api/subscription               { interval: 'monthly'|'yearly'; cardHolder; cardNumber; cardExpiry: 'MM/YY'; cardCvc }  → SubscriptionDto  (400; 402 payment/declined: broj koji završava na 0002)
+DELETE /api/subscription               → SubscriptionDto   // isključi obnovu; Senior do premiumUntil (409 subscription/not-active)
+POST   /api/subscription/daily-coins   → MeDto             // 25 novčića, jednom dnevno (409 subscription/senior-only; drugi klik istog dana ne plaća ništa)
+
+interface SubscriptionDto {
+  plan: 'junior'|'senior'; premiumUntil?: Iso; interval?: 'monthly'|'yearly'; autoRenew: boolean; cardLast4?: string
+  dailyCoins: number; dailyCoinsClaimed: boolean
+  plans: { interval: 'monthly'|'yearly'; priceCents: number; days: number }[]   // 499/30, 3999/365; cijene zna samo backend
+  professor: { questionsUsed: number; questionsLimit?: number; lessonsUsed: number; lessonsLimit?: number; quizzesUsed: number; quizzesLimit?: number }   // limit undefined = Senior, bez limita
+}
+```
+
+Plaćanje je simulirano (hackathon): karticu validira oblik, ništa se ne tereti, čuva se samo `last4`. Plaćanje dok je korisnik Senior dodaje dane na postojeći istek. Pogodnosti: `RankedResult` množi dobitak ratinga s 1,2 (poraz ne), `Rewarder` množi svaki XP s 1,2, paket dobrodošlice su redovi u `user_items` za ključeve iz `Premium.WelcomePack`, dnevni novčići su `reward_events` tip `premium_daily` s ključem `premium_daily:{dan}:{userId}`. Sve konstante: `App.Domain/Users/Premium.cs`; detalji i plan za Stripe: `docs/premium-pretplata.md`.
 
 ## 7. Seed sadržaja
 
@@ -1548,6 +1580,11 @@ F6 AI Profesor (ProfessorTests, FakeAi stoji umjesto Claudea)
   Lesson_is_written_once_per_answer_from_the_question_and_answer / Lesson_with_too_few_cards_or_a_failed_call_is_503_and_can_be_retried
   Quiz_hides_the_keys_and_grades_each_question_once / Quiz_and_lesson_from_one_answer_link_to_each_other
   Malformed_quiz_questions_are_dropped_and_too_few_is_503
+F7 Premium pretplata (SubscriptionTests; PremiumTests u App.Domain.Tests)
+  Paying_makes_me_a_senior_developer_with_the_welcome_pack / A_declined_card_is_402_and_changes_nothing / A_bad_card_or_interval_is_400
+  Paying_again_adds_the_time_on_top_and_cancelling_keeps_senior_until_the_end / Daily_coins_are_for_seniors_once_a_day
+  Senior_xp_is_20_percent_larger_in_the_ledger_and_the_cache / Junior_gets_2_questions_1_lesson_and_1_quiz_a_day_and_senior_has_no_limit
+  Senior_rating_gain_is_20_percent_larger_and_the_loss_is_not / An_expired_subscription_boosts_nothing / Boost_rounds_half_up_and_leaves_losses_alone / Plan_follows_premium_until
 ```
 
 ### 9.4 Frontend provjere

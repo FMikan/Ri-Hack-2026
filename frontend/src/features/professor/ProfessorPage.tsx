@@ -1,4 +1,4 @@
-import { ArrowUp, BookOpen, ListChecks, LoaderCircle, MessagesSquare, Plus, Square } from 'lucide-react'
+import { ArrowUp, BookOpen, Crown, ListChecks, LoaderCircle, MessagesSquare, Plus, Square } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import professor from '@/assets/professor.png'
@@ -15,7 +15,7 @@ import { idleHover, markStyles } from '@/features/match/question-utils'
 import { clock, relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
-import type { ProfessorChatSummaryDto, ProfessorMessageDto } from '@/types/api'
+import type { ProfessorChatSummaryDto, ProfessorMessageDto, SubscriptionDto } from '@/types/api'
 import { Markdown } from './Markdown'
 import { professorError } from './professor-error'
 import { useCreateStudy, type Making, type StudyKind } from './use-create-study'
@@ -36,15 +36,18 @@ export function ProfessorPage() {
   const [params, setParams] = useSearchParams()
   const chatId = params.get('chat') ?? undefined
   const chats = useAsync(loadChats)
+  const usage = useAsync(api.subscription)
   const { reload } = chats
   const title = chats.data?.find((chat) => chat.id === chatId)?.title
+  const { reload: reloadUsage } = usage
 
   const onSaved = useCallback(
     (chat: ProfessorChatSummaryDto) => {
       setParams({ chat: chat.id }, { replace: true })
       reload()
+      reloadUsage() // a Junior developer's allowance moved
     },
-    [setParams, reload],
+    [setParams, reload, reloadUsage],
   )
 
   // The page never scrolls (data-fit-screen, see AppShell): the chat list and the messages scroll inside it, and the
@@ -106,9 +109,31 @@ export function ProfessorPage() {
             </Button>
           </div>
         </header>
+        <Usage usage={usage} />
         <Conversation chatId={chatId} onSaved={onSaved} />
       </div>
     </main>
+  )
+}
+
+// A Junior developer's allowance for today (2 questions, 1 lesson, 1 quiz) with the way to lift it; nothing for a Senior.
+function Usage({ usage }: { usage: AsyncState<SubscriptionDto> }) {
+  const { t } = useLocale()
+  const data = usage.data
+  if (!data || data.plan === 'senior') return null
+  const p = data.professor
+
+  return (
+    <p className={cn(COLUMN, 'flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground cramped:hidden')}>
+      <span>{t.professor.usage(p.questionsUsed, p.questionsLimit ?? 0, p.lessonsUsed, p.lessonsLimit ?? 0, p.quizzesUsed, p.quizzesLimit ?? 0)}</span>
+      <Link
+        to="/senior"
+        className="inline-flex items-center gap-1 rounded-sm font-medium text-warning hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <Crown aria-hidden="true" className="size-3.5" />
+        {t.professor.goSenior}
+      </Link>
+    </p>
   )
 }
 
