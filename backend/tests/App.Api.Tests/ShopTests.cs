@@ -123,4 +123,35 @@ public class ShopTests(TestApp app) : ApiTestBase(app)
         Assert.Equal("frame-ring", equipped.Equipment["avatarFrame"]);
         Assert.False(off.Equipment.ContainsKey("avatarFrame"));
     }
+
+    // The locker on the profile: every cosmetic I own, season drops (never for sale) included; the streak freeze is not an item I keep.
+    [Fact]
+    public async Task Inventory_lists_owned_cosmetics_with_season_drops()
+    {
+        var items = await SeedShopAsync();
+        var drop = await App.InDbAsync(async db =>
+        {
+            var item = new ShopItem { Key = "frame.season-gold", Kind = ShopItemKind.AvatarFrame, Name = "Season gold", Price = 1000, AssetKey = "frame-season-gold", SeasonDropTier = "gold", IsActive = false };
+            db.ShopItems.Add(item);
+            await db.SaveChangesAsync();
+            return item;
+        });
+        var ana = await RegisterAsync("ana");
+        var bob = await RegisterAsync("bob");
+        await GiveCoinsAsync(ana, 1000);
+        await App.InDbAsync(async db =>
+        {
+            db.UserItems.Add(new UserItem { UserId = ana.Auth.User.Id, ItemId = drop.Id, AcquiredAt = DateTimeOffset.UtcNow });
+            return await db.SaveChangesAsync();
+        });
+
+        await BuyAsync(ana, items[1]);
+        await BuyAsync(ana, items[2]); // a streak freeze
+        var mine = (await ana.Client.GetFromJsonAsync<ShopItemDto[]>("/api/me/items", App.Json))!;
+        var none = (await bob.Client.GetFromJsonAsync<ShopItemDto[]>("/api/me/items", App.Json))!;
+
+        Assert.Equal(["banner.terminal", "frame.season-gold"], mine.Select(i => i.Key));
+        Assert.All(mine, i => Assert.True(i.Owned));
+        Assert.Empty(none);
+    }
 }

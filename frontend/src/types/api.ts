@@ -484,10 +484,12 @@ export interface ShopItemDto {
   kind: ShopItemKind
   name: string
   price: number
-  rarity: string
+  rarity: string // 'common' | 'rare' | 'epic' | 'legendary'
   assetKey: string
   owned: boolean // always false for the streak freeze (see me.streak.freezes, at most 2)
 }
+
+// GET /api/me/items → ShopItemDto[]: the cosmetics I own (owned always true), season drops included, cheapest first.
 
 export interface ShopDto {
   items: ShopItemDto[]

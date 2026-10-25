@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using App.Domain.Content;
+using App.Domain.Economy;
 using App.Domain.Matches;
 using App.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,20 @@ public class SeedTests(TestApp app) : ApiTestBase(app)
     {
         using var scope = App.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<Seeder>().SeedAsync();
+    }
+
+    // The shop (idea §15): 8 to 15 cosmetics for sale per slot, rarities the frontend names, keys and looks unique.
+    [Fact]
+    public void Shop_seed_is_well_formed()
+    {
+        var shop = Seeder.ReadShop();
+
+        Assert.Equal(shop.Count, shop.Select(i => i.Key).Distinct().Count());
+        Assert.Equal(shop.Count, shop.Select(i => i.AssetKey).Distinct().Count());
+        Assert.All(shop, i => Assert.Contains(i.Rarity, (string[])["common", "rare", "epic", "legendary"]));
+        Assert.All(shop, i => Assert.True(i.Price > 0, i.Key));
+        foreach (var kind in Enum.GetValues<ShopItemKind>().Where(k => ShopItem.SlotOf(k) is not null))
+            Assert.InRange(shop.Count(i => i.Kind == kind && i.SeasonDropTier is null), 8, 15);
     }
 
     [Fact]

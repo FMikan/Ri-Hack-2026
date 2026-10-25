@@ -40,6 +40,7 @@ import type {
   SetEquipmentRequest,
   SetTopicsRequest,
   ShopDto,
+  ShopItemDto,
   StatsDto,
   StartBotMatchRequest,
   StartCalibrationRequest,
@@ -246,6 +247,7 @@ export const api = {
   // Economy (F4): purchases and equipment answer with the updated MeDto.
   shop: (signal?: AbortSignal) => request<ShopDto>('/api/shop', { signal }),
   purchase: (body: PurchaseRequest) => request<MeDto>('/api/shop/purchase', post(body)),
+  myItems: (signal?: AbortSignal) => request<ShopItemDto[]>('/api/me/items', { signal }),
   equip: (body: SetEquipmentRequest) => request<MeDto>('/api/me/equipment', { method: 'PUT', body: JSON.stringify(body) }),
   rewards: (signal?: AbortSignal) => request<RewardEventDto[]>('/api/me/rewards?limit=50', { signal }),
   // Opens today's attempt: the 60 s run from the first call. The archive (by day) never opens one.
