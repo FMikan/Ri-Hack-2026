@@ -1,11 +1,13 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Application.Auth;
 using App.Application.Content;
 using App.Application.Lessons;
 using App.Application.Matches;
+using App.Application.Professor;
 using App.Application.Queue;
 using App.Application.Seasons;
 using App.Domain.Content;
@@ -78,6 +80,7 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IEmailSender>(Emails);
             services.AddSingleton<IExplanationGenerator>(Ai);
             services.AddSingleton<ILessonGenerator>(Ai);
+            services.AddSingleton<IProfessorAi>(Ai);
         });
     }
 
@@ -153,13 +156,70 @@ public sealed class FakeEmailSender : IEmailSender
 }
 
 // Stands in for Claude: counts calls and can be slowed down past Ai:TimeoutMs (50 ms in tests) to force the fallback.
-public sealed class FakeAi : IExplanationGenerator, ILessonGenerator
+// As the professor it streams ChatChunks (then throws ChatFailure, if set) and returns Lesson / Quiz.
+public sealed class FakeAi : IExplanationGenerator, ILessonGenerator, IProfessorAi
 {
     public int ExplanationCalls;
     public int CardCalls;
     public TimeSpan Delay { get; set; }
 
-    public void Reset() => (ExplanationCalls, CardCalls, Delay) = (0, 0, TimeSpan.Zero);
+    public bool Available { get; set; } = true;
+    public string[] ChatChunks { get; set; } = [];
+    public Exception? ChatFailure { get; set; }
+    public List<IReadOnlyList<ProfessorTurnInput>> ChatCalls { get; } = [];
+    public GeneratedLesson Lesson { get; set; } = null!;
+    public GeneratedQuiz Quiz { get; set; } = null!;
+    public Exception? StudyFailure { get; set; }
+    public List<StudyInput> StudyCalls { get; } = [];
+
+    public static readonly string[] DnsAnswer = ["TOP", "IC: specific | DNS\n", "\nDNS maps ", "names to IPs."];
+
+    // "<prompt> right" sits at the letter `correct` names (a key outside a-d leaves it first).
+    public static GeneratedQuizQuestion Choice(string prompt, string correct = "a")
+    {
+        string[] options = [$"{prompt} wrong 1", $"{prompt} wrong 2", $"{prompt} wrong 3"];
+        var at = Math.Clamp(correct[0] - 'a', 0, 3);
+        return new("multiple_choice", prompt, "", "", [.. options[..at], $"{prompt} right", .. options[at..]], correct, $"Why {prompt}");
+    }
+
+    public static GeneratedQuizQuestion Statement(string prompt, bool value) => new("true_false", prompt, "", "", [], value ? "true" : "false", $"Why {prompt}");
+
+    public void Reset()
+    {
+        (ExplanationCalls, CardCalls, Delay) = (0, 0, TimeSpan.Zero);
+        (Available, ChatChunks, ChatFailure, StudyFailure) = (true, DnsAnswer, null, null);
+        ChatCalls.Clear();
+        StudyCalls.Clear();
+        Lesson = new GeneratedLesson("DNS basics", "How names become addresses.",
+        [
+            new GeneratedStudyCard("Resolvers", "A resolver asks servers in turn.", "```bash\ndig example.com\n```", "Bash", "DNS is not one server."),
+            new GeneratedStudyCard("Caching", "Answers are cached for their TTL.", "", "", ""),
+            new GeneratedStudyCard(" ", "A card without a title is dropped.", "", "", ""),
+        ]);
+        Quiz = new GeneratedQuiz("DNS check", [Choice("Q1"), Choice("Q2", "c"), Choice("Q3", "d"), Statement("UDP is used", true), Statement("DNS is one server", false)]);
+    }
+
+    public async IAsyncEnumerable<string> ChatAsync(IReadOnlyList<ProfessorTurnInput> history, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        lock (ChatCalls) ChatCalls.Add(history);
+        foreach (var chunk in ChatChunks)
+        {
+            await Task.Yield();
+            yield return chunk;
+        }
+        if (ChatFailure is not null) throw ChatFailure;
+    }
+
+    public Task<GeneratedLesson> LessonAsync(StudyInput input, CancellationToken cancellationToken) => StudyAsync(input, Lesson);
+
+    public Task<GeneratedQuiz> QuizAsync(StudyInput input, CancellationToken cancellationToken) => StudyAsync(input, Quiz);
+
+    private async Task<T> StudyAsync<T>(StudyInput input, T result)
+    {
+        lock (StudyCalls) StudyCalls.Add(input);
+        await Task.Yield();
+        return StudyFailure is null ? result : throw StudyFailure;
+    }
 
     public async Task<GeneratedExplanation> ExplainAsync(ExplanationInput input, CancellationToken cancellationToken)
     {

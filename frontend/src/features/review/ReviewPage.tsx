@@ -1,6 +1,7 @@
 import { ArrowLeft, BookOpen, ChevronDown, Flag, Sparkles } from 'lucide-react'
 import { useCallback, useState, type SubmitEvent } from 'react'
 import { Link, useParams } from 'react-router'
+import { AiWorking } from '@/components/shared/AiWorking'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -106,6 +107,7 @@ function ReviewView({ review }: { review: MatchReviewDto }) {
           <Button aria-disabled={lesson.starting} onClick={lesson.start}>
             {match.lessonId ? copy.openLesson : copy.startLesson}
           </Button>
+          <AiWorking open={lesson.starting} title={t.lesson.preparing} description={t.lesson.preparingHint} />
         </section>
       )}
 

@@ -9,7 +9,9 @@
 }
 
 :80 {
-	encode
+	# The AI Professor's answer is a server-sent event stream: compressing it would hold chunks back.
+	@compressible not path /api/professor/messages
+	encode @compressible
 
 	@api path /api/* /health /health/*
 	handle @api {

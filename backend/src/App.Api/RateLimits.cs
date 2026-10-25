@@ -6,11 +6,11 @@ using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace App.Api;
 
-// Fixed windows per client IP (auth) or per user (answers). Rejections are 429 Problem Details with Retry-After.
+// Fixed windows per client IP (auth) or per user (answers, the AI Professor). Rejections are 429 Problem Details with Retry-After.
 // The IP is the player's only because forwarded headers are applied first (Program.cs).
 public static class RateLimits
 {
-    public const string Login = "login", Register = "register", Answers = "answers";
+    public const string Login = "login", Register = "register", Answers = "answers", Professor = "professor";
 
     public static IServiceCollection AddAppRateLimits(this IServiceCollection services) => services.AddRateLimiter(options =>
     {
@@ -18,6 +18,8 @@ public static class RateLimits
         options.AddPolicy(Login, context => Window(Ip(context), 10, TimeSpan.FromMinutes(1)));
         options.AddPolicy(Register, context => Window(Ip(context), 5, TimeSpan.FromMinutes(1)));
         options.AddPolicy(Answers, context => Window(context.User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? Ip(context), 5, TimeSpan.FromSeconds(1)));
+        // Every professor message, lesson and quiz is a paid model call.
+        options.AddPolicy(Professor, context => Window(context.User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? Ip(context), 10, TimeSpan.FromMinutes(1)));
         options.OnRejected = async (context, cancellationToken) =>
         {
             var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var wait) ? wait : TimeSpan.FromMinutes(1);
