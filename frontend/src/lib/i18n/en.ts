@@ -104,6 +104,7 @@ export const en = {
     settings: 'Settings',
     logOut: 'Log out',
     greeting: (name: string) => `Welcome back, ${name}!`,
+    friendRequests: (n: number) => `Friend requests: ${n}`,
   },
   avatar: {
     menu: 'Profile picture',

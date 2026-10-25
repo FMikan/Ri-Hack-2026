@@ -11,7 +11,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import { useState, type MouseEvent } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import coin from '@/assets/brand/stackoff-coin-on-dark.svg'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
@@ -32,6 +32,8 @@ import {
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
 import { AvatarDialog } from '@/features/profile/AvatarDialog'
+import { usePoll } from '@/hooks/use-poll'
+import { api } from '@/lib/api-client'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
@@ -48,6 +50,7 @@ const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
 ]
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+const keepPolling = () => false
 
 // A mouse click leaves focus on the link, which would keep the rail wide (focus-within) until a click elsewhere.
 // Keyboard activation has detail 0 and keeps focus, so tabbing through the rail still works.
@@ -74,6 +77,14 @@ function SideRail() {
   const { t } = useLocale()
   const { pathname } = useLocation()
   const reveal = 'opacity-0 transition-opacity group-focus-within/rail:opacity-100 group-hover/rail:opacity-100'
+  const friends = usePoll(api.friends, 10_000, keepPolling)
+  const { refresh } = friends
+  // Refetch on navigation, so a request answered on Friends clears the dot as soon as you leave.
+  useEffect(() => {
+    refresh()
+  }, [pathname, refresh])
+  // Hidden on Friends itself: that page lists the requests.
+  const requests = pathname === '/friends' ? 0 : (friends.data?.filter((friend) => friend.status === 'pending_in').length ?? 0)
 
   return (
     <aside className="group/rail sticky top-0 z-40 hidden h-svh lg:block">
@@ -98,8 +109,14 @@ function SideRail() {
               const base = 'flex h-11 min-w-0 items-center gap-3 overflow-hidden rounded-lg px-4.5 text-sm font-medium whitespace-nowrap'
               const inner = (
                 <>
-                  <item.icon aria-hidden="true" className="size-5 shrink-0" />
+                  <span className="relative shrink-0">
+                    <item.icon aria-hidden="true" className="size-5" />
+                    {item.key === 'friends' && requests > 0 && (
+                      <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-sidebar" />
+                    )}
+                  </span>
                   <span className={reveal}>{label}</span>
+                  {item.key === 'friends' && requests > 0 && <span className="sr-only">{t.shell.friendRequests(requests)}</span>}
                   {!item.to && <span className={cn('ml-auto font-mono text-xs', reveal)}>{t.shell.soon}</span>}
                 </>
               )

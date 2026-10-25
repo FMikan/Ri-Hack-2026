@@ -108,6 +108,7 @@ export const hr: Messages = {
     settings: 'Postavke',
     logOut: 'Odjava',
     greeting: (name: string) => `Bok, ${name}!`,
+    friendRequests: (n: number) => `Zahtjevi za prijateljstvo: ${n}`,
   },
   avatar: {
     menu: 'Profilna slika',
