@@ -993,7 +993,7 @@ interface QueueStateDto {
   enteredAt?: Iso; serverTime: Iso; rangeNow?: number; topicIds: Uuid[]
   proposal?: { id: Uuid; opponent: UserRefDto; expiresAt: Iso; iAccepted: boolean }
   ghostOffer?: { opponent: UserRefDto; recordedAt: Iso; topic: TopicDto }    // nakon 30 s
-  botOffer: boolean                                                          // nakon 30 s bez ghosta ili nakon odbijanja; POST /api/matches/bot napušta red
+  botOffer: boolean                                                          // nakon 20 s bez ghosta ili nakon odbijanja; POST /api/matches/bot napušta red
   matchId?: Uuid                                                             // status matched → navigiraj
 }
 ```
@@ -1125,7 +1125,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 **F3a: red čekanja, veto, živi rangirani duel**
 - Igraj rangirano: `POST /api/queue` (treba 3–5 tema), zatim `GET /api/queue` svake 1 s. `rangeNow` raste (±100, +50 svakih 10 s). Teme su zaključane dok je igrač u redu (`PUT /api/me/topics` → 409 `urn:app:topics/locked-in-queue`; `me.inQueue`, `dashboard.queueLocked`). `DELETE /api/queue` = Odustani.
 - `status: 'proposed'`: "Protivnik pronađen" s `proposal.opponent` i odbrojavanjem do `proposal.expiresAt` (10 s, iz `serverTime`). `POST /api/queue/proposals/{id}/accept`; dok drugi nije prihvatio, `iAccepted: true`. Kad oba prihvate, `status: 'matched'` + `matchId`: otvori partiju. Ako drugi odbije ili istekne: `409 urn:app:proposal/expired` ili poll vrati `waiting` (vrijeme čekanja ostaje).
-- `botOffer: true` nakon 30 s kad nema ghost ponude (vidi F3b): ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati".
+- `botOffer: true` nakon 20 s kad nema ghost ponude (vidi F3b): ponudi "Igraj protiv bota" (`POST /api/matches/bot` sam izbaci igrača iz reda) i "Nastavi čekati".
 - Partija počinje u `veto_coin` (3 s animacija novčića, `veto.coinWinnerSeat` banira prvi), pa `veto_ban`: igrač na potezu (`veto.turnSeat == mySeat`) bira temu iz `veto.pool` i šalje `POST /api/matches/{id}/veto/ban { topicId }`; 8 s po potezu, istek = automatski ban (`auto: true`). Uz temu: vlastiti `myMastery` i ikona `pickedByOpponent`. `veto_pick`: `chosenTopicId` je poznat odmah, animacija 3 s prema njemu, zatim lobby i duel kao s botom.
 - Kraj: `result.mine.ratingBefore/ratingAfter`, povijest ima `ratingDelta`. Tier (`user.tier`) i `isProvisional` (prvih 10 partija prikaži `?` umjesto ratinga) dolaze iz `UserRefDto`. Odustajanje i prekid veze (20 s bez pollanja) = poraz; oba odspojena = `aborted` bez promjene ratinga. SP, coini i XP ostaju 0 do F4.
 
@@ -1384,7 +1384,7 @@ F2 Analiza, poduka, mapa
   Calibration_uses_5_D1_D2_questions_on_unknown_concepts_without_reward
 F3 Rangirano (F3a: do Tie_resolves..., F3b: revanš i ghost; SP i tjedni bodovi idu s ledgerom u F4/F5)
   Join_queue_requires_topics / Join_twice_is_409 / Join_while_in_match_is_409
-  Starting_a_bot_match_leaves_the_queue / Bot_is_offered_after_30s_without_an_opponent
+  Starting_a_bot_match_leaves_the_queue / Bot_is_offered_after_20s_without_an_opponent
   Set_topics_is_locked_while_in_queue
   Two_compatible_players_get_proposal_within_one_tick
   Incompatible_topics_never_match

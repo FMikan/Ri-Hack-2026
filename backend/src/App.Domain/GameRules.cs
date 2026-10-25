@@ -13,7 +13,7 @@ public static class GameRules
     public const int ProfileAfterRankedMatches = 5; // targeted slots in ranked once both players have this many
     public const int HighKMatches = 30, KHigh = 32, KLow = 16;
     public const int MaxRatingGap = 400, QueueInitialRange = 100, QueueRangeStep = 50, QueueStepSeconds = 10;
-    public const int ProposalAcceptSeconds = 10, BotOfferAfterSeconds = 30, GhostOfferAfterSeconds = 30, GhostRecordingMaxDays = 30;
+    public const int ProposalAcceptSeconds = 10, BotOfferAfterSeconds = 20, GhostOfferAfterSeconds = 30, GhostRecordingMaxDays = 30;
     public const int RematchSeconds = 20, RematchOpponentSeenMinutes = 2;
     public const int VetoAnimationSeconds = 3, VetoBanSeconds = 8, VetoPoolMax = 6;
     public const int TierHysteresis = 25;

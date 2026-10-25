@@ -442,7 +442,7 @@ export interface QueueStateDto {
   // After 30 s without an opponent, once per recording: POST /api/queue/ghost (→ 201 MatchStateDto, kind 'ghost', lobby)
   // or POST /api/queue/ghost/decline (→ QueueStateDto; keeps waiting, the bot is offered instead).
   ghostOffer?: { opponent: UserRefDto; recordedAt: Iso; topic: TopicDto } | null
-  botOffer: boolean // after 30 s when there is no ghost offer; POST /api/matches/bot leaves the queue
+  botOffer: boolean // after 20 s when there is no ghost offer; POST /api/matches/bot leaves the queue
   matchId?: Uuid | null // status 'matched': open this match
 }
 
