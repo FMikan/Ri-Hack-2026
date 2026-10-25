@@ -119,10 +119,10 @@ export const en = {
     documentTitle: 'Dashboard',
     today: {
       title: 'Today',
-      subtitle: 'Each task pays 20 coins, all three 30 more. They reset at midnight.',
+      resets: (hours: number, minutes: number) => `Resets in ${hours > 0 ? `${hours} h ` : ''}${minutes} min`,
+      bonus: (coins: number) => `bonus +${coins}`,
       tasks: {
         play_2_ranked: 'Play 2 ranked duels',
-        patch_1_concept: 'Patch a concept in a lesson',
         daily_challenge: 'Try the daily challenge',
         practice_weakest: (topic: string) => `Practice ${topic}`,
         '3_brilliant': 'Give 3 brilliant answers',
@@ -130,10 +130,18 @@ export const en = {
       } as Record<string, string | ((topic: string) => string)>,
       reward: (coins: number) => `+${coins}`,
       done: 'Done',
-      go: 'Go',
       challenge: 'Daily challenge',
       challengeOpen: 'One bug, 60 seconds',
       challengeDone: 'Done today. See the ranking',
+      prompt: {
+        title: "Today's daily challenge",
+        body: "One bug, 60 seconds. Everyone gets the same question, and the fastest right answers top today's ranking.",
+        rewardFor: 'For a right answer',
+        tasks: 'Daily tasks',
+        clock: 'The 60-second clock starts as soon as you open it.',
+        start: 'Start the challenge',
+        later: "I'll do it later",
+      },
       notice: {
         title: "Today's tasks are ready",
         text: (done: number, total: number, challengeOpen: boolean) =>
@@ -350,6 +358,7 @@ export const en = {
       subtitle: 'Questions from the topic, weakest concepts first.',
       weak: (count: number) => `${count} weak`,
       notPlayed: 'Not played yet',
+      empty: 'No topics to practice yet.',
     },
     start: 'Start practice',
     starting: 'Starting…',
@@ -614,7 +623,9 @@ export const en = {
     subtitle: 'Add players by username, see who is online and challenge them to a friendly duel.',
     challengeLink: 'Challenge by link',
     loadFailed: 'Could not load your friends.',
-    empty: 'No friends yet. Add someone by username, or share a challenge link.',
+    emptyTitle: 'No friends yet',
+    empty: 'Add someone by username, or share a challenge link.',
+    onlineCount: (count: number) => `${count} online`,
     sections: {
       pending_in: (n: number) => `Requests (${n})`,
       accepted: (n: number) => `Friends (${n})`,

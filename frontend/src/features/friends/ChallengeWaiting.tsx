@@ -24,6 +24,12 @@ export function ChallengeWaiting({ code, expiresAt, friendName }: { code: string
     if (data?.matchId) openMatch(data.matchId)
   }, [data?.matchId, openMatch])
 
+  useEffect(() => {
+    if (!copied) return
+    const id = window.setTimeout(() => setCopied(false), 2000)
+    return () => window.clearTimeout(id)
+  }, [copied])
+
   async function copyLink() {
     await navigator.clipboard.writeText(link).catch(() => {})
     setCopied(true)

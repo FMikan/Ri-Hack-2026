@@ -123,10 +123,10 @@ export const hr: Messages = {
     documentTitle: 'Početna',
     today: {
       title: 'Danas',
-      subtitle: 'Svaki zadatak donosi 20 coina, sva tri još 30. Resetiraju se u ponoć.',
+      resets: (hours: number, minutes: number) => `Resetira se za ${hours > 0 ? `${hours} h ` : ''}${minutes} min`,
+      bonus: (coins: number) => `bonus +${coins}`,
       tasks: {
         play_2_ranked: 'Odigraj 2 rangirana duela',
-        patch_1_concept: 'Zakrpaj koncept u poduci',
         daily_challenge: 'Pokušaj dnevni izazov',
         practice_weakest: (topic: string) => `Treniraj: ${topic}`,
         '3_brilliant': 'Daj 3 briljantna odgovora',
@@ -134,10 +134,18 @@ export const hr: Messages = {
       } as Record<string, string | ((topic: string) => string)>,
       reward: (coins: number) => `+${coins}`,
       done: 'Gotovo',
-      go: 'Idi',
       challenge: 'Dnevni izazov',
       challengeOpen: 'Jedan bug, 60 sekundi',
       challengeDone: 'Odrađeno danas. Pogledaj poredak',
+      prompt: {
+        title: 'Današnji dnevni izazov',
+        body: 'Jedan bug, 60 sekundi. Svi dobivaju isto pitanje, a najbrži točni odgovori vode današnji poredak.',
+        rewardFor: 'Za točan odgovor',
+        tasks: 'Dnevni zadaci',
+        clock: 'Sat od 60 sekundi kreće čim ga otvoriš.',
+        start: 'Kreni na izazov',
+        later: 'Riješit ću kasnije',
+      },
       notice: {
         title: 'Današnji zadaci su spremni',
         text: (done: number, total: number, challengeOpen: boolean) =>
@@ -354,6 +362,7 @@ export const hr: Messages = {
       subtitle: 'Pitanja iz teme, prvo najslabiji koncepti.',
       weak: (count: number) => `Slabih: ${count}`,
       notPlayed: 'Još nije igrano',
+      empty: 'Još nema tema za trening.',
     },
     start: 'Kreni na trening',
     starting: 'Pokrećem…',
@@ -618,7 +627,9 @@ export const hr: Messages = {
     subtitle: 'Dodaj igrače po korisničkom imenu, vidi tko je online i izazovi ih na prijateljski duel.',
     challengeLink: 'Izazov linkom',
     loadFailed: 'Prijatelje nije moguće učitati.',
-    empty: 'Još nemaš prijatelja. Dodaj nekoga po imenu ili podijeli link za izazov.',
+    emptyTitle: 'Još nemaš prijatelja',
+    empty: 'Dodaj nekoga po imenu ili podijeli link za izazov.',
+    onlineCount: (count: number) => `${count} online`,
     sections: {
       pending_in: (n: number) => `Zahtjevi (${n})`,
       accepted: (n: number) => `Prijatelji (${n})`,
