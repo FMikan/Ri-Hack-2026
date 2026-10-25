@@ -41,7 +41,8 @@ export function OptionList({ options, picked, correct, locked, mono, trueFalse, 
   const reveal = correct !== undefined
 
   return (
-    <ul className="grid gap-2.5 sm:grid-cols-2">
+    // Every row as tall as the tallest and every tile filling its cell, so a short option never sits in a smaller box.
+    <ul className="grid auto-rows-fr gap-2.5 sm:grid-cols-2">
       {options.map((option, index) => {
         const marked = markOf(option.id, picked, correct)
         // Once locked (answered or out of time), the options I did not pick recede.
@@ -55,7 +56,7 @@ export function OptionList({ options, picked, correct, locked, mono, trueFalse, 
               disabled={locked}
               onClick={() => onPick(option.id)}
               className={cn(
-                'flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium ring-inset transition-[color,background-color,box-shadow,scale] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:active:scale-[0.98] disabled:cursor-default motion-reduce:transition-none',
+                'flex h-full min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium ring-inset transition-[color,background-color,box-shadow,scale] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:active:scale-[0.98] disabled:cursor-default motion-reduce:transition-none',
                 markStyles[mark],
                 mark === 'idle' && idleHover,
               )}

@@ -413,7 +413,7 @@ namespace App.Infrastructure.Migrations
 
                     b.ToTable("reward_events", null, t =>
                         {
-                            t.HasCheckConstraint("ck_reward_events_type", "type in ('match_win', 'match_loss', 'match_draw', 'rating_upset', 'lesson_passed', 'concept_patched', 'daily_challenge', 'daily_task', 'daily_task_bonus', 'streak_milestone', 'weekly_xp_goal', 'level_up', 'friend_match', 'answer_xp', 'match_xp', 'shop_purchase', 'streak_freeze', 'season_reset', 'season_drop')");
+                            t.HasCheckConstraint("ck_reward_events_type", "type in ('match_win', 'match_loss', 'match_draw', 'rating_upset', 'lesson_passed', 'concept_patched', 'daily_challenge', 'daily_task', 'daily_task_bonus', 'streak_milestone', 'weekly_xp_goal', 'level_up', 'friend_match', 'answer_xp', 'match_xp', 'shop_purchase', 'streak_freeze', 'season_reset', 'season_drop', 'premium_daily')");
                         });
                 });
 
@@ -1934,6 +1934,24 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
 
+                    b.Property<bool>("PremiumAutoRenew")
+                        .HasColumnType("boolean")
+                        .HasColumnName("premium_auto_renew");
+
+                    b.Property<string>("PremiumCardLast4")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("premium_card_last4");
+
+                    b.Property<string>("PremiumInterval")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("premium_interval");
+
+                    b.Property<DateTimeOffset?>("PremiumUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("premium_until");
+
                     b.Property<string>("ProfileVisibility")
                         .IsRequired()
                         .HasColumnType("text")
@@ -2006,6 +2024,8 @@ namespace App.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_users_coins", "coins >= 0");
 
                             t.HasCheckConstraint("ck_users_locale", "locale in ('en', 'hr')");
+
+                            t.HasCheckConstraint("ck_users_premium_interval", "premium_interval is null or premium_interval in ('monthly', 'yearly')");
 
                             t.HasCheckConstraint("ck_users_profile_visibility", "profile_visibility in ('public', 'friends')");
 

@@ -1,4 +1,4 @@
-import { Award, BookOpen, Flame, Target } from 'lucide-react'
+import { Award, BookOpen, Crown, Flame, Target } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { AiWorking } from '@/components/shared/AiWorking'
@@ -46,7 +46,8 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
   const { blunder, brilliant, practiceConcept } = result.cards
   const { ratingBefore, ratingAfter } = result.mine
   const again = AGAIN[match.kind]
-  const { refreshUser } = useAuth()
+  const { session, refreshUser } = useAuth()
+  const senior = session.status === 'authenticated' && session.user.plan === 'senior'
   // Coins, XP and the rating just changed on the server; the top bar reads them from the session.
   useEffect(() => {
     refreshUser().catch(() => {})
@@ -86,6 +87,12 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
           </p>
         )}
         <Rewards coins={result.mine.coins} xp={result.mine.xp} sp={result.mine.sp} className="pt-1" />
+        {senior && (result.mine.xp > 0 || (ratingAfter ?? 0) > (ratingBefore ?? 0)) && (
+          <p className="flex items-center gap-1.5 text-xs text-warning">
+            <Crown aria-hidden="true" className="size-3.5" />
+            {t.subscription.resultBonus}
+          </p>
+        )}
         {result.mine.streakSecured && (
           <p className="flex items-center gap-1.5 text-sm text-warning">
             <Flame aria-hidden="true" className="size-4" />

@@ -17,5 +17,17 @@ export function relativeTime(iso: string, locale: Locale, now = Date.now()) {
   return format.format(unit === 'second' ? 0 : Math.round(diff / size), unit)
 }
 
+// 1:05 for a running wait (the ranked queue, the professor writing a lesson).
+export const clock = (ms: number) => {
+  const seconds = Math.floor(ms / 1000)
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+}
+
 export const monthYear = (iso: string, locale: Locale) =>
   new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(iso))
+
+export const longDate = (iso: string, locale: Locale) => new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date(iso))
+
+// Prices come from the API in cents (EUR).
+export const euros = (cents: number, locale: Locale) =>
+  new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' }).format(cents / 100)

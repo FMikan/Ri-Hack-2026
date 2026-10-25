@@ -92,7 +92,8 @@ public class SocialService(IAppDbContext db, MatchService matches, TimeProvider 
         var challenge = new FriendChallenge
         {
             Code = FriendChallenge.NewCode(), HostUserId = userId, TargetUserId = friendUserId,
-            ExpiresAt = now.AddMinutes(GameRules.FriendChallengeMinutes), CreatedAt = now,
+            ExpiresAt = friendUserId is null ? now.AddMinutes(GameRules.FriendChallengeMinutes) : now.AddSeconds(GameRules.FriendInviteSeconds),
+            CreatedAt = now,
         };
         db.FriendChallenges.Add(challenge);
         await db.SaveChangesAsync(ct);
@@ -106,6 +107,14 @@ public class SocialService(IAppDbContext db, MatchService matches, TimeProvider 
         var challenge = await db.FriendChallenges.AsNoTracking().FirstOrDefaultAsync(c => c.Code == normalized, ct) ?? throw ChallengeNotFound();
         var host = await db.Users.FirstAsync(u => u.Id == challenge.HostUserId, ct);
         return new FriendChallengeDto(challenge.Code, UserRefDto.From(host), challenge.MatchId, challenge.ExpiresAt);
+    }
+
+    // The friend it was sent to says no: it closes at once, so the host's poll sees it expire. Anyone else changes nothing.
+    public Task DeclineChallengeAsync(Guid userId, string code, CancellationToken ct)
+    {
+        var (normalized, now) = (code.ToUpperInvariant(), time.GetUtcNow());
+        return db.FriendChallenges.Where(c => c.Code == normalized && c.TargetUserId == userId && c.MatchId == null && c.ExpiresAt > now)
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.ExpiresAt, now), ct);
     }
 
     // Under the challenge's row lock, so two guests at once start one match. Both players leave the ranked queue.

@@ -2521,5 +2521,3620 @@
       }
     },
     "remember": "any switches checks off, unknown demands a check, never has no values, and {} means any value that is not null or undefined."
+  },
+  {
+    "key": "js.event-loop.tf.02",
+    "concept": "js.event-loop",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Once the synchronous code has finished, queued promise callbacks run before queued setTimeout callbacks.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Promise callbacks are microtasks, and the microtask queue empties before the event loop picks the next timer."
+  },
+  {
+    "key": "js.event-loop.mc.02",
+    "concept": "js.event-loop",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A script calls setTimeout(fn, 100), then runs a synchronous loop that takes 2 seconds, and ends. When does fn run?",
+      "options": [
+        {
+          "id": "a",
+          "text": "At 100 ms, pausing the loop until fn returns"
+        },
+        {
+          "id": "b",
+          "text": "Once the loop and script finish, about 2 s in"
+        },
+        {
+          "id": "c",
+          "text": "Never, because its 100 ms deadline was missed"
+        },
+        {
+          "id": "d",
+          "text": "At 100 ms, on another thread, alongside the loop"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A timer's delay is a minimum: its callback waits until the call stack is empty, however late that is."
+  },
+  {
+    "key": "js.event-loop.out.02",
+    "concept": "js.event-loop",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "setTimeout(() => console.log(\"A\"), 0);\nnew Promise((resolve) => {\n  console.log(\"B\");\n  resolve();\n}).then(() => console.log(\"C\"));\nconsole.log(\"D\");",
+      "options": [
+        {
+          "id": "a",
+          "text": "B D C A"
+        },
+        {
+          "id": "b",
+          "text": "D B C A"
+        },
+        {
+          "id": "c",
+          "text": "B C D A"
+        },
+        {
+          "id": "d",
+          "text": "B D A C"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "The function passed to new Promise runs synchronously; only the .then callbacks wait for the microtask queue."
+  },
+  {
+    "key": "js.event-loop.bug.02",
+    "concept": "js.event-loop",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In Node.js, listeners are attached right after new Job(...) returns, so creating a Job should log \"backup ready\". Nothing is logged. Find the bug.",
+      "code": "const { EventEmitter } = require(\"node:events\");\n\nclass Job extends EventEmitter {\n  constructor(name) {\n    super();\n    this.name = name;\n    this.emit(\"ready\");\n  }\n}\n\nconst job = new Job(\"backup\");\njob.on(\"ready\", () => {\n  console.log(`${job.name} ready`);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Replace it with: queueMicrotask(() => this.emit(\"ready\"));"
+        },
+        {
+          "id": "f2",
+          "text": "Replace it with: Promise.resolve(this.emit(\"ready\"));"
+        },
+        {
+          "id": "f3",
+          "text": "Replace it with: setTimeout(this.emit, 0, \"ready\");"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f1"
+      }
+    },
+    "remember": "emit() calls listeners synchronously; defer it with queueMicrotask or process.nextTick so the caller can attach listeners first."
+  },
+  {
+    "key": "js.event-loop.cloze.01",
+    "concept": "js.event-loop",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so \"timeout\" is logged before \"then\".",
+      "code": "setTimeout(() => console.log(\"timeout\"), 0);\n____\n  .then(() => console.log(\"then\"));",
+      "options": [
+        {
+          "id": "a",
+          "text": "(async () => {})()"
+        },
+        {
+          "id": "b",
+          "text": "new Promise((r) => queueMicrotask(r))"
+        },
+        {
+          "id": "c",
+          "text": "Promise.resolve().then(() => {})"
+        },
+        {
+          "id": "d",
+          "text": "new Promise((r) => setTimeout(r, 0))"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A .then callback is queued only when its promise settles; a promise resolved by a later timer runs after the earlier timer."
+  },
+  {
+    "key": "js.event-loop.odd.01",
+    "concept": "js.event-loop",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In a browser, a click listener changes the DOM and schedules the four callbacks below. Three are guaranteed to run before the browser paints that change. Which one is not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "A Promise.resolve().then callback"
+        },
+        {
+          "id": "b",
+          "text": "A requestAnimationFrame callback"
+        },
+        {
+          "id": "c",
+          "text": "A setTimeout(fn, 0) callback"
+        },
+        {
+          "id": "d",
+          "text": "A queueMicrotask callback"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Microtasks drain before rendering and requestAnimationFrame runs just before paint, but a setTimeout task may run before or after the next frame."
+  },
+  {
+    "key": "js.event-loop.match.01",
+    "concept": "js.event-loop",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In Node.js, one fs.readFile callback schedules all four callbacks below. Match each with when it runs.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "process.nextTick(fn)"
+        },
+        {
+          "id": "l2",
+          "text": "Promise.resolve().then(fn)"
+        },
+        {
+          "id": "l3",
+          "text": "setImmediate(fn)"
+        },
+        {
+          "id": "l4",
+          "text": "setTimeout(fn, 0)"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "In the check phase, on this same turn of the loop"
+        },
+        {
+          "id": "r2",
+          "text": "In the timers phase, on a later turn of the loop"
+        },
+        {
+          "id": "r3",
+          "text": "First, as soon as the readFile callback returns"
+        },
+        {
+          "id": "r4",
+          "text": "Once the nextTick queue is empty, before the loop moves on"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "In Node.js, after each callback the nextTick queue drains, then promise jobs; setImmediate runs in the check phase, timers on a later turn."
+  },
+  {
+    "key": "js.promises.tf.02",
+    "concept": "js.promises",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In a promise chain, the value returned by one then callback is passed as the argument to the next then callback.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Whatever a then callback returns becomes the value the next then in the chain receives."
+  },
+  {
+    "key": "js.promises.odd.01",
+    "concept": "js.promises",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Passed to promise.then(cb), three of these callbacks make the promise returned by then reject. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "() => { throw new Error(\"x\"); }"
+        },
+        {
+          "id": "b",
+          "text": "() => Promise.reject(new Error(\"x\"))"
+        },
+        {
+          "id": "c",
+          "text": "() => new Error(\"x\")"
+        },
+        {
+          "id": "d",
+          "text": "async () => { throw new Error(\"x\"); }"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Returning an Error object fulfills the next promise with it; throw it or return a rejected promise to reject the chain."
+  },
+  {
+    "key": "js.promises.order.02",
+    "concept": "js.promises",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "loadUser() returns a promise that rejects; each callback logs its name. A script runs: log(\"start\"); loadUser().then(render).catch(showError).then(track).finally(hideSpinner); log(\"end\"). Order the logs.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "track"
+        },
+        {
+          "id": "s2",
+          "text": "end"
+        },
+        {
+          "id": "s3",
+          "text": "hideSpinner"
+        },
+        {
+          "id": "s4",
+          "text": "start"
+        },
+        {
+          "id": "s5",
+          "text": "showError"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "catch handles the rejection and returns a fulfilled promise, so the next then runs; no callback runs before the sync code ends."
+  },
+  {
+    "key": "js.promises.mc.02",
+    "concept": "js.promises",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In Node.js, what happens when this code runs?",
+      "code": "const p = new Promise((resolve, reject) => {\n  setTimeout(() => {\n    throw new Error(\"boom\");\n  }, 10);\n});\n\np.catch((e) => console.log(\"caught\", e.message));",
+      "options": [
+        {
+          "id": "a",
+          "text": "p rejects with boom and the catch logs caught boom"
+        },
+        {
+          "id": "b",
+          "text": "The error is uncaught and crashes the process; p never settles"
+        },
+        {
+          "id": "c",
+          "text": "p rejects, but the catch was attached too late to see it"
+        },
+        {
+          "id": "d",
+          "text": "p fulfills with undefined once the timer callback returns"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "The executor only turns synchronous throws into a rejection; inside a timer or callback, call reject instead of throwing."
+  },
+  {
+    "key": "js.promises.out.02",
+    "concept": "js.promises",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "Promise.resolve(1)\n  .then((x) => x + 1)\n  .then(console.log(\"A\"))\n  .then((x) => console.log(`B:${x}`));\n\nconsole.log(\"C\");",
+      "options": [
+        {
+          "id": "a",
+          "text": "C A B:2"
+        },
+        {
+          "id": "b",
+          "text": "A C B:undefined"
+        },
+        {
+          "id": "c",
+          "text": "C A B:undefined"
+        },
+        {
+          "id": "d",
+          "text": "A C B:2"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "then(console.log(\"A\")) calls log right away and passes undefined; then ignores a non-function and lets the value flow through."
+  },
+  {
+    "key": "js.promises.bug.02",
+    "concept": "js.promises",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "In Node.js, fetchUser and fetchAds return promises. When fetchAds fails while fetchUser is still running, the process crashes with an unhandled rejection instead of calling showError. Find the bug.",
+      "code": "function loadPage(userId) {\n  const user = fetchUser(userId);\n  const ads = fetchAds(userId);\n  return user.then((u) =>\n    ads.then((a) => render(u, a))\n  );\n}\n\nloadPage(7)\n  .then(show)\n  .catch(showError);",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Chain .catch(showError) onto ads.then(...) inside the callback"
+        },
+        {
+          "id": "f2",
+          "text": "Return Promise.all([user, ads]).then(([u, a]) => render(u, a))"
+        },
+        {
+          "id": "f3",
+          "text": "Wrap the return statement in try/catch and rethrow the error"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2",
+        "acceptLines": [
+          5,
+          6
+        ]
+      }
+    },
+    "remember": "Attach a handler to a promise as soon as you start it; if it rejects before any handler exists, Node reports it as unhandled."
+  },
+  {
+    "key": "js.promises.cloze.01",
+    "concept": "js.promises",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The finally callback releases a lock. Fill the blank so a failed release makes the code log failed: lock lost.",
+      "code": "Promise.resolve(\"report\")\n  .finally(() => ____)\n  .then((v) => console.log(\"saved\", v))\n  .catch((e) => console.log(\"failed:\", e.message));",
+      "options": [
+        {
+          "id": "a",
+          "text": "Promise.reject(new Error(\"lock lost\"))"
+        },
+        {
+          "id": "b",
+          "text": "\"lock lost\""
+        },
+        {
+          "id": "c",
+          "text": "new Error(\"lock lost\")"
+        },
+        {
+          "id": "d",
+          "text": "Promise.resolve(new Error(\"lock lost\"))"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "finally ignores what its callback returns, even a fulfilled promise; only a throw or a rejected promise changes the result."
+  },
+  {
+    "key": "js.async-await.tf.02",
+    "concept": "js.async-await",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "When an async function reaches await, the whole JavaScript program stops and waits until that promise settles.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "await pauses only its own async function; the rest of the program keeps running until the promise settles."
+  },
+  {
+    "key": "js.async-await.bug.02",
+    "concept": "js.async-await",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "notifyAll should mark the batch as sent only after every email has gone out, but markBatchSent runs first. Find the bug.",
+      "code": "async function notifyAll(users) {\n  users.forEach(async (user) => {\n    await sendEmail(user.email);\n  });\n  await markBatchSent();\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Put await before users.forEach(...)"
+        },
+        {
+          "id": "f2",
+          "text": "Use for (const user of users) and await each send"
+        },
+        {
+          "id": "f3",
+          "text": "Return sendEmail(user.email) instead of awaiting it"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2",
+        "acceptLines": [
+          3,
+          4
+        ]
+      }
+    },
+    "remember": "forEach ignores the promises its async callback returns; use for...of with await, or await Promise.all(items.map(...))."
+  },
+  {
+    "key": "js.async-await.cloze.02",
+    "concept": "js.async-await",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so this code runs and the toast appears only after saveSettings finishes.",
+      "code": "async function init() {\n  const user = await getUser();\n  button.addEventListener(\"click\", ____ {\n    await saveSettings(user.id);\n    showToast(\"Saved\");\n  });\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "() =>"
+        },
+        {
+          "id": "b",
+          "text": "async () =>"
+        },
+        {
+          "id": "c",
+          "text": "await () =>"
+        },
+        {
+          "id": "d",
+          "text": "function ()"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "await belongs to the nearest enclosing function, so a callback inside an async function must be marked async itself."
+  },
+  {
+    "key": "js.async-await.odd.01",
+    "concept": "js.async-await",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Inside an async function, awaiting three of these gives 42. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "{ then: (ok) => ok(42) }"
+        },
+        {
+          "id": "b",
+          "text": "42"
+        },
+        {
+          "id": "c",
+          "text": "new Promise(() => 42)"
+        },
+        {
+          "id": "d",
+          "text": "(async () => 42)()"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "await unwraps promises and thenables and passes plain values through; a promise executor's return value is ignored, so it never settles."
+  },
+  {
+    "key": "js.async-await.match.01",
+    "concept": "js.async-await",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Inside an async function, getUser() returns a promise that resolves to { name: \"Ana\" }. Match each line with the value of x.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "const x = getUser();"
+        },
+        {
+          "id": "l2",
+          "text": "const x = await getUser();"
+        },
+        {
+          "id": "l3",
+          "text": "const x = await getUser().name;"
+        },
+        {
+          "id": "l4",
+          "text": "const x = (await getUser()).name;"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "undefined"
+        },
+        {
+          "id": "r2",
+          "text": "\"Ana\""
+        },
+        {
+          "id": "r3",
+          "text": "{ name: \"Ana\" }"
+        },
+        {
+          "id": "r4",
+          "text": "A promise"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "await applies to the whole expression after it, so await getUser().name reads .name on the promise; write (await getUser()).name."
+  },
+  {
+    "key": "js.async-await.mc.02",
+    "concept": "js.async-await",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "In Node.js with default settings, getUser() resolves after 2 seconds and getStats() rejects after 100 ms. What happens when load() is called?",
+      "code": "async function load() {\n  const userP = getUser();\n  const statsP = getStats();\n  try {\n    const user = await userP;\n    const stats = await statsP;\n    return { user, stats };\n  } catch (err) {\n    return null;\n  }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "load() resolves to null after about 2 seconds"
+        },
+        {
+          "id": "b",
+          "text": "The process exits with an unhandled rejection after about 2 seconds"
+        },
+        {
+          "id": "c",
+          "text": "load() rejects with the error after about 100 ms"
+        },
+        {
+          "id": "d",
+          "text": "The process exits with an unhandled rejection after about 100 ms"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A started promise needs a handler before it rejects; awaiting it later is too late for Node. Await Promise.all instead."
+  },
+  {
+    "key": "js.async-await.out.02",
+    "concept": "js.async-await",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "let stock = 10;\nconst delay = () =>\n  new Promise((r) => setTimeout(r, 10));\n\nasync function buy(qty) {\n  const left = stock;\n  await delay();\n  stock = left - qty;\n}\n\nPromise.all([buy(3), buy(5)]).then(() => {\n  console.log(\"stock\", stock);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "stock 5"
+        },
+        {
+          "id": "b",
+          "text": "stock 2"
+        },
+        {
+          "id": "c",
+          "text": "stock 7"
+        },
+        {
+          "id": "d",
+          "text": "stock 10"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Other calls run while a function waits at await, so a value read before await can be stale; reading and writing across it loses updates."
+  },
+  {
+    "key": "js.closures.tf.02",
+    "concept": "js.closures",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In JavaScript, a function forms a closure only when it is returned from another function.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Every function closes over the scope it is created in, including callbacks passed to setTimeout or addEventListener."
+  },
+  {
+    "key": "js.closures.mc.02",
+    "concept": "js.closures",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "A page has three buttons, and clicking any of them logs 3. Which change makes each button log its own index?",
+      "code": "const buttons = document.querySelectorAll(\"button\");\nfor (var i = 0; i < buttons.length; i++) {\n  buttons[i].addEventListener(\"click\", () => {\n    console.log(i);\n  });\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "Replace the arrow function with a regular function"
+        },
+        {
+          "id": "b",
+          "text": "Store buttons.length in a const before the loop"
+        },
+        {
+          "id": "c",
+          "text": "Declare the loop variable with let instead of var"
+        },
+        {
+          "id": "d",
+          "text": "Copy i into a const inside the arrow function"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "let gives each loop iteration its own i for the callback to close over; var shares one i, which is 3 by the time anyone clicks."
+  },
+  {
+    "key": "js.closures.out.02",
+    "concept": "js.closures",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "let level = \"info\";\nfunction makeLogger(prefix) {\n  return (msg) => console.log(`${level} ${prefix}: ${msg}`);\n}\nlet service = \"app\";\nconst log = makeLogger(service);\nlevel = \"debug\";\nservice = \"db\";\nlog(\"ready\");",
+      "options": [
+        {
+          "id": "a",
+          "text": "info app: ready"
+        },
+        {
+          "id": "b",
+          "text": "info db: ready"
+        },
+        {
+          "id": "c",
+          "text": "debug db: ready"
+        },
+        {
+          "id": "d",
+          "text": "debug app: ready"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A closure sees later assignments to the variables it captures, but a parameter is a separate variable from the one the caller passed in."
+  },
+  {
+    "key": "js.closures.bug.02",
+    "concept": "js.closures",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "once(fn) should run fn only on the first call and return the saved result after that, but \"init\" is logged twice. Find the bug.",
+      "code": "function once(fn) {\n  let result;\n  return (...args) => {\n    let done = false;\n    if (!done) {\n      done = true;\n      result = fn(...args);\n    }\n    return result;\n  };\n}\n\nconst init = once(() => console.log(\"init\"));\ninit();\ninit();",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change let done to var done so it keeps its value"
+        },
+        {
+          "id": "f2",
+          "text": "Move let done = false to line 2, outside the arrow"
+        },
+        {
+          "id": "f3",
+          "text": "Turn the inner arrow function into a regular function"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f2"
+      }
+    },
+    "remember": "State that must survive between calls belongs in the outer function; a variable declared inside the returned function starts fresh on every call."
+  },
+  {
+    "key": "js.closures.cloze.01",
+    "concept": "js.closures",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so fn runs once, ms after the last call, with the latest arguments.",
+      "code": "function debounce(fn, ms) {\n  let timer;\n  return (...args) => {\n    ____;\n    timer = setTimeout(() => fn(...args), ms);\n  };\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "timer = undefined"
+        },
+        {
+          "id": "b",
+          "text": "clearTimeout(timer)"
+        },
+        {
+          "id": "c",
+          "text": "let timer = null"
+        },
+        {
+          "id": "d",
+          "text": "if (timer) return"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "debounce works because every call shares one timer through the closure: clear it before scheduling, and never redeclare it inside."
+  },
+  {
+    "key": "js.closures.odd.01",
+    "concept": "js.closures",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Inside function f() { const x = 1; ... } with no global x, three of these evaluate to 1. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "new Function(\"return x\")()"
+        },
+        {
+          "id": "b",
+          "text": "(() => x)()"
+        },
+        {
+          "id": "c",
+          "text": "eval(\"x\")"
+        },
+        {
+          "id": "d",
+          "text": "({ get v() { return x; } }).v"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "new Function bodies run in the global scope, so unlike arrows, getters or direct eval they cannot see the local variables around them."
+  },
+  {
+    "key": "js.closures.order.01",
+    "concept": "js.closures",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In for (let i = 0; i < 3; i++) fns.push(() => i);, the first iteration runs in environment E1. Put these steps in the order the engine performs them.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "i++ runs, so i becomes 1"
+        },
+        {
+          "id": "s2",
+          "text": "The second iteration's body creates a closure over E2"
+        },
+        {
+          "id": "s3",
+          "text": "The first iteration's body creates a closure over E1"
+        },
+        {
+          "id": "s4",
+          "text": "The test i < 3 is evaluated"
+        },
+        {
+          "id": "s5",
+          "text": "A new environment E2 is created with a copy of i"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "for (let ...) copies i into a fresh environment before i++ runs, so each iteration's closure keeps the value from its own iteration."
+  },
+  {
+    "key": "js.this.tf.02",
+    "concept": "js.this",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "When you call new User(), this inside the User constructor refers to the newly created object.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Calling a function with new creates a fresh object and runs the function with this set to that object."
+  },
+  {
+    "key": "js.this.odd.02",
+    "concept": "js.this",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In a browser, this code runs at the top level of a script and btn is a button. Three of these log btn when it is clicked. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "btn.onclick = function () { console.log(this); }"
+        },
+        {
+          "id": "b",
+          "text": "btn.addEventListener(\"click\", () => console.log(this))"
+        },
+        {
+          "id": "c",
+          "text": "btn.addEventListener(\"click\", (e) => console.log(e.currentTarget))"
+        },
+        {
+          "id": "d",
+          "text": "btn.addEventListener(\"click\", function () { console.log(this); })"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "A regular function handler gets the element as this; an arrow handler keeps the outer this, so use e.currentTarget there."
+  },
+  {
+    "key": "js.this.match.01",
+    "concept": "js.this",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "In strict mode: function f() { console.log(this); }, obj = { f } and user = {}. Match each call with what f logs.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "obj.f()"
+        },
+        {
+          "id": "l2",
+          "text": "[1].forEach(obj.f)"
+        },
+        {
+          "id": "l3",
+          "text": "new f()"
+        },
+        {
+          "id": "l4",
+          "text": "f.call(user)"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "user"
+        },
+        {
+          "id": "r2",
+          "text": "obj"
+        },
+        {
+          "id": "r3",
+          "text": "undefined"
+        },
+        {
+          "id": "r4",
+          "text": "A new empty object"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "this comes from the call: the object before the dot, the new object with new, the first argument of call, else undefined."
+  },
+  {
+    "key": "js.this.mc.02",
+    "concept": "js.this",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does Admin.create(\"Ana\") return?",
+      "code": "class User {\n  constructor(name) {\n    this.name = name;\n  }\n  static create(name) {\n    return new this(name);\n  }\n}\nclass Admin extends User {}",
+      "options": [
+        {
+          "id": "a",
+          "text": "A User, because create is written in the User class"
+        },
+        {
+          "id": "b",
+          "text": "It throws, because static methods cannot use this"
+        },
+        {
+          "id": "c",
+          "text": "It throws, because Admin does not inherit static methods"
+        },
+        {
+          "id": "d",
+          "text": "An Admin, because this is the class create was called on"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "In a static method this is the class it was called on, so new this() in a parent class builds the subclass."
+  },
+  {
+    "key": "js.this.out.02",
+    "concept": "js.this",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const base = {\n  count: 0,\n  inc() {\n    this.count++;\n  },\n};\nconst a = Object.create(base);\nconst b = Object.create(base);\na.inc();\na.inc();\nb.inc();\nconsole.log(base.count, a.count, b.count);",
+      "options": [
+        {
+          "id": "a",
+          "text": "0 2 1"
+        },
+        {
+          "id": "b",
+          "text": "3 3 3"
+        },
+        {
+          "id": "c",
+          "text": "0 1 1"
+        },
+        {
+          "id": "d",
+          "text": "3 2 1"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "An inherited method's this is the object it was called on, so this.count++ writes an own property, not the prototype's."
+  },
+  {
+    "key": "js.this.bug.01",
+    "concept": "js.this",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "SaveButton should log \"saving\" and then \"clicked Save\", but it only logs \"clicked Save\". Find the bug.",
+      "code": "class Button {\n  label = \"OK\";\n  handleClick = () => {\n    console.log(`clicked ${this.label}`);\n  };\n}\n\nclass SaveButton extends Button {\n  label = \"Save\";\n  handleClick() {\n    console.log(\"saving\");\n    super.handleClick();\n  }\n}\n\nnew SaveButton().handleClick();",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change it to: handleClick = function () {"
+        },
+        {
+          "id": "f2",
+          "text": "Change it to: handleClick() {"
+        },
+        {
+          "id": "f3",
+          "text": "Change it to: #handleClick = () => {"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f2"
+      }
+    },
+    "remember": "An arrow class field is an own property of each instance: it hides subclass methods and super cannot reach it."
+  },
+  {
+    "key": "js.this.cloze.02",
+    "concept": "js.this",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "traced(fn) returns a wrapper that can replace any method. Fill the blank so the last line logs 2.",
+      "code": "function traced(fn) {\n  return ____;\n}\nclass Cart {\n  items = [\"tea\", \"jam\"];\n  count() {\n    return this.items.length;\n  }\n}\nCart.prototype.count = traced(Cart.prototype.count);\nconsole.log(new Cart().count());",
+      "options": [
+        {
+          "id": "a",
+          "text": "(...a) => fn.apply(this, a)"
+        },
+        {
+          "id": "b",
+          "text": "fn.bind(this)"
+        },
+        {
+          "id": "c",
+          "text": "function (...a) { return fn.apply(this, a); }"
+        },
+        {
+          "id": "d",
+          "text": "function (...a) { return fn.apply(null, a); }"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A method wrapper must be a regular function that forwards its own this with fn.apply(this, args); arrows and early bind fix the wrong this."
+  },
+  {
+    "key": "js.equality.tf.02",
+    "concept": "js.equality",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "null === undefined evaluates to true.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "=== never converts types, so null and undefined are different values; only == treats them as equal."
+  },
+  {
+    "key": "js.equality.bug.01",
+    "concept": "js.equality",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "With no filters, buildQuery({}) should return \"/api/products\", but it returns \"/api/products?\". Find the bug.",
+      "code": "function buildQuery(filters) {\n  if (filters === {}) {\n    return \"/api/products\";\n  }\n  const qs = new URLSearchParams(filters);\n  return `/api/products?${qs}`;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Check whether filters is falsy instead"
+        },
+        {
+          "id": "f2",
+          "text": "Check that Object.keys(filters) is empty"
+        },
+        {
+          "id": "f3",
+          "text": "Compare loosely with == instead of ==="
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "== and === compare objects by reference, so nothing equals a fresh {}; test emptiness with Object.keys(obj).length === 0."
+  },
+  {
+    "key": "js.equality.cloze.01",
+    "concept": "js.equality",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so null and undefined get the fallback, but 0 and \"\" are returned unchanged.",
+      "code": "function withDefault(value, fallback) {\n  if (value ____ null) {\n    return fallback;\n  }\n  return value;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "==="
+        },
+        {
+          "id": "b",
+          "text": "=="
+        },
+        {
+          "id": "c",
+          "text": "!="
+        },
+        {
+          "id": "d",
+          "text": "="
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "value == null is true only for null and undefined, the one everyday use of ==; value ?? fallback does the same job."
+  },
+  {
+    "key": "js.equality.odd.02",
+    "concept": "js.equality",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these expressions evaluate to true. Which one evaluates to false?",
+      "items": [
+        {
+          "id": "a",
+          "text": "null == 0"
+        },
+        {
+          "id": "b",
+          "text": "null >= 0"
+        },
+        {
+          "id": "c",
+          "text": "null + 1 === 1"
+        },
+        {
+          "id": "d",
+          "text": "null <= 0"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Arithmetic and <, <=, >= turn null into 0, but == never converts null: it is loosely equal only to null and undefined."
+  },
+  {
+    "key": "js.equality.order.01",
+    "concept": "js.equality",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A legacy check reads if (items == 0), and items is the empty array []. In what order does JavaScript go through these steps to evaluate items == 0?",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Convert the empty string to the number 0"
+        },
+        {
+          "id": "s2",
+          "text": "Check whether both sides have the same type"
+        },
+        {
+          "id": "s3",
+          "text": "Compare 0 with 0 and return true"
+        },
+        {
+          "id": "s4",
+          "text": "Convert the array to a primitive, the empty string"
+        },
+        {
+          "id": "s5",
+          "text": "Check whether either side is null or undefined"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "== settles same-type and null/undefined cases first, then turns an object into a primitive and a string into a number, so [] == 0 is true."
+  },
+  {
+    "key": "js.equality.mc.02",
+    "concept": "js.equality",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "With ==, which values a, b, c make a == b and b == c true, but a == c false?",
+      "options": [
+        {
+          "id": "a",
+          "text": "null, undefined, 0"
+        },
+        {
+          "id": "b",
+          "text": "\"1\", 1, true"
+        },
+        {
+          "id": "c",
+          "text": "\"\", 0, \"0\""
+        },
+        {
+          "id": "d",
+          "text": "[], \"\", 0"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "== is not transitive: two strings compare as text, but a string and a number compare as numbers, so \"\" == 0 and 0 == \"0\" yet \"\" != \"0\"."
+  },
+  {
+    "key": "js.equality.out.02",
+    "concept": "js.equality",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "class Money {\n  constructor(cents) {\n    this.cents = cents;\n  }\n  valueOf() {\n    return this.cents;\n  }\n}\nconst a = new Money(500);\nconst b = new Money(500);\nconsole.log(a == b, a == 500, a <= b && a >= b);",
+      "options": [
+        {
+          "id": "a",
+          "text": "true true true"
+        },
+        {
+          "id": "b",
+          "text": "false false true"
+        },
+        {
+          "id": "c",
+          "text": "false true false"
+        },
+        {
+          "id": "d",
+          "text": "false true true"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "== on two objects compares references and never calls valueOf, while <= and >= convert both sides; compare a.valueOf() === b.valueOf()."
+  },
+  {
+    "key": "js.mutation.tf.02",
+    "concept": "js.mutation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If a function assigns a new object to its parameter, the caller's variable now points to that new object too.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A function gets a copy of the reference: changing the object is visible to the caller, reassigning the parameter is not."
+  },
+  {
+    "key": "js.mutation.mc.02",
+    "concept": "js.mutation",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A store skips re-rendering when the reducer returns the same object it received. Which reducer adds todo and makes the store re-render?",
+      "options": [
+        {
+          "id": "a",
+          "text": "state.todos.push(todo); return state;"
+        },
+        {
+          "id": "b",
+          "text": "const next = state; next.todos.push(todo); return next;"
+        },
+        {
+          "id": "c",
+          "text": "return { ...state, todos: [...state.todos, todo] };"
+        },
+        {
+          "id": "d",
+          "text": "state.todos = [...state.todos, todo]; return state;"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Change checks compare references, so mutating state and returning it looks like no change; return a new object instead."
+  },
+  {
+    "key": "js.mutation.out.02",
+    "concept": "js.mutation",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const state = { user: { name: \"Ann\" }, count: 1 };\nlet { user, count } = state;\nuser.name = \"Bo\";\ncount = 2;\nconsole.log(state.user.name, state.count);",
+      "options": [
+        {
+          "id": "a",
+          "text": "Bo 1"
+        },
+        {
+          "id": "b",
+          "text": "Ann 1"
+        },
+        {
+          "id": "c",
+          "text": "Bo 2"
+        },
+        {
+          "id": "d",
+          "text": "Ann 2"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Destructuring copies primitives by value but objects by reference, so changing a destructured object changes the source."
+  },
+  {
+    "key": "js.mutation.bug.02",
+    "concept": "js.mutation",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "loadFilter(null) should return an empty filter that each caller can change freely, but b.tags already contains \"urgent\". Find the bug.",
+      "code": "const EMPTY_FILTER = { query: \"\", tags: [] };\n\nfunction loadFilter(saved) {\n  return saved ?? EMPTY_FILTER;\n}\n\nconst a = loadFilter(null);\na.tags.push(\"urgent\");\nconst b = loadFilter(null);\nconsole.log(b.tags); // expected []",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "return saved ?? Object.freeze(EMPTY_FILTER);"
+        },
+        {
+          "id": "f2",
+          "text": "return saved ?? { ...EMPTY_FILTER };"
+        },
+        {
+          "id": "f3",
+          "text": "return saved ?? { query: \"\", tags: [] };"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Returning a shared default object hands every caller the same instance; build a fresh one per call, since spread and freeze are shallow."
+  },
+  {
+    "key": "js.mutation.cloze.02",
+    "concept": "js.mutation",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so next marks todo 1 as done and todos stays unchanged, as the comment shows.",
+      "code": "const todos = [{ id: 1, done: false }];\nconst next = todos.map((t) =>\n  t.id === 1 ? ____ : t\n);\nconsole.log(todos[0].done, next[0].done); // false true",
+      "options": [
+        {
+          "id": "a",
+          "text": "Object.assign(t, { done: true })"
+        },
+        {
+          "id": "b",
+          "text": "{ done: true, ...t }"
+        },
+        {
+          "id": "c",
+          "text": "(t.done = true, t)"
+        },
+        {
+          "id": "d",
+          "text": "{ ...t, done: true }"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "map returns a new array but the same element objects; spread the item first, and put overrides after the spread so they win."
+  },
+  {
+    "key": "js.mutation.odd.01",
+    "concept": "js.mutation",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In Node.js, three of these objects can be copied with structuredClone. Which one throws?",
+      "items": [
+        {
+          "id": "a",
+          "text": "{ ids: new Map([[1, \"a\"]]) }"
+        },
+        {
+          "id": "b",
+          "text": "{ total() { return 1; } }"
+        },
+        {
+          "id": "c",
+          "text": "{ total: 10n }"
+        },
+        {
+          "id": "d",
+          "text": "{ get total() { return 1; } }"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "structuredClone copies Maps, BigInts and the values of getters, but throws a DataCloneError on any function-valued property."
+  },
+  {
+    "key": "js.mutation.match.01",
+    "concept": "js.mutation",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "obj is { n: 1, meta: { v: 1 } }. Match each way of protecting obj with what you can still do to it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Declaring obj with const"
+        },
+        {
+          "id": "l2",
+          "text": "Object.preventExtensions(obj)"
+        },
+        {
+          "id": "l3",
+          "text": "Object.seal(obj)"
+        },
+        {
+          "id": "l4",
+          "text": "Object.freeze(obj)"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Change and delete properties, not add"
+        },
+        {
+          "id": "r2",
+          "text": "Change only nested values, like obj.meta.v"
+        },
+        {
+          "id": "r3",
+          "text": "Add, change and delete properties"
+        },
+        {
+          "id": "r4",
+          "text": "Change existing values, not add or delete"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "preventExtensions blocks adding, seal also blocks deleting, freeze also blocks changing; none of them reach nested objects."
+  },
+  {
+    "key": "js.hoisting.tf.02",
+    "concept": "js.hoisting",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Reading a let variable on a line above its declaration gives undefined, just like with var.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "let and const are hoisted but stay in the temporal dead zone until their line runs, so reading them early throws a ReferenceError."
+  },
+  {
+    "key": "js.hoisting.odd.02",
+    "concept": "js.hoisting",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Each line sits at the top level of an ES module. Three of these functions can be called on a line above their declaration. Which one cannot?",
+      "items": [
+        {
+          "id": "a",
+          "text": "function save() {}"
+        },
+        {
+          "id": "b",
+          "text": "async function load() {}"
+        },
+        {
+          "id": "c",
+          "text": "const format = () => {};"
+        },
+        {
+          "id": "d",
+          "text": "export function send() {}"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Every function declaration, async or exported, is hoisted with its body; a function stored in a const cannot be used before its line."
+  },
+  {
+    "key": "js.hoisting.order.01",
+    "concept": "js.hoisting",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Calling run() executes this body: console.log(a); var a = 1; let b = a + 1; console.log(b); Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "a is assigned 1"
+        },
+        {
+          "id": "s2",
+          "text": "The last log prints 2"
+        },
+        {
+          "id": "s3",
+          "text": "a is created as undefined and b as uninitialized"
+        },
+        {
+          "id": "s4",
+          "text": "The first log prints undefined"
+        },
+        {
+          "id": "s5",
+          "text": "b is initialized to 2"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s4",
+          "s1",
+          "s5",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Before a function body runs, its var names exist as undefined and its let names exist uninitialized; values arrive line by line."
+  },
+  {
+    "key": "js.hoisting.mc.02",
+    "concept": "js.hoisting",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "This file runs as an ES module. What happens?",
+      "code": "const debug = true;\n\nif (debug) {\n  function trace(msg) {\n    console.log(\"[trace]\", msg);\n  }\n}\n\ntrace(\"boot\");",
+      "options": [
+        {
+          "id": "a",
+          "text": "It logs [trace] boot"
+        },
+        {
+          "id": "b",
+          "text": "It throws ReferenceError: trace is not defined"
+        },
+        {
+          "id": "c",
+          "text": "It throws TypeError: trace is not a function"
+        },
+        {
+          "id": "d",
+          "text": "It throws a SyntaxError before any line runs"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "In strict code and ES modules, a function declared inside a block is hoisted only to the top of that block, not out of it."
+  },
+  {
+    "key": "js.hoisting.out.03",
+    "concept": "js.hoisting",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "function init() {\n  console.log(typeof render);\n  var render = \"ready\";\n  function render() {}\n  console.log(typeof render);\n}\n\ninit();",
+      "options": [
+        {
+          "id": "a",
+          "text": "undefined string"
+        },
+        {
+          "id": "b",
+          "text": "string string"
+        },
+        {
+          "id": "c",
+          "text": "function function"
+        },
+        {
+          "id": "d",
+          "text": "function string"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A function declaration wins over a var of the same name at hoisting, but the var's assignment still replaces it when its line runs."
+  },
+  {
+    "key": "js.hoisting.bug.01",
+    "concept": "js.hoisting",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "finalPrice should take 10% off for VIP users. It works for everyone else, but every VIP order throws a ReferenceError. Find the bug.",
+      "code": "function finalPrice(price, user) {\n  if (user.vip) {\n    let price = price * 0.9;\n    return Math.round(price);\n  }\n  return price;\n}\n\nconsole.log(finalPrice(100, { vip: false })); // 100\nconsole.log(finalPrice(100, { vip: true })); // 90",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change it to: const price = price * 0.9;"
+        },
+        {
+          "id": "f2",
+          "text": "Change it to: price = price * 0.9;"
+        },
+        {
+          "id": "f3",
+          "text": "Move this line above the if statement"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A let shadows the outer name from the start of its block, even inside its own initializer, so let x = x * 2 reads the new x in its dead zone."
+  },
+  {
+    "key": "js.hoisting.cloze.01",
+    "concept": "js.hoisting",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The entry file imports a.js. a.js and b.js import each other, so b.js runs before the body of a.js. Fill the blank so b.js logs ok.",
+      "code": "// a.js\nimport \"./b.js\";\nexport ____\n\n// b.js\nimport { helper } from \"./a.js\";\nconsole.log(helper());",
+      "options": [
+        {
+          "id": "a",
+          "text": "function helper() { return \"ok\"; }"
+        },
+        {
+          "id": "b",
+          "text": "const helper = function () { return \"ok\"; };"
+        },
+        {
+          "id": "c",
+          "text": "var helper = () => \"ok\";"
+        },
+        {
+          "id": "d",
+          "text": "let helper = () => \"ok\";"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "In an import cycle, an exported function declaration is ready before any module body runs; const and let exports throw and a var export is undefined."
+  },
+  {
+    "key": "js.scope.tf.02",
+    "concept": "js.scope",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Declaring an array with const prevents you from calling push on it.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "const stops the variable from being reassigned; the array or object it points to can still be changed."
+  },
+  {
+    "key": "js.scope.bug.03",
+    "concept": "js.scope",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "This should log standup, lunch and review, one second apart, but it logs undefined three times. Find the bug.",
+      "code": "const reminders = [\"standup\", \"lunch\", \"review\"];\nfor (var i = 0; i < reminders.length; i++) {\n  setTimeout(() => {\n    console.log(reminders[i]);\n  }, (i + 1) * 1000);\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use reminders[i - 1] inside the callback"
+        },
+        {
+          "id": "f2",
+          "text": "Declare i with let instead of var"
+        },
+        {
+          "id": "f3",
+          "text": "Declare reminders with let instead of const"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "let gives each loop iteration its own i, so callbacks that run later see their own value; var shares one i for the whole loop."
+  },
+  {
+    "key": "js.scope.cloze.02",
+    "concept": "js.scope",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so loadSettings returns the parsed object when raw is valid JSON.",
+      "code": "function loadSettings(raw) {\n  let settings;\n  try {\n    ____ = JSON.parse(raw);\n  } catch {\n    settings = {};\n  }\n  return settings;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "let settings"
+        },
+        {
+          "id": "b",
+          "text": "var settings"
+        },
+        {
+          "id": "c",
+          "text": "settings"
+        },
+        {
+          "id": "d",
+          "text": "const settings"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Assign to an outer variable without a keyword; let or const inside the block declares a new variable that disappears at the closing brace."
+  },
+  {
+    "key": "js.scope.odd.01",
+    "concept": "js.scope",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Each line runs on its own. Three of them finish without an error. Which one throws a TypeError?",
+      "items": [
+        {
+          "id": "a",
+          "text": "for (const i = 0; i < 2; i++) console.log(i);"
+        },
+        {
+          "id": "b",
+          "text": "for (const k in { a: 1, b: 2 }) console.log(k);"
+        },
+        {
+          "id": "c",
+          "text": "for (const n of [1, 2]) console.log(n);"
+        },
+        {
+          "id": "d",
+          "text": "const p = { n: 1 }; p.n += 1;"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "for...of and for...in create a fresh const binding per iteration; a classic for loop must reassign its counter, so it needs let."
+  },
+  {
+    "key": "js.scope.match.01",
+    "concept": "js.scope",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Each snippet runs on its own as a script. Match it with what happens.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "const n = 1; n = 2;"
+        },
+        {
+          "id": "l2",
+          "text": "{ let m = 1; } console.log(m);"
+        },
+        {
+          "id": "l3",
+          "text": "let s = 1; { let s = 2; }"
+        },
+        {
+          "id": "l4",
+          "text": "let k = 1; var k = 2;"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Runs without an error"
+        },
+        {
+          "id": "r2",
+          "text": "SyntaxError before anything runs"
+        },
+        {
+          "id": "r3",
+          "text": "TypeError at runtime"
+        },
+        {
+          "id": "r4",
+          "text": "ReferenceError at runtime"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Redeclaring a let in the same scope is a SyntaxError, shadowing it in an inner block is fine, and reassigning a const fails only at runtime."
+  },
+  {
+    "key": "js.scope.mc.02",
+    "concept": "js.scope",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In a browser, a page loads two classic (non-module) scripts, a.js then b.js. Both declare let config = {...} at the top level. What happens when b.js loads?",
+      "options": [
+        {
+          "id": "a",
+          "text": "b.js runs, and its config replaces a.js's for both"
+        },
+        {
+          "id": "b",
+          "text": "b.js runs with its own config; a.js keeps its own"
+        },
+        {
+          "id": "c",
+          "text": "b.js runs until its let line, then throws a SyntaxError"
+        },
+        {
+          "id": "d",
+          "text": "b.js throws a SyntaxError and none of its code runs"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Classic scripts share one global scope for let and const, so a second script that declares the same name fails before any of its code runs."
+  },
+  {
+    "key": "js.scope.out.01",
+    "concept": "js.scope",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const fns = [];\nfor (let i = 0; i < 3; i++) {\n  fns.push(() => i);\n  i++;\n}\nconsole.log(fns[0](), fns[1]());",
+      "options": [
+        {
+          "id": "a",
+          "text": "0 2"
+        },
+        {
+          "id": "b",
+          "text": "1 3"
+        },
+        {
+          "id": "c",
+          "text": "2 4"
+        },
+        {
+          "id": "d",
+          "text": "4 4"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A for-let loop copies i into a fresh binding before each increment, so a closure sees changes made in its own iteration's body only."
+  },
+  {
+    "key": "js.array-methods.tf.02",
+    "concept": "js.array-methods",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "forEach returns a new array made of the values its callback returns.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "forEach always returns undefined and is only for side effects; use map when you need a new array of results."
+  },
+  {
+    "key": "js.array-methods.mc.02",
+    "concept": "js.array-methods",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Which expression is true when cart holds an item with id 7?",
+      "code": "const cart = [\n  { id: 3, qty: 1 },\n  { id: 7, qty: 2 },\n  { id: 9, qty: 1 },\n];",
+      "options": [
+        {
+          "id": "a",
+          "text": "cart.includes({ id: 7, qty: 2 })"
+        },
+        {
+          "id": "b",
+          "text": "cart.indexOf(7) !== -1"
+        },
+        {
+          "id": "c",
+          "text": "cart.some((item) => item.id === 7)"
+        },
+        {
+          "id": "d",
+          "text": "cart.every((item) => item.id === 7)"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "includes and indexOf compare objects by reference, so a look-alike object never matches; use some with a test on a field."
+  },
+  {
+    "key": "js.array-methods.out.02",
+    "concept": "js.array-methods",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const orders = [\n  { id: 1, total: 40 },\n  { id: 2, total: 15 },\n];\nconst order = orders.filter((o) => o.id === 2);\nconsole.log(order.total, order.length);",
+      "options": [
+        {
+          "id": "a",
+          "text": "15 1"
+        },
+        {
+          "id": "b",
+          "text": "15 undefined"
+        },
+        {
+          "id": "c",
+          "text": "undefined undefined"
+        },
+        {
+          "id": "d",
+          "text": "undefined 1"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "filter always returns an array, even for a single match; use find to get the matching element itself."
+  },
+  {
+    "key": "js.array-methods.bug.01",
+    "concept": "js.array-methods",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "sortByName should return a copy of the list sorted A to Z by name, but this logs \"Mia, Ana, Leo\". Find the bug.",
+      "code": "const users = [\n  { name: \"Mia\", city: \"Rijeka\" },\n  { name: \"Ana\", city: \"Split\" },\n  { name: \"Leo\", city: \"Zadar\" },\n];\n\nfunction sortByName(list) {\n  return [...list].sort((a, b) => a.name - b.name);\n}\n\nconst names = sortByName(users).map((u) => u.name);\nconsole.log(names.join(\", \"));",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Call sort() with no compare function"
+        },
+        {
+          "id": "f2",
+          "text": "Sort list in place instead of a [...list] copy"
+        },
+        {
+          "id": "f3",
+          "text": "Compare with a.name.localeCompare(b.name)"
+        }
+      ],
+      "answer": {
+        "line": 8,
+        "fixId": "f3"
+      }
+    },
+    "remember": "A compare function must return a number; subtracting strings gives NaN, which sort treats as equal, so compare strings with localeCompare."
+  },
+  {
+    "key": "js.array-methods.cloze.02",
+    "concept": "js.array-methods",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In Node.js, fill the blank so players are sorted by team A to Z, and from highest to lowest score within a team.",
+      "code": "const players = [\n  { team: \"red\", score: 3 },\n  { team: \"blue\", score: 4 },\n  { team: \"red\", score: 7 },\n  { team: \"blue\", score: 9 },\n];\nplayers.sort(\n  (a, b) =>\n    a.team.localeCompare(b.team) ____ b.score - a.score\n);",
+      "options": [
+        {
+          "id": "a",
+          "text": "||"
+        },
+        {
+          "id": "b",
+          "text": "??"
+        },
+        {
+          "id": "c",
+          "text": "&&"
+        },
+        {
+          "id": "d",
+          "text": "+"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Chain sort keys with ||: a compare result of 0 means equal, so || falls through to the next key, while ?? does not, because 0 is not nullish."
+  },
+  {
+    "key": "js.array-methods.odd.01",
+    "concept": "js.array-methods",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "cb is (_, i) => i. Three of these return [0, 1, 2]. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Array.from({ length: 3 }, cb)"
+        },
+        {
+          "id": "b",
+          "text": "new Array(3).map(cb)"
+        },
+        {
+          "id": "c",
+          "text": "[...new Array(3)].map(cb)"
+        },
+        {
+          "id": "d",
+          "text": "new Array(3).fill(null).map(cb)"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "new Array(n) has empty slots, not undefined values, and map skips empty slots; fill the array or use Array.from first."
+  },
+  {
+    "key": "js.array-methods.order.01",
+    "concept": "js.array-methods",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In JavaScript, prices = [3, undefined, -1, null, 2] is sorted with prices.sort((a, b) => b - a). Put the elements in the order they end up in.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "null"
+        },
+        {
+          "id": "s2",
+          "text": "3"
+        },
+        {
+          "id": "s3",
+          "text": "undefined"
+        },
+        {
+          "id": "s4",
+          "text": "-1"
+        },
+        {
+          "id": "s5",
+          "text": "2"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s5",
+          "s1",
+          "s4",
+          "s3"
+        ]
+      }
+    },
+    "remember": "sort moves undefined to the end without calling the compare function, and b - a treats null as 0, so handle missing values before sorting."
+  },
+  {
+    "key": "js.coercion.tf.02",
+    "concept": "js.coercion",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "An empty array [] is truthy, so if ([]) { ... } runs its block.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Every array and object is truthy, even an empty one; check arr.length to test whether an array is empty."
+  },
+  {
+    "key": "js.coercion.odd.02",
+    "concept": "js.coercion",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these expressions evaluate to 0. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Number(\"\")"
+        },
+        {
+          "id": "b",
+          "text": "Number(null)"
+        },
+        {
+          "id": "c",
+          "text": "Number(undefined)"
+        },
+        {
+          "id": "d",
+          "text": "Number(false)"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Number() turns \"\", null and false into 0 but undefined into NaN, so one missing field turns a whole sum into NaN."
+  },
+  {
+    "key": "js.coercion.match.02",
+    "concept": "js.coercion",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each template literal with the string it produces.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "`${[1, 2]}`"
+        },
+        {
+          "id": "l2",
+          "text": "`${{ a: 1 }}`"
+        },
+        {
+          "id": "l3",
+          "text": "`${undefined}`"
+        },
+        {
+          "id": "l4",
+          "text": "`${[]}`"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "\"undefined\""
+        },
+        {
+          "id": "r2",
+          "text": "\"\""
+        },
+        {
+          "id": "r3",
+          "text": "\"1,2\""
+        },
+        {
+          "id": "r4",
+          "text": "\"[object Object]\""
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Interpolation converts with String(): arrays join with commas, [] becomes \"\", and plain objects become \"[object Object]\"."
+  },
+  {
+    "key": "js.coercion.mc.02",
+    "concept": "js.coercion",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "qty and stock come from text inputs: qty is \"10\", stock is \"9\", and qty > stock is false. Which expression compares them as numbers and is true?",
+      "options": [
+        {
+          "id": "a",
+          "text": "qty > stock + 0"
+        },
+        {
+          "id": "b",
+          "text": "+qty > stock"
+        },
+        {
+          "id": "c",
+          "text": "qty + 0 > stock"
+        },
+        {
+          "id": "d",
+          "text": "qty > String(stock)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Two strings compare character by character; once one side of < or > is a number, the other side is converted to a number too."
+  },
+  {
+    "key": "js.coercion.out.01",
+    "concept": "js.coercion",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "The prices were read from text inputs. What does this print?",
+      "code": "const prices = [\"4\", \"5\", \"6\"];\nconst total = prices.reduce((sum, p) => sum + p, 0);\nconsole.log(total, typeof total);",
+      "options": [
+        {
+          "id": "a",
+          "text": "15 number"
+        },
+        {
+          "id": "b",
+          "text": "456 string"
+        },
+        {
+          "id": "c",
+          "text": "NaN number"
+        },
+        {
+          "id": "d",
+          "text": "0456 string"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A reduce that starts at 0 still concatenates as soon as it adds a string; convert each item with Number() first."
+  },
+  {
+    "key": "js.coercion.bug.01",
+    "concept": "js.coercion",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "session.createdAt is a Date. Sessions should expire 15 minutes after creation, but isExpired returns false even for sessions created hours ago. Find the bug.",
+      "code": "const TTL_MS = 15 * 60 * 1000;\n\nfunction isExpired(session) {\n  const expiresAt = session.createdAt + TTL_MS;\n  return Date.now() > expiresAt;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change it to: const expiresAt = new Date(session.createdAt) + TTL_MS;"
+        },
+        {
+          "id": "f2",
+          "text": "Change it to: const expiresAt = Date.parse(session.createdAt + TTL_MS);"
+        },
+        {
+          "id": "f3",
+          "text": "Change it to: const expiresAt = session.createdAt.getTime() + TTL_MS;"
+        }
+      ],
+      "answer": {
+        "line": 4,
+        "fixId": "f3"
+      }
+    },
+    "remember": "Date + number joins the date's text with the number, while Date - number subtracts; call getTime() before adding milliseconds."
+  },
+  {
+    "key": "js.coercion.cloze.01",
+    "concept": "js.coercion",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so the last line logs $5.00 10 6.",
+      "code": "const price = {\n  amount: 5,\n  label: \"$5.00\",\n  [Symbol.toPrimitive](hint) {\n    if (____) return this.label;\n    return this.amount;\n  },\n};\nconsole.log(`${price}`, price * 2, price + 1);",
+      "options": [
+        {
+          "id": "a",
+          "text": "hint === \"string\""
+        },
+        {
+          "id": "b",
+          "text": "hint !== \"number\""
+        },
+        {
+          "id": "c",
+          "text": "hint === \"default\""
+        },
+        {
+          "id": "d",
+          "text": "typeof hint === \"string\""
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Symbol.toPrimitive gets the hint \"string\" in template literals, \"number\" for * and -, and \"default\" for + and ==."
+  },
+  {
+    "key": "js.errors.tf.02",
+    "concept": "js.errors",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A finally block runs only when the try block throws an error.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "finally runs after try and catch every time, error or not, so it is the place for cleanup like closing a file or hiding a spinner."
+  },
+  {
+    "key": "js.errors.bug.02",
+    "concept": "js.errors",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "api.post returns a promise. When the request fails, the user should see \"Could not save\", but sees \"Saved\" and the console reports an unhandled rejection. Find the bug.",
+      "code": "async function saveNote(note) {\n  try {\n    api.post(\"/notes\", note);\n    toast(\"Saved\");\n  } catch (err) {\n    toast(\"Could not save\");\n  }\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change it to: api.post(\"/notes\", note).catch(console.error);"
+        },
+        {
+          "id": "f2",
+          "text": "Change it to: return api.post(\"/notes\", note);"
+        },
+        {
+          "id": "f3",
+          "text": "Change it to: await api.post(\"/notes\", note);"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f3"
+      }
+    },
+    "remember": "try/catch only sees a rejected promise that you await; without await the function moves on and the rejection escapes."
+  },
+  {
+    "key": "js.errors.cloze.01",
+    "concept": "js.errors",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so parseConfig returns null for malformed JSON and rethrows any other error.",
+      "code": "function parseConfig(text) {\n  try {\n    return JSON.parse(text);\n  } catch (err) {\n    if (err instanceof ____) return null;\n    throw err;\n  }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "TypeError"
+        },
+        {
+          "id": "b",
+          "text": "SyntaxError"
+        },
+        {
+          "id": "c",
+          "text": "ParseError"
+        },
+        {
+          "id": "d",
+          "text": "RangeError"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "JSON.parse throws a SyntaxError on malformed input; check the error type in catch and rethrow anything you did not expect."
+  },
+  {
+    "key": "js.errors.odd.01",
+    "concept": "js.errors",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Inside an async function, each line sits alone in a try/catch and save(x) returns a promise that rejects. Three rejections reach the catch block. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "await save(x);"
+        },
+        {
+          "id": "b",
+          "text": "const p = save(x); await p;"
+        },
+        {
+          "id": "c",
+          "text": "[x].forEach(async (v) => await save(v));"
+        },
+        {
+          "id": "d",
+          "text": "await Promise.all([save(x)]);"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "forEach ignores the promises its async callback returns, so their rejections skip your try/catch; use for...of with await or Promise.all."
+  },
+  {
+    "key": "js.errors.order.02",
+    "concept": "js.errors",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "a() calls b() inside a try with catch and finally blocks. b() calls c() inside a try that has only a finally block. c() throws. Put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "a's finally block runs"
+        },
+        {
+          "id": "s2",
+          "text": "b's finally block runs"
+        },
+        {
+          "id": "s3",
+          "text": "c() throws an Error"
+        },
+        {
+          "id": "s4",
+          "text": "The code after the call to a() runs"
+        },
+        {
+          "id": "s5",
+          "text": "a's catch block runs"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s2",
+          "s5",
+          "s1",
+          "s4"
+        ]
+      }
+    },
+    "remember": "A thrown error unwinds the stack: every finally it passes runs on the way out, then the nearest catch handles it."
+  },
+  {
+    "key": "js.errors.mc.02",
+    "concept": "js.errors",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "In current Node.js with default settings, fetchA() rejects with Error(\"A down\") after 10 ms and fetchB() resolves after 100 ms. What happens?",
+      "code": "async function load() {\n  const a = fetchA();\n  const b = fetchB();\n  try {\n    await b;\n    await a;\n  } catch (err) {\n    console.log(\"handled\", err.message);\n  }\n}\nload();",
+      "options": [
+        {
+          "id": "a",
+          "text": "The catch block logs \"handled A down\" after about 100 ms"
+        },
+        {
+          "id": "b",
+          "text": "The catch block logs \"handled A down\" after about 10 ms"
+        },
+        {
+          "id": "c",
+          "text": "A warning is printed at 10 ms, then \"handled A down\" at 100 ms"
+        },
+        {
+          "id": "d",
+          "text": "The process crashes with an unhandled rejection at about 10 ms"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A rejected promise needs a handler by the time it settles; awaiting it later is too late, so await promises started together with Promise.all."
+  },
+  {
+    "key": "js.errors.out.02",
+    "concept": "js.errors",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const a = new Promise((resolve) => {\n  resolve(1);\n  throw new Error(\"late\");\n});\nconst b = new Promise((resolve) => {\n  throw new Error(\"early\");\n  resolve(2);\n});\na.then((v) => console.log(\"a\", v))\n  .catch((e) => console.log(\"a err\", e.message));\nb.then((v) => console.log(\"b\", v))\n  .catch((e) => console.log(\"b err\", e.message));",
+      "options": [
+        {
+          "id": "a",
+          "text": "a 1 b err early"
+        },
+        {
+          "id": "b",
+          "text": "a err late b err early"
+        },
+        {
+          "id": "c",
+          "text": "b err early a 1"
+        },
+        {
+          "id": "d",
+          "text": "Uncaught Error: late"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A throw in a promise executor becomes a rejection only before the promise settles; a throw after resolve is silently lost."
+  },
+  {
+    "key": "ts.types-interfaces.tf.02",
+    "concept": "ts.types-interfaces",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In TypeScript, only objects created from a class that implements an interface can be stored in a variable of that interface type.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Any value with the right shape matches an interface, a plain object literal included; no class or implements is needed."
+  },
+  {
+    "key": "ts.types-interfaces.mc.02",
+    "concept": "ts.types-interfaces",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "connect takes interface Options { timeout: number | undefined }. Under strict mode, what happens when you call connect({})?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It compiles; timeout is undefined inside connect"
+        },
+        {
+          "id": "b",
+          "text": "Compile error: property timeout is missing"
+        },
+        {
+          "id": "c",
+          "text": "Compile error: undefined is not a number"
+        },
+        {
+          "id": "d",
+          "text": "It compiles; timeout defaults to 0 inside connect"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A property typed T | undefined must still be present; only the ? modifier lets callers leave it out."
+  },
+  {
+    "key": "ts.types-interfaces.out.02",
+    "concept": "ts.types-interfaces",
+    "type": "output",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "This compiles under strict mode. What does it print?",
+      "code": "interface PublicUser {\n  id: number;\n  name: string;\n}\n\nconst row = { id: 1, name: \"Ann\", password: \"x\" };\nconst user: PublicUser = row;\n\nconsole.log(Object.keys(user).length, \"password\" in user);",
+      "options": [
+        {
+          "id": "a",
+          "text": "2 false"
+        },
+        {
+          "id": "b",
+          "text": "2 true"
+        },
+        {
+          "id": "c",
+          "text": "3 false"
+        },
+        {
+          "id": "d",
+          "text": "3 true"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A type annotation never removes properties: an object stored as a narrower type still carries every field at runtime."
+  },
+  {
+    "key": "ts.types-interfaces.bug.01",
+    "concept": "ts.types-interfaces",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "Config must be read-only all the way down, so the compiler should reject addTag. It compiles. Find the bug.",
+      "code": "interface Config {\n  readonly name: string;\n  readonly tags: string[];\n}\n\nconst config: Config = { name: \"app\", tags: [\"web\"] };\n\nfunction addTag(c: Config, tag: string) {\n  c.tags.push(tag);\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "readonly tags: Readonly<string>[];"
+        },
+        {
+          "id": "f2",
+          "text": "readonly tags: string[] as const;"
+        },
+        {
+          "id": "f3",
+          "text": "readonly tags: readonly string[];"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f3"
+      }
+    },
+    "remember": "readonly on a property only blocks reassigning it; the array inside stays mutable unless its type is readonly string[] too."
+  },
+  {
+    "key": "ts.types-interfaces.cloze.02",
+    "concept": "ts.types-interfaces",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "Fill the blank so every entry is checked against Route, and routes.missing is a compile error.",
+      "code": "type Route = { path: string; auth: boolean };\n\nconst routes = {\n  home: { path: \"/\", auth: false },\n  admin: { path: \"/admin\", auth: true },\n} ____ Record<string, Route>;\n\nroutes.admin.path; // ok\nroutes.missing; // must be a compile error",
+      "options": [
+        {
+          "id": "a",
+          "text": "as"
+        },
+        {
+          "id": "b",
+          "text": "as unknown as"
+        },
+        {
+          "id": "c",
+          "text": "satisfies"
+        },
+        {
+          "id": "d",
+          "text": "extends"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "satisfies checks a value against a type but keeps its inferred type; as Record<string, Route> widens it, so any key compiles."
+  },
+  {
+    "key": "ts.types-interfaces.odd.02",
+    "concept": "ts.types-interfaces",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these types accept the object { f: (x: string) => {} } under strict mode. Which one is a compile error?",
+      "items": [
+        {
+          "id": "a",
+          "text": "interface H { f: (x: string | number) => void }"
+        },
+        {
+          "id": "b",
+          "text": "interface H { f(x: string | number): void }"
+        },
+        {
+          "id": "c",
+          "text": "type H = { f(x: string | number): void }"
+        },
+        {
+          "id": "d",
+          "text": "interface H { f?(x: string | number): void }"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "Strict mode checks parameters of function-type properties strictly, but method shorthand stays bivariant, so a narrower handler slips through."
+  },
+  {
+    "key": "ts.types-interfaces.match.01",
+    "concept": "ts.types-interfaces",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "interface Base { id: string } is declared. Match each declaration with what TypeScript does under strict mode.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "interface A extends Base { id: number }"
+        },
+        {
+          "id": "l2",
+          "text": "type B = Base & { id: number }"
+        },
+        {
+          "id": "l3",
+          "text": "A second interface Base { name: string }"
+        },
+        {
+          "id": "l4",
+          "text": "type C = Omit<Base, \"id\"> & { id: number }"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Base merges and now needs both id and name"
+        },
+        {
+          "id": "r2",
+          "text": "Compiles, and id has type number"
+        },
+        {
+          "id": "r3",
+          "text": "Compile error on that declaration"
+        },
+        {
+          "id": "r4",
+          "text": "Compiles, but id has type never"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "extends reports a conflicting member as an error, but an intersection compiles and quietly makes it never; use Omit to replace a member."
+  },
+  {
+    "key": "ts.narrowing.tf.02",
+    "concept": "ts.narrowing",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In TypeScript, if (typeof value === \"array\") narrows value: string | string[] to string[].",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "typeof returns \"object\" for arrays, never \"array\"; narrow to an array type with Array.isArray(value)."
+  },
+  {
+    "key": "ts.narrowing.odd.01",
+    "concept": "ts.narrowing",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "value has the type string | null | undefined. Three of these checks narrow it to string inside the if block. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "value != null"
+        },
+        {
+          "id": "b",
+          "text": "typeof value === \"string\""
+        },
+        {
+          "id": "c",
+          "text": "value !== undefined"
+        },
+        {
+          "id": "d",
+          "text": "value != undefined"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "!== undefined removes only undefined and leaves null; the loose != null or != undefined removes both at once."
+  },
+  {
+    "key": "ts.narrowing.order.01",
+    "concept": "ts.narrowing",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "type Res = { ok: true; data: { tags?: string[] } } | { ok: false; error: string }. Order the parts of one && chain so it compiles under strict mode for res: Res | undefined.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "res.data.tags !== undefined"
+        },
+        {
+          "id": "s2",
+          "text": "res !== undefined"
+        },
+        {
+          "id": "s3",
+          "text": "res.data.tags.length > 0"
+        },
+        {
+          "id": "s4",
+          "text": "res.ok"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Each && operand sees the narrowing of the ones before it: rule out undefined, pick the member with ok, and only then read data."
+  },
+  {
+    "key": "ts.narrowing.mc.02",
+    "concept": "ts.narrowing",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "Under strict mode, line 6 fails with \"number | undefined is not assignable to number\", but line 7 compiles. Why?",
+      "code": "type Config = { port?: number };\ndeclare function listen(port: number): void;\n\nfunction start(config: Config) {\n  if (config.port !== undefined) {\n    setTimeout(() => listen(config.port), 1000);\n    listen(config.port);\n  }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "Property narrowing is reset in callbacks, as the property may change before they run"
+        },
+        {
+          "id": "b",
+          "text": "Arrow functions get no control flow analysis, so nothing is narrowed inside them"
+        },
+        {
+          "id": "c",
+          "text": "A parameter's narrowing is never kept in a nested function, even if not reassigned"
+        },
+        {
+          "id": "d",
+          "text": "Optional properties narrow only with the in operator, not with !== undefined"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Narrowing of a property does not reach into callbacks; copy it into a const first (const port = config.port) and use that inside."
+  },
+  {
+    "key": "ts.narrowing.out.02",
+    "concept": "ts.narrowing",
+    "type": "output",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "This compiles under strict mode. What does it print?",
+      "code": "class Point {\n  x = 1;\n  y = 2;\n}\n\nfunction kind(p: Point | { x: number; y: number }) {\n  return p instanceof Point ? \"class\" : \"plain\";\n}\n\nconst a = new Point();\nconst b = JSON.parse(JSON.stringify(a));\nconst c = { ...a };\nconsole.log(kind(a), kind(b), kind(c));",
+      "options": [
+        {
+          "id": "a",
+          "text": "class class class"
+        },
+        {
+          "id": "b",
+          "text": "class plain class"
+        },
+        {
+          "id": "c",
+          "text": "class class plain"
+        },
+        {
+          "id": "d",
+          "text": "class plain plain"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "instanceof checks the prototype chain at runtime, so a JSON or spread copy fails it even though its shape matches the class."
+  },
+  {
+    "key": "ts.narrowing.bug.02",
+    "concept": "ts.narrowing",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "ts",
+    "content": {
+      "prompt": "Msg recently gained a \"video\" member. Since then preview() throws \"Cannot read properties of undefined (reading 'slice')\" for videos. Find the bug.",
+      "code": "type Msg =\n  | { type: \"text\"; body: string }\n  | { type: \"image\"; url: string }\n  | { type: \"video\"; url: string; seconds: number };\n\ntype TextMsg = Extract<Msg, { type: \"text\" }>;\n\nfunction isText(m: Msg): m is TextMsg {\n  return m.type !== \"image\";\n}\n\nfunction preview(m: Msg): string {\n  if (isText(m)) return m.body.slice(0, 40);\n  return m.url;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change it to: return m.type !== \"image\" || \"body\" in m;"
+        },
+        {
+          "id": "f2",
+          "text": "Change it to: return m.type === \"text\";"
+        },
+        {
+          "id": "f3",
+          "text": "Change it to: return m.type !== \"image\" && m.type !== undefined;"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f2"
+      }
+    },
+    "remember": "The compiler trusts a type predicate's body blindly; test for the member you claim (=== \"text\") so new union members cannot slip through."
+  },
+  {
+    "key": "ts.narrowing.cloze.01",
+    "concept": "ts.narrowing",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "ts",
+    "content": {
+      "prompt": "Fill the blank so the function compiles under strict mode.",
+      "code": "type Res =\n  | { data: string; error: null }\n  | { data: null; error: Error };\n\nfunction show(r: Res): string {\n  if (____) {\n    return r.error.message;\n  }\n  return r.data.toUpperCase();\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "!r.data"
+        },
+        {
+          "id": "b",
+          "text": "r.error"
+        },
+        {
+          "id": "c",
+          "text": "r.error instanceof Error"
+        },
+        {
+          "id": "d",
+          "text": "typeof r.error === \"object\""
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A field check narrows the whole object only if it rules members out: !r.data misses \"\", and instanceof narrows just the field itself."
+  },
+  {
+    "key": "ts.generics.tf.02",
+    "concept": "ts.generics",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A generic function can declare only one type parameter, so pair<K, V>(key: K, value: V) is a compile error.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A generic can take several type parameters, such as <K, V>, and TypeScript infers each one from its own argument."
+  },
+  {
+    "key": "ts.generics.bug.02",
+    "concept": "ts.generics",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "merge should combine two objects with different shapes, so admin has id, name and role. The call to merge does not compile. Find the bug.",
+      "code": "function merge<T>(a: T, b: T) {\n  return { ...a, ...b };\n}\n\nconst user = { id: 1, name: \"Ana\" };\nconst extra = { role: \"admin\" };\nconst admin = merge(user, extra);\nconsole.log(admin.role);",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Constrain T: function merge<T extends object>(a: T, b: T) {"
+        },
+        {
+          "id": "f2",
+          "text": "Use two type parameters: function merge<A, B>(a: A, b: B) {"
+        },
+        {
+          "id": "f3",
+          "text": "Make b partial: function merge<T>(a: T, b: Partial<T>) {"
+        }
+      ],
+      "answer": {
+        "line": 1,
+        "fixId": "f2"
+      }
+    },
+    "remember": "One type parameter shared by two arguments forces them to the same type; give each independent input its own parameter, like <A, B>."
+  },
+  {
+    "key": "ts.generics.cloze.01",
+    "concept": "ts.generics",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "Fill the blank so this compiles under strict mode and user has the type User.",
+      "code": "interface User { id: number; name: string }\n\nasync function fetchJson<T>(url: string): ____ {\n  const res = await fetch(url);\n  return res.json();\n}\n\nasync function loadMe() {\n  const user = await fetchJson<User>(\"/api/me\");\n  return user.name;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "T"
+        },
+        {
+          "id": "b",
+          "text": "Promise<any>"
+        },
+        {
+          "id": "c",
+          "text": "Promise<T>"
+        },
+        {
+          "id": "d",
+          "text": "Promise<unknown>"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "An async function always returns a Promise, so a generic fetch helper returns Promise<T> and the caller's type argument comes out of await."
+  },
+  {
+    "key": "ts.generics.odd.01",
+    "concept": "ts.generics",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Given function getProp<T, K extends keyof T>(obj: T, key: K): T[K] and const user = { id: 1, name: \"Ana\" }, three of these calls compile under strict mode. Which one is a compile error?",
+      "items": [
+        {
+          "id": "a",
+          "text": "getProp(user, \"id\")"
+        },
+        {
+          "id": "b",
+          "text": "getProp(user, \"toString\")"
+        },
+        {
+          "id": "c",
+          "text": "getProp([10, 20], \"length\")"
+        },
+        {
+          "id": "d",
+          "text": "getProp(new Map<string, number>(), \"size\")"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "keyof T lists the keys declared on T's type; for a plain object literal that means its own properties, not inherited methods like toString."
+  },
+  {
+    "key": "ts.generics.match.02",
+    "concept": "ts.generics",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "loadUser is declared as async function loadUser(id: number, fresh: boolean): Promise<User>. Match each type with what it resolves to.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "ReturnType<typeof loadUser>"
+        },
+        {
+          "id": "l2",
+          "text": "Awaited<ReturnType<typeof loadUser>>"
+        },
+        {
+          "id": "l3",
+          "text": "Parameters<typeof loadUser>"
+        },
+        {
+          "id": "l4",
+          "text": "Parameters<typeof loadUser>[1]"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "User"
+        },
+        {
+          "id": "r2",
+          "text": "[id: number, fresh: boolean]"
+        },
+        {
+          "id": "r3",
+          "text": "boolean"
+        },
+        {
+          "id": "r4",
+          "text": "Promise<User>"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "ReturnType and Parameters read types off an existing function, and Awaited unwraps the Promise, so wrappers never restate a signature by hand."
+  },
+  {
+    "key": "ts.generics.mc.02",
+    "concept": "ts.generics",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "language": "ts",
+    "content": {
+      "prompt": "Under strict mode, the return line is a compile error. Why?",
+      "code": "function reset<T extends { count: number }>(item: T): T {\n  return { count: 0 };\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "item is not used, so T cannot be inferred inside the function body"
+        },
+        {
+          "id": "b",
+          "text": "Type parameters are erased, so a function can never build a new T"
+        },
+        {
+          "id": "c",
+          "text": "The constraint makes count readonly, so it cannot be set to 0"
+        },
+        {
+          "id": "d",
+          "text": "T may have more properties than count, so { count: 0 } is not a T"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A constraint is only a lower bound: T may carry extra properties, so a function returning T must build the result from its input, as in { ...item, count: 0 }."
+  },
+  {
+    "key": "ts.generics.out.02",
+    "concept": "ts.generics",
+    "type": "output",
+    "difficulty": 4,
+    "language": "ts",
+    "content": {
+      "prompt": "This compiles under strict mode. What happens when it runs?",
+      "code": "function append<T>(items: T[], value: T): void {\n  items.push(value);\n}\n\nconst ports: number[] = [80];\nappend<number | string>(ports, \"443\");\nconsole.log(ports.map((p) => p.toFixed(1)));",
+      "options": [
+        {
+          "id": "a",
+          "text": "TypeError: p.toFixed is not a function"
+        },
+        {
+          "id": "b",
+          "text": "[ '80.0', '443.0' ]"
+        },
+        {
+          "id": "c",
+          "text": "[ '80.0' ]"
+        },
+        {
+          "id": "d",
+          "text": "[ '80.0', '443' ]"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Arrays are covariant, so an explicit type argument like append<number | string> lets a string into a number[] with no compile error."
+  },
+  {
+    "key": "ts.any-unknown.tf.02",
+    "concept": "ts.any-unknown",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A TypeScript function with the return type never must not return normally: it either throws or runs forever.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "never as a return type means the function never returns: it always throws or loops, and TypeScript rejects a reachable end."
+  },
+  {
+    "key": "ts.any-unknown.mc.02",
+    "concept": "ts.any-unknown",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "Under TypeScript strict mode, what does the compiler say about this catch block?",
+      "code": "try {\n  saveOrder(order);\n} catch (err) {\n  console.log(err.message);\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "Accepts it, because err has the type Error"
+        },
+        {
+          "id": "b",
+          "text": "Accepts it, because err has the type any"
+        },
+        {
+          "id": "c",
+          "text": "Rejects it, because err has the type unknown"
+        },
+        {
+          "id": "d",
+          "text": "Rejects it, because err may be undefined"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Under strict mode a catch variable is unknown, because anything can be thrown; check err instanceof Error before reading err.message."
+  },
+  {
+    "key": "ts.any-unknown.out.01",
+    "concept": "ts.any-unknown",
+    "type": "output",
+    "difficulty": 2,
+    "language": "ts",
+    "content": {
+      "prompt": "This compiles under strict mode. What happens when it runs?",
+      "code": "const user: any = { userName: \"ana\" };\nconst login: string = user.username;\nconsole.log(login.length);",
+      "options": [
+        {
+          "id": "a",
+          "text": "Prints 3"
+        },
+        {
+          "id": "b",
+          "text": "Prints 0"
+        },
+        {
+          "id": "c",
+          "text": "Prints undefined"
+        },
+        {
+          "id": "d",
+          "text": "Throws a TypeError"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "any turns off checking for everything read from it, so a typo like username for userName compiles and fails only at runtime."
+  },
+  {
+    "key": "ts.any-unknown.bug.02",
+    "concept": "ts.any-unknown",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "sum should add up the numbers in input and skip every other value, but sum([1, \"2\", 3]) returns \"123\" instead of 4. Find the bug.",
+      "code": "function sum(input: unknown): number {\n  if (!Array.isArray(input)) {\n    return 0;\n  }\n  let total = 0;\n  for (const item of input) {\n    total += item;\n  }\n  return total;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "total += item as number;"
+        },
+        {
+          "id": "f2",
+          "text": "if (typeof item === \"number\") total += item;"
+        },
+        {
+          "id": "f3",
+          "text": "total += item ?? 0;"
+        }
+      ],
+      "answer": {
+        "line": 7,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Array.isArray narrows unknown to any[], so each element is any again; check each element's type before you use it."
+  },
+  {
+    "key": "ts.any-unknown.cloze.02",
+    "concept": "ts.any-unknown",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "ts",
+    "content": {
+      "prompt": "Fill the blank so getId compiles under strict mode.",
+      "code": "function getId(body: unknown): string {\n  if (typeof body === \"object\" && ____ && \"id\" in body) {\n    return String(body.id);\n  }\n  return \"\";\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "body !== null"
+        },
+        {
+          "id": "b",
+          "text": "body !== undefined"
+        },
+        {
+          "id": "c",
+          "text": "Boolean(body)"
+        },
+        {
+          "id": "d",
+          "text": "Object.keys(body).length > 0"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "typeof x === \"object\" narrows unknown to object | null, so rule out null before using in or reading properties."
+  },
+  {
+    "key": "ts.any-unknown.odd.01",
+    "concept": "ts.any-unknown",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "anyValue has the type any and neverValue has the type never. Three of these compile under strict mode. Which one is a compile error?",
+      "items": [
+        {
+          "id": "a",
+          "text": "let u: unknown = anyValue;"
+        },
+        {
+          "id": "b",
+          "text": "let n: never = anyValue;"
+        },
+        {
+          "id": "c",
+          "text": "let s: string = anyValue;"
+        },
+        {
+          "id": "d",
+          "text": "let x: number = neverValue;"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "any is assignable to every type except never, so passing an any value to an assertNever(x: never) helper does not compile."
+  },
+  {
+    "key": "ts.any-unknown.order.01",
+    "concept": "ts.any-unknown",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Under TypeScript strict mode, order these types from the one that accepts the most values to the one that accepts the fewest.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "object"
+        },
+        {
+          "id": "s2",
+          "text": "never"
+        },
+        {
+          "id": "s3",
+          "text": "unknown"
+        },
+        {
+          "id": "s4",
+          "text": "string[]"
+        },
+        {
+          "id": "s5",
+          "text": "{}"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "unknown accepts everything, {} drops null and undefined, object also drops primitives, string[] keeps only arrays, never accepts nothing."
   }
 ]

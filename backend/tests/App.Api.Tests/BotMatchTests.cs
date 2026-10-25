@@ -120,9 +120,26 @@ public class BotMatchTests(TestApp app) : MatchTestBase(app)
         var state = await FirstQuestionAsync(ana, await StartBotAsync(ana, topic.Id));
         var answered = (await ReadAsync<MatchStateDto>(await AnswerAsync(ana, state, Right(state))))!;
         var interstitial = await ToDeadlineAsync(ana, answered);
-        Assert.Equal(interstitial.ServerTime.AddSeconds(GameRules.InterstitialSeconds), interstitial.PhaseDeadline);
+        Assert.Equal(interstitial.ServerTime.AddSeconds(GameRules.BotInterstitialSeconds), interstitial.PhaseDeadline);
 
         var next = await ToDeadlineAsync(ana, interstitial);
+
+        Assert.Equal(MatchPhase.Question, next.Phase);
+        Assert.Equal(1, next.Question!.Index);
+        Assert.Null(next.Question.MyAnswer);
+    }
+
+    [Fact]
+    public async Task Next_in_the_bot_interstitial_opens_the_next_question()
+    {
+        var topic = await SeedTopicAsync();
+        var ana = await RegisterAsync("ana");
+        var state = await FirstQuestionAsync(ana, await StartBotAsync(ana, topic.Id));
+        var answered = (await ReadAsync<MatchStateDto>(await AnswerAsync(ana, state, Right(state))))!;
+        var interstitial = await ToDeadlineAsync(ana, answered);
+        Assert.Equal(MatchPhase.Interstitial, interstitial.Phase);
+
+        var next = (await ReadAsync<MatchStateDto>(await ana.Client.PostAsync($"/api/matches/{state.Id}/next", null)))!;
 
         Assert.Equal(MatchPhase.Question, next.Phase);
         Assert.Equal(1, next.Question!.Index);

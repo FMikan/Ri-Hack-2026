@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  Crown,
   GraduationCap,
   LayoutDashboard,
   LogOut,
@@ -18,6 +19,7 @@ import coin from '@/assets/brand/stackoff-coin-on-dark.svg'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
 import wordmark from '@/assets/brand/stackoff-wordmark-on-dark.svg'
 import { UserAvatar } from '@/components/shared/UserAvatar'
+import { Badge } from '@/components/ui/badge'
 import { Wordmark } from '@/components/shared/Wordmark'
 import {
   DropdownMenu,
@@ -32,13 +34,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
-import { AvatarDialog } from '@/features/profile/AvatarDialog'
 import { usePoll } from '@/hooks/use-poll'
 import { api } from '@/lib/api-client'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'practice' | 'professor' | 'leaderboards' | 'friends' | 'shop' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'professor' | 'leaderboards' | 'friends' | 'shop' | 'senior' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
@@ -48,6 +49,7 @@ const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
   { key: 'friends', icon: Users, to: '/friends' },
   { key: 'shop', icon: Store, to: '/shop' },
+  { key: 'senior', icon: Crown, to: '/senior' },
   { key: 'profile', icon: UserRound, to: '/profile' },
 ]
 
@@ -84,13 +86,22 @@ function SideRail() {
   const { pathname } = useLocation()
   const reveal = 'opacity-0 transition-opacity group-focus-within/rail:opacity-100 group-hover/rail:opacity-100'
   const friends = usePoll(api.friends, 10_000, keepPolling)
+  // 5 s: a rematch is open for 20 s and a friend's challenge for a minute.
+  const inbox = usePoll(api.inbox, 5000, keepPolling)
   const { refresh } = friends
-  // Refetch on navigation, so a request answered on Friends clears the dot as soon as you leave.
+  const { refresh: refreshInbox } = inbox
+  // Refetch on navigation, so a request answered on Friends (or an invite on the dashboard) clears the dot as soon as you leave.
   useEffect(() => {
     refresh()
-  }, [pathname, refresh])
+    refreshInbox()
+  }, [pathname, refresh, refreshInbox])
   // Hidden on Friends itself: that page lists the requests.
   const requests = pathname === '/friends' ? 0 : (friends.data?.filter((friend) => friend.status === 'pending_in').length ?? 0)
+  // An invite counts once it has been on screen: the dashboard shows it, so it stays off the dot after you leave.
+  const [seenInvites, setSeenInvites] = useState<ReadonlySet<string>>(new Set())
+  const unseen = [inbox.data?.rematch?.matchId, inbox.data?.friendChallenge?.code].filter((id): id is string => !!id && !seenInvites.has(id))
+  if (pathname === '/' && unseen.length) setSeenInvites(new Set([...seenInvites, ...unseen]))
+  const invites = pathname === '/' ? 0 : unseen.length
 
   return (
     <aside className="group/rail sticky top-0 z-40 hidden h-svh lg:block">
@@ -112,17 +123,18 @@ function SideRail() {
           <ul className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
             {NAV.map((item) => {
               const label = t.shell.nav[item.key]
+              const dot = item.key === 'friends' ? requests : item.key === 'dashboard' ? invites : 0
               const base = 'flex h-11 min-w-0 items-center gap-3 overflow-hidden rounded-lg px-4.5 text-sm font-medium whitespace-nowrap'
               const inner = (
                 <>
                   <span className="relative shrink-0">
                     <item.icon aria-hidden="true" className="size-5" />
-                    {item.key === 'friends' && requests > 0 && (
+                    {dot > 0 && (
                       <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-sidebar" />
                     )}
                   </span>
                   <span className={reveal}>{label}</span>
-                  {item.key === 'friends' && requests > 0 && <span className="sr-only">{t.shell.friendRequests(requests)}</span>}
+                  {dot > 0 && <span className="sr-only">{item.key === 'friends' ? t.shell.friendRequests(dot) : t.shell.invites(dot)}</span>}
                   {!item.to && <span className={cn('ml-auto font-mono text-xs', reveal)}>{t.shell.soon}</span>}
                 </>
               )
@@ -169,13 +181,13 @@ function TopBar() {
   const { t, locale, setLocale } = useLocale()
   const { pathname } = useLocation()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [avatarOpen, setAvatarOpen] = useState(false)
   if (session.status !== 'authenticated') return null
   const user = session.user
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (
-    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:py-5 cramped:py-1">
+    // Phones keep the bar pinned (logo, coins, menu); desktop has the rail for navigation.
+    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 max-lg:sticky max-lg:top-0 max-lg:z-30 max-lg:border-b max-lg:border-border max-lg:bg-background sm:px-6 lg:px-8 lg:py-5 cramped:py-1">
       <NavLink to="/" className={cn('rounded-sm lg:hidden', focusRing)}>
         <Wordmark className="h-6" />
       </NavLink>
@@ -205,7 +217,15 @@ function TopBar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64 lg:w-60">
             <DropdownMenuLabel className="grid gap-0.5">
-              <span className="truncate">{user.username}</span>
+              <span className="flex items-center gap-2">
+                <span className="truncate">{user.username}</span>
+                {user.plan === 'senior' && (
+                  <Badge variant="outline" className="shrink-0 border-warning/60 text-warning">
+                    <Crown aria-hidden="true" />
+                    {t.subscription.badge}
+                  </Badge>
+                )}
+              </span>
               <span className="truncate text-xs font-normal text-muted-foreground">{user.email}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -247,10 +267,6 @@ function TopBar() {
             </DropdownMenuItem>
             {settingsOpen && (
               <>
-                <DropdownMenuItem inset className={touch} onSelect={() => setAvatarOpen(true)}>
-                  {t.avatar.menu}
-                  <UserAvatar user={user} className="ml-auto size-5" />
-                </DropdownMenuItem>
                 {/* Language is a row like the others with a small EN | HR switch (the auth pages' look). Still radio
                     items, so arrow keys reach them; the menu stays open to show the switch. */}
                 <div className="flex items-center gap-1.5 py-0.5 pr-1.5 pl-7 text-sm max-lg:py-1.5">
@@ -293,7 +309,6 @@ function TopBar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <AvatarDialog user={user} open={avatarOpen} onOpenChange={setAvatarOpen} />
       </div>
     </header>
   )

@@ -67,4 +67,8 @@ public static class ErrorCodes
     public const string ProfessorLessonNotFound = "urn:app:professor/lesson-not-found";
     public const string ProfessorQuizNotFound = "urn:app:professor/quiz-not-found";
     public const string ProfessorWrongIndex = "urn:app:professor/wrong-index";
+    public const string ProfessorQuota = "urn:app:professor/quota";
+    public const string PaymentDeclined = "urn:app:payment/declined";
+    public const string SubscriptionNotActive = "urn:app:subscription/not-active";
+    public const string SubscriptionSeniorOnly = "urn:app:subscription/senior-only";
 }

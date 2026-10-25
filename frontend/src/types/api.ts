@@ -75,6 +75,10 @@ export type AppErrorCode =
   | 'urn:app:professor/lesson-not-found'
   | 'urn:app:professor/quiz-not-found'
   | 'urn:app:professor/wrong-index'
+  | 'urn:app:professor/quota' // a Junior developer used today's 2 questions, 1 lesson or 1 quiz; Senior has no limit
+  | 'urn:app:payment/declined' // 402: the (simulated) card was declined
+  | 'urn:app:subscription/not-active' // cancelling when not a Senior developer
+  | 'urn:app:subscription/senior-only' // the daily coins are for Senior developers
 
 export type Uuid = string
 export type Iso = string
@@ -132,6 +136,47 @@ export interface MeDto extends UserRefDto {
   activeMatchId?: Uuid | null
   inQueue: boolean
   createdAt: Iso
+  plan: Plan // Senior developer until premiumUntil (docs §6.13)
+  premiumUntil?: Iso | null
+}
+
+export type Plan = 'junior' | 'senior'
+
+// The Senior developer subscription (docs §6.13). The payment is simulated: nothing is charged.
+export interface PremiumPlanDto {
+  interval: 'monthly' | 'yearly'
+  priceCents: number // EUR
+  days: number
+}
+
+// Today's AI Professor use; a limit is null for a Senior developer (no limit).
+export interface ProfessorUsageDto {
+  questionsUsed: number
+  questionsLimit?: number | null
+  lessonsUsed: number
+  lessonsLimit?: number | null
+  quizzesUsed: number
+  quizzesLimit?: number | null
+}
+
+export interface SubscriptionDto {
+  plan: Plan
+  premiumUntil?: Iso | null
+  interval?: 'monthly' | 'yearly' | null
+  autoRenew: boolean
+  cardLast4?: string | null
+  dailyCoins: number
+  dailyCoinsClaimed: boolean
+  plans: PremiumPlanDto[]
+  professor: ProfessorUsageDto
+}
+
+export interface SubscribeRequest {
+  interval: 'monthly' | 'yearly'
+  cardHolder: string
+  cardNumber: string // 13 to 19 digits, spaces allowed; ending in 0002 is declined
+  cardExpiry: string // MM/YY
+  cardCvc: string
 }
 
 export interface RegisterRequest {
@@ -214,11 +259,14 @@ export interface DashboardDto {
   dailyTasks: DailyTaskDto[]
   dailyChallengeAttempted: boolean
   suggestion?: { kind: 'review_due' | 'practice_after_losses' | 'calibrate' | 'play'; topicId?: Uuid | null; conceptIds?: Uuid[] | null } | null
-  inbox: {
-    rematch?: { matchId: Uuid; from: UserRefDto; expiresAt: Iso } | null
-    friendChallenge?: { code: string; host: UserRefDto; expiresAt: Iso } | null
-  }
+  inbox: InboxDto
   queueLocked: boolean
+}
+
+// Also on its own at GET /api/me/inbox, which the navigation polls for its dot.
+export interface InboxDto {
+  rematch?: { matchId: Uuid; from: UserRefDto; expiresAt: Iso } | null
+  friendChallenge?: { code: string; host: UserRefDto; expiresAt: Iso } | null
 }
 
 // ---- Content and matches (F1, docs §6.1 and §6.5) ----
@@ -371,7 +419,8 @@ export interface MatchResultDto {
 
 // Poll GET /api/matches/{id} about once a second until status is finished or aborted.
 // question: present in the question and interstitial phases; interstitial: only in interstitial; result: only when over.
-// Countdowns use phaseDeadline - serverTime, never the device clock. phaseDeadline is null while untimed practice waits for "next".
+// Countdowns use phaseDeadline - serverTime, never the device clock. phaseDeadline is null while untimed practice waits for "next";
+// a bot duel's interstitial lasts 30 s and takes "next" too.
 export interface MatchStateDto {
   id: Uuid
   kind: MatchKind
@@ -484,7 +533,7 @@ export interface RematchDto {
 export type RewardType =
   | 'match_win' | 'match_loss' | 'match_draw' | 'rating_upset' | 'lesson_passed' | 'concept_patched' | 'daily_challenge'
   | 'daily_task' | 'daily_task_bonus' | 'streak_milestone' | 'weekly_xp_goal' | 'level_up' | 'friend_match' | 'answer_xp'
-  | 'match_xp' | 'shop_purchase' | 'streak_freeze' | 'season_reset' | 'season_drop'
+  | 'match_xp' | 'shop_purchase' | 'streak_freeze' | 'season_reset' | 'season_drop' | 'premium_daily'
 
 // GET /api/me/rewards?limit=50, newest first. coins is negative for a purchase.
 export interface RewardEventDto {
@@ -666,7 +715,8 @@ export interface FriendRequest {
 }
 
 // POST /api/friend-challenges → 201 FriendChallengeCreatedDto. With friendUserId the challenge shows in that friend's
-// dashboard.inbox.friendChallenge (409 friends/not-friends otherwise); the code works for anyone for 10 minutes.
+// dashboard.inbox.friendChallenge for 60 s (409 friends/not-friends otherwise); an open code works for anyone for 10 minutes.
+// POST /api/friend-challenges/{code}/decline → 204: the friend it was sent to closes it (expiresAt becomes now).
 export interface CreateFriendChallengeRequest {
   friendUserId?: Uuid | null
 }

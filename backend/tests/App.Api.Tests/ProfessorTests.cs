@@ -52,6 +52,15 @@ public class ProfessorTests(TestApp app) : ApiTestBase(app)
     private Task<HttpResponseMessage> CreateAsync(Session session, string kind, Guid messageId) =>
         PostAsync(session.Client, $"/api/professor/{kind}", new { messageId });
 
+    // A Senior developer (docs/premium-pretplata.md): no daily allowance, so a test can ask as often as it needs.
+    private async Task<Session> SeniorAsync(string name)
+    {
+        var session = await RegisterAsync(name);
+        var until = App.Clock.GetUtcNow().AddDays(30);
+        await App.InDbAsync(db => db.Users.Where(u => u.Id == session.Auth.User.Id).ExecuteUpdateAsync(s => s.SetProperty(u => u.PremiumUntil, until)));
+        return session;
+    }
+
     private async Task<string> ProblemTypeAsync(HttpResponseMessage response) =>
         (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("type").GetString()!;
 
@@ -84,7 +93,7 @@ public class ProfessorTests(TestApp app) : ApiTestBase(app)
     [Fact]
     public async Task Next_message_sends_the_history_with_the_headers_and_moves_the_chat_up()
     {
-        var ana = await RegisterAsync("ana");
+        var ana = await SeniorAsync("ana");
         var first = await AskAsync(ana);
         App.Clock.Advance(TimeSpan.FromMinutes(1));
         var other = await AskAsync(ana, text: "What is TCP?");
@@ -330,7 +339,7 @@ public class ProfessorTests(TestApp app) : ApiTestBase(app)
     [Fact]
     public async Task Malformed_quiz_questions_are_dropped_and_too_few_is_503()
     {
-        var ana = await RegisterAsync("ana");
+        var ana = await SeniorAsync("ana");
         var turn = await AskAsync(ana);
         App.Clock.Advance(TimeSpan.FromMinutes(1));
         var other = await AskAsync(ana, turn.Chat.Id, "More?");

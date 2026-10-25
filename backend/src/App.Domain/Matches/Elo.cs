@@ -25,8 +25,9 @@ public static class RankedResult
         var (userA, userB) = (a.User!, b.User!);
         var scoreA = match.WinnerSeat is null ? 0.5 : match.WinnerSeat == a.Seat ? 1 : 0;
         var opponentOfA = b.Kind == SeatKind.Ghost ? b.DisplayRating : userB.Rating;
-        var newA = Elo.Update(userA.Rating, opponentOfA, scoreA, userA.RankedMatches);
-        var newB = Elo.Update(userB.Rating, userA.Rating, 1 - scoreA, userB.RankedMatches);
+        var at = match.FinishedAt ?? DateTimeOffset.MaxValue; // no Senior boost without a finish time
+        var newA = Boost(userA, Elo.Update(userA.Rating, opponentOfA, scoreA, userA.RankedMatches), at);
+        var newB = Boost(userB, Elo.Update(userB.Rating, userA.Rating, 1 - scoreA, userB.RankedMatches), at);
         foreach (var (player, user, rating) in new[] { (a, userA, newA), (b, userB, newB) })
         {
             if (player.Kind != SeatKind.Human) continue;
@@ -36,4 +37,8 @@ public static class RankedResult
             user.Tier = Tiers.Of(rating, user.Tier);
         }
     }
+
+    // Senior developer: a rating gain is 20 % larger, a loss is not, so the subscriber climbs faster (docs/premium-pretplata.md).
+    private static int Boost(User user, int rating, DateTimeOffset at) =>
+        user.IsSenior(at) ? user.Rating + Premium.Boost(rating - user.Rating, Premium.RatingMultiplier) : rating;
 }

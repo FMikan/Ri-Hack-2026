@@ -36,7 +36,8 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | gotovo, PR `feature/f4a-ledger` (F4a ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak; F4b dnevni zadaci, dnevni izazov, shop, oprema) |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | gotovo, PR `feature/f5-social` (F5a prijatelji, izazov prijatelja, javni profil, statistika, rang-liste, Grandmaster; F5b sezone, titule, achievementi, tjedni i sezonski snapshot, povlačenje i auto-kalibracija pitanja) |
 | **F6 AI Profesor** | chat s AI profesorom o IT-u (odgovor se streama), poduka i kviz za vježbu napravljeni iz jednog odgovora, spremljena povijest razgovora | Pitanje → odgovor uživo → "Napravi poduku" / "Napravi kviz" → kartice i kviz s objašnjenjima | gotovo, PR `feature/ai-professor` (bez nagrada, mastery i poola: samo za učenje) |
-| Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
+| **F7 Premium pretplata** | planovi Junior developer (besplatno) i Senior developer (4,99 €/mj, 39,99 €/god): ×1,2 na dobitak ratinga i XP, AI Profesor bez dnevne kvote (Junior 2 pitanja, 1 poduka, 1 kviz), 25 novčića dnevno, paket animirane kozmetike, značka; simulirano plaćanje karticom | Stranica *Senior* → *Pay with card* → *Use this card* → Senior status, paket u ormariću, dnevni novčići na početnoj | gotovo, grana `feature/subscription-premium` (`docs/premium-pretplata.md`, biznis model u `docs/biznis-model.md`) |
+| Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium roadmap (tutor u poduci, objasni svojim riječima, napredna statistika, mjesečni drop; `premium-pretplata.md` §9), pravi naplatni sustav (Stripe, Play Billing), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
 Stupac "Stanje backenda" se ažurira u PR-u svake faze; što frontend može spojiti po fazama je u §6.11.
 
@@ -163,6 +164,10 @@ create table users (
   equipped_title_id     uuid references titles(id) on delete set null,
   equipment             jsonb not null default '{}',          -- {"avatarFrame":itemId,"banner":...,"boardTheme":...,"nameColor":...,"cardBackground":...}
   last_seen_at          timestamptz,                           -- online status, ažurira se najviše jednom u 30 s
+  premium_until         timestamptz,                           -- F7: Senior developer dok je u budućnosti (plan je izvedenica, nema stupca)
+  premium_interval      text check (premium_interval is null or premium_interval in ('monthly','yearly')),
+  premium_auto_renew    boolean not null default false,        -- otkaz = false; Senior ostaje do premium_until
+  premium_card_last4    text,                                  -- jedino što se od kartice čuva (plaćanje je simulirano)
   created_at            timestamptz not null
 );
 
@@ -496,7 +501,7 @@ Pravila sastavljanja (`StartLesson`, `LessonRules`):
 create table reward_events (               -- ledger; jedini način da se promijene coins/xp/sp
   id           uuid primary key,
   user_id      uuid not null references users(id) on delete cascade,
-  type         text not null,              -- 'match_win','match_loss','match_draw','rating_upset','lesson_passed','concept_patched','daily_challenge','daily_task','daily_task_bonus','streak_milestone','weekly_xp_goal','level_up','friend_match','answer_xp','match_xp','shop_purchase','streak_freeze','season_reset','season_drop'
+  type         text not null,              -- 'match_win','match_loss','match_draw','rating_upset','lesson_passed','concept_patched','daily_challenge','daily_task','daily_task_bonus','streak_milestone','weekly_xp_goal','level_up','friend_match','answer_xp','match_xp','shop_purchase','streak_freeze','season_reset','season_drop','premium_daily'
   coins        integer not null default 0, -- može biti negativan (kupnja)
   xp           integer not null default 0,
   sp           integer not null default 0,
@@ -740,7 +745,7 @@ public static class GameRules
     public const string DayTimeZone = "Europe/Zagreb";
     public const int StartRating = 1000, ProvisionalMatches = 10, ProfileAfterRankedMatches = 5, HighKMatches = 30, KHigh = 32, KLow = 16;
     public const int MaxRatingGap = 400, QueueInitialRange = 100, QueueRangeStep = 50, QueueStepSeconds = 10, GhostOfferAfterSeconds = 30, GhostRecordingMaxDays = 30;
-    public const int ProposalAcceptSeconds = 10, VetoBanSeconds = 8, VetoAnimationSeconds = 3, LobbySeconds = 5, InterstitialSeconds = 2, RematchSeconds = 20, FriendChallengeMinutes = 10;
+    public const int ProposalAcceptSeconds = 10, VetoBanSeconds = 8, VetoAnimationSeconds = 3, LobbySeconds = 5, InterstitialSeconds = 4, BotInterstitialSeconds = 30, RematchSeconds = 20, FriendChallengeMinutes = 10, FriendInviteSeconds = 60;
     public const int ReconnectGraceSeconds = 20, ClientTimeToleranceMs = 1500, BotMinSlackMs = 500, QuestionsPerMatch = 10, CalibrationQuestions = 5, VetoPoolMax = 6;
     public const int MinTopics = 3, MaxTopics = 5, SeenQuestionDays = 30, SameOpponentMaxStreak = 3, TargetedRotationMatches = 2;
     public const int TierHysteresis = 25, GrandmasterTop = 100;
@@ -756,14 +761,14 @@ public static class GameRules
     public static readonly (int days, int coins)[] StreakMilestones = [(7, 100), (30, 500), (100, 2000)];
     public static readonly IReadOnlyDictionary<QuestionType, QuestionTypeRule> Types = new Dictionary<QuestionType, QuestionTypeRule>
     {
-        [TrueFalse]      = new(TimeMs: 8_000,  BasePoints: 50,  Guessability: 0.5,  MaxPerDeck: 2, MinPerDeck: 0, Partial: false),
-        [MultipleChoice] = new(15_000, 100, 0.75, MaxPerDeck: 3, MinPerDeck: 0, false),
-        [Cloze]          = new(18_000, 120, 0.75, 2, 0, false),
-        [OddOneOut]      = new(12_000, 100, 0.75, 2, 0, false),
-        [Output]         = new(25_000, 150, 0.75, 2, 1, false),
-        [MatchPairs]     = new(30_000, 150, 1.0,  2, 0, true),
-        [Order]          = new(25_000, 150, 1.0,  2, 0, false),
-        [FindBug]        = new(40_000, 200, 1.0,  2, 1, true),
+        [TrueFalse]      = new(TimeMs: 10_000, BasePoints: 50,  Guessability: 0.5,  MaxPerDeck: 2, MinPerDeck: 0, Partial: false),
+        [MultipleChoice] = new(27_000, 100, 0.75, MaxPerDeck: 3, MinPerDeck: 0, false),
+        [Cloze]          = new(33_000, 120, 0.75, 2, 0, false),
+        [OddOneOut]      = new(21_000, 100, 0.75, 2, 0, false),
+        [Output]         = new(45_000, 150, 0.75, 2, 1, false),
+        [MatchPairs]     = new(54_000, 150, 1.0,  2, 0, true),
+        [Order]          = new(45_000, 150, 1.0,  2, 0, false),
+        [FindBug]        = new(72_000, 200, 1.0,  2, 1, true),
     };
     public static readonly TypeGroupRule[] TypeGroups = [ new(Types: [MatchPairs, Order], Min: 1, Max: 2) ];   // drag-and-drop zajedno
     public static readonly double[] DifficultyWeight = [0, 0.7, 0.9, 1.1, 1.3];   // index = D
@@ -820,13 +825,13 @@ Advance(now)                                      (tick) veto_coin istek → vet
                                                   veto_ban istek → AutoBan → sljedeći turn (+8 s) ili veto_pick (chosenTopicId odmah, deadline +3 s)
                                                   veto_pick istek → topic + deck → lobby (+5 s)
                                                   lobby istek → pitanje 0 (question_started_at = now, deadline + limit + 1,5 s; bot/ghost odgovor unaprijed)
-                                                  question: oba odgovorila (answered_at <= now) ili istek → timeouti po §2.4 → interstitial (+2 s)
+                                                  question: oba odgovorila (answered_at <= now) ili istek → timeouti po §2.4 → interstitial (+4 s; bot duel +30 s)
                                                   interstitial istek (timed) → sljedeće pitanje ili Finish
                                                   u in_progress: human s last_seen_at < now - 20 s → disconnected_at; vraćeni → null
 Ban(seat, topicId, now)                           faza veto_ban, moj turn, tema u poolu i nije banirana; 2 preostale → veto_pick
 SubmitAnswer(seat, index, payload, clientMs, now) faza question, index == current, još nije odgovoreno; tolerancija (§2.4); grade; points; label;
                                                   oba → interstitial odmah; protivnik bot/ghost s answered_at > now → phase_deadline = answered_at
-Next(seat, now)                                   samo untimed practice u interstitial → sljedeće pitanje ili Finish
+Next(seat, now)                                   untimed practice ili bot duel u interstitial → sljedeće pitanje ili Finish
 Resign(seat, now)                                 finished, result resign, protivnik pobjeđuje
 Finish(now)                                       §17: human s disconnected_at ≠ null na kraju = resign; oba = aborted; tiebreak; winner; phase done
 ```
@@ -945,6 +950,7 @@ GET   /api/me                      → MeDto
 PATCH /api/me                      { username?; avatar?; locale?; profileVisibility?; notifications? } → MeDto
 PUT   /api/me/topics               { topicIds: Uuid[] }  → 204   // 3–5; 409 locked-in-queue
 GET   /api/me/dashboard            → DashboardDto
+GET   /api/me/inbox                → DashboardDto.inbox        (samo inbox, za točku u navigaciji)
 GET   /api/me/matches?limit=50     → MatchSummaryDto[]        (F1; samo završene partije, najviše 50)
 GET   /api/me/knowledge-map        → KnowledgeMapDto           (F2)
 GET   /api/me/stats                → StatsDto                  (F5)
@@ -955,6 +961,7 @@ interface MeDto extends UserRefDto {
   rankedMatches: number; coins: number; xp: number; level: number; xpToNextLevel: number; seasonPoints: number
   streak: { count: number; lastActiveOn?: string; freezes: number; securedToday: boolean }
   activeTopicIds: Uuid[]; equippedTitleId?: Uuid; activeMatchId?: Uuid; inQueue: boolean; createdAt: Iso
+  plan: 'junior'|'senior'; premiumUntil?: Iso                                            // F7 (§6.13)
 }
 interface DashboardDto {
   me: MeDto
@@ -990,7 +997,7 @@ POST /api/matches/calibration  { topicId: Uuid }                                
 GET  /api/matches/{id}                                                                        → MatchStateDto  (poll 1 s; samo sudionik)
 POST /api/matches/{id}/veto/ban   { topicId }                                                 → MatchStateDto
 POST /api/matches/{id}/answers    { questionIndex; payload; clientElapsedMs }                 → MatchStateDto  (409 already-answered / wrong-index / wrong-phase)
-POST /api/matches/{id}/next                                                                   → MatchStateDto  (samo trening bez vremena u interstitial)
+POST /api/matches/{id}/next                                                                   → MatchStateDto  (trening bez vremena ili bot duel u interstitial)
 POST /api/matches/{id}/resign                                                                 → MatchStateDto  (frontend traži potvrdu u 3 s)
 GET  /api/matches/{id}/review                                                                 → MatchReviewDto (F2; 409 match/not-finished)
 POST /api/matches/{id}/rematch                                                                → RematchDto     (F3; 20 s)
@@ -1033,7 +1040,7 @@ interface ReviewQuestionDto { index: number; question: QuestionPublicDto; key: A
 interface RematchDto { status: 'none'|'pending'|'accepted'|'declined'|'expired'; requestedBySeat?: 0|1; expiresAt?: Iso; matchId?: Uuid }
 ```
 
-Tok na frontendu: `useMatch(id)` polla `GET /api/matches/{id}` svake 1 s dok `status` nije `finished|aborted`; svaka komanda vraća isti DTO pa se state odmah zamijeni. Timer pitanja klijent mjeri `performance.now()`-om od prvog rendera (nakon reloada kreće od `serverTime - deliveredAt`) i šalje `clientElapsedMs`; vizualno odbrojavanje koristi `timeLimitMs`, rezano na `phaseDeadline - serverTime - 500 ms`. `rematchAvailable` = ranked/friend, protivnik čovjek, viđen u zadnje 2 min. Trening bez vremena: nakon međuekrana klijent zove `GET /api/questions/{id}/explanation` pa `POST .../next`.
+Tok na frontendu: `useMatch(id)` polla `GET /api/matches/{id}` svake 1 s dok `status` nije `finished|aborted`; svaka komanda vraća isti DTO pa se state odmah zamijeni. Timer pitanja klijent mjeri `performance.now()`-om od prvog rendera (nakon reloada kreće od `serverTime - deliveredAt`) i šalje `clientElapsedMs`; vizualno odbrojavanje koristi `timeLimitMs`, rezano na `phaseDeadline - serverTime - 500 ms`. `rematchAvailable` = ranked/friend, protivnik čovjek, viđen u zadnje 2 min. Trening bez vremena: nakon međuekrana klijent zove `GET /api/questions/{id}/explanation` pa `POST .../next`. Bot duel: međuekran traje 30 s, gumb *Dalje* zove `POST .../next` ranije.
 
 ### 6.6 Red čekanja (F3)
 
@@ -1105,6 +1112,7 @@ POST   /api/friends/requests/{userId}/accept → FriendDto         (404 friends/
 DELETE /api/friends/{userId}                 → 204               (makni prijatelja, povuci ili odbij zahtjev)
 POST   /api/friend-challenges { friendUserId?: Uuid }  → 201 { code: string; expiresAt: Iso }   // s friendUserId (samo prihvaćeni prijatelj, inače 409 friends/not-friends): pojavi se u njegovom DashboardDto.inbox
 GET    /api/friend-challenges/{code}         → { code; host: UserRefDto; matchId?: Uuid; expiresAt: Iso }   (host polla dok ne dobije matchId)
+POST   /api/friend-challenges/{code}/decline → 204   // samo prijatelj kojem je poslan: izazov se odmah zatvara (expiresAt = sada); ostalima bez učinka
 POST   /api/friend-challenges/{code}/join    → 201 MatchStateDto  (kind 'friend', veto; 409 challenge/expired, challenge/own, topics/count, match/already-in-match)
 
 interface LeaderboardDto { board: 'global'|'season'|'weekly'|'topic'|'friends'; entries: LeaderboardEntryDto[]; me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] /* uključuje moj red */ } ; resetsAt?: Iso }
@@ -1127,6 +1135,12 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 Što backend već poslužuje (u `development`) i što ekrani trebaju znati, a ne piše u tipovima. Svaka faza dodaje svoj odlomak.
 
+**F7: Premium pretplata**
+- Ekran `/senior`: `GET /api/subscription` daje plan, istek, cijene (`plans`, u centima) i današnju potrošnju Profesora. *Pay with card* otvara dijalog kartice; *Use this card* upisuje testnu karticu `4242 4242 4242 4242 · 12/28 · 123`; `POST /api/subscription` vraća novo stanje (402 `payment/declined` za broj koji završava na 0002). Nakon plaćanja osvježi `me` (`plan`, paket u ormariću). *Otkaži obnovu* je `DELETE`; Senior ostaje do `premiumUntil`.
+- Početna: Senior vidi karticu *Pokupi 25* (`POST /api/subscription/daily-coins` vraća `MeDto`, saldo u gornjoj traci se odmah mijenja); `dailyCoinsClaimed` skriva gumb do sutra. Renderiraj samo kad je `me.plan === 'senior'`.
+- AI Profesor: Junior vidi *Danas: n/2 pitanja · n/1 poduke · n/1 kviza* s linkom na `/senior`; 409 `professor/quota` ima svoju poruku. Senior ne vidi ništa od toga.
+- Značka *Senior* uz ime u izborniku; na ekranu rezultata redak *Senior bonus ×1,2 uračunat* kad je `me.plan === 'senior'` i bilo je dobitka (rating ili XP su već uvećani na serveru, frontend ne množi ništa).
+
 **F6: AI Profesor**
 - Ekran `/professor` (`?chat=<id>` bira razgovor). Pitanje: `POST /api/professor/messages { chatId?, text }` odgovara server-sent eventsima kroz `fetch` (EventSource ne može poslati tijelo ni token): `delta` dijelovi odgovora, zatim `done` sa spremljenim potezom (novi razgovor dobiva `chat.id`) ili `error` (Problem Details) i ništa nije spremljeno. Greške prije streama (400, 404, 429, 503) dolaze kao obični Problem Details. Do prve `delta` prikaži "AI Profesor razmišlja…".
 - Ispod odgovora s `topic` dva gumba, "Napravi poduku" i "Napravi kviz" (prvi je onaj koji paše: `scope: 'general'` poduka, `specific` kviz). Pisanje traje 10–30 s: prikaži status "AI Profesor piše…" na mjestu gumba. Odgovor s `lessonId`/`quizId` nudi "Otvori".
@@ -1143,7 +1157,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 **F5a: prijatelji, izazov prijatelja, javni profil, statistika, rang-liste**
 - Prijatelji: `GET /api/friends` (`pending_in` prvi, pa prihvaćeni s `online` (viđen u zadnje 2 min), pa `pending_out`), `POST /api/friends/requests { username }`, `POST /api/friends/requests/{userId}/accept`, `DELETE /api/friends/{userId}`. Zahtjev prema nekome tko je već poslao zahtjev meni odmah je prihvaćen. Online status puni svaki autentificirani zahtjev (`users.last_seen_at`, najviše jednom u 30 s), pa ga polling partije i dashboarda drže svježim.
-- Izazov prijatelja: `POST /api/friend-challenges {}` (otvoreni kod) ili `{ friendUserId }` (gumb "Izazovi" uz prijatelja; on ga vidi u `dashboard.inbox.friendChallenge`). Kod je 6 znakova (A–Z, 2–9), vrijedi 10 min; link `https://<domena>/challenge/{code}`. Host polla `GET /api/friend-challenges/{code}` dok ne dobije `matchId`; gost zove `POST .../{code}/join` i dobiva `MatchStateDto` u `veto_coin`. Oba igrača trebaju 3–5 tema. Partija je kao rangirana (veto, isti tok), ali `kind: 'friend'`: bez Elo-a i SP-a, 5 coina oboma, XP i streak kao inače, revanš radi (novi friend duel).
+- Izazov prijatelja: `POST /api/friend-challenges {}` (otvoreni kod) ili `{ friendUserId }` (gumb "Izazovi" uz prijatelja; on ga vidi u `dashboard.inbox.friendChallenge`). Kod je 6 znakova (A–Z, 2–9), vrijedi 10 min (poslan prijatelju 60 s; on ga može odbiti s `POST .../{code}/decline`, a host to vidi kao istek); link `https://<domena>/challenge/{code}`. Host polla `GET /api/friend-challenges/{code}` dok ne dobije `matchId`; gost zove `POST .../{code}/join` i dobiva `MatchStateDto` u `veto_coin`. Oba igrača trebaju 3–5 tema. Partija je kao rangirana (veto, isti tok), ali `kind: 'friend'`: bez Elo-a i SP-a, 5 coina oboma, XP i streak kao inače, revanš radi (novi friend duel).
 - `GET /api/users/{username}` (javni profil): teme (aktivne i one s odgovorima) s `mastery`/`completion`, statistika (`matches`, `winRate`, `conceptsGraduated`); nikad mastery po konceptu. Profil `friends` je `403 urn:app:users/profile-private` za ne-prijatelje.
 - `GET /api/me/stats`: `winRate` i točnost su postoci 0–100; `accuracyByType`/`avgTimeMsByType` imaju samo tipove koje je igrač odgovarao (prosjek vremena samo za odgovore s vremenom). `dashboard.ratingHistory` i `stats.ratingHistory` su zadnjih 30 rangiranih/ghost partija, najstarija prva.
 - Rang-liste: `GET /api/leaderboards/global|weekly|friends` i `topic?topic=<slug>`. Top 100 + `me` (moj red s do 2 iznad i ispod, `around` uključuje moj red; `me` je `null` kad nisam na listi). Globalna: Elo, bez provizornih (< 10 rangiranih). Tjedna: zbroj bodova iz rangiranih i ghost partija od ponedjeljka 00:00 (Zagreb), `resetsAt` = idući ponedjeljak. Po temi: broj graduiranih koncepata, izjednačenje po masteryju teme; na listi je svatko tko je u temi nešto odgovorio. Prijatelji: ja + prihvaćeni prijatelji po Elo-u.
@@ -1157,7 +1171,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 **F1: bot duel, trening, povijest**
 - `GET /api/bots` (persona s `recommended`), `POST /api/matches/bot`, `POST /api/matches/practice`, `GET /api/matches/{id}`, `POST .../answers`, `POST .../next`, `POST .../resign`, `GET /api/me/matches`.
-- Bot partija: `lobby` 5 s → 10 × (`question` → `interstitial` 2 s) → `done`. Poll svake 1 s; odbrojavanje iz `phaseDeadline - serverTime`, ne iz sata klijenta.
+- Bot partija: `lobby` 5 s → 10 × (`question` → `interstitial` do 30 s ili `POST .../next`) → `done`. Ostali dueli s vremenom: međuekran 4 s. Poll svake 1 s; odbrojavanje iz `phaseDeadline - serverTime`, ne iz sata klijenta.
 - Ključ odgovora (`interstitial.key`) postoji tek u međuekranu; `question.question.content` ga nikad nema.
 - Kad odgovoriš prije bota, faza se zatvara čim bot "odgovori"; kad su svi odgovorili, međuekran dolazi odmah.
 - `find_bug`: linije koda broje se od 1 (`split('\n')`); ključ može imati `acceptLines` (druge linije iste naredbe) za isticanje.
@@ -1226,6 +1240,26 @@ interface ProfessorQuizResultDto { index: number; payload: AnswerPayload; isCorr
 ```
 
 Tekst odgovora koristi mali podskup Markdowna (odlomci, `- ` i `1. ` liste, `**bold**`, `*kurziv*`, `` `kod` ``, ``` blokovi s jezikom); frontend ga prikazuje kao tekst, nikad kao HTML.
+
+Junior developer (F7) ima dnevnu kvotu: `POST /messages`, `POST /lessons` i `POST /quizzes` odgovaraju 409 `professor/quota` kad su današnja 2 pitanja, 1 poduka odnosno 1 kviz potrošeni (dan po `Europe/Zagreb`; neuspio odgovor se ne broji; već napisana poduka/kviz za isti odgovor vraća postojeće). Senior developer nema kvotu. Stanje je u `GET /api/subscription`.
+
+### 6.13 Premium pretplata (F7)
+
+```ts
+GET    /api/subscription               → SubscriptionDto
+POST   /api/subscription               { interval: 'monthly'|'yearly'; cardHolder; cardNumber; cardExpiry: 'MM/YY'; cardCvc }  → SubscriptionDto  (400; 402 payment/declined: broj koji završava na 0002)
+DELETE /api/subscription               → SubscriptionDto   // isključi obnovu; Senior do premiumUntil (409 subscription/not-active)
+POST   /api/subscription/daily-coins   → MeDto             // 25 novčića, jednom dnevno (409 subscription/senior-only; drugi klik istog dana ne plaća ništa)
+
+interface SubscriptionDto {
+  plan: 'junior'|'senior'; premiumUntil?: Iso; interval?: 'monthly'|'yearly'; autoRenew: boolean; cardLast4?: string
+  dailyCoins: number; dailyCoinsClaimed: boolean
+  plans: { interval: 'monthly'|'yearly'; priceCents: number; days: number }[]   // 499/30, 3999/365; cijene zna samo backend
+  professor: { questionsUsed: number; questionsLimit?: number; lessonsUsed: number; lessonsLimit?: number; quizzesUsed: number; quizzesLimit?: number }   // limit undefined = Senior, bez limita
+}
+```
+
+Plaćanje je simulirano (hackathon): karticu validira oblik, ništa se ne tereti, čuva se samo `last4`. Plaćanje dok je korisnik Senior dodaje dane na postojeći istek. Pogodnosti: `RankedResult` množi dobitak ratinga s 1,2 (poraz ne), `Rewarder` množi svaki XP s 1,2, paket dobrodošlice su redovi u `user_items` za ključeve iz `Premium.WelcomePack`, dnevni novčići su `reward_events` tip `premium_daily` s ključem `premium_daily:{dan}:{userId}`. Sve konstante: `App.Domain/Users/Premium.cs`; detalji i plan za Stripe: `docs/premium-pretplata.md`.
 
 ## 7. Seed sadržaja
 
@@ -1382,6 +1416,7 @@ MatchEngine
   Second_answer_for_same_index_is_rejected
   Answer_in_interstitial_is_rejected
   Untimed_practice_waits_for_next
+  Bot_duel_interstitial_lasts_30_s_or_until_next / Next_is_rejected_in_timed_duels
   Tenth_interstitial_finishes_match
   Resign_finishes_with_opponent_as_winner
   Disconnected_player_at_finish_counts_as_resign
@@ -1437,6 +1472,7 @@ F1 Sadržaj i bot duel
   Tick_after_bot_time_reveals_interstitial_with_both_results            čovjek u 3 s, bot u 5 s → međuekran na ticku nakon 5 s, ne nakon limita
   Interstitial_includes_question_and_key
   Tick_after_interstitial_advances_index
+  Next_in_the_bot_interstitial_opens_the_next_question
   Answer_after_deadline_is_409_wrong_phase
   Full_bot_match_finishes_with_result_cards_and_no_rating_change
   Each_answer_writes_answers_row_and_updates_concept_mastery
@@ -1532,7 +1568,7 @@ F5 Društveno i rang-liste
   Close_week_awards_top10_badge_count
   Knowledge_title_for_100_percent_graduated_and_lost_below_70
   Friend_request_accept_remove / Friend_request_in_both_directions_is_one_row / Online_status_from_last_seen
-  Friend_challenge_code_joins_veto_unranked_5_coins_each / Targeted_friend_challenge_appears_in_inbox
+  Friend_challenge_code_joins_veto_unranked_5_coins_each / Targeted_friend_challenge_appears_in_inbox / Friend_declines_targeted_challenge
   Public_profile_hides_concept_mastery / Friends_only_profile_is_403_for_strangers
   Stats_accuracy_by_type_and_most_common_blunder / Stats_and_dashboard_show_results_and_rating_history
   Retiring_question_reverts_its_mastery_deltas_and_keeps_match_result
@@ -1546,6 +1582,11 @@ F6 AI Profesor (ProfessorTests, FakeAi stoji umjesto Claudea)
   Lesson_is_written_once_per_answer_from_the_question_and_answer / Lesson_with_too_few_cards_or_a_failed_call_is_503_and_can_be_retried
   Quiz_hides_the_keys_and_grades_each_question_once / Quiz_and_lesson_from_one_answer_link_to_each_other
   Malformed_quiz_questions_are_dropped_and_too_few_is_503
+F7 Premium pretplata (SubscriptionTests; PremiumTests u App.Domain.Tests)
+  Paying_makes_me_a_senior_developer_with_the_welcome_pack / A_declined_card_is_402_and_changes_nothing / A_bad_card_or_interval_is_400
+  Paying_again_adds_the_time_on_top_and_cancelling_keeps_senior_until_the_end / Daily_coins_are_for_seniors_once_a_day
+  Senior_xp_is_20_percent_larger_in_the_ledger_and_the_cache / Junior_gets_2_questions_1_lesson_and_1_quiz_a_day_and_senior_has_no_limit
+  Senior_rating_gain_is_20_percent_larger_and_the_loss_is_not / An_expired_subscription_boosts_nothing / Boost_rounds_half_up_and_leaves_losses_alone / Plan_follows_premium_until
 ```
 
 ### 9.4 Frontend provjere

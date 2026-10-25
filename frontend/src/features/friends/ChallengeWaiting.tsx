@@ -1,4 +1,4 @@
-import { Check, Copy, LoaderCircle } from 'lucide-react'
+import { Check, CircleOff, Copy, LoaderCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useOpenMatch } from '@/features/match/use-start-match'
@@ -8,7 +8,9 @@ import { relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
 import type { FriendChallengeDto } from '@/types/api'
 
-const joined = (challenge: FriendChallengeDto) => !!challenge.matchId
+// Declined by the friend it was sent to, or nobody came in time: the server moves expiresAt to the past either way.
+const closed = (challenge: FriendChallengeDto) => !challenge.matchId && Date.parse(challenge.expiresAt) <= Date.now()
+const settled = (challenge: FriendChallengeDto) => !!challenge.matchId || closed(challenge)
 
 // The host's side of a friend challenge: the code and link to share, then the duel once someone joins (polled 2 s).
 export function ChallengeWaiting({ code, expiresAt, friendName }: { code: string; expiresAt: string; friendName?: string }) {
@@ -16,7 +18,7 @@ export function ChallengeWaiting({ code, expiresAt, friendName }: { code: string
   const copy = t.friends.challenge
   const openMatch = useOpenMatch()
   const load = useCallback((signal: AbortSignal) => api.challenge(code, signal), [code])
-  const { data } = usePoll(load, 2000, joined)
+  const { data } = usePoll(load, 2000, settled)
   const [copied, setCopied] = useState(false)
   const link = `${window.location.origin}/challenge/${code}`
 
@@ -48,10 +50,17 @@ export function ChallengeWaiting({ code, expiresAt, friendName }: { code: string
           {copied ? copy.copied : copy.copy}
         </Button>
       </div>
-      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-        <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
-        {copy.waiting} · {copy.expires(relativeTime(expiresAt, locale))}
-      </p>
+      {data && closed(data) ? (
+        <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+          <CircleOff aria-hidden="true" className="size-4" />
+          {friendName ? copy.closed : copy.codeExpired}
+        </p>
+      ) : (
+        <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+          <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
+          {copy.waiting} · {copy.expires(relativeTime(expiresAt, locale))}
+        </p>
+      )}
     </div>
   )
 }

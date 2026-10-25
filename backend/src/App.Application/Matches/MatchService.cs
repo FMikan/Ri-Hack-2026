@@ -389,10 +389,10 @@ public class MatchService(IAppDbContext db, Rewarder rewarder, TimeProvider time
         var spFromWins = await rewarder.SpTodayAsync(userId, [RewardType.MatchWin, RewardType.RatingUpset], ct);
         foreach (var grant in Rewards.ForMatch(match, seat, spFromWins))
         {
-            if (!await rewarder.GrantAsync(userId, grant, ct)) continue;
-            seat.CoinsEarned += grant.Coins;
-            seat.XpEarned += grant.Xp;
-            seat.SpEarned += grant.Sp;
+            if (await rewarder.GrantAsync(userId, grant, ct) is not { } paid) continue;
+            seat.CoinsEarned += paid.Coins;
+            seat.XpEarned += paid.Xp;
+            seat.SpEarned += paid.Sp;
         }
         if (match.Kind != MatchKind.Calibration && match.ResultReason != MatchResultReason.Aborted)
             await rewarder.RecordActivityAsync(seat.User!, ct);

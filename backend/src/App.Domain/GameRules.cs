@@ -24,7 +24,7 @@ public static class GameRules
     public const int MaxStreakFreezes = 2;
 
     // Social and leaderboards (idea §12, §14)
-    public const int FriendChallengeMinutes = 10, OnlineMinutes = 2, LastSeenThrottleSeconds = 30;
+    public const int FriendChallengeMinutes = 10, FriendInviteSeconds = 60, OnlineMinutes = 2, LastSeenThrottleSeconds = 30; // invite = sent to one friend
     public const int LeaderboardSize = 100, LeaderboardAround = 2, GrandmasterTop = 100;
     public const int SeasonMonths = 3, SeasonLearningBoostDays = 14, WeeklyTitleTop = 10;
     public static readonly int[] SeasonTitleRanks = [5, 50, 100];
@@ -41,7 +41,7 @@ public static class GameRules
 
     // Match flow (idea §6, §17)
     public const int QuestionsPerMatch = 10;
-    public const int LobbySeconds = 5, InterstitialSeconds = 2;
+    public const int LobbySeconds = 5, InterstitialSeconds = 4, BotInterstitialSeconds = 30; // bot duel: "next" or the full 30 s
     public const int ClientTimeToleranceMs = 1500; // client-measured time is trusted within this window of the server's
     public const int BotMinSlackMs = 500; // a bot always answers at least this long before the time limit
     public const int ReconnectGraceSeconds = 20; // a human not seen for this long counts as disconnected
@@ -68,14 +68,14 @@ public static class GameRules
 
     public static readonly IReadOnlyDictionary<QuestionType, QuestionTypeRule> Types = new Dictionary<QuestionType, QuestionTypeRule>
     {
-        [QuestionType.TrueFalse] = new(TimeMs: 8_000, BasePoints: 50, Guessability: 0.5, MinPerDeck: 0, MaxPerDeck: 2),
-        [QuestionType.MultipleChoice] = new(15_000, 100, 0.75, 0, 3),
-        [QuestionType.Cloze] = new(18_000, 120, 0.75, 0, 2),
-        [QuestionType.OddOneOut] = new(12_000, 100, 0.75, 0, 2),
-        [QuestionType.Output] = new(25_000, 150, 0.75, 1, 2),
-        [QuestionType.MatchPairs] = new(30_000, 150, 1.0, 0, 2),
-        [QuestionType.Order] = new(25_000, 150, 1.0, 0, 2),
-        [QuestionType.FindBug] = new(40_000, 200, 1.0, 1, 2),
+        [QuestionType.TrueFalse] = new(TimeMs: 10_000, BasePoints: 50, Guessability: 0.5, MinPerDeck: 0, MaxPerDeck: 2),
+        [QuestionType.MultipleChoice] = new(27_000, 100, 0.75, 0, 3),
+        [QuestionType.Cloze] = new(33_000, 120, 0.75, 0, 2),
+        [QuestionType.OddOneOut] = new(21_000, 100, 0.75, 0, 2),
+        [QuestionType.Output] = new(45_000, 150, 0.75, 1, 2),
+        [QuestionType.MatchPairs] = new(54_000, 150, 1.0, 0, 2),
+        [QuestionType.Order] = new(45_000, 150, 1.0, 0, 2),
+        [QuestionType.FindBug] = new(72_000, 200, 1.0, 1, 2),
     };
 
     // Drag-and-drop types count together: at least 1 and at most 2 per deck.

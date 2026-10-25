@@ -1892,5 +1892,3877 @@
       }
     },
     "remember": "An <a> without href is neither focusable nor announced as a link; use <a href> to navigate and <button> for actions."
+  },
+  {
+    "key": "fe.semantic-html.tf.02",
+    "concept": "fe.semantic-html",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Choosing <h4> instead of <h2> is the right way to make a section heading look smaller.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Pick heading levels by the page outline, not by size; change how a heading looks with CSS."
+  },
+  {
+    "key": "fe.semantic-html.mc.02",
+    "concept": "fe.semantic-html",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A recipe lists its preparation steps, and their order matters. Which markup fits best?",
+      "options": [
+        {
+          "id": "a",
+          "text": "<ul> with one <li> per step"
+        },
+        {
+          "id": "b",
+          "text": "<ol> with one <li> per step"
+        },
+        {
+          "id": "c",
+          "text": "<dl> with one <dt> per step"
+        },
+        {
+          "id": "d",
+          "text": "<div> with one numbered <p> per step"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Use <ol> when the order of the items matters and <ul> when it does not; screen readers announce a list and how many items it has."
+  },
+  {
+    "key": "fe.semantic-html.mc.03",
+    "concept": "fe.semantic-html",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "An orders table has a header row: Date, Customer, Total. Which header cell markup lets screen readers announce the column name with each data cell?",
+      "options": [
+        {
+          "id": "a",
+          "text": "<td class=\"header\">Total</td>"
+        },
+        {
+          "id": "b",
+          "text": "<td><strong>Total</strong></td>"
+        },
+        {
+          "id": "c",
+          "text": "<td aria-label=\"Total\">Total</td>"
+        },
+        {
+          "id": "d",
+          "text": "<th scope=\"col\">Total</th>"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Mark header cells with <th> so screen readers can read the matching column or row header along with each data cell."
+  },
+  {
+    "key": "fe.semantic-html.odd.02",
+    "concept": "fe.semantic-html",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these inputs tell the browser what kind of value to expect, so a phone shows a fitting keyboard. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "<input type=\"email\" name=\"email\">"
+        },
+        {
+          "id": "b",
+          "text": "<input type=\"tel\" name=\"phone\">"
+        },
+        {
+          "id": "c",
+          "text": "<input type=\"text\" name=\"phone\">"
+        },
+        {
+          "id": "d",
+          "text": "<input type=\"number\" name=\"qty\">"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "type, not name, tells the browser what a field holds; email, tel and number get fitting phone keyboards, while name only labels the sent value."
+  },
+  {
+    "key": "fe.semantic-html.cloze.01",
+    "concept": "fe.semantic-html",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "html",
+    "content": {
+      "prompt": "Fill the blank so screen readers announce \"Shipping speed\" as the name of the radio group when the user tabs into it.",
+      "code": "<fieldset>\n  ____\n  <label>\n    <input type=\"radio\" name=\"ship\" value=\"std\"> Standard\n  </label>\n  <label>\n    <input type=\"radio\" name=\"ship\" value=\"exp\"> Express\n  </label>\n</fieldset>",
+      "options": [
+        {
+          "id": "a",
+          "text": "<legend>Shipping speed</legend>"
+        },
+        {
+          "id": "b",
+          "text": "<label>Shipping speed</label>"
+        },
+        {
+          "id": "c",
+          "text": "<h3>Shipping speed</h3>"
+        },
+        {
+          "id": "d",
+          "text": "<caption>Shipping speed</caption>"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A group of radios or checkboxes gets its name from the <legend> of its <fieldset>; a heading or a stray label inside does not name the group."
+  },
+  {
+    "key": "fe.semantic-html.out.01",
+    "concept": "fe.semantic-html",
+    "type": "output",
+    "difficulty": 3,
+    "language": "html",
+    "content": {
+      "prompt": "What does this log in a browser?",
+      "code": "<label id=\"l\">\n  <input type=\"checkbox\" id=\"c\"> Remember me\n</label>\n<script>\n  let n = 0;\n  l.addEventListener(\"click\", () => n++);\n  l.click();\n  console.log(n, c.checked);\n</script>",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 true"
+        },
+        {
+          "id": "b",
+          "text": "2 false"
+        },
+        {
+          "id": "c",
+          "text": "2 true"
+        },
+        {
+          "id": "d",
+          "text": "1 false"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Clicking a label also clicks its control, and that second click bubbles back up, so a listener on a wrapping label runs twice."
+  },
+  {
+    "key": "fe.semantic-html.bug.02",
+    "concept": "fe.semantic-html",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "html",
+    "content": {
+      "prompt": "The dialog is opened with showModal(). Cancel and Delete should close it and leave the choice in returnValue, without leaving the page. Instead the page reloads. Find the bug.",
+      "code": "<dialog id=\"ask\">\n  <form method=\"post\">\n    <p>Delete this file?</p>\n    <button value=\"cancel\">Cancel</button>\n    <button value=\"delete\">Delete</button>\n  </form>\n</dialog>\n<script>\n  const dlg = document.getElementById(\"ask\");\n  dlg.addEventListener(\"close\", () => {\n    if (dlg.returnValue === \"delete\") deleteFile();\n  });\n</script>",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add type=\"button\" to the Cancel and Delete buttons"
+        },
+        {
+          "id": "f2",
+          "text": "Change method=\"post\" to method=\"dialog\""
+        },
+        {
+          "id": "f3",
+          "text": "Remove the method attribute so the form uses its default"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A <form method=\"dialog\"> closes its <dialog> on submit and stores the button's value in returnValue instead of sending a request."
+  },
+  {
+    "key": "fe.semantic-html.match.02",
+    "concept": "fe.semantic-html",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each piece of markup with how browsers expose it to screen readers.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "<header> as a direct child of <body>"
+        },
+        {
+          "id": "l2",
+          "text": "<header> inside an <article>"
+        },
+        {
+          "id": "l3",
+          "text": "<section aria-labelledby=\"t\"> with an <h2 id=\"t\">"
+        },
+        {
+          "id": "l4",
+          "text": "<footer> as a direct child of <body>"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "No landmark role, a generic container"
+        },
+        {
+          "id": "r2",
+          "text": "Contentinfo landmark"
+        },
+        {
+          "id": "r3",
+          "text": "Banner landmark"
+        },
+        {
+          "id": "r4",
+          "text": "Region landmark named by its heading"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "header and footer are page landmarks only outside article, aside, main, nav and section, and a section is a region only once it has a name."
+  },
+  {
+    "key": "fe.semantic-html.order.01",
+    "concept": "fe.semantic-html",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In a browser, a form has a required text field, then submit buttons Save (name=action, value=save) and Delete. The field is filled in. The user presses Enter in it. Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "submit fires on the form"
+        },
+        {
+          "id": "s2",
+          "text": "click fires on the Save button"
+        },
+        {
+          "id": "s3",
+          "text": "The request is sent with action=save"
+        },
+        {
+          "id": "s4",
+          "text": "keydown fires on the text field"
+        },
+        {
+          "id": "s5",
+          "text": "The browser validates the required field"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Enter in a field clicks the form's first submit button, so its click handlers run and its value is sent; validation and submit come after that click."
+  },
+  {
+    "key": "fe.semantic-html.tf.03",
+    "concept": "fe.semantic-html",
+    "type": "true_false",
+    "difficulty": 4,
+    "content": {
+      "statement": "If a stylesheet sets .panel { display: flex; }, then <div class=\"panel\" hidden> is visible on the page.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "hidden works only through the browser's default display: none, so any author display rule beats it; add [hidden] { display: none !important; }."
+  },
+  {
+    "key": "fe.box-model.tf.02",
+    "concept": "fe.box-model",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Like margin, padding accepts negative values, such as padding: -10px.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Padding can never be negative and padding: -10px is ignored as invalid; only margins accept negative values."
+  },
+  {
+    "key": "fe.box-model.out.02",
+    "concept": "fe.box-model",
+    "type": "output",
+    "difficulty": 1,
+    "language": "css",
+    "content": {
+      "prompt": "How wide is the content area of .box, the part where its text goes?",
+      "code": ".box {\n  box-sizing: border-box;\n  width: 300px;\n  padding: 20px;\n  border: 2px solid gray;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "300px"
+        },
+        {
+          "id": "b",
+          "text": "260px"
+        },
+        {
+          "id": "c",
+          "text": "256px"
+        },
+        {
+          "id": "d",
+          "text": "344px"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "With border-box, width is measured to the outer border edge, so the content gets width minus padding and border on both sides."
+  },
+  {
+    "key": "fe.box-model.bug.01",
+    "concept": "fe.box-model",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "css",
+    "content": {
+      "prompt": "Every element should use border-box, so each .card fills the 300px .sidebar exactly. Instead each card is 336px wide. Find the bug.",
+      "code": "html {\n  box-sizing: border-box;\n}\n.sidebar {\n  width: 300px;\n}\n.sidebar .card {\n  width: 100%;\n  padding: 16px;\n  border: 2px solid #ddd;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add !important after border-box"
+        },
+        {
+          "id": "f2",
+          "text": "Change the selector html to *, *::before, *::after"
+        },
+        {
+          "id": "f3",
+          "text": "Move box-sizing: border-box into the .sidebar rule"
+        }
+      ],
+      "answer": {
+        "line": 1,
+        "fixId": "f2",
+        "acceptLines": [
+          2
+        ]
+      }
+    },
+    "remember": "box-sizing is not inherited, so setting it on html changes only html; put it on *, *::before, *::after to reach every element."
+  },
+  {
+    "key": "fe.box-model.match.01",
+    "concept": "fe.box-model",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each padding shorthand with the padding it sets.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "padding: 10px"
+        },
+        {
+          "id": "l2",
+          "text": "padding: 10px 20px"
+        },
+        {
+          "id": "l3",
+          "text": "padding: 10px 20px 30px"
+        },
+        {
+          "id": "l4",
+          "text": "padding: 10px 20px 30px 40px"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "10px top, 20px right, 30px bottom, 40px left"
+        },
+        {
+          "id": "r2",
+          "text": "10px top, 20px left and right, 30px bottom"
+        },
+        {
+          "id": "r3",
+          "text": "10px on all four sides"
+        },
+        {
+          "id": "r4",
+          "text": "10px top and bottom, 20px left and right"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Box shorthands go clockwise from the top, and a missing side copies its opposite: two values mean vertical, then horizontal."
+  },
+  {
+    "key": "fe.box-model.order.01",
+    "concept": "fe.box-model",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "None of these elements has a margin, and box-sizing is the default unless set. Order them from narrowest to widest on screen, border included.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "width: 250px; padding: 40px; box-sizing: border-box"
+        },
+        {
+          "id": "s2",
+          "text": "width: 200px; padding: 30px"
+        },
+        {
+          "id": "s3",
+          "text": "width: 240px; border: 10px solid; box-sizing: border-box"
+        },
+        {
+          "id": "s4",
+          "text": "width: 220px; border: 5px solid"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s3",
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Compare boxes by their border-box size: content-box adds padding and border to width, border-box already includes them."
+  },
+  {
+    "key": "fe.box-model.tf.03",
+    "concept": "fe.box-model",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "Under box-sizing: border-box, max-width: 600px caps the element at 600px including its padding and border.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "box-sizing also applies to min-width, max-width, min-height and max-height, not only to width and height."
+  },
+  {
+    "key": "fe.box-model.mc.03",
+    "concept": "fe.box-model",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "css",
+    "content": {
+      "prompt": ".child is an empty block inside .parent, in normal flow. How tall is .child?",
+      "code": ".parent {\n  width: 400px;\n  height: 100px;\n}\n.child {\n  padding-top: 50%;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "50px"
+        },
+        {
+          "id": "b",
+          "text": "200px"
+        },
+        {
+          "id": "c",
+          "text": "0px"
+        },
+        {
+          "id": "d",
+          "text": "100px"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Percentage padding on every side, top and bottom included, is a share of the containing block's width, not its height."
+  },
+  {
+    "key": "fe.box-model.mc.04",
+    "concept": "fe.box-model",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A plain inline <a> in the middle of a paragraph that wraps over several lines gets padding: 12px and a background color. What happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The line holding the link grows 24px taller to fit the padding"
+        },
+        {
+          "id": "b",
+          "text": "Top and bottom padding are dropped; only left and right apply"
+        },
+        {
+          "id": "c",
+          "text": "The link becomes an inline-block, so all padding takes up space"
+        },
+        {
+          "id": "d",
+          "text": "The background grows up and down, but line spacing stays the same"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Vertical padding on an inline element is painted but does not change the line height, so it can overlap the lines above and below."
+  },
+  {
+    "key": "fe.box-model.odd.01",
+    "concept": "fe.box-model",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "An element has box-sizing: content-box, width: 200px, padding: 10px and a 1px border, and no scrollbar. Three of these include its padding. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "el.offsetWidth"
+        },
+        {
+          "id": "b",
+          "text": "el.clientWidth"
+        },
+        {
+          "id": "c",
+          "text": "getComputedStyle(el).width"
+        },
+        {
+          "id": "d",
+          "text": "el.getBoundingClientRect().width"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "getComputedStyle(el).width reports the width property, here the content box; clientWidth adds padding, offsetWidth adds border too."
+  },
+  {
+    "key": "fe.box-model.cloze.02",
+    "concept": "fe.box-model",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "css",
+    "content": {
+      "prompt": "The h1's 48px top margin shows as a gap above .hero instead of inside its blue background. Fill the blank so the margin stays inside .hero without adding padding or a border.",
+      "code": ".hero {\n  display: ____;\n  background: steelblue;\n}\n.hero h1 {\n  margin-top: 48px;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "flow-root"
+        },
+        {
+          "id": "b",
+          "text": "block"
+        },
+        {
+          "id": "c",
+          "text": "list-item"
+        },
+        {
+          "id": "d",
+          "text": "contents"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A first child's top margin collapses through a parent with no top padding or border; display: flow-root starts a new formatting context and stops it."
+  },
+  {
+    "key": "fe.css-specificity.tf.02",
+    "concept": "fe.css-specificity",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Without any !important, a color set in an element's style attribute beats a color set by an ID selector in a stylesheet.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A style attribute outranks every selector in the stylesheet, however specific; a stylesheet rule needs !important to beat it."
+  },
+  {
+    "key": "fe.css-specificity.tf.03",
+    "concept": "fe.css-specificity",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "The universal selector * adds as much specificity to a rule as a class selector does.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "The universal selector * counts zero, so even a plain element selector like p outranks a * rule."
+  },
+  {
+    "key": "fe.css-specificity.mc.02",
+    "concept": "fe.css-specificity",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "The page links theme.css and then main.css. Both contain .btn { background: ... }, and theme.css finishes downloading last. Which background does a .btn get?",
+      "options": [
+        {
+          "id": "a",
+          "text": "theme.css's, because the first rule for a property wins"
+        },
+        {
+          "id": "b",
+          "text": "main.css's, because its <link> comes later in the HTML"
+        },
+        {
+          "id": "c",
+          "text": "theme.css's, because it was the last file to finish loading"
+        },
+        {
+          "id": "d",
+          "text": "It varies between page loads, depending on network timing"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "With equal specificity the later rule wins, and stylesheets count in document order, not in the order they download."
+  },
+  {
+    "key": "fe.css-specificity.mc.03",
+    "concept": "fe.css-specificity",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A shared stylesheet has .price { color: red !important; }. Inside <main id=\"checkout\"> the prices must be green. Which change works?",
+      "options": [
+        {
+          "id": "a",
+          "text": "#checkout .price { color: green; } in page.css"
+        },
+        {
+          "id": "b",
+          "text": "style=\"color: green\" on each price element"
+        },
+        {
+          "id": "c",
+          "text": ".price { color: green; } loaded after the shared file"
+        },
+        {
+          "id": "d",
+          "text": "#checkout .price { color: green !important; }"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Normal declarations, even inline ones, never beat !important; you need another !important that wins on specificity or order."
+  },
+  {
+    "key": "fe.css-specificity.odd.01",
+    "concept": "fe.css-specificity",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A <p class=\"note\"> is styled by .note { color: blue; } at the end of the stylesheet. Three of these earlier rules still make it red. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "[class=\"note\"] { color: red; }"
+        },
+        {
+          "id": "b",
+          "text": ".note.note { color: red; }"
+        },
+        {
+          "id": "c",
+          "text": "p.note { color: red; }"
+        },
+        {
+          "id": "d",
+          "text": ".note { color: red !important; }"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "An attribute selector such as [class=\"note\"] weighs the same as one class, so it ties with .note and the later rule wins."
+  },
+  {
+    "key": "fe.css-specificity.cloze.01",
+    "concept": "fe.css-specificity",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "css",
+    "content": {
+      "prompt": "Each <h2 class=\"title\"> sits inside a <div class=\"card\">. Fill the blank so titles become 18px on screens up to 600px wide.",
+      "code": ".card .title {\n  font-size: 24px;\n}\n\n@media (max-width: 600px) {\n  ____ {\n    font-size: 18px;\n  }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": ".title"
+        },
+        {
+          "id": "b",
+          "text": "h2.title"
+        },
+        {
+          "id": "c",
+          "text": ".card .title"
+        },
+        {
+          "id": "d",
+          "text": ".card h2"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A media query adds no specificity; the rule inside must still match or beat the specificity of the rule it overrides."
+  },
+  {
+    "key": "fe.css-specificity.out.02",
+    "concept": "fe.css-specificity",
+    "type": "output",
+    "difficulty": 3,
+    "language": "html",
+    "content": {
+      "prompt": "What color is the word \"world\"?",
+      "code": "<style>\n  #post { color: navy; }\n  .note { color: green; }\n  p { color: gray; }\n</style>\n<div id=\"post\" class=\"note\">\n  <p>Hello <b>world</b></p>\n</div>",
+      "options": [
+        {
+          "id": "a",
+          "text": "navy"
+        },
+        {
+          "id": "b",
+          "text": "gray"
+        },
+        {
+          "id": "c",
+          "text": "green"
+        },
+        {
+          "id": "d",
+          "text": "black"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Inherited values have no specificity: a rule that targets an element directly, even a bare p, beats what an #id parent passes down."
+  },
+  {
+    "key": "fe.css-specificity.bug.02",
+    "concept": "fe.css-specificity",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "css",
+    "content": {
+      "prompt": "Every .btn except #submit gets a gray default that class rules like .btn.primary can override. A <button class=\"btn primary\" id=\"save\"> stays gray. Find the bug.",
+      "code": ".btn:not(#submit) {\n  background: gray;\n}\n\n.btn.primary {\n  background: blue;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Change line 1 to .btn:not(:is(#submit))"
+        },
+        {
+          "id": "f2",
+          "text": "Change line 1 to .btn:not([id=\"submit\"])"
+        },
+        {
+          "id": "f3",
+          "text": "Swap the order of the two rules"
+        }
+      ],
+      "answer": {
+        "line": 1,
+        "fixId": "f2"
+      }
+    },
+    "remember": ":not() takes the specificity of its argument, so :not(#submit) adds a whole ID; [id=\"submit\"] excludes the same button at class weight."
+  },
+  {
+    "key": "fe.css-specificity.match.02",
+    "concept": "fe.css-specificity",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Each pair sets color on <p class=\"a b\"> inside <div id=\"x\">; rules are unlayered unless stated. Match each pair with the cascade step that decides which rule wins.",
+      "left": [
+        {
+          "id": "l1",
+          "text": ".a.b, then later .b.a"
+        },
+        {
+          "id": "l2",
+          "text": "#x p in layer base, p in a later layer"
+        },
+        {
+          "id": "l3",
+          "text": "#x .a, then later .a.b"
+        },
+        {
+          "id": "l4",
+          "text": "p { ... !important }, then later #x p.a"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Cascade layers"
+        },
+        {
+          "id": "r2",
+          "text": "Order of appearance"
+        },
+        {
+          "id": "r3",
+          "text": "Importance"
+        },
+        {
+          "id": "r4",
+          "text": "Specificity"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "Among author rules the cascade compares importance, then layer, then specificity; source order only settles a full tie."
+  },
+  {
+    "key": "fe.css-specificity.order.01",
+    "concept": "fe.css-specificity",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Each of these sets color on the same <p> inside <div id=\"main\">, all written by the page author. Order them from lowest to highest priority.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "p { color: ... !important } in the stylesheet"
+        },
+        {
+          "id": "s2",
+          "text": "style=\"color: ...\" on the <p>"
+        },
+        {
+          "id": "s3",
+          "text": "style=\"color: ... !important\" on the <p>"
+        },
+        {
+          "id": "s4",
+          "text": "#main p { color: ... } in the stylesheet"
+        },
+        {
+          "id": "s5",
+          "text": "A running @keyframes animation of color"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Animations beat every normal declaration, inline ones included, but lose to !important; inline !important beats stylesheet !important."
+  },
+  {
+    "key": "fe.flex-grid.tf.02",
+    "concept": "fe.flex-grid",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "By default, display: flex lines up its children in a column, one below the other.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "The default flex-direction is row, so flex children sit side by side; flex-direction: column stacks them."
+  },
+  {
+    "key": "fe.flex-grid.cloze.01",
+    "concept": "fe.flex-grid",
+    "type": "cloze",
+    "difficulty": 1,
+    "language": "css",
+    "content": {
+      "prompt": "Fill the blank so .gallery has three columns of equal width.",
+      "code": ".gallery {\n  display: grid;\n  grid-template-columns: ____;\n  gap: 16px;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "3fr"
+        },
+        {
+          "id": "b",
+          "text": "repeat(3, 1fr)"
+        },
+        {
+          "id": "c",
+          "text": "repeat(1fr, 3)"
+        },
+        {
+          "id": "d",
+          "text": "span 3"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "grid-template-columns lists one size per column; repeat(3, 1fr) is three columns that share the space equally."
+  },
+  {
+    "key": "fe.flex-grid.out.02",
+    "concept": "fe.flex-grid",
+    "type": "output",
+    "difficulty": 2,
+    "language": "css",
+    "content": {
+      "prompt": ".row holds four .item elements, each a single short word with no padding, border or margin. How wide is each .item?",
+      "code": ".row {\n  display: flex;\n  width: 500px;\n}\n.item {\n  width: 150px;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "150px each; the row overflows by 100px"
+        },
+        {
+          "id": "b",
+          "text": "150px each; the fourth wraps to a new line"
+        },
+        {
+          "id": "c",
+          "text": "150px for three, 50px for the last one"
+        },
+        {
+          "id": "d",
+          "text": "125px each; all four shrink equally"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Flex items have flex-shrink: 1 and no wrapping by default, so a width is only a starting size they shrink from to fit."
+  },
+  {
+    "key": "fe.flex-grid.bug.02",
+    "concept": "fe.flex-grid",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "css",
+    "content": {
+      "prompt": "A <ul class=\"menu\"> holds three <li>, each with one <a>. The links should sit in one row, 16px apart, but they stack vertically. Find the bug.",
+      "code": ".menu {\n  list-style: none;\n  padding: 0;\n}\n.menu li {\n  display: flex;\n  gap: 16px;\n}\n.menu a {\n  color: inherit;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add flex-direction: row to the .menu li rule"
+        },
+        {
+          "id": "f2",
+          "text": "Move display: flex and gap from .menu li to .menu"
+        },
+        {
+          "id": "f3",
+          "text": "Add display: flex to the .menu a rule"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f2",
+        "acceptLines": [
+          5,
+          7
+        ]
+      }
+    },
+    "remember": "display: flex arranges the direct children of the element it is set on, so put it on the parent whose children should line up."
+  },
+  {
+    "key": "fe.flex-grid.match.02",
+    "concept": "fe.flex-grid",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A grid has grid-template-columns: repeat(4, 1fr). Match each grid-column value with the columns the item covers.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "1 / -1"
+        },
+        {
+          "id": "l2",
+          "text": "2 / 4"
+        },
+        {
+          "id": "l3",
+          "text": "span 2"
+        },
+        {
+          "id": "l4",
+          "text": "-2"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Columns 2 and 3"
+        },
+        {
+          "id": "r2",
+          "text": "Column 4 only"
+        },
+        {
+          "id": "r3",
+          "text": "Columns 1 to 4"
+        },
+        {
+          "id": "r4",
+          "text": "Two adjacent columns chosen by auto-placement"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "grid-column numbers grid lines, not columns: 2 / 4 ends before line 4, negative lines count from the end, span sets only a length."
+  },
+  {
+    "key": "fe.flex-grid.order.01",
+    "concept": "fe.flex-grid",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A flex container has flex-wrap: wrap. Put the browser's steps for sizing items along the main axis in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Grow or shrink items to fill each line's free space"
+        },
+        {
+          "id": "s2",
+          "text": "Find each item's flex basis, its starting size"
+        },
+        {
+          "id": "s3",
+          "text": "Hand any space still left over to justify-content"
+        },
+        {
+          "id": "s4",
+          "text": "Break the items into lines where they stop fitting"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Flexbox starts from the basis, wraps into lines, flexes each line, and justify-content only gets space that flex-grow left over."
+  },
+  {
+    "key": "fe.flex-grid.tf.03",
+    "concept": "fe.flex-grid",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "In a browser, a flex item with order: -1 is drawn first in its row, but the Tab key still reaches it in DOM order.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "order changes only where an item is drawn; keyboard focus and screen readers still follow the DOM, so keep meaningful order in the HTML."
+  },
+  {
+    "key": "fe.flex-grid.mc.02",
+    "concept": "fe.flex-grid",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "language": "css",
+    "content": {
+      "prompt": "This card grid is 1000px wide and looks right when full. When a search returns only two cards, each stretches to 500px. Which change keeps them 200px wide?",
+      "code": ".grid {\n  display: grid;\n  width: 1000px;\n  grid-template-columns:\n    repeat(auto-fit, minmax(200px, 1fr));\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "Change auto-fit to auto-fill"
+        },
+        {
+          "id": "b",
+          "text": "Add grid-auto-flow: dense to .grid"
+        },
+        {
+          "id": "c",
+          "text": "Change the max in minmax() from 1fr to auto"
+        },
+        {
+          "id": "d",
+          "text": "Add justify-content: start to .grid"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "auto-fit collapses empty tracks so the items stretch into the space; auto-fill keeps the empty tracks, so a few items stay track-sized."
+  },
+  {
+    "key": "fe.flex-grid.mc.03",
+    "concept": "fe.flex-grid",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "language": "css",
+    "content": {
+      "prompt": "How does a browser treat this grid-template-areas value?",
+      "code": ".page {\n  display: grid;\n  grid-template-columns: 200px 1fr;\n  grid-template-areas:\n    \"head head\"\n    \"nav  main\"\n    \"nav  nav\";\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "nav covers the L-shaped group of three cells"
+        },
+        {
+          "id": "b",
+          "text": "nav keeps its top-left rectangle; the last cell is empty"
+        },
+        {
+          "id": "c",
+          "text": "The value is invalid, so the declaration is ignored"
+        },
+        {
+          "id": "d",
+          "text": "nav grows to its bounding box and overlaps main"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Every named grid area must be one rectangle; an L-shaped area makes the whole grid-template-areas value invalid, so it is dropped."
+  },
+  {
+    "key": "fe.flex-grid.odd.01",
+    "concept": "fe.flex-grid",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these declarations do nothing on a flex item left at position: static. Which one still has an effect?",
+      "items": [
+        {
+          "id": "a",
+          "text": "float: right"
+        },
+        {
+          "id": "b",
+          "text": "z-index: 2"
+        },
+        {
+          "id": "c",
+          "text": "clear: both"
+        },
+        {
+          "id": "d",
+          "text": "vertical-align: middle"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Flex and grid items ignore float, clear and vertical-align, but z-index works on them even when position is static."
+  },
+  {
+    "key": "fe.responsive.tf.02",
+    "concept": "fe.responsive",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Setting max-width: 100% on an image makes it stretch beyond its natural width to fill a wider container.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "max-width: 100% only shrinks an image to fit its container; it never enlarges it past its natural size."
+  },
+  {
+    "key": "fe.responsive.order.01",
+    "concept": "fe.responsive",
+    "type": "order",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A responsive page is open on a phone and the user turns the phone from portrait to landscape. The page does not reload. Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Styles from the queries that now match are applied"
+        },
+        {
+          "id": "s2",
+          "text": "The page is laid out again and redrawn"
+        },
+        {
+          "id": "s3",
+          "text": "The viewport becomes wider"
+        },
+        {
+          "id": "s4",
+          "text": "The browser checks the media queries against the new size"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s4",
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Media queries are live: when the viewport changes, the browser checks them again and restyles the page without a reload."
+  },
+  {
+    "key": "fe.responsive.tf.03",
+    "concept": "fe.responsive",
+    "type": "true_false",
+    "difficulty": 2,
+    "content": {
+      "statement": "On mobile browsers, an element with height: 100vh can be taller than the visible area while the address bar is showing.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "On mobile, 100vh is the height with the toolbars hidden; use 100dvh or 100svh when the element must fit the visible area."
+  },
+  {
+    "key": "fe.responsive.mc.02",
+    "concept": "fe.responsive",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "On a phone, a data table with eight columns is wider than the screen and the whole page scrolls sideways. Which change keeps every column readable and stops the page itself from scrolling sideways?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Set table { width: 100%; }"
+        },
+        {
+          "id": "b",
+          "text": "Wrap the table in a <div> with overflow-x: auto"
+        },
+        {
+          "id": "c",
+          "text": "Set table { max-width: 100%; }"
+        },
+        {
+          "id": "d",
+          "text": "Set body { overflow-x: hidden; }"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A table cannot shrink below the width of its content; put it in a wrapper with overflow-x: auto so only the table scrolls."
+  },
+  {
+    "key": "fe.responsive.mc.03",
+    "concept": "fe.responsive",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "css",
+    "content": {
+      "prompt": "At exactly 768px wide the nav is stacked like on mobile, but the menu button is hidden. Which change makes only one block apply at every width?",
+      "code": "@media (max-width: 768px) {\n  .nav { flex-direction: column; }\n  .menu-btn { display: block; }\n}\n@media (min-width: 768px) {\n  .menu-btn { display: none; }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "Change the second query to (min-width: 767px)"
+        },
+        {
+          "id": "b",
+          "text": "Write both conditions as only screen and (...)"
+        },
+        {
+          "id": "c",
+          "text": "Rewrite both queries with 48em instead of 768px"
+        },
+        {
+          "id": "d",
+          "text": "Change the first query to (width < 768px)"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "min-width and max-width both include the boundary, so 768px matches both; end the lower range with width < 768px."
+  },
+  {
+    "key": "fe.responsive.odd.02",
+    "concept": "fe.responsive",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "The viewport is 400px wide and <body> keeps its default 8px margin. Each rule styles a block inside <body>. Three make the page scroll sideways. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "width: 100%; padding: 0 1rem;"
+        },
+        {
+          "id": "b",
+          "text": "width: 100vw; margin: 0;"
+        },
+        {
+          "id": "c",
+          "text": "width: auto; padding: 0 1rem;"
+        },
+        {
+          "id": "d",
+          "text": "min-width: 30rem; max-width: 100%;"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "An auto-width block fits its padding into the space; 100% plus padding, 100vw beside a margin and a min-width above max-width all overflow."
+  },
+  {
+    "key": "fe.responsive.cloze.02",
+    "concept": "fe.responsive",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "css",
+    "content": {
+      "prompt": "The same .card sits in a wide .main and a narrow .sidebar. Fill the blank so each card switches to flex by the width of its own column, while the columns stay as tall as their content.",
+      "code": ".main, .sidebar {\n  container-type: ____;\n}\n.card {\n  display: block;\n}\n@container (min-width: 400px) {\n  .card { display: flex; }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "inline-size"
+        },
+        {
+          "id": "b",
+          "text": "size"
+        },
+        {
+          "id": "c",
+          "text": "normal"
+        },
+        {
+          "id": "d",
+          "text": "block-size"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Container queries need an ancestor with container-type: inline-size; size also contains the height, so the box stops growing with its content."
+  },
+  {
+    "key": "fe.responsive.out.02",
+    "concept": "fe.responsive",
+    "type": "output",
+    "difficulty": 4,
+    "language": "css",
+    "content": {
+      "prompt": "The browser's default font size is 16px. What is the narrowest viewport width at which .nav is shown?",
+      "code": "html {\n  font-size: 62.5%;\n}\n.nav {\n  display: none;\n}\n@media (min-width: 40em) {\n  .nav { display: flex; }\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "400px"
+        },
+        {
+          "id": "b",
+          "text": "641px"
+        },
+        {
+          "id": "c",
+          "text": "401px"
+        },
+        {
+          "id": "d",
+          "text": "640px"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "em and rem in media queries use the browser's default font size, not the html rule, so 40em is 640px at the 16px default."
+  },
+  {
+    "key": "fe.responsive.bug.01",
+    "concept": "fe.responsive",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The script must always pick the same layout as the CSS @media (min-width: 768px). With a classic scrollbar, just above 768px the CSS shows desktop but the script says mobile. Find the bug.",
+      "code": "function isDesktop() {\n  return document.documentElement.clientWidth >= 768;\n}\n\nfunction render() {\n  const mode = isDesktop() ? \"desktop\" : \"mobile\";\n  document.body.dataset.mode = mode;\n}\n\nwindow.addEventListener(\"resize\", render);\nrender();",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "return window.matchMedia(\"(min-width: 768px)\").matches;"
+        },
+        {
+          "id": "f2",
+          "text": "return document.body.clientWidth >= 768;"
+        },
+        {
+          "id": "f3",
+          "text": "return screen.width >= 768;"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f1"
+      }
+    },
+    "remember": "Media queries measure the viewport including the scrollbar but clientWidth leaves it out; use matchMedia so JS and CSS agree."
+  },
+  {
+    "key": "fe.responsive.match.01",
+    "concept": "fe.responsive",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each piece of responsive image markup with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "srcset=\"a.jpg 1x, b.jpg 2x\""
+        },
+        {
+          "id": "l2",
+          "text": "srcset=\"s.jpg 480w, l.jpg 1200w\""
+        },
+        {
+          "id": "l3",
+          "text": "sizes=\"(min-width: 60em) 50vw, 100vw\""
+        },
+        {
+          "id": "l4",
+          "text": "<source media=\"(min-width: 60em)\" srcset=\"wide.jpg\">"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Tells the browser how wide the image will be drawn, before layout is done"
+        },
+        {
+          "id": "r2",
+          "text": "Is used whenever its condition matches, e.g. to show a different crop"
+        },
+        {
+          "id": "r3",
+          "text": "Offers files for different pixel densities at one fixed display size"
+        },
+        {
+          "id": "r4",
+          "text": "Lists each file's real width so the browser picks by drawn size and density"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "srcset only offers candidates and sizes says how wide the image will be drawn; use picture with source media when the choice must be forced."
+  },
+  {
+    "key": "fe.dom-reflow.tf.02",
+    "concept": "fe.dom-reflow",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Hiding an element with visibility: hidden removes its box from the layout, so the elements after it move up.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "visibility: hidden keeps the element's space in the layout; display: none removes the box, so the content after it moves up."
+  },
+  {
+    "key": "fe.dom-reflow.odd.02",
+    "concept": "fe.dom-reflow",
+    "type": "odd_one_out",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Three of these CSS changes can resize or move elements, so the browser has to run layout again. Which one only needs a repaint?",
+      "items": [
+        {
+          "id": "a",
+          "text": "width: 300px"
+        },
+        {
+          "id": "b",
+          "text": "font-size: 24px"
+        },
+        {
+          "id": "c",
+          "text": "margin-top: 20px"
+        },
+        {
+          "id": "d",
+          "text": "color: red"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Geometry changes such as width, margin and font-size trigger layout; color only changes pixels, so the browser repaints without layout."
+  },
+  {
+    "key": "fe.dom-reflow.cloze.01",
+    "concept": "fe.dom-reflow",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "css",
+    "content": {
+      "prompt": "Fill the blank so the hidden toast slides down out of view and the browser does not run layout on every frame of the transition.",
+      "code": ".toast {\n  position: fixed;\n  bottom: 0;\n  transition: all 300ms ease-out;\n}\n.toast.hidden {\n  ____;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "margin-bottom: -100px"
+        },
+        {
+          "id": "b",
+          "text": "transform: translateY(100%)"
+        },
+        {
+          "id": "c",
+          "text": "bottom: -100px"
+        },
+        {
+          "id": "d",
+          "text": "height: 0; overflow: hidden"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Animate transform or opacity to move things; animating bottom, margins or height makes the browser run layout on every frame."
+  },
+  {
+    "key": "fe.dom-reflow.out.01",
+    "concept": "fe.dom-reflow",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "In a browser, on a page with no stylesheets, what do the two console.log calls print?",
+      "code": "const box = document.createElement(\"div\");\nbox.style.width = \"250px\";\nconsole.log(box.offsetWidth);\ndocument.body.append(box);\nconsole.log(box.offsetWidth);",
+      "options": [
+        {
+          "id": "a",
+          "text": "250, then 250"
+        },
+        {
+          "id": "b",
+          "text": "0, then 0"
+        },
+        {
+          "id": "c",
+          "text": "0, then 250"
+        },
+        {
+          "id": "d",
+          "text": "undefined, then 250"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "An element outside the document has no layout box, so offsetWidth is 0; after insertion the read lays it out and returns 250."
+  },
+  {
+    "key": "fe.dom-reflow.bug.02",
+    "concept": "fe.dom-reflow",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In a browser, .item has opacity: 0 and transition: opacity 300ms; .item.shown has opacity: 1. New items should fade in, but they appear at once. Find the bug.",
+      "code": "function addItem(list, text) {\n  const li = document.createElement(\"li\");\n  li.className = \"item\";\n  li.textContent = text;\n  list.append(li);\n  li.classList.add(\"shown\");\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add the shown class before calling list.append(li)"
+        },
+        {
+          "id": "f2",
+          "text": "Read li.offsetWidth right before adding the shown class"
+        },
+        {
+          "id": "f3",
+          "text": "Set li.style.opacity = \"1\" instead of adding the class"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A transition needs a computed start style; reading offsetWidth between insert and class change forces it, so the fade can run."
+  },
+  {
+    "key": "fe.dom-reflow.match.01",
+    "concept": "fe.dom-reflow",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each task with the browser API built for it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Run DOM writes right before the browser renders the next frame"
+        },
+        {
+          "id": "l2",
+          "text": "Redraw a chart when its container changes size, without polling offsetWidth"
+        },
+        {
+          "id": "l3",
+          "text": "Load images as they scroll into view, without reading positions on scroll"
+        },
+        {
+          "id": "l4",
+          "text": "Build 500 rows off-document and insert them with one append"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "IntersectionObserver"
+        },
+        {
+          "id": "r2",
+          "text": "DocumentFragment"
+        },
+        {
+          "id": "r3",
+          "text": "requestAnimationFrame"
+        },
+        {
+          "id": "r4",
+          "text": "ResizeObserver"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "Observers report size and visibility changes without layout reads in hot handlers; rAF times writes to the frame; fragments batch inserts."
+  },
+  {
+    "key": "fe.dom-reflow.order.02",
+    "concept": "fe.dom-reflow",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A class moves a card to a new spot in a grid. To animate the move with transform only, put the steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Add the class, then read the card's new position"
+        },
+        {
+          "id": "s2",
+          "text": "On the next frame, add a transition and remove the transform"
+        },
+        {
+          "id": "s3",
+          "text": "Read the card's current position with getBoundingClientRect()"
+        },
+        {
+          "id": "s4",
+          "text": "Set a transform that moves the card back to where it started"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "FLIP: measure First, apply the Last layout and measure, Invert with a transform, then Play by transitioning the transform away."
+  },
+  {
+    "key": "fe.dom-reflow.tf.03",
+    "concept": "fe.dom-reflow",
+    "type": "true_false",
+    "difficulty": 4,
+    "content": {
+      "statement": "Reading el.innerText right after a style change can force a synchronous layout, while reading el.textContent does not.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "innerText depends on rendering, such as hidden elements and line breaks, so it needs fresh layout; textContent only reads the DOM text."
+  },
+  {
+    "key": "fe.dom-reflow.mc.02",
+    "concept": "fe.dom-reflow",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "In a browser, .board has no padding or border and a zoom control has scaled it. What does this log?",
+      "code": "// .board { width: 100px; transform: scale(2); }\nconst board = document.querySelector(\".board\");\nconsole.log(\n  board.offsetWidth,\n  board.getBoundingClientRect().width,\n  getComputedStyle(board).width\n);",
+      "options": [
+        {
+          "id": "a",
+          "text": "100 200 100px"
+        },
+        {
+          "id": "b",
+          "text": "200 200 200px"
+        },
+        {
+          "id": "c",
+          "text": "100 100 100px"
+        },
+        {
+          "id": "d",
+          "text": "100 200 200px"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "offsetWidth and the computed width give the layout size before transforms; getBoundingClientRect() returns the transformed box on screen."
+  },
+  {
+    "key": "fe.dom-reflow.mc.03",
+    "concept": "fe.dom-reflow",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In a browser, a ResizeObserver callback adds 1px to the width of the element it observes, every time it runs. What happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The callback re-runs within the same frame, forever, and the tab freezes"
+        },
+        {
+          "id": "b",
+          "text": "The width change is ignored, because styles set in the callback are discarded"
+        },
+        {
+          "id": "c",
+          "text": "The observer throws inside the callback and disconnects itself after one run"
+        },
+        {
+          "id": "d",
+          "text": "It runs once per frame, and each frame fires a ResizeObserver loop error event"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A ResizeObserver that resizes what it watches gets the new size next frame, and each frame fires a 'ResizeObserver loop' error event."
+  },
+  {
+    "key": "fe.events.tf.02",
+    "concept": "fe.events",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Assigning button.onclick a second time keeps the first handler and adds the new one, just like addEventListener does.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "onclick holds one function, so a new assignment replaces the old one; addEventListener adds listeners side by side."
+  },
+  {
+    "key": "fe.events.match.01",
+    "concept": "fe.events",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Match each part of the browser event API with what it does.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "event.target"
+        },
+        {
+          "id": "l2",
+          "text": "event.preventDefault()"
+        },
+        {
+          "id": "l3",
+          "text": "event.stopPropagation()"
+        },
+        {
+          "id": "l4",
+          "text": "el.removeEventListener(type, fn)"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Stops the event from moving on to other elements"
+        },
+        {
+          "id": "r2",
+          "text": "Detaches a listener that was added with that same function"
+        },
+        {
+          "id": "r3",
+          "text": "The element the event started on, such as the clicked button"
+        },
+        {
+          "id": "r4",
+          "text": "Cancels the browser's own action, such as following a link"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "target is where the event started, preventDefault() cancels the default action and stopPropagation() ends the trip through the DOM."
+  },
+  {
+    "key": "fe.events.order.02",
+    "concept": "fe.events",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A <button> is inside a <div>. Click listeners without capture were added in this order: div, button, document, button again. Put them in the order they run when the button is clicked.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The div's listener"
+        },
+        {
+          "id": "s2",
+          "text": "The button's second listener"
+        },
+        {
+          "id": "s3",
+          "text": "The document listener"
+        },
+        {
+          "id": "s4",
+          "text": "The button's first listener"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Listeners run element by element as the event bubbles up; on one element they run in the order they were added."
+  },
+  {
+    "key": "fe.events.tf.03",
+    "concept": "fe.events",
+    "type": "true_false",
+    "difficulty": 2,
+    "content": {
+      "statement": "In a click listener added to a <ul>, event.currentTarget is the <ul> even when the user clicked an <li> inside it.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "currentTarget is the element whose listener is running; target is where the event started, so delegation reads target."
+  },
+  {
+    "key": "fe.events.mc.03",
+    "concept": "fe.events",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In a browser, the user clicks the Buy button. What is logged?",
+      "code": "// <div id=\"card\"><button id=\"buy\">Buy</button></div>\ncard.addEventListener(\"click\", () => {\n  console.log(\"card\");\n});\nbuy.addEventListener(\"click\", (event) => {\n  console.log(\"buy 1\");\n  event.stopPropagation();\n});\nbuy.addEventListener(\"click\", () => {\n  console.log(\"buy 2\");\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "buy 1"
+        },
+        {
+          "id": "b",
+          "text": "buy 1, card"
+        },
+        {
+          "id": "c",
+          "text": "buy 1, buy 2"
+        },
+        {
+          "id": "d",
+          "text": "buy 1, buy 2, card"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "stopPropagation() keeps the event from other elements, but later listeners on the same element still run; stopImmediatePropagation() stops those too."
+  },
+  {
+    "key": "fe.events.mc.04",
+    "concept": "fe.events",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A dropdown closes from a bubbling click listener on document. A date picker on the page calls event.stopPropagation() on its clicks. With the dropdown open, the user clicks the date picker. What happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The dropdown stays open, because the click never reaches document"
+        },
+        {
+          "id": "b",
+          "text": "The dropdown closes, because listeners on document always run"
+        },
+        {
+          "id": "c",
+          "text": "The dropdown closes before the date picker's own listener runs"
+        },
+        {
+          "id": "d",
+          "text": "The dropdown stays open, and the date picker ignores the click too"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A stopPropagation() anywhere below hides the click from document-level \"click outside\" handlers; a capture listener on document still sees it."
+  },
+  {
+    "key": "fe.events.odd.01",
+    "concept": "fe.events",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these events bubble, so one listener on a parent element sees them from every child. Which one does not bubble?",
+      "items": [
+        {
+          "id": "a",
+          "text": "mouseover"
+        },
+        {
+          "id": "b",
+          "text": "mouseenter"
+        },
+        {
+          "id": "c",
+          "text": "focusin"
+        },
+        {
+          "id": "d",
+          "text": "change"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "mouseenter, mouseleave, focus and blur do not bubble; for delegation use mouseover, mouseout, focusin and focusout."
+  },
+  {
+    "key": "fe.events.cloze.02",
+    "concept": "fe.events",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The cart listens on document. Fill the blank so the event fired on a normal button (no shadow DOM) reaches it.",
+      "code": "document.addEventListener(\"cart:add\", (event) => {\n  cart.add(event.detail.id);\n});\n\nbutton.addEventListener(\"click\", () => {\n  button.dispatchEvent(new CustomEvent(\"cart:add\", {\n    detail: { id: button.dataset.id },\n    ____: true,\n  }));\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "composed"
+        },
+        {
+          "id": "b",
+          "text": "cancelable"
+        },
+        {
+          "id": "c",
+          "text": "propagate"
+        },
+        {
+          "id": "d",
+          "text": "bubbles"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Events created with new Event() or new CustomEvent() do not bubble unless you pass bubbles: true, so ancestors never hear them."
+  },
+  {
+    "key": "fe.events.out.01",
+    "concept": "fe.events",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "In a browser, this script runs after the page, which has one <button>, has loaded. What does it log?",
+      "code": "const btn = document.querySelector(\"button\");\nbtn.addEventListener(\"click\", () => {\n  Promise.resolve().then(() => console.log(\"micro 1\"));\n  console.log(\"listener 1\");\n});\nbtn.addEventListener(\"click\", () => {\n  Promise.resolve().then(() => console.log(\"micro 2\"));\n  console.log(\"listener 2\");\n});\nbtn.click();\nconsole.log(\"after\");",
+      "options": [
+        {
+          "id": "a",
+          "text": "listener 1, micro 1, listener 2, micro 2, after"
+        },
+        {
+          "id": "b",
+          "text": "listener 1, listener 2, after, micro 1, micro 2"
+        },
+        {
+          "id": "c",
+          "text": "after, listener 1, listener 2, micro 1, micro 2"
+        },
+        {
+          "id": "d",
+          "text": "listener 1, listener 2, micro 1, micro 2, after"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "btn.click() dispatches synchronously, so microtasks wait for the whole script; after a real user click they run between listeners."
+  },
+  {
+    "key": "fe.events.bug.01",
+    "concept": "fe.events",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The menu listens in the capture phase so no stopPropagation() can hide a click from it. After closeMenu() runs, clicks still call onOutside. Find the bug.",
+      "code": "function onOutside(event) {\n  if (!menu.contains(event.target)) closeMenu();\n}\n\nfunction openMenu() {\n  menu.hidden = false;\n  document.addEventListener(\"click\", onOutside, true);\n}\n\nfunction closeMenu() {\n  menu.hidden = true;\n  document.removeEventListener(\"click\", onOutside);\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Pass { once: true } as the third argument"
+        },
+        {
+          "id": "f2",
+          "text": "Pass true as the third argument, as when it was added"
+        },
+        {
+          "id": "f3",
+          "text": "Call removeEventListener before setting menu.hidden"
+        }
+      ],
+      "answer": {
+        "line": 12,
+        "fixId": "f2"
+      }
+    },
+    "remember": "removeEventListener must match the type, the function and the capture flag; a capture listener is only removed with capture: true."
+  },
+  {
+    "key": "fe.state-rerender.tf.02",
+    "concept": "fe.state-rerender",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If a page renders the same Counter component twice, clicking one of them also changes the count shown by the other.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Every rendered instance of a component gets its own state, so two Counters on one page count independently."
+  },
+  {
+    "key": "fe.state-rerender.mc.02",
+    "concept": "fe.state-rerender",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Which of these makes a React component re-render?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Assigning a new value to a ref's current property"
+        },
+        {
+          "id": "b",
+          "text": "Pushing an item into an array held in state"
+        },
+        {
+          "id": "c",
+          "text": "Calling its state setter with a different value"
+        },
+        {
+          "id": "d",
+          "text": "Changing a variable declared outside the component"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Calling a state setter with a new value schedules a re-render; refs, mutations and outside variables change silently."
+  },
+  {
+    "key": "fe.state-rerender.odd.01",
+    "concept": "fe.state-rerender",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Cart, email, todos and filter are already in state. Three of these should be computed during render. Which one needs its own state?",
+      "items": [
+        {
+          "id": "a",
+          "text": "cartCount: how many items are in cart"
+        },
+        {
+          "id": "b",
+          "text": "canSubmit: whether email is not empty"
+        },
+        {
+          "id": "c",
+          "text": "query: the text typed in the search box"
+        },
+        {
+          "id": "d",
+          "text": "visibleTodos: the todos that match filter"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Store only what cannot be computed, like user input; counts, flags and filtered lists come from existing state during render."
+  },
+  {
+    "key": "fe.state-rerender.cloze.01",
+    "concept": "fe.state-rerender",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "jsx",
+    "content": {
+      "prompt": "Typing in the email input must update email without losing the name already stored in form. Fill the blank.",
+      "code": "function SignupForm() {\n  const [form, setForm] = useState({\n    name: \"\",\n    email: \"\",\n  });\n\n  function onEmail(e) {\n    setForm(____);\n  }\n\n  return (\n    <input value={form.email} onChange={onEmail} />\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "{ ...form, email: e.target.value }"
+        },
+        {
+          "id": "b",
+          "text": "{ email: e.target.value }"
+        },
+        {
+          "id": "c",
+          "text": "form.email = e.target.value"
+        },
+        {
+          "id": "d",
+          "text": "Object.assign(form, { email: e.target.value })"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A useState setter replaces the whole value instead of merging, so spread the old object into a new one and override the changed field."
+  },
+  {
+    "key": "fe.state-rerender.out.02",
+    "concept": "fe.state-rerender",
+    "type": "output",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "The button shows 0. The user clicks it once. What does it show now?",
+      "code": "function Counter() {\n  const [count, setCount] = useState(0);\n\n  function handleClick() {\n    setCount((c) => c + 1);\n    setCount(count + 5);\n    setCount((c) => c * 2);\n  }\n\n  return <button onClick={handleClick}>{count}</button>;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "12"
+        },
+        {
+          "id": "b",
+          "text": "2"
+        },
+        {
+          "id": "c",
+          "text": "5"
+        },
+        {
+          "id": "d",
+          "text": "10"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Queued updates run in order: an updater gets the pending value, while a plain value like count + 5 replaces it using this render's count."
+  },
+  {
+    "key": "fe.state-rerender.bug.02",
+    "concept": "fe.state-rerender",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "The parent passes a new items array when a product is added. The item count updates, but the total keeps showing the first amount. Find the bug.",
+      "code": "const sumPrices = (items) =>\n  items.reduce((sum, item) => sum + item.price, 0);\n\nfunction CartSummary({ items }) {\n  const [total] = useState(sumPrices(items));\n\n  return (\n    <p>\n      {items.length} items, total {total} EUR\n    </p>\n  );\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use a lazy initializer: useState(() => sumPrices(items))"
+        },
+        {
+          "id": "f2",
+          "text": "Memoize it: useMemo(() => sumPrices(items), [])"
+        },
+        {
+          "id": "f3",
+          "text": "Compute it each render: const total = sumPrices(items);"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f3"
+      }
+    },
+    "remember": "useState uses its argument only on the first render; a value derived from props must be computed during render so it follows them."
+  },
+  {
+    "key": "fe.state-rerender.match.01",
+    "concept": "fe.state-rerender",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each value with the best place to keep it in a React component.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Search text the user types, shown live in a heading"
+        },
+        {
+          "id": "l2",
+          "text": "Interval id that a Stop button must clear later"
+        },
+        {
+          "id": "l3",
+          "text": "Number of unchecked todos, with todos in state"
+        },
+        {
+          "id": "l4",
+          "text": "Country names that never change"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "A constant outside the component"
+        },
+        {
+          "id": "r2",
+          "text": "A const computed during render"
+        },
+        {
+          "id": "r3",
+          "text": "useState"
+        },
+        {
+          "id": "r4",
+          "text": "useRef"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Use state for what the screen shows and changes, a ref for values that must not trigger renders, and compute anything derivable."
+  },
+  {
+    "key": "fe.state-rerender.order.02",
+    "concept": "fe.state-rerender",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Summary keeps total in state and syncs it with useEffect(() => setTotal(sum(items)), [items]). The parent passes a new items array. Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The effect runs and calls setTotal with the new sum"
+        },
+        {
+          "id": "s2",
+          "text": "React commits the new total to the DOM"
+        },
+        {
+          "id": "s3",
+          "text": "Summary renders with the new items and the old total"
+        },
+        {
+          "id": "s4",
+          "text": "Summary renders with the new items and the new total"
+        },
+        {
+          "id": "s5",
+          "text": "React commits the old total to the DOM"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Syncing a derived value through an effect commits a stale value first and costs an extra render; compute it during render instead."
+  },
+  {
+    "key": "fe.state-rerender.tf.03",
+    "concept": "fe.state-rerender",
+    "type": "true_false",
+    "difficulty": 4,
+    "content": {
+      "statement": "In React, a component wrapped in memo still re-renders when a context value it reads with useContext changes, even if its props stay the same.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "memo only compares props; a component that reads a context with useContext re-renders whenever that context value changes."
+  },
+  {
+    "key": "fe.state-rerender.mc.03",
+    "concept": "fe.state-rerender",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "language": "jsx",
+    "content": {
+      "prompt": "The user clicks the counter up to 3, then types one letter in the input. The counter shows 0 again. Why?",
+      "code": "function Page() {\n  const [text, setText] = useState(\"\");\n\n  function Counter() {\n    const [n, setN] = useState(0);\n    return <button onClick={() => setN(n + 1)}>{n}</button>;\n  }\n\n  const onType = (e) => setText(e.target.value);\n  return (\n    <>\n      <input value={text} onChange={onType} />\n      <Counter />\n    </>\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "A parent re-render always resets the state of its children"
+        },
+        {
+          "id": "b",
+          "text": "Each Page render creates a new Counter type, so React remounts it"
+        },
+        {
+          "id": "c",
+          "text": "useState(0) runs on every render and resets n to its initial value"
+        },
+        {
+          "id": "d",
+          "text": "Counter has no key, so React cannot match it with the last render"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Declare components at the top level; one defined inside another is a new type on every render, so React remounts it and loses its state."
+  },
+  {
+    "key": "fe.effects.tf.02",
+    "concept": "fe.effects",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "An effect with the dependency array [count] skips the first render and runs only when count changes later.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "An effect always runs after the first render; its dependency array only decides when it runs again."
+  },
+  {
+    "key": "fe.effects.bug.02",
+    "concept": "fe.effects",
+    "type": "find_bug",
+    "difficulty": 1,
+    "language": "jsx",
+    "content": {
+      "prompt": "UserList should load the users once when it mounts, but the browser keeps requesting /api/users in an endless loop. Find the bug.",
+      "code": "function UserList() {\n  const [users, setUsers] = useState([]);\n\n  useEffect(() => {\n    fetch(\"/api/users\")\n      .then((res) => res.json())\n      .then((data) => setUsers(data));\n  });\n\n  return <p>{users.length} users</p>;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Return the fetch promise from the effect"
+        },
+        {
+          "id": "f2",
+          "text": "Pass [] as the second argument to useEffect"
+        },
+        {
+          "id": "f3",
+          "text": "Start users as null instead of []"
+        }
+      ],
+      "answer": {
+        "line": 8,
+        "fixId": "f2",
+        "acceptLines": [
+          4
+        ]
+      }
+    },
+    "remember": "Without a dependency array an effect runs after every render, so setting state inside it re-renders and runs it again in a loop."
+  },
+  {
+    "key": "fe.effects.match.01",
+    "concept": "fe.effects",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each job in a React component with where its code belongs.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Load the profile whenever the userId prop changes"
+        },
+        {
+          "id": "l2",
+          "text": "Listen to window resize while the component is mounted"
+        },
+        {
+          "id": "l3",
+          "text": "Show the items filtered by the current search query"
+        },
+        {
+          "id": "l4",
+          "text": "Send an order to the server when Buy is clicked"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "An effect with [] that returns a cleanup"
+        },
+        {
+          "id": "r2",
+          "text": "No effect: compute it during render"
+        },
+        {
+          "id": "r3",
+          "text": "No effect: do it in the click handler"
+        },
+        {
+          "id": "r4",
+          "text": "An effect with [userId]"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "Effects are for syncing with something outside React; derive values during render and handle user actions in event handlers."
+  },
+  {
+    "key": "fe.effects.order.02",
+    "concept": "fe.effects",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Page starts with data = null and shows Loading... until data is set. Its effect with [] fetches and then calls setData(json). Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The effect runs and starts the fetch"
+        },
+        {
+          "id": "s2",
+          "text": "Page renders again and shows the data"
+        },
+        {
+          "id": "s3",
+          "text": "Page renders with data = null"
+        },
+        {
+          "id": "s4",
+          "text": "The response arrives and setData(json) runs"
+        },
+        {
+          "id": "s5",
+          "text": "React puts Loading... in the DOM"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "An effect runs only after the first render is committed, so a fetch in an effect always shows the loading state first and the data on a later render."
+  },
+  {
+    "key": "fe.effects.tf.03",
+    "concept": "fe.effects",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "Under <StrictMode> in development, React runs each effect, then its cleanup, then the effect again on mount; production runs it once.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Strict Mode remounts once in development to expose missing cleanups; an effect that cleans up correctly behaves the same either way."
+  },
+  {
+    "key": "fe.effects.mc.02",
+    "concept": "fe.effects",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "userId changes from 1 to 2. The request for user 1 is slow and resolves after the one for user 2. What does the heading show in the end?",
+      "code": "function Profile({ userId }) {\n  const [user, setUser] = useState(null);\n\n  useEffect(() => {\n    fetchUser(userId).then((u) => setUser(u));\n  }, [userId]);\n\n  return <h1>{user?.name}</h1>;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "User 2's name: the effect for 2 ran last"
+        },
+        {
+          "id": "b",
+          "text": "Nothing: React ignores results of an old effect"
+        },
+        {
+          "id": "c",
+          "text": "User 1's name: its response arrived last"
+        },
+        {
+          "id": "d",
+          "text": "User 2's name: React aborts the first fetch"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "React does not cancel async work when dependencies change; set an ignore flag in the cleanup so a late, stale response is dropped."
+  },
+  {
+    "key": "fe.effects.mc.03",
+    "concept": "fe.effects",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "The timer shows 0, then 1, and then stays at 1 forever. Why?",
+      "code": "function Timer() {\n  const [count, setCount] = useState(0);\n\n  useEffect(() => {\n    const id = setInterval(() => {\n      setCount(count + 1);\n    }, 1000);\n    return () => clearInterval(id);\n  }, []);\n\n  return <p>{count}</p>;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "The interval is cleared right after its first tick"
+        },
+        {
+          "id": "b",
+          "text": "React ignores state updates that come from a timer"
+        },
+        {
+          "id": "c",
+          "text": "setCount is async, so the later updates are dropped"
+        },
+        {
+          "id": "d",
+          "text": "Its callback still reads count from the first render"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "A callback created in an effect with [] sees that render's values forever; use setCount(c => c + 1) or list count as a dependency."
+  },
+  {
+    "key": "fe.effects.odd.01",
+    "concept": "fe.effects",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these keep the same identity for the whole life of a component, so as effect dependencies they never re-run the effect. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The setter returned by useState"
+        },
+        {
+          "id": "b",
+          "text": "A function from useCallback with [query]"
+        },
+        {
+          "id": "c",
+          "text": "The object returned by useRef"
+        },
+        {
+          "id": "d",
+          "text": "The dispatch function from useReducer"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "React keeps useState setters, useReducer dispatch and useRef objects stable; a useCallback result changes whenever its own dependencies change."
+  },
+  {
+    "key": "fe.effects.cloze.02",
+    "concept": "fe.effects",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "jsx",
+    "content": {
+      "prompt": "The parent passes a new onMessage arrow on every render. Fill the blank so the chat reconnects only when roomId changes, yet each message reaches the latest onMessage.",
+      "code": "function ChatRoom({ roomId, onMessage }) {\n  const onMessageRef = useRef(onMessage);\n\n  useEffect(() => {\n    onMessageRef.current = onMessage;\n  });\n\n  useEffect(() => {\n    const conn = connect(roomId);\n    conn.on(\"message\", (m) => onMessageRef.current(m));\n    return () => conn.close();\n  }, ____);\n\n  return null;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "[roomId]"
+        },
+        {
+          "id": "b",
+          "text": "[roomId, onMessage]"
+        },
+        {
+          "id": "c",
+          "text": "[]"
+        },
+        {
+          "id": "d",
+          "text": "[roomId, onMessageRef.current]"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Keep a callback in a ref updated by an effect to call its latest version without listing it; a ref's .current never belongs in a dependency array."
+  },
+  {
+    "key": "fe.effects.out.01",
+    "concept": "fe.effects",
+    "type": "output",
+    "difficulty": 4,
+    "language": "jsx",
+    "content": {
+      "prompt": "Parent is rendered for the first time with createRoot, without Strict Mode. What does the console show?",
+      "code": "function Child() {\n  useEffect(() => console.log(\"child effect\"));\n  useLayoutEffect(() => console.log(\"child layout\"));\n  return null;\n}\n\nfunction Parent() {\n  useEffect(() => console.log(\"parent effect\"));\n  useLayoutEffect(() => console.log(\"parent layout\"));\n  return <Child />;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "parent layout, child layout, parent effect, child effect"
+        },
+        {
+          "id": "b",
+          "text": "child layout, parent layout, child effect, parent effect"
+        },
+        {
+          "id": "c",
+          "text": "child layout, child effect, parent layout, parent effect"
+        },
+        {
+          "id": "d",
+          "text": "parent layout, parent effect, child layout, child effect"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "On mount React runs every layout effect before any passive effect, and in each pass a child's effects run before its parent's."
+  },
+  {
+    "key": "fe.list-keys.tf.02",
+    "concept": "fe.list-keys",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A React component cannot read its own key: inside the component, props.key is undefined.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "React keeps the key for itself; if the component needs the id, pass it again as a normal prop such as id={item.id}."
+  },
+  {
+    "key": "fe.list-keys.mc.02",
+    "concept": "fe.list-keys",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "In React, what happens when a list is rendered with items.map() but the items get no key?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Nothing renders and React throws an error"
+        },
+        {
+          "id": "b",
+          "text": "It renders, React warns and matches items by position"
+        },
+        {
+          "id": "c",
+          "text": "React silently gives each item a stable unique id"
+        },
+        {
+          "id": "d",
+          "text": "It renders, but every item remounts on each update"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Without keys React logs a warning and falls back to the index, so items are matched by their position in the list."
+  },
+  {
+    "key": "fe.list-keys.mc.03",
+    "concept": "fe.list-keys",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "jsx",
+    "content": {
+      "prompt": "React warns that each child in the list should have a unique key. Where should key={u.id} go?",
+      "code": "function Row({ user }) {\n  return <li>{user.name}</li>;\n}\n\nfunction Users({ users }) {\n  return (\n    <ul>\n      {users.map((u) => <Row user={u} />)}\n    </ul>\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "On the <li> that Row returns"
+        },
+        {
+          "id": "b",
+          "text": "On the <ul> that wraps the list"
+        },
+        {
+          "id": "c",
+          "text": "On the <Users> element in its parent"
+        },
+        {
+          "id": "d",
+          "text": "On <Row> inside the map() callback"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "The key goes on the element map() returns, here <Row key={u.id} />; a key inside the child component comes too late."
+  },
+  {
+    "key": "fe.list-keys.odd.02",
+    "concept": "fe.list-keys",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Rows are keyed by index and each row keeps its own state, such as an expanded toggle. Three of these changes can show that state on the wrong item. Which one cannot?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Deleting an item from the middle"
+        },
+        {
+          "id": "b",
+          "text": "Adding a new item at the top"
+        },
+        {
+          "id": "c",
+          "text": "Adding a new item at the end"
+        },
+        {
+          "id": "d",
+          "text": "Sorting the list by name"
+        }
+      ],
+      "answer": {
+        "itemId": "c"
+      }
+    },
+    "remember": "Index keys only hold up while items never shift: appending is safe, but inserting, deleting or sorting moves state to other items."
+  },
+  {
+    "key": "fe.list-keys.cloze.02",
+    "concept": "fe.list-keys",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "Todos are created in the browser and rendered with key={t.id}. Fill the blank so every todo gets an id that no other todo will ever share.",
+      "code": "let nextId = 0;\n\nfunction TodoList() {\n  const [todos, setTodos] = useState([]);\n  const add = (text) =>\n    setTodos([...todos, { id: ____, text }]);\n  const remove = (id) =>\n    setTodos(todos.filter((t) => t.id !== id));\n  return (\n    <ul>\n      {todos.map((t) => (\n        <Todo key={t.id} todo={t} onRemove={remove} />\n      ))}\n    </ul>\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "nextId++"
+        },
+        {
+          "id": "b",
+          "text": "nextId + 1"
+        },
+        {
+          "id": "c",
+          "text": "todos.length"
+        },
+        {
+          "id": "d",
+          "text": "text"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Give an item its id once, when it is created, from something that never repeats; todos.length repeats after a delete and text can repeat."
+  },
+  {
+    "key": "fe.list-keys.out.02",
+    "concept": "fe.list-keys",
+    "type": "output",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "Not in Strict Mode. List first renders with names [\"A\", \"B\", \"C\"], then re-renders with [\"C\", \"A\", \"D\"]. What does the re-render log?",
+      "code": "function Item({ name }) {\n  useEffect(() => {\n    console.log(\"mount\", name);\n    return () => console.log(\"unmount\", name);\n  }, []);\n  return <li>{name}</li>;\n}\n\nfunction List({ names }) {\n  return (\n    <ul>\n      {names.map((n) => <Item key={n} name={n} />)}\n    </ul>\n  );\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "unmount C / mount D"
+        },
+        {
+          "id": "b",
+          "text": "Nothing is logged"
+        },
+        {
+          "id": "c",
+          "text": "unmount B / mount D"
+        },
+        {
+          "id": "d",
+          "text": "mount D / unmount B"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "An item whose key survives a reorder keeps its component; only removed keys unmount and new keys mount, and cleanups run first."
+  },
+  {
+    "key": "fe.list-keys.bug.01",
+    "concept": "fe.list-keys",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "jsx",
+    "content": {
+      "prompt": "React warns that each child in the list should have a unique key, although every <dt> has one. Find the bug.",
+      "code": "function Glossary({ terms }) {\n  return (\n    <dl>\n      {terms.map((t) => (\n        <>\n          <dt key={t.id}>{t.word}</dt>\n          <dd>{t.meaning}</dd>\n        </>\n      ))}\n    </dl>\n  );\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Add key={t.id} to the <dd> as well, like the <dt>"
+        },
+        {
+          "id": "f2",
+          "text": "Replace <>...</> with <Fragment key={t.id}>...</Fragment>"
+        },
+        {
+          "id": "f3",
+          "text": "Move key={t.id} from the <dt> to the <dl> element"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f2",
+        "acceptLines": [
+          8
+        ]
+      }
+    },
+    "remember": "The key belongs on the outermost element map() returns; to key a group of siblings use <Fragment key={...}>, since <> takes no key."
+  },
+  {
+    "key": "fe.list-keys.match.01",
+    "concept": "fe.list-keys",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Each row keeps local state, such as an open toggle. Match each key with what goes wrong.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "key={row.id + \"-\" + i}, and the list is re-sorted"
+        },
+        {
+          "id": "l2",
+          "text": "key={i}, and the list is re-sorted"
+        },
+        {
+          "id": "l3",
+          "text": "key={row.title}, and a row's title is edited"
+        },
+        {
+          "id": "l4",
+          "text": "key={row.ownerId}, and one owner has several rows"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "State stays at its position and ends up on another row"
+        },
+        {
+          "id": "r2",
+          "text": "The edited row remounts and its state resets"
+        },
+        {
+          "id": "r3",
+          "text": "Updates can duplicate rows or leave removed ones on screen"
+        },
+        {
+          "id": "r4",
+          "text": "Rows that change position remount and lose their state"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "A key must be unique and never change for the same item; index parts, editable fields and shared values each break that."
+  },
+  {
+    "key": "fe.list-keys.order.01",
+    "concept": "fe.list-keys",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Page renders <Profile key={userId} />, and Profile has a useEffect that returns a cleanup. Not in Strict Mode, userId changes from 1 to 2. Put what happens in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The old Profile's effect cleanup runs"
+        },
+        {
+          "id": "s2",
+          "text": "A new Profile renders, starting from its initial state"
+        },
+        {
+          "id": "s3",
+          "text": "The new Profile's effect runs"
+        },
+        {
+          "id": "s4",
+          "text": "Page re-renders and React sees that Profile's key changed"
+        },
+        {
+          "id": "s5",
+          "text": "The old Profile's DOM is removed and the new one inserted"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "A new key means a new instance: it renders fresh, the DOM is swapped, and only then does the old instance's cleanup run, before the new effect."
+  },
+  {
+    "key": "fe.list-keys.tf.03",
+    "concept": "fe.list-keys",
+    "type": "true_false",
+    "difficulty": 4,
+    "content": {
+      "statement": "In React, a keyed component that moves to a different parent element keeps its state, as long as its key stays the same.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Keys are only compared among siblings of one parent; moving a component under another parent remounts it and resets its state."
+  },
+  {
+    "key": "fe.memo-lazy.tf.02",
+    "concept": "fe.memo-lazy",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In JavaScript, import(\"./chart.js\") returns a Promise that resolves to the module once it has loaded.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "import() loads a module on demand and returns a Promise for it; it is the building block of code splitting and React.lazy."
+  },
+  {
+    "key": "fe.memo-lazy.out.02",
+    "concept": "fe.memo-lazy",
+    "type": "output",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const cache = {};\n\nfunction slowSquare(n) {\n  if (n in cache) return cache[n];\n  console.log(\"computing\", n);\n  cache[n] = n * n;\n  return cache[n];\n}\n\nslowSquare(4);\nslowSquare(4);\nslowSquare(5);",
+      "options": [
+        {
+          "id": "a",
+          "text": "computing 4, computing 4, computing 5"
+        },
+        {
+          "id": "b",
+          "text": "computing 4"
+        },
+        {
+          "id": "c",
+          "text": "computing 4, computing 5"
+        },
+        {
+          "id": "d",
+          "text": "computing 5"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A memoized function stores each result by its input and returns the stored result on a repeat call instead of computing it again."
+  },
+  {
+    "key": "fe.memo-lazy.bug.01",
+    "concept": "fe.memo-lazy",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "jsx",
+    "content": {
+      "prompt": "Chart.jsx has only a named export, export function Chart(). Clicking Show should display the chart, but React throws an error instead. Find the bug.",
+      "code": "import { lazy, Suspense, useState } from \"react\";\n\nconst Chart = lazy(() => import(\"./Chart\"));\n\nexport default function Report() {\n  const [show, setShow] = useState(false);\n  return (\n    <div>\n      <button onClick={() => setShow(true)}>Show</button>\n      {show && (\n        <Suspense fallback={<p>Loading...</p>}>\n          <Chart />\n        </Suspense>\n      )}\n    </div>\n  );\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Move the lazy() call inside Report, above useState"
+        },
+        {
+          "id": "f2",
+          "text": "Use import(\"./Chart\").then((m) => m.Chart)"
+        },
+        {
+          "id": "f3",
+          "text": "Use import(\"./Chart\").then((m) => ({ default: m.Chart }))"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f3"
+      }
+    },
+    "remember": "lazy() needs a Promise for a module with a default export; for a named export, map it with .then((m) => ({ default: m.Chart }))."
+  },
+  {
+    "key": "fe.memo-lazy.match.02",
+    "concept": "fe.memo-lazy",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Chart only renders after a click on a Show chart button, and nothing else imports ./Chart. Match each way App.jsx loads it with when Chart's code is fetched.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "import Chart from \"./Chart\"; at the top of App.jsx"
+        },
+        {
+          "id": "l2",
+          "text": "const Chart = lazy(() => import(\"./Chart\"));"
+        },
+        {
+          "id": "l3",
+          "text": "onMouseEnter={() => import(\"./Chart\")} on the button"
+        },
+        {
+          "id": "l4",
+          "text": "useEffect(() => { import(\"./Chart\"); }, []); in App"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "When the pointer moves over the Show chart button"
+        },
+        {
+          "id": "r2",
+          "text": "Together with App.jsx, before App can run"
+        },
+        {
+          "id": "r3",
+          "text": "Soon after App first appears, before any click"
+        },
+        {
+          "id": "r4",
+          "text": "When the click makes <Chart /> render for the first time"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "A static import loads with its importer, lazy() loads on first render, and calling import() yourself (on hover or after mount) fetches earlier."
+  },
+  {
+    "key": "fe.memo-lazy.order.02",
+    "concept": "fe.memo-lazy",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Parent keeps filter in state and renders memo(List) with items and filter. List filters items in useMemo with [items, filter]. Put what happens after filter changes from \"a\" to \"ab\" in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "useMemo sees that filter changed and runs the filtering again"
+        },
+        {
+          "id": "s2",
+          "text": "React commits the new rows to the DOM"
+        },
+        {
+          "id": "s3",
+          "text": "Parent re-renders and creates List's props with the new filter"
+        },
+        {
+          "id": "s4",
+          "text": "List's function body starts running"
+        },
+        {
+          "id": "s5",
+          "text": "memo compares List's old and new props and finds filter changed"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s4",
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    "remember": "memo checks props before the child renders, useMemo checks its dependencies during that render, and the DOM changes only in the commit after."
+  },
+  {
+    "key": "fe.memo-lazy.tf.03",
+    "concept": "fe.memo-lazy",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "React.memo stops a component re-rendering when a context it reads with useContext changes, as long as its props stay equal.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "memo only compares props; a change in a context the component reads still re-renders it, even when every prop is equal."
+  },
+  {
+    "key": "fe.memo-lazy.mc.02",
+    "concept": "fe.memo-lazy",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Toolbar is wrapped in memo and receives onSave={handleSave}. Which expression for handleSave is a function that calls save(id) and stays the same until id changes?",
+      "options": [
+        {
+          "id": "a",
+          "text": "useMemo(() => save(id), [id])"
+        },
+        {
+          "id": "b",
+          "text": "useCallback(save(id), [id])"
+        },
+        {
+          "id": "c",
+          "text": "useCallback(() => () => save(id), [id])"
+        },
+        {
+          "id": "d",
+          "text": "useMemo(() => () => save(id), [id])"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "useMemo calls its function and caches the result, useCallback caches the function itself: useCallback(fn, deps) equals useMemo(() => fn, deps)."
+  },
+  {
+    "key": "fe.memo-lazy.mc.03",
+    "concept": "fe.memo-lazy",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "App loads Chart with lazy(() => import(\"./Chart\")), yet the production build still puts Chart's code in the main bundle. Which of these explains it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Chart is rendered on the first screen, so the bundler inlines it"
+        },
+        {
+          "id": "b",
+          "text": "A module in the main bundle statically imports a helper from ./Chart"
+        },
+        {
+          "id": "c",
+          "text": "The Suspense boundary sits above App instead of right around Chart"
+        },
+        {
+          "id": "d",
+          "text": "lazy() is called at module level, so it loads Chart as App.jsx runs"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A dynamic import only splits off a module that nothing imports statically; one static import from the main bundle pulls it back in."
+  },
+  {
+    "key": "fe.memo-lazy.odd.01",
+    "concept": "fe.memo-lazy",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Chart is wrapped in memo, and Parent re-renders because its own state changed. Each item is the only prop Chart gets. Three make Chart re-render anyway. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "onSelect={setSelected}, a setter from Parent's useState"
+        },
+        {
+          "id": "b",
+          "text": "<Legend /> passed as Chart's children"
+        },
+        {
+          "id": "c",
+          "text": "rows={rows.slice(0, 10)}, with rows from Parent's state"
+        },
+        {
+          "id": "d",
+          "text": "format={formatDate}, a function declared in Parent's body"
+        }
+      ],
+      "answer": {
+        "itemId": "a"
+      }
+    },
+    "remember": "useState setters keep their identity across renders; JSX children, new arrays and functions declared in the body are new on every render."
+  },
+  {
+    "key": "fe.memo-lazy.cloze.01",
+    "concept": "fe.memo-lazy",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "jsx",
+    "content": {
+      "prompt": "Every fetch returns a new data object, but data.version changes only when the points change. Fill the blank so Chart re-renders only when the version changes.",
+      "code": "const Chart = memo(\n  function Chart({ data }) {\n    return <Plot points={data.points} />;\n  },\n  (prev, next) => ____\n);",
+      "options": [
+        {
+          "id": "a",
+          "text": "prev.data.version !== next.data.version"
+        },
+        {
+          "id": "b",
+          "text": "prev.data === next.data"
+        },
+        {
+          "id": "c",
+          "text": "prev.data.version === next.data.version"
+        },
+        {
+          "id": "d",
+          "text": "Object.is(prev, next)"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "memo's comparison function returns true when the props count as equal so the render is skipped, the opposite of shouldComponentUpdate."
+  },
+  {
+    "key": "fe.accessibility.tf.02",
+    "concept": "fe.accessibility",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Turning a form field's border red is enough on its own to tell every user that the field has an error.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Never rely on color alone; pair it with text or an icon, because many users cannot tell red from other colors."
+  },
+  {
+    "key": "fe.accessibility.tf.03",
+    "concept": "fe.accessibility",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A \"Skip to main content\" link lets keyboard users jump past the navigation that repeats at the top of every page.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A skip link, usually the first focusable element, lets keyboard and screen reader users bypass menus repeated on every page."
+  },
+  {
+    "key": "fe.accessibility.mc.02",
+    "concept": "fe.accessibility",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A user clicks \"Delete account\" and a custom modal dialog opens over the page. Where should keyboard focus go when it opens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stay on the Delete account button behind the dialog"
+        },
+        {
+          "id": "b",
+          "text": "Go back to the first link at the top of the page"
+        },
+        {
+          "id": "c",
+          "text": "Move into the dialog, for example to its first button"
+        },
+        {
+          "id": "d",
+          "text": "Nowhere, because screen readers read new dialogs aloud"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "When a modal opens, move focus into it; when it closes, send focus back to the control that opened it."
+  },
+  {
+    "key": "fe.accessibility.mc.03",
+    "concept": "fe.accessibility",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Below a labelled password input, <p id=\"pw-err\">At least 8 characters</p> appears. On focus, a screen reader reads only the input's label. What makes it read the error too?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Give the message tabindex=\"0\" so users can Tab to it"
+        },
+        {
+          "id": "b",
+          "text": "Add aria-describedby=\"pw-err\" to the input"
+        },
+        {
+          "id": "c",
+          "text": "Add aria-hidden=\"true\" to the error message"
+        },
+        {
+          "id": "d",
+          "text": "Move the message above the input in the HTML"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "aria-describedby points a field at the ids of hint or error text, which screen readers read after the field's label."
+  },
+  {
+    "key": "fe.accessibility.odd.02",
+    "concept": "fe.accessibility",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these hide an element from screen readers as well as from sight. Which one only hides it visually?",
+      "items": [
+        {
+          "id": "a",
+          "text": "display: none"
+        },
+        {
+          "id": "b",
+          "text": "the hidden attribute"
+        },
+        {
+          "id": "c",
+          "text": "visibility: hidden"
+        },
+        {
+          "id": "d",
+          "text": "opacity: 0"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "opacity: 0 only makes an element invisible; screen readers still read it and Tab still reaches its links and buttons."
+  },
+  {
+    "key": "fe.accessibility.cloze.01",
+    "concept": "fe.accessibility",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "The <nav> starts with the hidden attribute. Fill the blank so a screen reader tells the user whether the menu this button controls is currently open.",
+      "code": "const btn = document.querySelector(\"#menu-btn\");\nconst nav = document.querySelector(\"#main-nav\");\n\nbtn.addEventListener(\"click\", () => {\n  const open = nav.hidden;\n  nav.hidden = !open;\n  btn.setAttribute(\"aria-____\", String(open));\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "pressed"
+        },
+        {
+          "id": "b",
+          "text": "expanded"
+        },
+        {
+          "id": "c",
+          "text": "selected"
+        },
+        {
+          "id": "d",
+          "text": "checked"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A button that shows and hides a region sets aria-expanded to match; aria-pressed is for toggles like Bold, not for menus."
+  },
+  {
+    "key": "fe.accessibility.out.01",
+    "concept": "fe.accessibility",
+    "type": "output",
+    "difficulty": 3,
+    "language": "html",
+    "content": {
+      "prompt": "In a browser, what accessible name does a screen reader announce for this button?",
+      "code": "<span id=\"item\">invoice 42</span>\n<span id=\"verb\">Delete</span>\n<button aria-labelledby=\"verb item\"\n        aria-label=\"Remove\">\n  Trash\n</button>",
+      "options": [
+        {
+          "id": "a",
+          "text": "Delete invoice 42"
+        },
+        {
+          "id": "b",
+          "text": "Remove"
+        },
+        {
+          "id": "c",
+          "text": "invoice 42 Delete"
+        },
+        {
+          "id": "d",
+          "text": "Trash"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "aria-labelledby beats aria-label, which beats the text inside; the referenced texts are joined in the order the ids are listed."
+  },
+  {
+    "key": "fe.accessibility.bug.02",
+    "concept": "fe.accessibility",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "CSS slides the drawer off-screen when it loses the open class. After closeDrawer() runs, its links must be skipped by both the Tab key and screen readers. Find the bug.",
+      "code": "const drawer = document.querySelector(\"#drawer\");\nconst toggle = document.querySelector(\"#menu-toggle\");\n\nfunction closeDrawer() {\n  drawer.classList.remove(\"open\");\n  drawer.setAttribute(\"aria-hidden\", \"true\");\n  toggle.setAttribute(\"aria-expanded\", \"false\");\n  toggle.focus();\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Replace it with drawer.setAttribute(\"aria-disabled\", \"true\")"
+        },
+        {
+          "id": "f2",
+          "text": "Keep it and also set drawer.tabIndex = -1"
+        },
+        {
+          "id": "f3",
+          "text": "Replace it with drawer.inert = true"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f3"
+      }
+    },
+    "remember": "aria-hidden hides content from screen readers only, so its links stay in the Tab order; inert removes a subtree from both."
+  },
+  {
+    "key": "fe.accessibility.match.02",
+    "concept": "fe.accessibility",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "In a browser, match each focused element (not inside a form) with how the keyboard operates it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "<a href=\"/docs\">Docs</a>"
+        },
+        {
+          "id": "l2",
+          "text": "<button>Save</button>"
+        },
+        {
+          "id": "l3",
+          "text": "<input type=\"checkbox\">"
+        },
+        {
+          "id": "l4",
+          "text": "<input type=\"radio\"> in a group of three"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Arrow keys move the choice; Tab moves past the group"
+        },
+        {
+          "id": "r2",
+          "text": "Space activates it; Enter does not"
+        },
+        {
+          "id": "r3",
+          "text": "Enter activates it; Space does not"
+        },
+        {
+          "id": "r4",
+          "text": "Enter and Space both activate it"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Links fire on Enter, buttons on Enter and Space, checkboxes on Space; a custom role must copy the keys of the element it imitates."
+  },
+  {
+    "key": "fe.accessibility.order.01",
+    "concept": "fe.accessibility",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "These elements appear in the HTML in the order listed, and nothing else on the page can take focus. Put them in the order the Tab key visits them, starting from the top of the page.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "<input name=\"q\">"
+        },
+        {
+          "id": "s2",
+          "text": "<a href=\"/help\" tabindex=\"2\">Help</a>"
+        },
+        {
+          "id": "s3",
+          "text": "<div tabindex=\"0\">Card</div>"
+        },
+        {
+          "id": "s4",
+          "text": "<button tabindex=\"1\">Save</button>"
+        },
+        {
+          "id": "s5",
+          "text": "<button tabindex=\"2\">Send</button>"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Positive tabindex values go first, lowest to highest and ties in DOM order, then everything else in DOM order; avoid them."
   }
 ]

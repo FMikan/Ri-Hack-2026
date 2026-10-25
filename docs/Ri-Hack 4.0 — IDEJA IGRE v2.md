@@ -163,14 +163,14 @@ Nasumični korak na kraju uklanja prednost zadnjeg bana: nitko ne bira temu, sva
 
 ## 6. Duel — tijek partije
 
-Partija je 10 identičnih pitanja za oba igrača, svako sa svojim timerom koji kreće od prikaza; cijela partija s veto fazom traje 4 do 5 minuta.
+Partija je 10 identičnih pitanja za oba igrača, svako sa svojim timerom koji kreće od prikaza; cijela partija s veto fazom traje 4 do 7 minuta.
 
 **Tijek**
 
 1. **Lobby (5 s):** protivnikovo ime, tier, rating, tema partije, odbrojavanje 3-2-1.
 2. **Pitanje:** prikazuje se oboma istodobno; timer svakog igrača kreće u trenutku prikaza na njegovom ekranu. Odgovor se zaključava na klik (odabir, T/N, uljez, cloze, output), na *Potvrdi* (povezivanje, redoslijed) ili u dva koraka (nađi bug: klik linije, pa odabir fixa).
 3. **Čekanje:** tko odgovori prvi vidi *Odgovoreno* i čeka; protivnikov odgovor se ne vidi.
-4. **Međuekran (2 s):** točan odgovor, je li svatko pogodio, bodovi oba igrača za to pitanje, trenutni zbroj. Pokreće se kad oba odgovore ili istekne vrijeme sporijem.
+4. **Međuekran (4 s):** točan odgovor, je li svatko pogodio, bodovi oba igrača za to pitanje, trenutni zbroj. Pokreće se kad oba odgovore ili istekne vrijeme sporijem.
 5. Koraci 2–4 za svih 10 pitanja; redoslijed i sadržaj identični oboma.
 6. **Kraj:** zbroj bodova, pobjednik, promjena Elo-a i SP-a, prelazak na ekran rezultata (§10).
 
@@ -180,9 +180,9 @@ Partija je 10 identičnih pitanja za oba igrača, svako sa svojim timerom koji k
 | --- | --- |
 | Veto faza | 10–30 s |
 | Lobby | 5 s |
-| 10 pitanja (timeri iz §7) | 190–230 s ako oba igrača iskoriste puno vrijeme, u praksi 120–180 s |
-| Međuekrani | 20 s |
-| Ukupno | 3–5 min |
+| 10 pitanja (timeri iz §7) | 300–400 s ako oba igrača iskoriste puno vrijeme, u praksi 150–240 s |
+| Međuekrani | 40 s |
+| Ukupno | 4–7 min |
 
 **Pravila tijekom partije**
 
@@ -200,14 +200,14 @@ Osam tipova, svi deterministički ocjenjivani; tri od njih (cloze, uljez, output
 
 | Tip | Mehanika | Vrijeme | Bazni bodovi | Djelomični bodovi | Ograničenja u decku |
 | --- | --- | --- | --- | --- | --- |
-| Točno/netočno | jedna tvrdnja, dva gumba | 8 s | 50 | ne | uvijek 1. pitanje (D1); još najviše 1 |
-| Odabir | pitanje + 4 opcije | 15 s | 100 | ne | najviše 3 |
-| Cloze u kodu | kod s jednim `____`, 4 tokena | 18 s | 120 | ne | najviše 2 |
-| Koji ne pripada | 4 stavke, jedna uljez | 12 s | 100 | ne | najviše 2 |
-| Što ispisuje kod | snippet + 4 moguća izlaza | 25 s | 150 | ne | najmanje 1, najviše 2 |
-| Povezivanje | 4 para, drag-and-drop, *Potvrdi* | 30 s | 150 | 25 % po točnom paru | povezivanje + redoslijed: najmanje 1, najviše 2 |
-| Redoslijed | 4–5 koraka, drag-and-drop, *Potvrdi* | 25 s | 150 | ne (sve ili ništa) | vidi gore |
-| Nađi bug | klik na liniju, zatim 3 fixa | 40 s | 200 | linija 40 %, fix 60 %; kriva linija = 0 | najmanje 1, najviše 2 |
+| Točno/netočno | jedna tvrdnja, dva gumba | 10 s | 50 | ne | uvijek 1. pitanje (D1); još najviše 1 |
+| Odabir | pitanje + 4 opcije | 27 s | 100 | ne | najviše 3 |
+| Cloze u kodu | kod s jednim `____`, 4 tokena | 33 s | 120 | ne | najviše 2 |
+| Koji ne pripada | 4 stavke, jedna uljez | 21 s | 100 | ne | najviše 2 |
+| Što ispisuje kod | snippet + 4 moguća izlaza | 45 s | 150 | ne | najmanje 1, najviše 2 |
+| Povezivanje | 4 para, drag-and-drop, *Potvrdi* | 54 s | 150 | 25 % po točnom paru | povezivanje + redoslijed: najmanje 1, najviše 2 |
+| Redoslijed | 4–5 koraka, drag-and-drop, *Potvrdi* | 45 s | 150 | ne (sve ili ništa) | vidi gore |
+| Nađi bug | klik na liniju, zatim 3 fixa | 72 s | 200 | linija 40 %, fix 60 %; kriva linija = 0 | najmanje 1, najviše 2 |
 
 **Primjeri dodatnih tipova**
 
@@ -412,6 +412,7 @@ Sve nerangirane aktivnosti ažuriraju mastery i održavaju streak, ali ne diraju
 - Bot ima ključ odgovora. Za svako pitanje izvlači točan odgovor s vjerojatnošću *točnost − 8 % × (težina − 2)*, inače nasumični distraktor; vrijeme iz raspona.
 - Deck gradi isti builder; bot nema mastery profil, pa sva 3 ciljana slota idu iz igračevih slabih koncepata.
 - Bez Elo-a, bez coina, bez SP-a. Ažurira mastery, broji se za streak i dnevne zadatke.
+- Međuekran u bot duelu traje do 30 s: igrač ide dalje gumbom *Dalje*, a kad vrijeme istekne sljedeće pitanje se otvara samo.
 - Igrač bira personu; preporučena je ona najbliža njegovom ratingu. Imena persona se lokaliziraju s jezikom (EN: Vibe Coder Vince, Junior Jake, Mid Mike, Senior Sarah).
 
 **Trening po temi**
@@ -606,7 +607,7 @@ Isti deck, neovisni timeri i deterministički ključ čine partiju fer; varanje 
 
 **Varanje**
 
-- Timeri od 8 do 40 s i kod koji se mora pročitati čine vanjsko traženje odgovora sporim; sporo točan odgovor vrijedi 50 % baznih bodova.
+- Timeri od 10 do 72 s i kod koji se mora pročitati čine vanjsko traženje odgovora sporim; sporo točan odgovor vrijedi 50 % baznih bodova.
 - Rangirani mod nagrađuje brzinu upravo zato što je brzina dokaz vlastitog znanja.
 - Uzorak *stalno ispod 1 s na D3–D4* zastavicom ide na pregled; nema automatskih kazni.
 - U prezentaciji se to kaže otvoreno: igra ne može spriječiti da netko pita AI, ali ga čini gubitnikom na vrijeme.

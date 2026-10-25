@@ -25,7 +25,8 @@ public record MeDto(
     Guid Id, string Username, string Avatar, string Tier, int Rating, bool IsProvisional, string? Title, Dictionary<string, string> Equipment,
     string Email, string Locale, ProfileVisibility ProfileVisibility, Dictionary<string, bool> Notifications,
     int RankedMatches, int Coins, int Xp, int Level, int XpToNextLevel, int SeasonPoints, StreakDto Streak,
-    Guid[] ActiveTopicIds, Guid? EquippedTitleId, Guid? ActiveMatchId, bool InQueue, DateTimeOffset CreatedAt);
+    Guid[] ActiveTopicIds, Guid? EquippedTitleId, Guid? ActiveMatchId, bool InQueue, DateTimeOffset CreatedAt,
+    Plan Plan, DateTimeOffset? PremiumUntil); // Senior developer until premiumUntil (docs/premium-pretplata.md)
 
 public record UpdateMeRequest
 {

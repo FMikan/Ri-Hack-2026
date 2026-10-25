@@ -191,7 +191,7 @@ public class RankedMatchTests(TestApp app) : RankedTestBase(app)
         var (ana, bob, match) = await RankedPairAsync();
         await ThroughVetoAsync(ana, bob, match);
 
-        for (var i = 0; i < 40; i++) await App.AdvanceAsync(TimeSpan.FromSeconds(10)); // nobody polls any more
+        for (var i = 0; i < 80; i++) await App.AdvanceAsync(TimeSpan.FromSeconds(10)); // nobody polls any more; 800 s outlasts the longest deck
 
         var final = await StateAsync(await LoginAgainAsync(ana), match.Id);
         Assert.Equal(MatchStatus.Aborted, final.Status);

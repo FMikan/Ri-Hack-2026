@@ -119,7 +119,7 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
             (await daily.TasksAsync(userId, cancellationToken)).Tasks,
             await daily.ChallengeAttemptedTodayAsync(userId, cancellationToken),
             suggestion,
-            new InboxDto(await RematchInboxAsync(userId, cancellationToken), await FriendChallengeInboxAsync(userId, cancellationToken)),
+            await InboxAsync(userId, cancellationToken),
             me.InQueue);
     }
 
@@ -176,6 +176,9 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
     }
 
     // The newest rematch someone asked me for that is still open (20 s).
+    public async Task<InboxDto> InboxAsync(Guid userId, CancellationToken cancellationToken) =>
+        new(await RematchInboxAsync(userId, cancellationToken), await FriendChallengeInboxAsync(userId, cancellationToken));
+
     private async Task<RematchInboxDto?> RematchInboxAsync(Guid userId, CancellationToken cancellationToken)
     {
         var openSince = time.GetUtcNow().AddSeconds(-GameRules.RematchSeconds);
@@ -250,7 +253,8 @@ public class MeService(IAppDbContext db, ContentService content, DailyService da
             user.Email, user.Locale, user.ProfileVisibility, Notifications(user),
             user.RankedMatches, user.Coins, user.Xp, Level.Of(user.Xp), Level.XpToNext(user.Xp), seasonPoints,
             new StreakDto(Streaks.Current(user, today), user.StreakLastActiveOn, user.StreakFreezes, user.StreakLastActiveOn == today),
-            user.Topics.Select(t => t.TopicId).ToArray(), user.EquippedTitleId, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt);
+            user.Topics.Select(t => t.TopicId).ToArray(), user.EquippedTitleId, user.CurrentMatchId, await InQueueAsync(user.Id, cancellationToken), user.CreatedAt,
+            user.PlanAt(now), user.PremiumUntil);
     }
 
     private Task<bool> InQueueAsync(Guid userId, CancellationToken cancellationToken) =>

@@ -25,6 +25,10 @@ public class User
     public Guid? EquippedTitleId { get; set; }
     public Seasons.Title? EquippedTitle { get; set; } // always loaded with the user (AutoInclude): UserRefDto shows its name
     public Guid? CurrentMatchId { get; set; } // one active match per user
+    public DateTimeOffset? PremiumUntil { get; set; } // a Senior developer while this is in the future (docs/premium-pretplata.md)
+    public string? PremiumInterval { get; set; } // 'monthly' | 'yearly' of the last payment
+    public bool PremiumAutoRenew { get; set; }
+    public string? PremiumCardLast4 { get; set; } // the only part of the card ever kept
     public DateTimeOffset? LastSeenAt { get; set; }
     public required DateTimeOffset CreatedAt { get; init; }
     public List<UserTopic> Topics { get; } = [];
@@ -32,6 +36,10 @@ public class User
     public const string DefaultNotifications = """{"dailyChallenge":true,"streakReminder":true,"rematch":true}""";
 
     public bool IsProvisional => RankedMatches < GameRules.ProvisionalMatches;
+
+    public bool IsSenior(DateTimeOffset now) => PremiumUntil > now;
+
+    public Plan PlanAt(DateTimeOffset now) => IsSenior(now) ? Plan.Senior : Plan.Junior;
 
     public static string Normalize(string username) => username.ToLowerInvariant();
 }

@@ -6,7 +6,7 @@ namespace App.Domain.Economy;
 public enum RewardType
 {
     MatchWin, MatchLoss, MatchDraw, RatingUpset, LessonPassed, ConceptPatched, DailyChallenge, DailyTask, DailyTaskBonus,
-    StreakMilestone, WeeklyXpGoal, LevelUp, FriendMatch, AnswerXp, MatchXp, ShopPurchase, StreakFreeze, SeasonReset, SeasonDrop,
+    StreakMilestone, WeeklyXpGoal, LevelUp, FriendMatch, AnswerXp, MatchXp, ShopPurchase, StreakFreeze, SeasonReset, SeasonDrop, PremiumDaily,
 }
 
 // The ledger (docs §3.7): the only way coins, XP and SP change. users.coins and users.xp are its cached sums.

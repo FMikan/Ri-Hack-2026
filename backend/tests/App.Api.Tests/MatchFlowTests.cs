@@ -166,11 +166,14 @@ public class MatchFlowTests(TestApp app) : MatchTestBase(app)
     }
 
     [Fact]
-    public async Task Next_in_a_timed_match_is_409()
+    public async Task Next_in_a_timed_practice_interstitial_is_409()
     {
         var topic = await SeedTopicAsync();
         var ana = await RegisterAsync("ana");
-        var started = await StartBotAsync(ana, topic.Id);
+        var started = (await ReadAsync<MatchStateDto>(await PostAsync(ana.Client, "/api/matches/practice", new { topicId = topic.Id, timed = true })))!;
+        var state = await FirstQuestionAsync(ana, started);
+        var answered = (await ReadAsync<MatchStateDto>(await AnswerAsync(ana, state, Right(state))))!;
+        Assert.Equal(MatchPhase.Interstitial, answered.Phase); // solo: the interstitial opens as soon as I answer
 
         var response = await ana.Client.PostAsync($"/api/matches/{started.Id}/next", null);
 

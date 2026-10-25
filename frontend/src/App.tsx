@@ -21,6 +21,7 @@ import { ProfilePage } from '@/features/profile/ProfilePage'
 import { PublicProfilePage } from '@/features/profile/PublicProfilePage'
 import { ReviewPage } from '@/features/review/ReviewPage'
 import { ShopPage } from '@/features/shop/ShopPage'
+import { SubscriptionPage } from '@/features/subscription/SubscriptionPage'
 import { LocaleProvider } from '@/lib/i18n/LocaleProvider'
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
                 <Route path="/match/:id/review" element={<ReviewPage />} />
                 <Route path="/lesson/:id" element={<LessonPage />} />
                 <Route path="/shop" element={<ShopPage />} />
+                <Route path="/senior" element={<SubscriptionPage />} />
                 <Route path="/daily" element={<DailyChallengePage />} />
                 <Route path="/friends" element={<FriendsPage />} />
                 <Route path="/u/:username" element={<PublicProfilePage />} />

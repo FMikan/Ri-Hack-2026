@@ -1896,5 +1896,3227 @@
       }
     },
     "remember": "Shared databases, shared entity libraries and synchronous call chains couple services; versioned events with local copies keep them apart."
+  },
+  {
+    "key": "be.http-status.tf.02",
+    "concept": "be.http-status",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A HEAD request asks for the same response as GET, but the server sends back only the headers and no body.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "HEAD is GET without the body: a cheap way to check that a resource exists or read its headers without downloading it."
+  },
+  {
+    "key": "be.http-status.mc.03",
+    "concept": "be.http-status",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "The URL /api/countries only supports GET. A client sends DELETE /api/countries. Which status code fits the response?",
+      "options": [
+        {
+          "id": "a",
+          "text": "404 Not Found"
+        },
+        {
+          "id": "b",
+          "text": "403 Forbidden"
+        },
+        {
+          "id": "c",
+          "text": "405 Method Not Allowed"
+        },
+        {
+          "id": "d",
+          "text": "400 Bad Request"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "405 means the URL exists but does not support that method; the Allow header lists the methods that work."
+  },
+  {
+    "key": "be.http-status.mc.04",
+    "concept": "be.http-status",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "GET /api/orders?status=refunded runs without errors, but no order matches the filter. What should the API return?",
+      "options": [
+        {
+          "id": "a",
+          "text": "200 OK with an empty list []"
+        },
+        {
+          "id": "b",
+          "text": "404 Not Found with an error message"
+        },
+        {
+          "id": "c",
+          "text": "204 No Content and no body"
+        },
+        {
+          "id": "d",
+          "text": "400 Bad Request with an error message"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A search with no matches still succeeded: return 200 with [], so clients show 'no results' instead of handling an error."
+  },
+  {
+    "key": "be.http-status.odd.02",
+    "concept": "be.http-status",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these confirm that the server has finished the work the request asked for. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "201 Created"
+        },
+        {
+          "id": "b",
+          "text": "204 No Content"
+        },
+        {
+          "id": "c",
+          "text": "200 OK"
+        },
+        {
+          "id": "d",
+          "text": "202 Accepted"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "202 Accepted means the work was queued, not done; the client checks a status URL later to learn the outcome."
+  },
+  {
+    "key": "be.http-status.cloze.01",
+    "concept": "be.http-status",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In Express. This endpoint only reads JSON bodies, and a client posts the order as XML. Fill the blank.",
+      "code": "app.post(\"/api/orders\", (req, res) => {\n  const type = req.get(\"Content-Type\") ?? \"\";\n  if (!type.startsWith(\"application/json\")) {\n    return res.status(____).json({\n      title: \"Send the order as JSON\",\n    });\n  }\n  // ...create the order\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "406 Not Acceptable"
+        },
+        {
+          "id": "b",
+          "text": "415 Unsupported Media Type"
+        },
+        {
+          "id": "c",
+          "text": "422 Unprocessable Content"
+        },
+        {
+          "id": "d",
+          "text": "405 Method Not Allowed"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "415 rejects a request body in a format the server cannot read; 406 means it cannot produce the format the Accept header asks for."
+  },
+  {
+    "key": "be.http-status.out.01",
+    "concept": "be.http-status",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In a browser or Node.js, what does this print?",
+      "code": "async function save() {\n  // the server answered PUT with 204 No Content\n  const res = new Response(null, { status: 204 });\n  if (!res.ok) return \"failed \" + res.status;\n  try {\n    const body = await res.json();\n    return \"saved \" + JSON.stringify(body);\n  } catch (err) {\n    return err.name;\n  }\n}\nsave().then(console.log);",
+      "options": [
+        {
+          "id": "a",
+          "text": "saved null"
+        },
+        {
+          "id": "b",
+          "text": "failed 204"
+        },
+        {
+          "id": "c",
+          "text": "SyntaxError"
+        },
+        {
+          "id": "d",
+          "text": "saved {}"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A 204 is a success with no body, so res.json() throws; check for 204 before parsing the response."
+  },
+  {
+    "key": "be.http-status.bug.01",
+    "concept": "be.http-status",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In Express. When the report has not changed, the browser should reuse its cached copy, but users see an empty report instead. Find the bug.",
+      "code": "app.get(\"/api/report\", async (req, res) => {\n  const report = await buildReport();\n  const etag = `\"${hash(report)}\"`;\n  res.set(\"ETag\", etag);\n  if (req.get(\"If-None-Match\") === etag) {\n    return res.status(200).end();\n  }\n  res.json(report);\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Compare against If-Match instead of If-None-Match"
+        },
+        {
+          "id": "f2",
+          "text": "Answer with res.status(304).end() instead"
+        },
+        {
+          "id": "f3",
+          "text": "Set the ETag header after the if block"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A matching If-None-Match gets 304 Not Modified, which tells the browser to reuse its copy; a 200 with no body replaces it."
+  },
+  {
+    "key": "be.http-status.match.02",
+    "concept": "be.http-status",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "An API runs behind a reverse proxy such as nginx. Match each situation with the status code the client receives.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "A bug in the app throws; the app's error handler replies"
+        },
+        {
+          "id": "l2",
+          "text": "The app is still working when the proxy stops waiting"
+        },
+        {
+          "id": "l3",
+          "text": "The app replies with bytes the proxy cannot parse as HTTP"
+        },
+        {
+          "id": "l4",
+          "text": "The app is in maintenance mode and says to retry later"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "504 Gateway Timeout"
+        },
+        {
+          "id": "r2",
+          "text": "503 Service Unavailable"
+        },
+        {
+          "id": "r3",
+          "text": "500 Internal Server Error"
+        },
+        {
+          "id": "r4",
+          "text": "502 Bad Gateway"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "500 comes from the app itself; 502 and 504 come from the proxy when the app's reply is broken or too slow; 503 says retry later."
+  },
+  {
+    "key": "be.http-status.order.01",
+    "concept": "be.http-status",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A client uploads a 2 GB file with POST and the header Expect: 100-continue. Order the exchange when the upload succeeds.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Client sends the 2 GB body"
+        },
+        {
+          "id": "s2",
+          "text": "Server answers 100 Continue"
+        },
+        {
+          "id": "s3",
+          "text": "Client sends the request headers only"
+        },
+        {
+          "id": "s4",
+          "text": "Server answers 201 Created"
+        },
+        {
+          "id": "s5",
+          "text": "Server checks the headers: token, Content-Length"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s2",
+          "s1",
+          "s4"
+        ]
+      }
+    },
+    "remember": "With Expect: 100-continue the body waits for 100 Continue, so the server can refuse a too-large or unauthorised upload before it is sent."
+  },
+  {
+    "key": "be.http-status.tf.03",
+    "concept": "be.http-status",
+    "type": "true_false",
+    "difficulty": 4,
+    "content": {
+      "statement": "When a POST gets a 307 Temporary Redirect, the browser follows it by sending a GET to the new URL.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "307 and 308 repeat the same method and body at the new URL; only 301, 302 and 303 let a browser turn a POST into a GET."
+  },
+  {
+    "key": "be.rest-design.tf.02",
+    "concept": "be.rest-design",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A REST API must send and receive its data as JSON.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "REST does not fix a data format; JSON is common, and the Content-Type header says which format a body uses."
+  },
+  {
+    "key": "be.rest-design.out.01",
+    "concept": "be.rest-design",
+    "type": "output",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "GET /users returns the collection and GET /users/:id one user. What does this print?",
+      "code": "const users = [\n  { id: 1, name: \"Ana\" },\n  { id: 2, name: \"Ivo\" },\n];\n\n// \"/users/2\".split(\"/\") is [\"\", \"users\", \"2\"]\nfunction get(path) {\n  const id = path.split(\"/\")[2];\n  if (id) return users.find((u) => u.id === Number(id));\n  return users;\n}\n\nconsole.log(get(\"/users\").length, get(\"/users/2\").name);",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 Ana"
+        },
+        {
+          "id": "b",
+          "text": "undefined Ivo"
+        },
+        {
+          "id": "c",
+          "text": "2 Ivo"
+        },
+        {
+          "id": "d",
+          "text": "2 Ana"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A plural path like /users names the whole collection; adding an id, as in /users/2, names one member of it."
+  },
+  {
+    "key": "be.rest-design.bug.01",
+    "concept": "be.rest-design",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "PUT /api/users/7 should update user 7. A request whose body still said \"id\": 8 changed user 8 instead. Find the bug.",
+      "code": "app.put(\"/api/users/:id\", async (req, res) => {\n  const { id, name, email } = req.body;\n  const user = await db.users.findById(id);\n  if (!user) return res.status(404).end();\n  await db.users.update(id, { name, email });\n  res.json({ id, name, email });\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Convert id with Number(id) before the lookup"
+        },
+        {
+          "id": "f2",
+          "text": "Take id from req.params.id, not from req.body"
+        },
+        {
+          "id": "f3",
+          "text": "Look the user up by email instead of by id"
+        }
+      ],
+      "answer": {
+        "line": 2,
+        "fixId": "f2"
+      }
+    },
+    "remember": "The URL identifies the resource: take the id from the path and never let a field in the body redirect the write."
+  },
+  {
+    "key": "be.rest-design.match.02",
+    "concept": "be.rest-design",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each piece of information with where it belongs in a REST request.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "The id of the order to read"
+        },
+        {
+          "id": "l2",
+          "text": "Only orders with status open"
+        },
+        {
+          "id": "l3",
+          "text": "The fields of a new order"
+        },
+        {
+          "id": "l4",
+          "text": "The format the client wants back"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "The query string"
+        },
+        {
+          "id": "r2",
+          "text": "The Accept header"
+        },
+        {
+          "id": "r3",
+          "text": "The URL path"
+        },
+        {
+          "id": "r4",
+          "text": "The request body"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "The path names the resource, the query string filters it, the body carries its data and the Accept header picks the format."
+  },
+  {
+    "key": "be.rest-design.order.01",
+    "concept": "be.rest-design",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Building a CSV export takes minutes, so the API runs it as a job. Order what happens, from first to last.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Client sends GET /exports/jobs/5 and sees status running"
+        },
+        {
+          "id": "s2",
+          "text": "Client sends GET /exports/77 and downloads the file"
+        },
+        {
+          "id": "s3",
+          "text": "Client sends POST /exports with the export options"
+        },
+        {
+          "id": "s4",
+          "text": "Worker finishes and the job now links to /exports/77"
+        },
+        {
+          "id": "s5",
+          "text": "Server queues the job and answers 202 with /exports/jobs/5"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Slow work gets 202 Accepted and a job resource to poll; when the job is done, that resource points to the result."
+  },
+  {
+    "key": "be.rest-design.tf.03",
+    "concept": "be.rest-design",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "PUT /api/users/42 can create user 42 when it does not exist yet; the server then answers 201 Created.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "PUT stores the body at the URL the client names: it replaces the resource there, or creates it with 201 if it was missing."
+  },
+  {
+    "key": "be.rest-design.mc.02",
+    "concept": "be.rest-design",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "An admin, who may read every order, calls GET /api/users/42/orders/9. Order 9 exists but belongs to user 17. What should the API answer?",
+      "options": [
+        {
+          "id": "a",
+          "text": "200 with order 9, since the admin may read it"
+        },
+        {
+          "id": "b",
+          "text": "404 Not Found, since user 42 has no order 9"
+        },
+        {
+          "id": "c",
+          "text": "403 Forbidden, since order 9 is not user 42's"
+        },
+        {
+          "id": "d",
+          "text": "400 Bad Request, since the two ids do not match"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A nested URL scopes the lookup: /users/42/orders/9 exists only if order 9 belongs to user 42; otherwise it is a 404."
+  },
+  {
+    "key": "be.rest-design.mc.03",
+    "concept": "be.rest-design",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "User 42 has the nickname \"ana99\". A client sends PATCH /api/users/42 with Content-Type: application/merge-patch+json and the body {\"nickname\": null}. What happens to the nickname?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It keeps ana99, since null means no change"
+        },
+        {
+          "id": "b",
+          "text": "The patch is rejected with 400 Bad Request"
+        },
+        {
+          "id": "c",
+          "text": "It is stored as the JSON value null"
+        },
+        {
+          "id": "d",
+          "text": "It is removed from the user resource"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "In JSON Merge Patch, null deletes the field, so a merge patch cannot set a value to null; a JSON Patch replace can."
+  },
+  {
+    "key": "be.rest-design.odd.02",
+    "concept": "be.rest-design",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these changes to a public JSON API can break clients that work today. Which one cannot?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Let numeric ids grow past 2^53 in JSON"
+        },
+        {
+          "id": "b",
+          "text": "Make a required request field optional"
+        },
+        {
+          "id": "c",
+          "text": "Return null in a field that was never null"
+        },
+        {
+          "id": "d",
+          "text": "Start rejecting quantity above 100"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Accepting more is safe; tightening input, adding nulls or sending numbers a JavaScript client cannot hold exactly breaks clients."
+  },
+  {
+    "key": "be.rest-design.cloze.02",
+    "concept": "be.rest-design",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "http",
+    "content": {
+      "prompt": "GET /api/reports/5 returns JSON or CSV depending on Accept. A CDN served a cached CSV to a client that asked for JSON. Fill the blank so the CDN caches the two apart.",
+      "code": "GET /api/reports/5 HTTP/1.1\nAccept: text/csv\n\nHTTP/1.1 200 OK\nContent-Type: text/csv\nCache-Control: public, max-age=300\n____",
+      "options": [
+        {
+          "id": "a",
+          "text": "Vary: Accept"
+        },
+        {
+          "id": "b",
+          "text": "Vary: Content-Type"
+        },
+        {
+          "id": "c",
+          "text": "Vary: Accept-Encoding"
+        },
+        {
+          "id": "d",
+          "text": "ETag: \"report-5-csv\""
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "When a response depends on a request header such as Accept, list it in Vary, or caches hand one client's format to another."
+  },
+  {
+    "key": "be.validation.tf.02",
+    "concept": "be.validation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "An API should validate a request's input before it writes anything to the database.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Validate first and answer 400 before any write, so a rejected request leaves no half-saved data behind."
+  },
+  {
+    "key": "be.validation.tf.03",
+    "concept": "be.validation",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "If a request body parses as valid JSON, the API can treat its contents as valid input.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Valid JSON only means the body parses; the server still checks each field's presence, type and range."
+  },
+  {
+    "key": "be.validation.mc.02",
+    "concept": "be.validation",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The profile form only has a name field, yet a user sent {\"name\": \"Ana\", \"role\": \"admin\"} to this endpoint and became an admin. What is the right fix?",
+      "code": "app.patch(\"/api/users/me\", async (req, res) => {\n  const user = await db.users.find(req.userId);\n  Object.assign(user, req.body);\n  await db.users.save(user);\n  res.json(user);\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "Check that name is a non-empty string"
+        },
+        {
+          "id": "b",
+          "text": "Copy only allowed fields, such as name, into user"
+        },
+        {
+          "id": "c",
+          "text": "Leave role out of the JSON the endpoint returns"
+        },
+        {
+          "id": "d",
+          "text": "Accept only requests whose Origin is the app's site"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Copy only the fields an endpoint allows; assigning the whole body lets a client set fields like role that no form ever showed."
+  },
+  {
+    "key": "be.validation.mc.03",
+    "concept": "be.validation",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "In an Express app, a client calls GET /api/products?limit=abc. What does the check on line 3 do?",
+      "code": "app.get(\"/api/products\", async (req, res) => {\n  const limit = req.query.limit ?? \"20\";\n  if (limit > 100) {\n    return res.status(400).json({ error: \"limit too big\" });\n  }\n  res.json(await db.products.list({ limit }));\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "Rejects it, because \"abc\" is not a number"
+        },
+        {
+          "id": "b",
+          "text": "Throws a TypeError for comparing a string to a number"
+        },
+        {
+          "id": "c",
+          "text": "Lets it through, because NaN > 100 is false"
+        },
+        {
+          "id": "d",
+          "text": "Rejects it, because \"abc\" sorts after \"100\""
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Query parameters arrive as strings: parse and type-check them before range checks, because NaN fails every comparison."
+  },
+  {
+    "key": "be.validation.odd.01",
+    "concept": "be.validation",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these sign-up checks are decided by the request's own data. Which one can pass for two concurrent requests and still let bad data in?",
+      "items": [
+        {
+          "id": "a",
+          "text": "email has a valid address format"
+        },
+        {
+          "id": "b",
+          "text": "password is at least 12 characters"
+        },
+        {
+          "id": "c",
+          "text": "displayName has 3 to 30 characters"
+        },
+        {
+          "id": "d",
+          "text": "username is not taken by another user"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "A check against other rows, like a free username, races between requests; back it with a unique constraint in the database."
+  },
+  {
+    "key": "be.validation.cloze.02",
+    "concept": "be.validation",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "In JavaScript, fill the blank so the check passes only a complete order code such as ORD-1234.",
+      "code": "// Order codes: ORD- followed by exactly 4 digits\nconst ORDER_CODE = ____;\n\napp.get(\"/api/orders/:code\", async (req, res) => {\n  const { code } = req.params;\n  if (!ORDER_CODE.test(code)) {\n    return res.status(400).json({ error: \"bad code\" });\n  }\n  res.json(await db.orders.findByCode(code));\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "/^ORD-\\d{4}$/"
+        },
+        {
+          "id": "b",
+          "text": "/^ORD-\\d{4}/"
+        },
+        {
+          "id": "c",
+          "text": "/ORD-\\d{4}$/"
+        },
+        {
+          "id": "d",
+          "text": "/^ORD-\\d{4}$/m"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Anchor validation regexes at both ends with ^ and $ and no m flag, or a value that merely contains a valid code passes."
+  },
+  {
+    "key": "be.validation.out.02",
+    "concept": "be.validation",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "def clean_name(name):\n  if len(name) < 2:\n    return \"error: too short\"\n  return name.strip()\n\nnames = [\"  A  \", \"Bo\", \" \"]\nprint([clean_name(n) for n in names])",
+      "options": [
+        {
+          "id": "a",
+          "text": "['error: too short', 'Bo', 'error: too short']"
+        },
+        {
+          "id": "b",
+          "text": "['A', 'Bo', '']"
+        },
+        {
+          "id": "c",
+          "text": "['  A  ', 'Bo', 'error: too short']"
+        },
+        {
+          "id": "d",
+          "text": "['A', 'Bo', 'error: too short']"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Normalize first (trim, lowercase), then validate the value you will store; checking the raw input lets short or blank values through."
+  },
+  {
+    "key": "be.validation.bug.02",
+    "concept": "be.validation",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "Avatars may only be downloaded over HTTPS from the host img.example.com, yet the server fetched a file from an attacker's server. Find the bug.",
+      "code": "const ALLOWED_HOST = \"img.example.com\";\n\napp.post(\"/api/avatar\", async (req, res) => {\n  const { url } = req.body;\n  if (typeof url !== \"string\") {\n    return res.status(400).json({ error: \"url required\" });\n  }\n  if (!url.startsWith(\"https://\" + ALLOWED_HOST)) {\n    return res.status(400).json({ error: \"bad host\" });\n  }\n  const image = await fetch(url);\n  await saveAvatar(req.userId, image);\n  res.status(204).end();\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Lowercase url before the startsWith check"
+        },
+        {
+          "id": "f2",
+          "text": "Parse it with new URL() and check protocol and hostname"
+        },
+        {
+          "id": "f3",
+          "text": "Also require url to end in .png or .jpg"
+        }
+      ],
+      "answer": {
+        "line": 8,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Parse structured input such as a URL before checking it; a prefix check passes img.example.com.evil.net and img.example.com@evil.net."
+  },
+  {
+    "key": "be.validation.match.01",
+    "concept": "be.validation",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "PATCH /api/profile takes a JSON merge patch. nickname is optional; when present it must be a string of 3-20 characters. Match each body with the result.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "{}"
+        },
+        {
+          "id": "l2",
+          "text": "{\"nickname\": null}"
+        },
+        {
+          "id": "l3",
+          "text": "{\"nickname\": \"\"}"
+        },
+        {
+          "id": "l4",
+          "text": "{\"nickname\": 42}"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Nickname is removed"
+        },
+        {
+          "id": "r2",
+          "text": "400: nickname must be a string"
+        },
+        {
+          "id": "r3",
+          "text": "Nickname stays as it was"
+        },
+        {
+          "id": "r4",
+          "text": "400: nickname must be 3-20 characters"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "In a partial update a missing field means leave it and null means clear it; bind and validate the two cases separately."
+  },
+  {
+    "key": "be.validation.order.01",
+    "concept": "be.validation",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "GET /files/{name} serves files from /srv/files. Order the steps so ../ tricks, even percent-encoded ones, cannot reach files outside it.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Check the resolved path starts with /srv/files/"
+        },
+        {
+          "id": "s2",
+          "text": "Stream the file's bytes to the client"
+        },
+        {
+          "id": "s3",
+          "text": "Percent-decode the name from the request URL"
+        },
+        {
+          "id": "s4",
+          "text": "Open the file, or answer 404 if it is missing"
+        },
+        {
+          "id": "s5",
+          "text": "Resolve /srv/files plus the name to an absolute path"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "Validate the canonical form: decode and resolve a path first, then check it is inside the allowed directory before touching the disk."
+  },
+  {
+    "key": "be.error-handling.tf.02",
+    "concept": "be.error-handling",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Problem Details (application/problem+json) is a standard JSON format for describing errors in HTTP API responses.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Problem Details is the standard error body for HTTP APIs: fields such as type, title, status and detail in one predictable shape."
+  },
+  {
+    "key": "be.error-handling.cloze.01",
+    "concept": "be.error-handling",
+    "type": "cloze",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "Fill the blank so the client learns nothing about what failed inside the server.",
+      "code": "app.get(\"/api/orders\", async (req, res) => {\n  try {\n    res.json(await orders.list(req.user.id));\n  } catch (err) {\n    logger.error(err);\n    res.status(500).json({ title: ____ });\n  }\n});",
+      "options": [
+        {
+          "id": "a",
+          "text": "err.message"
+        },
+        {
+          "id": "b",
+          "text": "\"Server error\""
+        },
+        {
+          "id": "c",
+          "text": "err.stack"
+        },
+        {
+          "id": "d",
+          "text": "String(err)"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Send clients a fixed, generic message for unexpected errors; the exception's message and stack belong in the server log."
+  },
+  {
+    "key": "be.error-handling.out.02",
+    "concept": "be.error-handling",
+    "type": "output",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "An endpoint builds its error body like this. What does this print?",
+      "code": "const err = new Error(\"Order 7 not found\");\nconst body = { status: 404, error: err };\nconsole.log(JSON.stringify(body));",
+      "options": [
+        {
+          "id": "a",
+          "text": "{\"status\":404,\"error\":\"Order 7 not found\"}"
+        },
+        {
+          "id": "b",
+          "text": "{\"status\":404,\"error\":{\"message\":\"Order 7 not found\"}}"
+        },
+        {
+          "id": "c",
+          "text": "{\"status\":404,\"error\":\"Error: Order 7 not found\"}"
+        },
+        {
+          "id": "d",
+          "text": "{\"status\":404,\"error\":{}}"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "JSON.stringify turns an Error into {} because message and stack are not enumerable; copy the fields you want to send into a plain object."
+  },
+  {
+    "key": "be.error-handling.bug.02",
+    "concept": "be.error-handling",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "Missing records should get a 404 with their message; every other failure must reach the client only as a generic 500. Find the bug.",
+      "code": "class NotFoundError extends Error {}\n\napp.use((err, req, res, next) => {\n  if (err instanceof NotFoundError) {\n    res.status(404).json({ title: err.message });\n    return;\n  }\n  logger.error(err);\n  res.status(500).json({ title: err.message });\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Use err.status ?? 500 instead of a fixed 500"
+        },
+        {
+          "id": "f2",
+          "text": "Replace err.message with a fixed generic title"
+        },
+        {
+          "id": "f3",
+          "text": "Move err.message from title into a detail field"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f2"
+      }
+    },
+    "remember": "Show the message only for errors you raise on purpose for the client; unexpected errors get a generic body and their details go to the log."
+  },
+  {
+    "key": "be.error-handling.match.01",
+    "concept": "be.error-handling",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each Problem Details field with what it holds.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "type"
+        },
+        {
+          "id": "l2",
+          "text": "title"
+        },
+        {
+          "id": "l3",
+          "text": "detail"
+        },
+        {
+          "id": "l4",
+          "text": "instance"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "An explanation specific to this one occurrence"
+        },
+        {
+          "id": "r2",
+          "text": "A URI that identifies this one occurrence"
+        },
+        {
+          "id": "r3",
+          "text": "A URI that identifies the kind of problem"
+        },
+        {
+          "id": "r4",
+          "text": "A short summary that is the same for every occurrence"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "In Problem Details, type and title describe the kind of problem and stay fixed; detail and instance describe this one occurrence."
+  },
+  {
+    "key": "be.error-handling.order.01",
+    "concept": "be.error-handling",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Placing an order fails because the product has just sold out. Order what happens, from the database to the user.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The global error handler maps OutOfStockError to 409"
+        },
+        {
+          "id": "s2",
+          "text": "PostgreSQL rejects the UPDATE: the stock >= 0 check fails"
+        },
+        {
+          "id": "s3",
+          "text": "The app shows 'Sold out' on the product page"
+        },
+        {
+          "id": "s4",
+          "text": "The data layer catches the driver error, throws OutOfStockError"
+        },
+        {
+          "id": "s5",
+          "text": "The client receives a Problem Details body titled 'Out of stock'"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s5",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Translate low-level errors into domain errors near their source, so the error handler maps meaning to status codes without knowing SQL."
+  },
+  {
+    "key": "be.error-handling.tf.03",
+    "concept": "be.error-handling",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "Once a server has sent part of a 200 response body, it can still change the status to 500 if a later step fails.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "The status line goes out before the body; once streaming has started, a server can only abort the connection to signal failure."
+  },
+  {
+    "key": "be.error-handling.mc.02",
+    "concept": "be.error-handling",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Your API calls a payment provider, which answers 401 because your API's own provider key has expired. What should your API answer its client?",
+      "options": [
+        {
+          "id": "a",
+          "text": "502, because a dependency behind the API failed"
+        },
+        {
+          "id": "b",
+          "text": "401, passing on the provider's status unchanged"
+        },
+        {
+          "id": "c",
+          "text": "403, because the payment was not authorized"
+        },
+        {
+          "id": "d",
+          "text": "400, because the request could not be processed"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Never forward a dependency's status as your own: its 401 tells your client that the client's login failed. Answer 5xx and log the cause."
+  },
+  {
+    "key": "be.error-handling.mc.03",
+    "concept": "be.error-handling",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A browser app on another origin calls your API. Successful calls work, but when the API answers 500, fetch rejects with a TypeError instead of giving the app the response. Why?",
+      "options": [
+        {
+          "id": "a",
+          "text": "fetch rejects its promise for every 5xx status"
+        },
+        {
+          "id": "b",
+          "text": "Browsers hide 5xx bodies from scripts on other origins"
+        },
+        {
+          "id": "c",
+          "text": "The 500 response has no Access-Control-Allow-Origin header"
+        },
+        {
+          "id": "d",
+          "text": "The preflight check rejects the problem+json content type"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Error responses need CORS headers too; without them the browser hides a 500 from the app as a network error."
+  },
+  {
+    "key": "be.error-handling.odd.02",
+    "concept": "be.error-handling",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these let an attacker learn whether an account or record exists. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Login says 'wrong password' only for registered e-mails"
+        },
+        {
+          "id": "b",
+          "text": "Other users' orders get 403, missing orders get 404"
+        },
+        {
+          "id": "c",
+          "text": "Password reset replies faster for unknown e-mails"
+        },
+        {
+          "id": "d",
+          "text": "A 400 names the request field that failed validation"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Give the same status, message and timing whether or not a record exists; any difference lets attackers enumerate accounts and ids."
+  },
+  {
+    "key": "be.auth-flow.tf.02",
+    "concept": "be.auth-flow",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A password plus a one-time code from an authenticator app on your phone counts as two-factor authentication.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Two-factor means two different kinds of proof, such as something you know (a password) and something you have (a phone)."
+  },
+  {
+    "key": "be.auth-flow.order.02",
+    "concept": "be.auth-flow",
+    "type": "order",
+    "difficulty": 1,
+    "content": {
+      "prompt": "DELETE /api/posts/7 arrives with a bearer token. Put the server's steps in order.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Check that this user may delete post 7"
+        },
+        {
+          "id": "s2",
+          "text": "Read the token from the Authorization header"
+        },
+        {
+          "id": "s3",
+          "text": "Delete the post and answer 204"
+        },
+        {
+          "id": "s4",
+          "text": "Verify the token to learn who the user is"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Authenticate first to learn who is calling, then check that this caller may do this exact action, and only then do the work."
+  },
+  {
+    "key": "be.auth-flow.tf.03",
+    "concept": "be.auth-flow",
+    "type": "true_false",
+    "difficulty": 2,
+    "content": {
+      "statement": "Over HTTPS, sending the access token in the URL, as in /api/me?token=abc, is as safe as sending it in the Authorization header.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "URLs end up in server logs, browser history and Referer headers, so send tokens in the Authorization header, never in the query string."
+  },
+  {
+    "key": "be.auth-flow.mc.02",
+    "concept": "be.auth-flow",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "An SPA uses 15-minute access tokens and a 30-day refresh token. An API call returns 401 because the access token has just expired. What should the app do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Sign the user out, because the refresh token expired with it"
+        },
+        {
+          "id": "b",
+          "text": "Retry the same call a few times with the same access token"
+        },
+        {
+          "id": "c",
+          "text": "Get a new access token with the refresh token, then retry"
+        },
+        {
+          "id": "d",
+          "text": "Send the refresh token as the bearer token on the same call"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "An expired access token is renewed with the refresh token behind the scenes; the user signs in again only when that refresh fails."
+  },
+  {
+    "key": "be.auth-flow.mc.03",
+    "concept": "be.auth-flow",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Access tokens last 15 minutes; the API checks only their signature and expiry. Refresh tokens last 30 days; the refresh endpoint rejects banned users. After a ban, how long can the user still call the API?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Up to 15 minutes, until their access token expires"
+        },
+        {
+          "id": "b",
+          "text": "Not at all; the ban applies from their next request"
+        },
+        {
+          "id": "c",
+          "text": "Up to 30 days, until their refresh token expires"
+        },
+        {
+          "id": "d",
+          "text": "Until they sign out on their own device"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A self-contained access token cannot be recalled: a ban or role change reaches the API only when the token expires and must be refreshed."
+  },
+  {
+    "key": "be.auth-flow.odd.01",
+    "concept": "be.auth-flow",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Three of these let an attacker find out which e-mail addresses have an account. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Login replies \"No account uses this e-mail\""
+        },
+        {
+          "id": "b",
+          "text": "Password reset gives the same reply at the same speed for any e-mail"
+        },
+        {
+          "id": "c",
+          "text": "Login replies in 5 ms for unknown e-mails and 300 ms for known ones"
+        },
+        {
+          "id": "d",
+          "text": "Sign-up replies \"This e-mail is already registered\""
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Answer the same way at the same speed whether or not an account exists, or the login, sign-up and reset forms become an account finder."
+  },
+  {
+    "key": "be.auth-flow.cloze.01",
+    "concept": "be.auth-flow",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "After login the browser is redirected to the ?next= value. Fill the blank so next can never send the user to another site.",
+      "code": "const BASE = \"https://shop.example\";\n\nfunction safeNext(next) {\n  const url = new URL(next, BASE);\n  return ____ ? next : \"/\";\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "next.startsWith(\"/\")"
+        },
+        {
+          "id": "b",
+          "text": "!next.startsWith(\"http\")"
+        },
+        {
+          "id": "c",
+          "text": "url.hostname.endsWith(\"shop.example\")"
+        },
+        {
+          "id": "d",
+          "text": "url.origin === BASE"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Parse the redirect target and compare its whole origin: prefix checks miss //evil.example and suffix checks miss evilshop.example."
+  },
+  {
+    "key": "be.auth-flow.out.01",
+    "concept": "be.auth-flow",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "Refresh tokens are rotated and a reused one revokes its whole family. What does this print?",
+      "code": "const tokens = new Map([[\"r1\", { fam: 1, used: false }]]);\nconst revoked = new Set();\nlet n = 1;\nfunction refresh(t) {\n  const row = tokens.get(t);\n  if (!row || revoked.has(row.fam)) return \"401\";\n  if (row.used) {\n    revoked.add(row.fam);\n    return \"401\";\n  }\n  row.used = true;\n  const next = \"r\" + ++n;\n  tokens.set(next, { fam: row.fam, used: false });\n  return next;\n}\n// two tabs refresh at once, both holding r1\nconst a = refresh(\"r1\");\nconst b = refresh(\"r1\");\nconsole.log(a, b, refresh(a));",
+      "options": [
+        {
+          "id": "a",
+          "text": "r2 r3 r4"
+        },
+        {
+          "id": "b",
+          "text": "r2 401 401"
+        },
+        {
+          "id": "c",
+          "text": "r2 401 r3"
+        },
+        {
+          "id": "d",
+          "text": "r2 r2 r3"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "With rotation and reuse detection, two tabs refreshing at once look like theft and log the user out; let tabs share one refresh call."
+  },
+  {
+    "key": "be.auth-flow.bug.02",
+    "concept": "be.auth-flow",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "Before sending the user to the provider, /auth/start saved a random state in req.session.oauthState. Attackers get victims signed in to the attacker's own account. Find the bug.",
+      "code": "app.get(\"/auth/callback\", async (req, res) => {\n  const { code, state } = req.query;\n  if (typeof state !== \"string\" || state === \"\") {\n    return res.status(400).send(\"Bad state\");\n  }\n  delete req.session.oauthState;\n  const tokens = await oauth.exchangeCode(code);\n  const profile = await oauth.verifyIdToken(tokens.idToken);\n  const user = await users.findOrCreate(profile.sub);\n  req.session.regenerate(() => {\n    req.session.userId = user.id;\n    res.redirect(\"/\");\n  });\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Also reject a state shorter than 32 characters"
+        },
+        {
+          "id": "f2",
+          "text": "Also reject when state differs from req.session.oauthState"
+        },
+        {
+          "id": "f3",
+          "text": "Pass state to exchangeCode so the provider checks it"
+        }
+      ],
+      "answer": {
+        "line": 3,
+        "fixId": "f2"
+      }
+    },
+    "remember": "The OAuth state must match the value saved in this browser's session; checking only that it is present lets an attacker's callback log you in."
+  },
+  {
+    "key": "be.auth-flow.match.02",
+    "concept": "be.auth-flow",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "The API runs on several instances behind a load balancer. Match each production symptom with its cause.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Cookie sessions are lost at random, but never when only one instance runs"
+        },
+        {
+          "id": "l2",
+          "text": "JWTs issued by one instance fail the signature check on another"
+        },
+        {
+          "id": "l3",
+          "text": "One instance rejects freshly issued tokens as not yet valid"
+        },
+        {
+          "id": "l4",
+          "text": "After login, the SPA on app.shop.example gets 401 from api.shop.example"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "fetch is called without credentials: \"include\""
+        },
+        {
+          "id": "r2",
+          "text": "That instance's clock runs a few minutes behind"
+        },
+        {
+          "id": "r3",
+          "text": "Each instance creates its own signing key at startup"
+        },
+        {
+          "id": "r4",
+          "text": "Session data is kept in each instance's memory"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Several instances need one shared session store, one shared signing key and synced clocks; a cross-origin fetch sends cookies only with credentials."
+  },
+  {
+    "key": "be.idempotency.tf.02",
+    "concept": "be.idempotency",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "POST is an idempotent HTTP method, so sending the same POST /orders twice creates only one order.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "POST is not idempotent: each repeat may create another order, so retrying it needs a guard such as an idempotency key."
+  },
+  {
+    "key": "be.idempotency.match.01",
+    "concept": "be.idempotency",
+    "type": "match_pairs",
+    "difficulty": 1,
+    "content": {
+      "prompt": "Each request is sent twice in a row. Match it with the result on the server.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "GET /users/5"
+        },
+        {
+          "id": "l2",
+          "text": "PUT /users/5 with {\"name\": \"Ana\"}"
+        },
+        {
+          "id": "l3",
+          "text": "DELETE /users/5"
+        },
+        {
+          "id": "l4",
+          "text": "POST /users with {\"name\": \"Ana\"}"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "User 5 no longer exists"
+        },
+        {
+          "id": "r2",
+          "text": "Two new users named Ana exist"
+        },
+        {
+          "id": "r3",
+          "text": "User 5 is named Ana"
+        },
+        {
+          "id": "r4",
+          "text": "Nothing has changed"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r2"
+          }
+        ]
+      }
+    },
+    "remember": "GET, PUT and DELETE end in the same state however often they repeat; every repeated POST can create one more resource."
+  },
+  {
+    "key": "be.idempotency.order.02",
+    "concept": "be.idempotency",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "A checkout charged a customer twice. Order the events that led to it.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "The app sees a timeout and sends the same POST again"
+        },
+        {
+          "id": "s2",
+          "text": "The server charges the card and sends 201"
+        },
+        {
+          "id": "s3",
+          "text": "The app sends POST /payments"
+        },
+        {
+          "id": "s4",
+          "text": "The server charges the card a second time"
+        },
+        {
+          "id": "s5",
+          "text": "The 201 is lost when the phone drops its connection"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s2",
+          "s5",
+          "s1",
+          "s4"
+        ]
+      }
+    },
+    "remember": "A timeout does not mean the request failed: the server may already have done the work, so a blind retry of a POST repeats it."
+  },
+  {
+    "key": "be.idempotency.tf.03",
+    "concept": "be.idempotency",
+    "type": "true_false",
+    "difficulty": 2,
+    "content": {
+      "statement": "If the client picks the order number and a unique index covers it, a retried create-order request cannot insert a second order row.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A unique index on a client-chosen id turns a duplicate create into a conflict; answer it with the existing order instead."
+  },
+  {
+    "key": "be.idempotency.mc.03",
+    "concept": "be.idempotency",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "An app retries DELETE requests after a timeout. Which endpoint can remove more than the user meant when a retry repeats a request the server already handled?",
+      "options": [
+        {
+          "id": "a",
+          "text": "DELETE /cart/items/42, answering 404 once the item is gone"
+        },
+        {
+          "id": "b",
+          "text": "DELETE /sessions/current, signing out the caller's session"
+        },
+        {
+          "id": "c",
+          "text": "DELETE /cart/items/newest, removing the item added last"
+        },
+        {
+          "id": "d",
+          "text": "DELETE /cart/items?sku=A1, removing every item with that SKU"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "A DELETE stays idempotent only if its URL names one fixed resource; 'the newest item' points to a different one after each call."
+  },
+  {
+    "key": "be.idempotency.mc.04",
+    "concept": "be.idempotency",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A worker handles 'add 10 points' messages from an at-least-once queue and skips message ids already in processed_messages. Which design adds the points exactly once, even if the worker crashes at any moment?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Add the points and the message id in one transaction, then ack"
+        },
+        {
+          "id": "b",
+          "text": "Add the points and commit, then insert the message id and ack"
+        },
+        {
+          "id": "c",
+          "text": "Insert the message id and commit, then add the points and ack"
+        },
+        {
+          "id": "d",
+          "text": "Add the points, ack the message, then insert the message id"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "Record the handled message id in the same transaction as the change, so a redelivered message was either fully applied or not at all."
+  },
+  {
+    "key": "be.idempotency.odd.01",
+    "concept": "be.idempotency",
+    "type": "odd_one_out",
+    "difficulty": 3,
+    "content": {
+      "prompt": "In JavaScript, three of these statements leave user the same whether they run once or twice in a row. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "user.tags.add(\"vip\"), where tags is a Set"
+        },
+        {
+          "id": "b",
+          "text": "user.until = Math.max(user.until, deadline)"
+        },
+        {
+          "id": "c",
+          "text": "Object.assign(user, { plan: \"pro\" })"
+        },
+        {
+          "id": "d",
+          "text": "user.history.push(\"upgraded\")"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Setting a field, adding to a set and taking a max are idempotent; appending to a list is not, so a retried append records the event twice."
+  },
+  {
+    "key": "be.idempotency.cloze.01",
+    "concept": "be.idempotency",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "sql",
+    "content": {
+      "prompt": "Clients choose their own Idempotency-Key values, and a customer may pay the same amount twice on purpose. Fill the blank in this PostgreSQL table.",
+      "code": "CREATE TABLE idempotency_keys (\n  account_id   bigint NOT NULL,\n  idem_key     text   NOT NULL,\n  request_hash text   NOT NULL,\n  response     jsonb,\n  PRIMARY KEY (____)\n);",
+      "options": [
+        {
+          "id": "a",
+          "text": "idem_key"
+        },
+        {
+          "id": "b",
+          "text": "account_id, idem_key"
+        },
+        {
+          "id": "c",
+          "text": "request_hash"
+        },
+        {
+          "id": "d",
+          "text": "account_id, request_hash"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Scope idempotency keys to the caller, so two customers who pick the same key never collide or see each other's stored response."
+  },
+  {
+    "key": "be.idempotency.out.02",
+    "concept": "be.idempotency",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const saved = new Map();\nlet charged = 0;\n\nfunction pay(key, amount) {\n  const hit = saved.get(key);\n  if (hit) return hit;\n  charged += amount;\n  const res = { status: 201, amount };\n  saved.set(key, res);\n  return res;\n}\n\n// the key is user id + cart id\npay(\"u1-cart7\", 50);\n// the user adds an item, then pays for the same cart\nconst res = pay(\"u1-cart7\", 80);\nconsole.log(res.status, res.amount, charged);",
+      "options": [
+        {
+          "id": "a",
+          "text": "201 80 130"
+        },
+        {
+          "id": "b",
+          "text": "201 50 50"
+        },
+        {
+          "id": "c",
+          "text": "201 80 80"
+        },
+        {
+          "id": "d",
+          "text": "201 80 50"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "A replayed key ignores the new body; store a hash of the request with the key and reject a reuse whose body differs."
+  },
+  {
+    "key": "be.idempotency.bug.01",
+    "concept": "be.idempotency",
+    "type": "find_bug",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "The payment provider deduplicates charges by idempotencyKey. A retry must never charge twice, even if the server crashes between the charge and the insert. Find the bug.",
+      "code": "async function pay(userId, clientKey, amount) {\n  const key = `${userId}:${clientKey}`;\n  const done = await db.payments.findByKey(key);\n  if (done) return done.response;\n  const opts = { idempotencyKey: crypto.randomUUID() };\n  const charge = await provider.charge(amount, opts);\n  const response = { status: 201, chargeId: charge.id };\n  await db.payments.insert({ key, response });\n  return response;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Run the charge and the insert in one database transaction"
+        },
+        {
+          "id": "f2",
+          "text": "Pass key instead of a random UUID as idempotencyKey"
+        },
+        {
+          "id": "f3",
+          "text": "Create one UUID at startup and reuse it for every charge"
+        }
+      ],
+      "answer": {
+        "line": 5,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A database transaction cannot undo a charge at another service; send a key derived from the client's key so a retry reuses the first charge."
+  },
+  {
+    "key": "be.pagination.tf.02",
+    "concept": "be.pagination",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "In PostgreSQL, LIMIT 10 OFFSET 20 skips the first 20 rows and returns the next 10.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "OFFSET is how many rows to skip and LIMIT is how many to return, so LIMIT 10 OFFSET 20 is page 3 of 10-row pages."
+  },
+  {
+    "key": "be.pagination.mc.02",
+    "concept": "be.pagination",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "In keyset (cursor) pagination, each response carries a nextCursor. What does it hold?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A marker of the last item sent; the next page starts after it"
+        },
+        {
+          "id": "b",
+          "text": "The number of the page the client should request next"
+        },
+        {
+          "id": "c",
+          "text": "The total number of items the whole list contains"
+        },
+        {
+          "id": "d",
+          "text": "How many rows the server should skip on the next call"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A cursor marks where the last page ended, so the next page continues right after that item instead of counting rows."
+  },
+  {
+    "key": "be.pagination.odd.01",
+    "concept": "be.pagination",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these are drawbacks of offset pagination (LIMIT/OFFSET). Which one is a drawback of cursor pagination instead?",
+      "items": [
+        {
+          "id": "a",
+          "text": "A row added before the current page makes the next page repeat one"
+        },
+        {
+          "id": "b",
+          "text": "A row deleted from an earlier page makes the next page skip one"
+        },
+        {
+          "id": "c",
+          "text": "Page 5000 is slow because the skipped rows are still read"
+        },
+        {
+          "id": "d",
+          "text": "The client cannot jump straight from page 1 to page 50"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Offset pages drift when rows change and slow down deep in the list; cursor pages stay correct and fast but cannot jump to page N."
+  },
+  {
+    "key": "be.pagination.cloze.02",
+    "concept": "be.pagination",
+    "type": "cloze",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "In ?page=2&size=20 the page number starts at 1. Fill the blank so each page starts at the right item.",
+      "code": "// page starts at 1: page 1 shows the first items\nfunction getPage(items, page, size) {\n  const start = ____;\n  return items.slice(start, start + size);\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "page * size"
+        },
+        {
+          "id": "b",
+          "text": "(page - 1) * size"
+        },
+        {
+          "id": "c",
+          "text": "page * size - 1"
+        },
+        {
+          "id": "d",
+          "text": "(page - 1) * size + 1"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "With page numbers that start at 1 the offset is (page - 1) * size; page * size skips the whole first page."
+  },
+  {
+    "key": "be.pagination.out.02",
+    "concept": "be.pagination",
+    "type": "output",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "In Python 3, a job handles pending rows page by page, and a handled row stops being pending. What does this print?",
+      "code": "pending = list(range(1, 11))  # ids 1..10 are pending\ndone = []\noffset = 0\nwhile True:\n    page = pending[offset:offset + 3]\n    if not page:\n        break\n    for i in page:\n        done.append(i)\n        pending.remove(i)  # no longer pending\n    offset += 3\nprint(done)",
+      "options": [
+        {
+          "id": "a",
+          "text": "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
+        },
+        {
+          "id": "b",
+          "text": "[1, 2, 3, 4, 5, 6]"
+        },
+        {
+          "id": "c",
+          "text": "[1, 2, 3, 7, 8, 9]"
+        },
+        {
+          "id": "d",
+          "text": "[1, 2, 3, 7, 8, 9, 10]"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "If handling a page removes rows from the filtered list, a growing OFFSET skips rows; keep the offset at 0 or use a cursor."
+  },
+  {
+    "key": "be.pagination.bug.02",
+    "concept": "be.pagination",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "py",
+    "content": {
+      "prompt": "Posts come in pages of size, each page continuing right after the last post of the page before. One post goes missing at every page boundary. Find the bug.",
+      "code": "def list_posts(db, after_id, size):\n    rows = db.fetch_all(\n        \"SELECT id, title FROM posts\"\n        \" WHERE id > %s ORDER BY id LIMIT %s\",\n        (after_id, size + 1),\n    )\n    has_more = len(rows) > size\n    items = rows[:size]\n    cursor = rows[-1][\"id\"] if has_more else None\n    return {\"items\": items, \"nextCursor\": cursor}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Compute has_more as len(rows) == size"
+        },
+        {
+          "id": "f2",
+          "text": "Take the cursor from items[-1] instead of rows[-1]"
+        },
+        {
+          "id": "f3",
+          "text": "Pass size instead of size + 1 as the LIMIT"
+        }
+      ],
+      "answer": {
+        "line": 9,
+        "fixId": "f2"
+      }
+    },
+    "remember": "When you fetch size + 1 rows to detect a next page, build the cursor from the last row you return, not from the extra one."
+  },
+  {
+    "key": "be.pagination.match.01",
+    "concept": "be.pagination",
+    "type": "match_pairs",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Match each pagination technique with its trade-off.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "LIMIT/OFFSET"
+        },
+        {
+          "id": "l2",
+          "text": "Keyset: WHERE id > :last_id"
+        },
+        {
+          "id": "l3",
+          "text": "Opaque, encoded cursor token"
+        },
+        {
+          "id": "l4",
+          "text": "COUNT(*) on every request"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Shows 'page 3 of 120', but must visit every matching row"
+        },
+        {
+          "id": "r2",
+          "text": "Server may change what it encodes without breaking clients"
+        },
+        {
+          "id": "r3",
+          "text": "Can jump to page 40, but deep pages get slower"
+        },
+        {
+          "id": "r4",
+          "text": "Fast at any depth, but cannot jump to page 40"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Offset can jump but slows down deep, keyset stays fast but only steps along, opaque cursors hide their format, and totals cost a full count."
+  },
+  {
+    "key": "be.pagination.order.01",
+    "concept": "be.pagination",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A job copies a huge, growing orders table to a warehouse in keyset batches. The checkpoint lives in a separate file, and a crash must never skip rows. Order one batch.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Commit the warehouse transaction"
+        },
+        {
+          "id": "s2",
+          "text": "Select WHERE id > checkpoint ORDER BY id LIMIT 1000"
+        },
+        {
+          "id": "s3",
+          "text": "Save the batch's highest id as the new checkpoint"
+        },
+        {
+          "id": "s4",
+          "text": "Read the checkpoint id saved by the last finished batch"
+        },
+        {
+          "id": "s5",
+          "text": "Upsert the rows into the warehouse by id"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s4",
+          "s2",
+          "s5",
+          "s1",
+          "s3"
+        ]
+      }
+    },
+    "remember": "Advance a batch checkpoint only after the batch is committed; a crash then repeats a batch, which an upsert absorbs, instead of skipping it."
+  },
+  {
+    "key": "be.pagination.tf.03",
+    "concept": "be.pagination",
+    "type": "true_false",
+    "difficulty": 4,
+    "content": {
+      "statement": "In PostgreSQL, WHERE (score, id) < (:score, :id) gives the next keyset page for ORDER BY score DESC, id ASC.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A row comparison like (a, b) < (x, y) fits only a sort where every column goes the same way; mixed directions need an explicit OR."
+  },
+  {
+    "key": "be.pagination.mc.03",
+    "concept": "be.pagination",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A client pages through tasks with a keyset cursor on (updated_at, id), newest first. While it reads page 2, someone edits a task that was on page 5. What happens to that task?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It appears twice, on page 3 and again on page 5"
+        },
+        {
+          "id": "b",
+          "text": "It appears on page 5 as planned, with its new values"
+        },
+        {
+          "id": "c",
+          "text": "It appears at the top of page 3, as the newest task"
+        },
+        {
+          "id": "d",
+          "text": "It is skipped, because it now sorts ahead of the cursor"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Keyset pagination on a column that changes, like updated_at, skips rows that move ahead of the cursor while a client is paging."
+  },
+  {
+    "key": "be.rate-limiting.tf.02",
+    "concept": "be.rate-limiting",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A client that gets 429 Too Many Requests should resend the same request immediately.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "After a 429, wait as long as Retry-After says before trying again; instant retries only add load and fail again."
+  },
+  {
+    "key": "be.rate-limiting.bug.01",
+    "concept": "be.rate-limiting",
+    "type": "find_bug",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "Each client should get its own 100 requests per minute, but once one busy client hits the limit, other clients calling the same URL get 429 too. Find the bug.",
+      "code": "const LIMIT = 100; // per client per minute\nconst counts = new Map();\nsetInterval(() => counts.clear(), 60_000);\n\napp.use((req, res, next) => {\n  const key = req.path;\n  const n = (counts.get(key) ?? 0) + 1;\n  counts.set(key, n);\n  if (n > LIMIT) {\n    return res.status(429).send(\"Too many requests\");\n  }\n  next();\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Raise LIMIT so busy clients reach it later"
+        },
+        {
+          "id": "f2",
+          "text": "Use req.ip as the key instead of req.path"
+        },
+        {
+          "id": "f3",
+          "text": "Return 503 instead of 429 when n > LIMIT"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f2"
+      }
+    },
+    "remember": "A rate limit counts per client, keyed on something like the IP, API key or user id; a shared key lets one client block everyone."
+  },
+  {
+    "key": "be.rate-limiting.match.02",
+    "concept": "be.rate-limiting",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each part of a rate-limited API response with what it tells the client.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "429 status code"
+        },
+        {
+          "id": "l2",
+          "text": "Retry-After"
+        },
+        {
+          "id": "l3",
+          "text": "X-RateLimit-Limit"
+        },
+        {
+          "id": "l4",
+          "text": "X-RateLimit-Remaining"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "How many requests are left in this window"
+        },
+        {
+          "id": "r2",
+          "text": "How many requests the window allows in total"
+        },
+        {
+          "id": "r3",
+          "text": "The request was rejected for going over the limit"
+        },
+        {
+          "id": "r4",
+          "text": "How long to wait before trying again"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "429 rejects the request, Retry-After says when to come back, and X-RateLimit-Limit and -Remaining show the quota and what is left of it."
+  },
+  {
+    "key": "be.rate-limiting.order.01",
+    "concept": "be.rate-limiting",
+    "type": "order",
+    "difficulty": 2,
+    "content": {
+      "prompt": "An API allows 100 requests per minute per API key. Order what a fixed-window limiter does with a client's 101st request this minute.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Add one to the counter"
+        },
+        {
+          "id": "s2",
+          "text": "Answer 429 with Retry-After set to the seconds left"
+        },
+        {
+          "id": "s3",
+          "text": "Read the API key to identify the client"
+        },
+        {
+          "id": "s4",
+          "text": "See that the new count is above 100"
+        },
+        {
+          "id": "s5",
+          "text": "Look up the key's counter for the current minute"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s1",
+          "s4",
+          "s2"
+        ]
+      }
+    },
+    "remember": "A limiter identifies the client, counts the request in the current window, and answers 429 with Retry-After once the count passes the limit."
+  },
+  {
+    "key": "be.rate-limiting.tf.03",
+    "concept": "be.rate-limiting",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "Behind a single reverse proxy, a limiter keyed on the TCP connection's source IP puts all users into one shared limit.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Behind a proxy every connection comes from the proxy's IP; key the limit on the forwarded client IP or on the user instead."
+  },
+  {
+    "key": "be.rate-limiting.mc.02",
+    "concept": "be.rate-limiting",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Your API runs 4 instances behind a round-robin load balancer. Each instance keeps its own in-memory limit of 100 requests per minute per API key. How many can one key get per minute?",
+      "options": [
+        {
+          "id": "a",
+          "text": "About 100"
+        },
+        {
+          "id": "b",
+          "text": "About 400"
+        },
+        {
+          "id": "c",
+          "text": "About 25"
+        },
+        {
+          "id": "d",
+          "text": "No limit at all"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "Separate in-memory counters multiply the limit by the number of instances; keep the counter in a shared store such as Redis."
+  },
+  {
+    "key": "be.rate-limiting.mc.03",
+    "concept": "be.rate-limiting",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "10,000 mobile clients got 429 with Retry-After: 60 at the same moment. Exactly 60 s later they all retry and are rejected again. What client change helps most?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Retry every second until one request succeeds"
+        },
+        {
+          "id": "b",
+          "text": "Wait Retry-After minus a fixed 5-second margin"
+        },
+        {
+          "id": "c",
+          "text": "Send the retry on a fresh connection right away"
+        },
+        {
+          "id": "d",
+          "text": "Wait Retry-After plus a random extra delay"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Add random jitter to retry delays so clients rejected together do not all come back at the same instant."
+  },
+  {
+    "key": "be.rate-limiting.odd.01",
+    "concept": "be.rate-limiting",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these rate-limit keys let one client get around its limit. Which one does not?",
+      "items": [
+        {
+          "id": "a",
+          "text": "Left-most entry of the X-Forwarded-For header"
+        },
+        {
+          "id": "b",
+          "text": "Entry your load balancer appended to X-Forwarded-For"
+        },
+        {
+          "id": "c",
+          "text": "Full IPv6 address of each request"
+        },
+        {
+          "id": "d",
+          "text": "Session id given to each new anonymous visitor"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Key limits on what the client cannot reset: the IP your own proxy recorded, an IPv6 /64 or an account, not client-sent headers or new sessions."
+  },
+  {
+    "key": "be.rate-limiting.cloze.02",
+    "concept": "be.rate-limiting",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "With Redis, each client may send 100 requests per 60-second window that starts at its first request. Fill the blank.",
+      "code": "// INCR creates a missing key at 0, then adds 1\nasync function allow(clientId) {\n  const key = `rl:${clientId}`;\n  const n = await redis.incr(key);\n  if (____) {\n    await redis.expire(key, 60);\n  }\n  return n <= 100;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "n === 1"
+        },
+        {
+          "id": "b",
+          "text": "n > 100"
+        },
+        {
+          "id": "c",
+          "text": "true"
+        },
+        {
+          "id": "d",
+          "text": "n <= 100"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "With INCR and EXPIRE, set the TTL only when the count is 1; refreshing it on every request keeps a steady client's window from ever ending."
+  },
+  {
+    "key": "be.rate-limiting.out.02",
+    "concept": "be.rate-limiting",
+    "type": "output",
+    "difficulty": 4,
+    "language": "js",
+    "content": {
+      "prompt": "This token bucket serves a client that keeps retrying every 0.5 s after hitting the limit. What does this print?",
+      "code": "const CAP = 3, RATE = 1; // tokens per second\nlet tokens = CAP, last = 0;\n\nfunction allow(t) {\n  tokens = Math.min(CAP, tokens + (t - last) * RATE);\n  last = t;\n  tokens -= 1;\n  return tokens >= 0;\n}\n\n// a client that retries every 0.5 s\nconst times = [0, 0, 0, 0, 0.5, 1, 1.5, 2, 2.5, 3];\nconsole.log(times.filter(allow).length);",
+      "options": [
+        {
+          "id": "a",
+          "text": "6"
+        },
+        {
+          "id": "b",
+          "text": "4"
+        },
+        {
+          "id": "c",
+          "text": "3"
+        },
+        {
+          "id": "d",
+          "text": "7"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "If rejected requests also spend tokens, a client retrying faster than the refill rate never gets through again."
+  },
+  {
+    "key": "be.caching.tf.02",
+    "concept": "be.caching",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "A cache hit means the requested value was already in the cache, so the slow source was not asked.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "A hit is served straight from the cache; a miss means the value must first be loaded from the slower source."
+  },
+  {
+    "key": "be.caching.mc.02",
+    "concept": "be.caching",
+    "type": "multiple_choice",
+    "difficulty": 1,
+    "content": {
+      "prompt": "A value is stored in the cache with a TTL of 300 seconds. What does the TTL mean?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The value can be read from the cache at most 300 times"
+        },
+        {
+          "id": "b",
+          "text": "The cache fetches a fresh copy from the database every 300 seconds"
+        },
+        {
+          "id": "c",
+          "text": "After 300 seconds the value expires and is loaded again when needed"
+        },
+        {
+          "id": "d",
+          "text": "The database must answer the query within 300 seconds"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "TTL (time to live) is how long a cached value may be served; once it runs out, the next request loads a fresh copy."
+  },
+  {
+    "key": "be.caching.mc.03",
+    "concept": "be.caching",
+    "type": "multiple_choice",
+    "difficulty": 2,
+    "content": {
+      "prompt": "GET /api/me returns the signed-in user's profile. A developer caches the response under the key \"me\" for 60 seconds. What happens?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Users are shown the profile of whoever filled the cache"
+        },
+        {
+          "id": "b",
+          "text": "Each user sees their own profile, at most 60 seconds old"
+        },
+        {
+          "id": "c",
+          "text": "Every request misses because the key changes per user"
+        },
+        {
+          "id": "d",
+          "text": "The cache keeps one entry per user and fills up memory"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "A cache key must include everything the response depends on, such as the user id, or one user's data is served to others."
+  },
+  {
+    "key": "be.caching.odd.01",
+    "concept": "be.caching",
+    "type": "odd_one_out",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Three of these can be served from a cache a few minutes stale without harm. Which one cannot?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The list of countries on the sign-up form"
+        },
+        {
+          "id": "b",
+          "text": "The categories shown in the shop menu"
+        },
+        {
+          "id": "c",
+          "text": "The 'most read this week' list on a blog"
+        },
+        {
+          "id": "d",
+          "text": "The balance checked before approving a withdrawal"
+        }
+      ],
+      "answer": {
+        "itemId": "d"
+      }
+    },
+    "remember": "Cache data that may be a little stale; values a money or safety decision depends on are read fresh from the source."
+  },
+  {
+    "key": "be.caching.cloze.01",
+    "concept": "be.caching",
+    "type": "cloze",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Unknown ids are cached as null so bots probing random ids stop reaching the database. Fill the blank so a cached null counts as a hit.",
+      "code": "// cache.get resolves to undefined on a miss\nasync function getUser(id) {\n  const key = `user:${id}`;\n  const cached = await cache.get(key);\n  if (____) return cached;\n  const user = await db.users.find(id); // null if none\n  await cache.set(key, user, { ttl: 60 });\n  return user;\n}",
+      "options": [
+        {
+          "id": "a",
+          "text": "cached"
+        },
+        {
+          "id": "b",
+          "text": "cached !== undefined"
+        },
+        {
+          "id": "c",
+          "text": "cached != null"
+        },
+        {
+          "id": "d",
+          "text": "cached !== null"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "When you cache 'not found' as null, tell a miss from a hit by checking for undefined; a truthiness check treats the cached null as a miss."
+  },
+  {
+    "key": "be.caching.out.02",
+    "concept": "be.caching",
+    "type": "output",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "This cache holds at most two entries. What does this print?",
+      "code": "const cache = new Map(); // keeps at most 2 entries\nfunction get(key) {\n  const value = cache.get(key);\n  if (value !== undefined) {\n    cache.delete(key);\n    cache.set(key, value); // now the newest entry\n  }\n  return value;\n}\n\nfunction set(key, value) {\n  cache.delete(key);\n  cache.set(key, value);\n  if (cache.size > 2) {\n    cache.delete(cache.keys().next().value);\n  }\n}\n\nset(\"a\", 1); set(\"b\", 2); get(\"a\"); set(\"c\", 3);\nconsole.log([...cache.keys()].join(\" \"));",
+      "options": [
+        {
+          "id": "a",
+          "text": "b c"
+        },
+        {
+          "id": "b",
+          "text": "a b"
+        },
+        {
+          "id": "c",
+          "text": "a b c"
+        },
+        {
+          "id": "d",
+          "text": "a c"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "An LRU cache evicts the entry used least recently, so reading a key protects it; a Map keeps insertion order, which makes it easy to build one."
+  },
+  {
+    "key": "be.caching.bug.02",
+    "concept": "be.caching",
+    "type": "find_bug",
+    "difficulty": 3,
+    "language": "js",
+    "content": {
+      "prompt": "Members get 10% off; everyone else pays the list price. After a few member visits, every customer sees ever lower prices. Find the bug.",
+      "code": "const cache = new Map(); // in-process, no TTL\n\nasync function getProduct(id) {\n  if (!cache.has(id)) {\n    cache.set(id, await db.products.find(id));\n  }\n  return cache.get(id);\n}\n\nasync function memberPrice(id) {\n  const product = await getProduct(id);\n  product.price = product.price * 0.9;\n  return product.price;\n}",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Give the cache entry a TTL of 60 seconds"
+        },
+        {
+          "id": "f2",
+          "text": "Declare product with let so it is a local copy"
+        },
+        {
+          "id": "f3",
+          "text": "Return product.price * 0.9 instead of assigning it"
+        }
+      ],
+      "answer": {
+        "line": 12,
+        "fixId": "f3"
+      }
+    },
+    "remember": "An in-process cache hands out the same object to every caller; treat cached values as read-only or copy them before changing anything."
+  },
+  {
+    "key": "be.caching.match.01",
+    "concept": "be.caching",
+    "type": "match_pairs",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Match each production cache problem with the fix that targets it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Keys cached together at startup all expire in the same second"
+        },
+        {
+          "id": "l2",
+          "text": "Bots request ids that exist in neither the cache nor the database"
+        },
+        {
+          "id": "l3",
+          "text": "One very popular key overloads the cache node that holds it"
+        },
+        {
+          "id": "l4",
+          "text": "During a rolling deploy, old code fails to read objects cached by new code"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Keep a short-lived copy in each app server's memory"
+        },
+        {
+          "id": "r2",
+          "text": "Add a random spread to each TTL"
+        },
+        {
+          "id": "r3",
+          "text": "Put a format version in every cache key"
+        },
+        {
+          "id": "r4",
+          "text": "Cache the not-found result for a short time"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r1"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r3"
+          }
+        ]
+      }
+    },
+    "remember": "Jitter TTLs against mass expiry, cache not-found results for missing ids, copy hot keys locally and version keys across deploys."
+  },
+  {
+    "key": "be.caching.order.02",
+    "concept": "be.caching",
+    "type": "order",
+    "difficulty": 4,
+    "content": {
+      "prompt": "A hot key has just expired and many requests miss it at once. Order what the one request that rebuilds it does while the others wait.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Release the rebuild lock"
+        },
+        {
+          "id": "s2",
+          "text": "Look up the key and get a miss"
+        },
+        {
+          "id": "s3",
+          "text": "Load the value from the database and cache it with a TTL"
+        },
+        {
+          "id": "s4",
+          "text": "Take a rebuild lock that expires by itself after a few seconds"
+        },
+        {
+          "id": "s5",
+          "text": "Read the cache again in case another request just filled it"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s2",
+          "s4",
+          "s5",
+          "s3",
+          "s1"
+        ]
+      }
+    },
+    "remember": "Rebuild a hot key under a lock that expires on its own, check the cache again once you hold it, and release it only after storing the value."
+  },
+  {
+    "key": "be.caching.tf.03",
+    "concept": "be.caching",
+    "type": "true_false",
+    "difficulty": 4,
+    "content": {
+      "statement": "In cache-aside, deleting the key right after the database commit guarantees no reader can put the old value back into the cache.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "A reader that loaded the old row before the commit can still store it after your delete, so keep a TTL as the backstop."
+  },
+  {
+    "key": "be.background-jobs.tf.02",
+    "concept": "be.background-jobs",
+    "type": "true_false",
+    "difficulty": 1,
+    "content": {
+      "statement": "Once the API puts a 'send welcome e-mail' job on a queue and responds, the e-mail has already been sent.",
+      "answer": {
+        "value": false
+      }
+    },
+    "remember": "Enqueueing only records the job; a worker does the work later, so the response cannot promise it is already done."
+  },
+  {
+    "key": "be.background-jobs.out.01",
+    "concept": "be.background-jobs",
+    "type": "output",
+    "difficulty": 1,
+    "language": "js",
+    "content": {
+      "prompt": "What does this print?",
+      "code": "const log = [];\nconst queue = [];\n\nfunction signUp(name) {\n  queue.push(name);       // enqueue the welcome e-mail\n  log.push(\"ok:\" + name); // respond to the client\n}\n\nfunction worker() {\n  while (queue.length) log.push(\"mail:\" + queue.shift());\n}\n\nsignUp(\"ana\");\nsignUp(\"ivo\");\nworker();\nconsole.log(log.join(\" \"));",
+      "options": [
+        {
+          "id": "a",
+          "text": "ok:ana mail:ana ok:ivo mail:ivo"
+        },
+        {
+          "id": "b",
+          "text": "ok:ana ok:ivo mail:ana mail:ivo"
+        },
+        {
+          "id": "c",
+          "text": "mail:ana mail:ivo ok:ana ok:ivo"
+        },
+        {
+          "id": "d",
+          "text": "ok:ana ok:ivo mail:ivo mail:ana"
+        }
+      ],
+      "answer": {
+        "optionId": "b"
+      }
+    },
+    "remember": "The request only enqueues and answers; the worker runs the jobs afterwards, oldest first."
+  },
+  {
+    "key": "be.background-jobs.bug.02",
+    "concept": "be.background-jobs",
+    "type": "find_bug",
+    "difficulty": 2,
+    "language": "js",
+    "content": {
+      "prompt": "The queue retries a job only when its handler throws. While the mail server was down, failed welcome e-mails were logged but never retried. Find the bug.",
+      "code": "queue.process(\"send-welcome\", async (job) => {\n  const user = await db.users.find(job.data.userId);\n  try {\n    await mailer.send(user.email, \"Welcome!\");\n  } catch (err) {\n    logger.error(\"welcome mail failed\", err);\n  }\n});",
+      "fixes": [
+        {
+          "id": "f1",
+          "text": "Return false from the catch block to mark a failure"
+        },
+        {
+          "id": "f2",
+          "text": "Add throw err; after the log line so the job fails"
+        },
+        {
+          "id": "f3",
+          "text": "Move the user lookup inside the try block too"
+        }
+      ],
+      "answer": {
+        "line": 6,
+        "fixId": "f2",
+        "acceptLines": [
+          5
+        ]
+      }
+    },
+    "remember": "A job that catches and logs its own error looks successful to the queue; rethrow so the queue can retry it."
+  },
+  {
+    "key": "be.background-jobs.match.01",
+    "concept": "be.background-jobs",
+    "type": "match_pairs",
+    "difficulty": 2,
+    "content": {
+      "prompt": "Match each situation with the background-job feature that handles it.",
+      "left": [
+        {
+          "id": "l1",
+          "text": "Delete unconfirmed accounts every night at 03:00"
+        },
+        {
+          "id": "l2",
+          "text": "Remind a user 24 hours after they abandon a cart"
+        },
+        {
+          "id": "l3",
+          "text": "The mail server is down for a few minutes"
+        },
+        {
+          "id": "l4",
+          "text": "A job failed all 5 attempts and needs a human to look"
+        }
+      ],
+      "right": [
+        {
+          "id": "r1",
+          "text": "Dead-letter queue"
+        },
+        {
+          "id": "r2",
+          "text": "Recurring (cron) job"
+        },
+        {
+          "id": "r3",
+          "text": "Delayed job"
+        },
+        {
+          "id": "r4",
+          "text": "Retry with exponential backoff"
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "l1",
+            "rightId": "r2"
+          },
+          {
+            "leftId": "l2",
+            "rightId": "r3"
+          },
+          {
+            "leftId": "l3",
+            "rightId": "r4"
+          },
+          {
+            "leftId": "l4",
+            "rightId": "r1"
+          }
+        ]
+      }
+    },
+    "remember": "Cron jobs run on a schedule, delayed jobs run once later, backoff rides out outages, and a dead-letter queue keeps jobs that never succeeded."
+  },
+  {
+    "key": "be.background-jobs.order.02",
+    "concept": "be.background-jobs",
+    "type": "order",
+    "difficulty": 3,
+    "content": {
+      "prompt": "A deploy sends SIGTERM to a queue worker. Order what the worker does to shut down without losing jobs.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Close the database and queue connections"
+        },
+        {
+          "id": "s2",
+          "text": "Put jobs that are still unfinished back on the queue"
+        },
+        {
+          "id": "s3",
+          "text": "Stop fetching new jobs from the queue"
+        },
+        {
+          "id": "s4",
+          "text": "Exit the process"
+        },
+        {
+          "id": "s5",
+          "text": "Wait up to the grace period for running jobs to finish"
+        }
+      ],
+      "answer": {
+        "orderedIds": [
+          "s3",
+          "s5",
+          "s2",
+          "s1",
+          "s4"
+        ]
+      }
+    },
+    "remember": "On SIGTERM a worker stops fetching, lets running jobs finish, requeues the rest, then closes connections and exits."
+  },
+  {
+    "key": "be.background-jobs.tf.03",
+    "concept": "be.background-jobs",
+    "type": "true_false",
+    "difficulty": 3,
+    "content": {
+      "statement": "If three workers take jobs from one queue, two jobs enqueued for the same user can finish in the reverse order.",
+      "answer": {
+        "value": true
+      }
+    },
+    "remember": "Parallel workers can finish jobs in any order; if one job depends on another, chain them or send them through one worker."
+  },
+  {
+    "key": "be.background-jobs.mc.02",
+    "concept": "be.background-jobs",
+    "type": "multiple_choice",
+    "difficulty": 3,
+    "content": {
+      "prompt": "Shipping-notice jobs often wait an hour in the queue, and support may fix the address meanwhile. The e-mail must show the current address. What goes in the job payload?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The whole order object, serialized when the job is enqueued"
+        },
+        {
+          "id": "b",
+          "text": "The finished e-mail HTML, rendered when the job is enqueued"
+        },
+        {
+          "id": "c",
+          "text": "The order id and the address, to save the worker a query"
+        },
+        {
+          "id": "d",
+          "text": "The order id; the worker loads the order when it runs"
+        }
+      ],
+      "answer": {
+        "optionId": "d"
+      }
+    },
+    "remember": "Put ids in job payloads and load fresh data when the job runs; a snapshot taken at enqueue time can be stale by then."
+  },
+  {
+    "key": "be.background-jobs.mc.03",
+    "concept": "be.background-jobs",
+    "type": "multiple_choice",
+    "difficulty": 4,
+    "content": {
+      "prompt": "At 02:00, 50,000 charge jobs fail together while the payment API is down. They retry after 1, 2, 4 and 8 minutes, and each wave knocks the API over again. What fixes this?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Add more workers so each retry wave finishes sooner"
+        },
+        {
+          "id": "b",
+          "text": "Retry every job after a fixed 1-minute delay instead"
+        },
+        {
+          "id": "c",
+          "text": "Add random jitter to each job's retry delay"
+        },
+        {
+          "id": "d",
+          "text": "Raise the maximum number of retry attempts per job"
+        }
+      ],
+      "answer": {
+        "optionId": "c"
+      }
+    },
+    "remember": "Exponential backoff alone keeps jobs that failed together in step; random jitter spreads their retries out."
+  },
+  {
+    "key": "be.background-jobs.odd.02",
+    "concept": "be.background-jobs",
+    "type": "odd_one_out",
+    "difficulty": 4,
+    "content": {
+      "prompt": "Three of these can make the same work run twice. Which one cannot?",
+      "items": [
+        {
+          "id": "a",
+          "text": "The worker crashes after the work but before acking the job"
+        },
+        {
+          "id": "b",
+          "text": "The worker acks the job, then crashes midway through the work"
+        },
+        {
+          "id": "c",
+          "text": "A job runs longer than the queue's visibility timeout"
+        },
+        {
+          "id": "d",
+          "text": "An enqueue call times out after it succeeded and is retried"
+        }
+      ],
+      "answer": {
+        "itemId": "b"
+      }
+    },
+    "remember": "Acking after the work risks duplicates; acking before the work risks losing the job, never running it twice."
+  },
+  {
+    "key": "be.background-jobs.cloze.01",
+    "concept": "be.background-jobs",
+    "type": "cloze",
+    "difficulty": 4,
+    "language": "sql",
+    "content": {
+      "prompt": "In PostgreSQL, many workers run this at once. Fill the blank so each claims a different job without waiting for or failing on rows others have locked.",
+      "code": "UPDATE jobs SET status = 'running'\nWHERE id = (\n  SELECT id FROM jobs\n  WHERE status = 'queued'\n  ORDER BY id\n  LIMIT 1\n  ____\n)\nRETURNING id;",
+      "options": [
+        {
+          "id": "a",
+          "text": "FOR UPDATE SKIP LOCKED"
+        },
+        {
+          "id": "b",
+          "text": "FOR UPDATE"
+        },
+        {
+          "id": "c",
+          "text": "FOR SHARE SKIP LOCKED"
+        },
+        {
+          "id": "d",
+          "text": "FOR UPDATE NOWAIT"
+        }
+      ],
+      "answer": {
+        "optionId": "a"
+      }
+    },
+    "remember": "In PostgreSQL, FOR UPDATE SKIP LOCKED lets many workers claim different queued rows at once without blocking each other."
   }
 ]

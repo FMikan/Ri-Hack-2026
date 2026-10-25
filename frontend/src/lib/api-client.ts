@@ -18,6 +18,7 @@ import type {
   FriendDto,
   FriendRequest,
   GoogleLoginRequest,
+  InboxDto,
   KnowledgeMapDto,
   LeaderboardDto,
   LessonDto,
@@ -42,7 +43,6 @@ import type {
   QuestionDetailDto,
   QueueStateDto,
   RegisterRequest,
-  RewardEventDto,
   SeasonDto,
   ReportQuestionRequest,
   ResetPasswordRequest,
@@ -57,6 +57,8 @@ import type {
   StartCalibrationRequest,
   StartPracticeRequest,
   SubmitAnswerRequest,
+  SubscribeRequest,
+  SubscriptionDto,
   SubmitLessonCheckRequest,
   TitleDto,
   TopicDto,
@@ -300,7 +302,7 @@ export const api = {
   resign: (id: string) => request<MatchStateDto>(`/api/matches/${id}/resign`, { method: 'POST' }),
   startPractice: (body: StartPracticeRequest) => request<MatchStateDto>('/api/matches/practice', post(body)),
   startCalibration: (body: StartCalibrationRequest) => request<MatchStateDto>('/api/matches/calibration', post(body)),
-  // Untimed practice waits in the interstitial until the player moves on.
+  // Untimed practice waits in the interstitial until the player moves on; a bot duel takes it too (and moves on by itself after 30 s).
   next: (id: string) => request<MatchStateDto>(`/api/matches/${id}/next`, { method: 'POST' }),
   // Only after answering; the first request may take up to 8 s while the AI writes it.
   explanation: (questionId: string, signal?: AbortSignal) =>
@@ -333,7 +335,6 @@ export const api = {
   purchase: (body: PurchaseRequest) => request<MeDto>('/api/shop/purchase', post(body)),
   myItems: (signal?: AbortSignal) => request<ShopItemDto[]>('/api/me/items', { signal }),
   equip: (body: SetEquipmentRequest) => request<MeDto>('/api/me/equipment', { method: 'PUT', body: JSON.stringify(body) }),
-  rewards: (signal?: AbortSignal) => request<RewardEventDto[]>('/api/me/rewards?limit=50', { signal }),
   // Opens today's attempt: the 60 s run from the first call. The archive (by day) never opens one.
   dailyChallenge: (signal?: AbortSignal) => request<DailyChallengeDto>('/api/daily-challenge', { signal }),
   dailyChallengeOn: (day: string, signal?: AbortSignal) => request<DailyChallengeDto>(`/api/daily-challenge/${day}`, { signal }),
@@ -359,6 +360,8 @@ export const api = {
   challenge: (code: string, signal?: AbortSignal) =>
     request<FriendChallengeDto>(`/api/friend-challenges/${encodeURIComponent(code)}`, { signal }),
   joinChallenge: (code: string) => request<MatchStateDto>(`/api/friend-challenges/${encodeURIComponent(code)}/join`, { method: 'POST' }),
+  declineChallenge: (code: string) => request<void>(`/api/friend-challenges/${encodeURIComponent(code)}/decline`, { method: 'POST' }),
+  inbox: (signal?: AbortSignal) => request<InboxDto>('/api/me/inbox', { signal }),
 
   myMatches: (signal?: AbortSignal) => request<MatchSummaryDto[]>('/api/me/matches?limit=50', { signal }),
   dueConcepts: (signal?: AbortSignal) => request<DueConceptsDto>('/api/me/progress/due', { signal }),
@@ -375,4 +378,12 @@ export const api = {
   professorQuiz: (id: string, signal?: AbortSignal) => request<ProfessorQuizDto>(`/api/professor/quizzes/${id}`, { signal }),
   answerProfessorQuiz: (id: string, body: ProfessorQuizAnswerRequest) =>
     request<ProfessorQuizResultDto>(`/api/professor/quizzes/${id}/answers`, post(body)),
+
+  // The Senior developer subscription (docs §6.13). The card payment is simulated: nothing is charged.
+  subscription: (signal?: AbortSignal) => request<SubscriptionDto>('/api/subscription', { signal }),
+  subscribe: (body: SubscribeRequest) => request<SubscriptionDto>('/api/subscription', post(body)),
+  // Turns the renewal off; Senior stays until premiumUntil.
+  cancelSubscription: () => request<SubscriptionDto>('/api/subscription', { method: 'DELETE' }),
+  // 25 coins once a day for a Senior developer; answers with the updated MeDto.
+  claimDailyCoins: () => request<MeDto>('/api/subscription/daily-coins', { method: 'POST' }),
 }
