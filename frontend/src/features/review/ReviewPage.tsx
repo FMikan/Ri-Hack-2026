@@ -27,8 +27,10 @@ export function ReviewPage() {
   const load = useCallback((signal: AbortSignal) => api.review(id, signal), [id])
   const review = useAsync(load)
 
+  // grid-cols-1 (minmax(0, 1fr)) on main, the questions section and its list: an auto column grows to fit a long
+  // one-line (truncated) prompt in a question's summary, and the page scrolls sideways.
   return (
-    <main className="mx-auto grid w-full max-w-3xl content-start gap-5 px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="mx-auto grid w-full max-w-3xl grid-cols-1 content-start gap-5 px-4 pb-10 sm:px-6 lg:px-8">
       <title>{`${t.review.documentTitle} · StackOff`}</title>
       <Link
         to="/profile"
@@ -131,9 +133,9 @@ function ReviewView({ review }: { review: MatchReviewDto }) {
         </Card>
       )}
 
-      <section className="grid gap-3">
+      <section className="grid grid-cols-1 gap-3">
         <h2 className="font-heading text-lg font-semibold">{copy.questions}</h2>
-        <ol className="grid gap-2">
+        <ol className="grid grid-cols-1 gap-2">
           {review.questions.map((question) => (
             <ReviewItem key={question.index} question={question} opponentName={opponentName} />
           ))}
@@ -162,7 +164,7 @@ function ReviewItem({ question, opponentName }: { question: ReviewQuestionDto; o
             <Badge variant="secondary">{question.concept.name}</Badge>
             <Badge variant="outline">{copy.slots[question.slot]}</Badge>
           </p>
-          <QuestionBody content={question.question.content} mine={question.mine.payload} correct={question.key.answer} locked onAnswer={() => {}} />
+          <QuestionBody content={question.question.content} language={question.question.language} mine={question.mine.payload} correct={question.key.answer} locked onAnswer={() => {}} />
           <div className="flex flex-wrap gap-2">
             <AnswerChip who={t.match.you} result={question.mine} />
             {question.opponent && opponentName && <AnswerChip who={opponentName} result={question.opponent} />}
