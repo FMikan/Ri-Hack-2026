@@ -53,7 +53,7 @@ export function SeniorDailyCard() {
           {t.dashboard.today.done}
         </Badge>
       ) : (
-        <Button aria-disabled={busy} onClick={() => !busy && claim()}>
+        <Button aria-disabled={busy} onClick={() => !busy && claim()} className="bg-warning text-primary-foreground hover:bg-warning/85">
           <img src={coinSmall} alt="" className="size-4" />
           {copy.claim(dailyCoins)}
         </Button>
