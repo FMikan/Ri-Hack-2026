@@ -141,13 +141,38 @@ public class SocialTests(TestApp app) : RankedTestBase(app)
         Assert.Equal(ErrorCodes.FriendsNotFriends, await ErrorAsync(notFriend));
 
         var challenge = await ChallengeAsync(ana, bob.Auth.User.Id);
+        Assert.Equal(App.Clock.GetUtcNow().AddSeconds(GameRules.FriendInviteSeconds), challenge.ExpiresAt);
 
         var inbox = (await bob.Client.GetFromJsonAsync<DashboardDto>("/api/me/dashboard", App.Json))!.Inbox.FriendChallenge!;
         Assert.Equal((challenge.Code, "ana", challenge.ExpiresAt), (inbox.Code, inbox.Host.Username, inbox.ExpiresAt));
+        Assert.Equal(challenge.Code, (await bob.Client.GetFromJsonAsync<InboxDto>("/api/me/inbox", App.Json))!.FriendChallenge!.Code);
         Assert.Null((await cid.Client.GetFromJsonAsync<DashboardDto>("/api/me/dashboard", App.Json))!.Inbox.FriendChallenge);
 
-        App.Clock.Advance(TimeSpan.FromMinutes(11));
+        App.Clock.Advance(TimeSpan.FromSeconds(GameRules.FriendInviteSeconds + 1));
         Assert.Null((await bob.Client.GetFromJsonAsync<DashboardDto>("/api/me/dashboard", App.Json))!.Inbox.FriendChallenge);
+        Assert.Null((await bob.Client.GetFromJsonAsync<InboxDto>("/api/me/inbox", App.Json))!.FriendChallenge);
+        Assert.Equal(ErrorCodes.ChallengeExpired, await ErrorAsync(await bob.Client.PostAsync($"/api/friend-challenges/{challenge.Code}/join", null)));
+    }
+
+    [Fact]
+    public async Task Friend_declines_targeted_challenge()
+    {
+        var topics = await PlayableTopicsAsync(3);
+        var ana = await PlayerAsync("ana", topics);
+        var bob = await PlayerAsync("bob", topics);
+        var cid = await PlayerAsync("cid", topics);
+        await FriendsWithAsync(ana, bob);
+        var challenge = await ChallengeAsync(ana, bob.Auth.User.Id);
+
+        // Only the friend it was sent to can decline it; anyone else changes nothing.
+        Assert.Equal(HttpStatusCode.NoContent, (await cid.Client.PostAsync($"/api/friend-challenges/{challenge.Code}/decline", null)).StatusCode);
+        Assert.NotNull((await bob.Client.GetFromJsonAsync<InboxDto>("/api/me/inbox", App.Json))!.FriendChallenge);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await bob.Client.PostAsync($"/api/friend-challenges/{challenge.Code}/decline", null)).StatusCode);
+
+        Assert.Null((await bob.Client.GetFromJsonAsync<InboxDto>("/api/me/inbox", App.Json))!.FriendChallenge);
+        var hostView = (await ana.Client.GetFromJsonAsync<FriendChallengeDto>($"/api/friend-challenges/{challenge.Code}", App.Json))!;
+        Assert.True(hostView.ExpiresAt <= App.Clock.GetUtcNow());
         Assert.Equal(ErrorCodes.ChallengeExpired, await ErrorAsync(await bob.Client.PostAsync($"/api/friend-challenges/{challenge.Code}/join", null)));
     }
 

@@ -33,7 +33,7 @@ public static class SocialEndpoints
 
         var challenges = app.MapGroup("/api/friend-challenges").WithTags("Social").RequireAuthorization();
 
-        // { friendUserId? }: with it, the challenge shows in that friend's dashboard inbox; the code works for anyone for 10 minutes.
+        // { friendUserId? }: with it, the challenge shows in that friend's inbox for a minute; an open code works for anyone for 10 minutes.
         challenges.MapPost("/", async (CreateFriendChallengeRequest request, ClaimsPrincipal user, SocialService social, CancellationToken ct) =>
             TypedResults.Created((string?)null, await social.CreateChallengeAsync(user.UserId(), request.FriendUserId, ct)))
             .ProducesProblem(StatusCodes.Status409Conflict);
@@ -46,6 +46,13 @@ public static class SocialEndpoints
             TypedResults.Created((string?)null, await social.JoinChallengeAsync(user.UserId(), code, ct)))
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        // The friend it was sent to declines it (204, also when it already closed).
+        challenges.MapPost("/{code}/decline", async (string code, ClaimsPrincipal user, SocialService social, CancellationToken ct) =>
+        {
+            await social.DeclineChallengeAsync(user.UserId(), code, ct);
+            return TypedResults.NoContent();
+        });
 
         // 403 users/profile-private when the profile is for friends only.
         app.MapGet("/api/users/{username}", (string username, ClaimsPrincipal user, ProfileService profiles, CancellationToken ct) =>

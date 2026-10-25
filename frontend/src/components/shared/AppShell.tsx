@@ -83,13 +83,22 @@ function SideRail() {
   const { pathname } = useLocation()
   const reveal = 'opacity-0 transition-opacity group-focus-within/rail:opacity-100 group-hover/rail:opacity-100'
   const friends = usePoll(api.friends, 10_000, keepPolling)
+  // 5 s: a rematch is open for 20 s and a friend's challenge for a minute.
+  const inbox = usePoll(api.inbox, 5000, keepPolling)
   const { refresh } = friends
-  // Refetch on navigation, so a request answered on Friends clears the dot as soon as you leave.
+  const { refresh: refreshInbox } = inbox
+  // Refetch on navigation, so a request answered on Friends (or an invite on the dashboard) clears the dot as soon as you leave.
   useEffect(() => {
     refresh()
-  }, [pathname, refresh])
+    refreshInbox()
+  }, [pathname, refresh, refreshInbox])
   // Hidden on Friends itself: that page lists the requests.
   const requests = pathname === '/friends' ? 0 : (friends.data?.filter((friend) => friend.status === 'pending_in').length ?? 0)
+  // An invite counts once it has been on screen: the dashboard shows it, so it stays off the dot after you leave.
+  const [seenInvites, setSeenInvites] = useState<ReadonlySet<string>>(new Set())
+  const unseen = [inbox.data?.rematch?.matchId, inbox.data?.friendChallenge?.code].filter((id): id is string => !!id && !seenInvites.has(id))
+  if (pathname === '/' && unseen.length) setSeenInvites(new Set([...seenInvites, ...unseen]))
+  const invites = pathname === '/' ? 0 : unseen.length
 
   return (
     <aside className="group/rail sticky top-0 z-40 hidden h-svh lg:block">
@@ -111,17 +120,18 @@ function SideRail() {
           <ul className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
             {NAV.map((item) => {
               const label = t.shell.nav[item.key]
+              const dot = item.key === 'friends' ? requests : item.key === 'dashboard' ? invites : 0
               const base = 'flex h-11 min-w-0 items-center gap-3 overflow-hidden rounded-lg px-4.5 text-sm font-medium whitespace-nowrap'
               const inner = (
                 <>
                   <span className="relative shrink-0">
                     <item.icon aria-hidden="true" className="size-5" />
-                    {item.key === 'friends' && requests > 0 && (
+                    {dot > 0 && (
                       <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-sidebar" />
                     )}
                   </span>
                   <span className={reveal}>{label}</span>
-                  {item.key === 'friends' && requests > 0 && <span className="sr-only">{t.shell.friendRequests(requests)}</span>}
+                  {dot > 0 && <span className="sr-only">{item.key === 'friends' ? t.shell.friendRequests(dot) : t.shell.invites(dot)}</span>}
                   {!item.to && <span className={cn('ml-auto font-mono text-xs', reveal)}>{t.shell.soon}</span>}
                 </>
               )

@@ -18,6 +18,7 @@ import type {
   FriendDto,
   FriendRequest,
   GoogleLoginRequest,
+  InboxDto,
   KnowledgeMapDto,
   LeaderboardDto,
   LessonDto,
@@ -359,6 +360,8 @@ export const api = {
   challenge: (code: string, signal?: AbortSignal) =>
     request<FriendChallengeDto>(`/api/friend-challenges/${encodeURIComponent(code)}`, { signal }),
   joinChallenge: (code: string) => request<MatchStateDto>(`/api/friend-challenges/${encodeURIComponent(code)}/join`, { method: 'POST' }),
+  declineChallenge: (code: string) => request<void>(`/api/friend-challenges/${encodeURIComponent(code)}/decline`, { method: 'POST' }),
+  inbox: (signal?: AbortSignal) => request<InboxDto>('/api/me/inbox', { signal }),
 
   myMatches: (signal?: AbortSignal) => request<MatchSummaryDto[]>('/api/me/matches?limit=50', { signal }),
   dueConcepts: (signal?: AbortSignal) => request<DueConceptsDto>('/api/me/progress/due', { signal }),

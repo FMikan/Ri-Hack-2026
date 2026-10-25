@@ -24,7 +24,7 @@ public static class GameRules
     public const int MaxStreakFreezes = 2;
 
     // Social and leaderboards (idea §12, §14)
-    public const int FriendChallengeMinutes = 10, OnlineMinutes = 2, LastSeenThrottleSeconds = 30;
+    public const int FriendChallengeMinutes = 10, FriendInviteSeconds = 60, OnlineMinutes = 2, LastSeenThrottleSeconds = 30; // invite = sent to one friend
     public const int LeaderboardSize = 100, LeaderboardAround = 2, GrandmasterTop = 100;
     public const int SeasonMonths = 3, SeasonLearningBoostDays = 14, WeeklyTitleTop = 10;
     public static readonly int[] SeasonTitleRanks = [5, 50, 100];

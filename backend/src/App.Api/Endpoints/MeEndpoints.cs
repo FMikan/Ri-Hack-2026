@@ -29,6 +29,9 @@ public static class MeEndpoints
 
         group.MapGet("/dashboard", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.GetDashboardAsync(user.UserId(), ct));
 
+        // Just the dashboard's inbox, cheap enough for the navigation to poll for its dot.
+        group.MapGet("/inbox", (ClaimsPrincipal user, MeService me, CancellationToken ct) => me.InboxAsync(user.UserId(), ct));
+
         // The ledger, newest first: what paid how many coins, XP and SP, and for what (referenceId = match, lesson, ...).
         group.MapGet("/rewards", (ClaimsPrincipal user, MeService me, CancellationToken ct, int limit = 50) =>
             me.GetRewardsAsync(user.UserId(), limit, ct));

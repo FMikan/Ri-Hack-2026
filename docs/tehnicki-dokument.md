@@ -740,7 +740,7 @@ public static class GameRules
     public const string DayTimeZone = "Europe/Zagreb";
     public const int StartRating = 1000, ProvisionalMatches = 10, ProfileAfterRankedMatches = 5, HighKMatches = 30, KHigh = 32, KLow = 16;
     public const int MaxRatingGap = 400, QueueInitialRange = 100, QueueRangeStep = 50, QueueStepSeconds = 10, GhostOfferAfterSeconds = 30, GhostRecordingMaxDays = 30;
-    public const int ProposalAcceptSeconds = 10, VetoBanSeconds = 8, VetoAnimationSeconds = 3, LobbySeconds = 5, InterstitialSeconds = 2, RematchSeconds = 20, FriendChallengeMinutes = 10;
+    public const int ProposalAcceptSeconds = 10, VetoBanSeconds = 8, VetoAnimationSeconds = 3, LobbySeconds = 5, InterstitialSeconds = 2, RematchSeconds = 20, FriendChallengeMinutes = 10, FriendInviteSeconds = 60;
     public const int ReconnectGraceSeconds = 20, ClientTimeToleranceMs = 1500, BotMinSlackMs = 500, QuestionsPerMatch = 10, CalibrationQuestions = 5, VetoPoolMax = 6;
     public const int MinTopics = 3, MaxTopics = 5, SeenQuestionDays = 30, SameOpponentMaxStreak = 3, TargetedRotationMatches = 2;
     public const int TierHysteresis = 25, GrandmasterTop = 100;
@@ -945,6 +945,7 @@ GET   /api/me                      → MeDto
 PATCH /api/me                      { username?; avatar?; locale?; profileVisibility?; notifications? } → MeDto
 PUT   /api/me/topics               { topicIds: Uuid[] }  → 204   // 3–5; 409 locked-in-queue
 GET   /api/me/dashboard            → DashboardDto
+GET   /api/me/inbox                → DashboardDto.inbox        (samo inbox, za točku u navigaciji)
 GET   /api/me/matches?limit=50     → MatchSummaryDto[]        (F1; samo završene partije, najviše 50)
 GET   /api/me/knowledge-map        → KnowledgeMapDto           (F2)
 GET   /api/me/stats                → StatsDto                  (F5)
@@ -1105,6 +1106,7 @@ POST   /api/friends/requests/{userId}/accept → FriendDto         (404 friends/
 DELETE /api/friends/{userId}                 → 204               (makni prijatelja, povuci ili odbij zahtjev)
 POST   /api/friend-challenges { friendUserId?: Uuid }  → 201 { code: string; expiresAt: Iso }   // s friendUserId (samo prihvaćeni prijatelj, inače 409 friends/not-friends): pojavi se u njegovom DashboardDto.inbox
 GET    /api/friend-challenges/{code}         → { code; host: UserRefDto; matchId?: Uuid; expiresAt: Iso }   (host polla dok ne dobije matchId)
+POST   /api/friend-challenges/{code}/decline → 204   // samo prijatelj kojem je poslan: izazov se odmah zatvara (expiresAt = sada); ostalima bez učinka
 POST   /api/friend-challenges/{code}/join    → 201 MatchStateDto  (kind 'friend', veto; 409 challenge/expired, challenge/own, topics/count, match/already-in-match)
 
 interface LeaderboardDto { board: 'global'|'season'|'weekly'|'topic'|'friends'; entries: LeaderboardEntryDto[]; me?: { entry: LeaderboardEntryDto; around: LeaderboardEntryDto[] /* uključuje moj red */ } ; resetsAt?: Iso }
@@ -1143,7 +1145,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 **F5a: prijatelji, izazov prijatelja, javni profil, statistika, rang-liste**
 - Prijatelji: `GET /api/friends` (`pending_in` prvi, pa prihvaćeni s `online` (viđen u zadnje 2 min), pa `pending_out`), `POST /api/friends/requests { username }`, `POST /api/friends/requests/{userId}/accept`, `DELETE /api/friends/{userId}`. Zahtjev prema nekome tko je već poslao zahtjev meni odmah je prihvaćen. Online status puni svaki autentificirani zahtjev (`users.last_seen_at`, najviše jednom u 30 s), pa ga polling partije i dashboarda drže svježim.
-- Izazov prijatelja: `POST /api/friend-challenges {}` (otvoreni kod) ili `{ friendUserId }` (gumb "Izazovi" uz prijatelja; on ga vidi u `dashboard.inbox.friendChallenge`). Kod je 6 znakova (A–Z, 2–9), vrijedi 10 min; link `https://<domena>/challenge/{code}`. Host polla `GET /api/friend-challenges/{code}` dok ne dobije `matchId`; gost zove `POST .../{code}/join` i dobiva `MatchStateDto` u `veto_coin`. Oba igrača trebaju 3–5 tema. Partija je kao rangirana (veto, isti tok), ali `kind: 'friend'`: bez Elo-a i SP-a, 5 coina oboma, XP i streak kao inače, revanš radi (novi friend duel).
+- Izazov prijatelja: `POST /api/friend-challenges {}` (otvoreni kod) ili `{ friendUserId }` (gumb "Izazovi" uz prijatelja; on ga vidi u `dashboard.inbox.friendChallenge`). Kod je 6 znakova (A–Z, 2–9), vrijedi 10 min (poslan prijatelju 60 s; on ga može odbiti s `POST .../{code}/decline`, a host to vidi kao istek); link `https://<domena>/challenge/{code}`. Host polla `GET /api/friend-challenges/{code}` dok ne dobije `matchId`; gost zove `POST .../{code}/join` i dobiva `MatchStateDto` u `veto_coin`. Oba igrača trebaju 3–5 tema. Partija je kao rangirana (veto, isti tok), ali `kind: 'friend'`: bez Elo-a i SP-a, 5 coina oboma, XP i streak kao inače, revanš radi (novi friend duel).
 - `GET /api/users/{username}` (javni profil): teme (aktivne i one s odgovorima) s `mastery`/`completion`, statistika (`matches`, `winRate`, `conceptsGraduated`); nikad mastery po konceptu. Profil `friends` je `403 urn:app:users/profile-private` za ne-prijatelje.
 - `GET /api/me/stats`: `winRate` i točnost su postoci 0–100; `accuracyByType`/`avgTimeMsByType` imaju samo tipove koje je igrač odgovarao (prosjek vremena samo za odgovore s vremenom). `dashboard.ratingHistory` i `stats.ratingHistory` su zadnjih 30 rangiranih/ghost partija, najstarija prva.
 - Rang-liste: `GET /api/leaderboards/global|weekly|friends` i `topic?topic=<slug>`. Top 100 + `me` (moj red s do 2 iznad i ispod, `around` uključuje moj red; `me` je `null` kad nisam na listi). Globalna: Elo, bez provizornih (< 10 rangiranih). Tjedna: zbroj bodova iz rangiranih i ghost partija od ponedjeljka 00:00 (Zagreb), `resetsAt` = idući ponedjeljak. Po temi: broj graduiranih koncepata, izjednačenje po masteryju teme; na listi je svatko tko je u temi nešto odgovorio. Prijatelji: ja + prihvaćeni prijatelji po Elo-u.
@@ -1532,7 +1534,7 @@ F5 Društveno i rang-liste
   Close_week_awards_top10_badge_count
   Knowledge_title_for_100_percent_graduated_and_lost_below_70
   Friend_request_accept_remove / Friend_request_in_both_directions_is_one_row / Online_status_from_last_seen
-  Friend_challenge_code_joins_veto_unranked_5_coins_each / Targeted_friend_challenge_appears_in_inbox
+  Friend_challenge_code_joins_veto_unranked_5_coins_each / Targeted_friend_challenge_appears_in_inbox / Friend_declines_targeted_challenge
   Public_profile_hides_concept_mastery / Friends_only_profile_is_403_for_strangers
   Stats_accuracy_by_type_and_most_common_blunder / Stats_and_dashboard_show_results_and_rating_history
   Retiring_question_reverts_its_mastery_deltas_and_keeps_match_result
