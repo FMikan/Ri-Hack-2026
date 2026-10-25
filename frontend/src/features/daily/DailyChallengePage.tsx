@@ -12,7 +12,7 @@ import { useAsync } from '@/hooks/use-async'
 import { useTicker } from '@/hooks/use-ticker'
 import { api, ApiError } from '@/lib/api-client'
 import { useLocale } from '@/lib/i18n/locale-context'
-import { cn } from '@/lib/utils'
+import { cn, skyOutline } from '@/lib/utils'
 import type { AnswerPayload, DailyChallengeDto } from '@/types/api'
 
 const LIMIT_MS = 60_000
@@ -155,9 +155,9 @@ function Attempt({ dto, at, onDone, onLate }: AttemptProps) {
           {seconds} s
         </span>
       </div>
-      <Card>
+      <Card className={skyOutline}>
         <CardContent>
-          <QuestionBody content={dto.question.content} mine={sent} locked={!!sent || left <= 0} onAnswer={submit} />
+          <QuestionBody content={dto.question.content} language={dto.question.language} mine={sent} locked={!!sent || left <= 0} onAnswer={submit} />
         </CardContent>
       </Card>
       {error && (
@@ -183,9 +183,9 @@ function Result({ challenge }: { challenge: DailyChallengeDto }) {
           {mine.rank != null && <span className="font-heading text-lg font-semibold">{copy.rank(mine.rank)}</span>}
         </header>
       )}
-      <Card>
+      <Card className={skyOutline}>
         <CardContent className="grid gap-4">
-          <QuestionBody content={challenge.question.content} mine={mine?.payload} correct={challenge.key?.answer} locked onAnswer={() => {}} />
+          <QuestionBody content={challenge.question.content} language={challenge.question.language} mine={mine?.payload} correct={challenge.key?.answer} locked onAnswer={() => {}} />
           {challenge.key && (
             <p className="text-sm text-pretty">
               <span className="font-medium text-primary">{t.match.remember}:</span> {challenge.key.remember}

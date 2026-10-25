@@ -24,6 +24,15 @@
     --color-tier-platinum: var(--tier-platinum);
     --color-tier-master: var(--tier-master);
     --color-board-midnight: var(--board-midnight);
+    --color-code-keyword: var(--code-keyword);
+    --color-code-string: var(--code-string);
+    --color-code-number: var(--code-number);
+    --color-code-comment: var(--code-comment);
+    --color-code-function: var(--code-function);
+    --color-code-type: var(--code-type);
+    --color-code-attr: var(--code-attr);
+    --color-code-tag: var(--code-tag);
+    --color-code-meta: var(--code-meta);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -119,6 +128,16 @@
     --tier-platinum: #6fd6c4;
     --tier-master: #e64ccf;
     --board-midnight: #0b0f1f;
+    /* syntax colors in question code (src/features/match/highlight.ts); all 6.5:1+ on --ink */
+    --code-keyword: #c792ea;
+    --code-string: #a8d982;
+    --code-number: #f0b24a;
+    --code-comment: var(--text-muted);
+    --code-function: #7cc4ff;
+    --code-type: #6fd6c4;
+    --code-attr: #ffcb6b;
+    --code-tag: #ff8a8c;
+    --code-meta: #f59fd5;
     /* Input borders need 3:1 against the page (WCAG 1.4.11). */
     --border: rgb(255 255 255 / 0.07);
     --input: rgb(255 255 255 / 0.36);

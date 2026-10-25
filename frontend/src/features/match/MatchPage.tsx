@@ -14,7 +14,7 @@ import { ratingText } from '@/lib/game'
 import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { topicIcon } from '@/lib/topic-icons'
-import { cn } from '@/lib/utils'
+import { cn, skyOutline } from '@/lib/utils'
 import type { AnswerPayload, PlayerDto } from '@/types/api'
 import { AnswerChip } from './AnswerChip'
 import { Explanation } from './Explanation'
@@ -225,10 +225,10 @@ function Scoreboard({ me, opponent, opponentName, opponentAnswered }: Scoreboard
   )
 
   if (!opponent)
-    return <div className="grid rounded-xl bg-card p-3 ring-1 ring-foreground/10 sm:p-4">{side(me, t.match.you, false)}</div>
+    return <div className={cn('grid rounded-xl bg-card p-3 sm:p-4', skyOutline)}>{side(me, t.match.you, false)}</div>
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 sm:p-4">
+    <div className={cn('grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-xl bg-card p-3 sm:p-4', skyOutline)}>
       {side(me, t.match.you, false)}
       <span className="font-mono text-xs text-muted-foreground">vs</span>
       {side(opponent, opponentName, opponentAnswered, true)}
@@ -310,10 +310,11 @@ function QuestionStage({ snapshot, command, opponentName }: QuestionStageProps) 
   return (
     <section className="grid gap-5">
       {match.timed && <TimerBar left={left} total={limit} hidden={!!interstitial} />}
-      <Card>
+      <Card className={skyOutline}>
         <CardContent>
           <QuestionBody
             content={turn.question.content}
+            language={turn.question.language}
             mine={mine}
             correct={interstitial?.key.answer}
             locked={answered || left <= 0 || !!interstitial}

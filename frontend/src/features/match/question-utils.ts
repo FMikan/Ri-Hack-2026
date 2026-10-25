@@ -11,7 +11,7 @@ export function markOf(id: string, picked: string | undefined, correct: string |
 }
 
 export const markStyles: Record<Mark, string> = {
-  idle: 'bg-secondary ring-border',
+  idle: 'bg-secondary ring-primary/50',
   picked: 'bg-primary/15 text-primary ring-primary',
   correct: 'bg-success/15 text-success ring-success',
   wrong: 'bg-destructive/15 text-destructive ring-destructive',

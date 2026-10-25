@@ -33,7 +33,7 @@ export function OptionList({ options, picked, correct, locked, mono, onPick }: O
               disabled={locked}
               onClick={() => onPick(option.id)}
               className={cn(
-                'flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium ring-1 ring-inset transition-[color,background-color,box-shadow,scale] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:hover:ring-input enabled:active:scale-[0.98] disabled:cursor-default',
+                'flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium ring-2 ring-inset transition-[color,background-color,box-shadow,scale] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:hover:ring-primary enabled:active:scale-[0.98] disabled:cursor-default',
                 markStyles[mark],
               )}
             >
