@@ -308,7 +308,7 @@ function FriendRow({ friend, onChanged, onChallenge }: { friend: FriendDto; onCh
         <span className="grid min-w-0">
           <span className={cn('truncate text-sm font-medium', nameClass(user))}>{user.username}</span>
           <span className="truncate text-xs text-muted-foreground">
-            {user.title ?? t.dashboard.tiers[user.tier]} · <span className="font-mono tabular-nums">{ratingText(user.rating, user.isProvisional)}</span>
+            {user.title ?? t.dashboard.tiers[user.tier]} · <span className="font-mono tabular-nums">{ratingText(user.rating, user.isProvisional, t)}</span>
             {friend.status === 'accepted' && (
               <>
                 {' · '}

@@ -5,7 +5,7 @@ import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 import type { Option } from '@/types/api'
 import { MarkIcon } from './OptionList'
-import { markStyles, type Mark } from './question-utils'
+import { badge, badgeStyles, idleHover, markStyles, type Mark } from './question-utils'
 
 type Pairs = { leftId: string; rightId: string }[]
 
@@ -18,7 +18,8 @@ interface MatchPairsProps {
   onAnswer: (pairs: Pairs) => void
 }
 
-const tile = 'flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ring-2 ring-inset'
+const tile =
+  'flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none'
 
 // Tap a left item, then its match on the right; a number ties the two together. Locked, it lists the pairs.
 export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: MatchPairsProps) {
@@ -67,8 +68,8 @@ export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: Mat
       return { pairs: next, active: left.find((item) => !next[item.id])?.id }
     })
 
-  const badge = (n: number) => (
-    <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center rounded-full bg-primary font-mono text-xs text-primary-foreground">
+  const pairBadge = (n: number) => (
+    <span aria-hidden="true" className={cn(badge, badgeStyles.picked)}>
       {n}
     </span>
   )
@@ -87,10 +88,10 @@ export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: Mat
                 className={cn(
                   tile,
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                  active === item.id ? markStyles.picked : 'bg-secondary ring-primary/50 hover:ring-primary',
+                  active === item.id ? markStyles.picked : cn(markStyles.idle, idleHover),
                 )}
               >
-                {pairs[item.id] ? badge(number(item.id)) : <span aria-hidden="true" className="size-6 shrink-0 rounded-full ring-1 ring-border" />}
+                {pairs[item.id] ? pairBadge(number(item.id)) : <span aria-hidden="true" className={cn(badge, badgeStyles.idle)} />}
                 <span className="min-w-0 font-mono text-[0.8125rem] break-words">{item.text}</span>
               </button>
             </li>
@@ -107,11 +108,11 @@ export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: Mat
                   onClick={() => pick(item.id)}
                   className={cn(
                     tile,
-                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring enabled:hover:ring-primary disabled:cursor-default',
-                    owner ? 'bg-primary/10 ring-primary' : 'bg-secondary ring-primary/50',
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-default',
+                    owner ? markStyles.picked : cn(markStyles.idle, idleHover),
                   )}
                 >
-                  {owner && badge(number(owner))}
+                  {owner && pairBadge(number(owner))}
                   <span className="min-w-0 break-words">{item.text}</span>
                 </button>
               </li>

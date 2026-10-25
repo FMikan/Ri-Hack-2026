@@ -2,6 +2,7 @@ import { Bot, Ghost, LoaderCircle } from 'lucide-react'
 import { createElement, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { DuelBadge } from '@/components/shared/RankedDuelIcon'
+import { seat, SeatFrame } from '@/components/shared/SeatFrame'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -316,13 +317,11 @@ const clock = (ms: number) => {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 }
 
-const seat = 'size-16 sm:size-20'
-
 // Me on the left, the opponent's seat on the right ("?" and the rating range while searching), the swords between.
 // Searching and the proposal both render it first, so it stays mounted: only the right seat changes, the swords keep going.
 function Versus({ me, opponent, range = 0 }: { me: MeDto; opponent?: UserRefDto; range?: number }) {
   const { t } = useLocale()
-  const tierLine = (user: UserRefDto) => `${t.dashboard.tiers[user.tier]} · ${ratingText(user.rating, user.isProvisional)}`
+  const tierLine = (user: UserRefDto) => `${t.dashboard.tiers[user.tier]} · ${ratingText(user.rating, user.isProvisional, t)}`
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-3 pt-2 sm:gap-6">
@@ -373,17 +372,6 @@ function Seat({ avatar, name, nameClassName, detail }: { avatar: ReactNode; name
         {detail && <p className="truncate text-xs text-muted-foreground tabular-nums sm:text-sm">{detail}</p>}
       </div>
     </div>
-  )
-}
-
-// A seat's sky ring, drawn where the duel badge draws its own (2px outside the circle) so all three line up. The portrait
-// sits inside with a gap.
-function SeatFrame({ children }: { children: ReactNode }) {
-  return (
-    <span aria-hidden="true" className={cn('relative grid place-items-center', seat)}>
-      <span className="absolute -inset-0.5 rounded-full border-2 border-primary" />
-      {children}
-    </span>
   )
 }
 

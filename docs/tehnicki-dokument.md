@@ -151,7 +151,7 @@ create table users (
   profile_visibility    text not null default 'public' check (profile_visibility in ('public','friends')),
   notifications         jsonb not null default '{"dailyChallenge":true,"streakReminder":true,"rematch":true}',
   rating                integer not null default 1000,
-  ranked_matches        integer not null default 0,           -- Elo K=32 do 30, '?' do 10, profil za ciljanje od 5 (§9, §8 ideje)
+  ranked_matches        integer not null default 0,           -- Elo K=32 do 30, 'Placement' do 10, profil za ciljanje od 5 (§9, §8 ideje)
   tier                  text not null default 'bronze' check (tier in ('bronze','silver','gold','platinum','diamond','master')),  -- s histerezom
   is_grandmaster        boolean not null default false,       -- globalni top 100, osvježava Housekeeping; DTO prikazuje 'grandmaster'
   coins                 integer not null default 0 check (coins >= 0),   -- keš ledgera, mijenja se samo ExecuteUpdate-om

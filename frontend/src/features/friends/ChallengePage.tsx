@@ -48,7 +48,7 @@ export function ChallengePage() {
                 <div className="grid gap-0.5">
                   <p className={cn('font-heading text-xl font-semibold', nameClass(data.host))}>{data.host.username}</p>
                   <p className="text-sm text-muted-foreground">
-                    {data.host.title ?? t.dashboard.tiers[data.host.tier]} · {ratingText(data.host.rating, data.host.isProvisional)}
+                    {data.host.title ?? t.dashboard.tiers[data.host.tier]} · {ratingText(data.host.rating, data.host.isProvisional, t)}
                   </p>
                 </div>
                 <p className="max-w-sm text-pretty">{copy.body}</p>
