@@ -449,7 +449,6 @@ Tri ciklusa drže igrača: dnevni (streak, zadaci, izazov), tjedni (leaderboard,
 | Zadatak | Nagrada |
 | --- | --- |
 | Odigraj 2 rangirane partije | 20 coina |
-| Zakrpaj 1 koncept | 20 coina |
 | Riješi dnevni izazov | 20 coina |
 | Odigraj trening na najslabijoj temi | 20 coina |
 | Osvoji 3 oznake Brilliant | 20 coina |
