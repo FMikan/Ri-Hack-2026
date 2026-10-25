@@ -5,7 +5,7 @@ import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 import type { Option } from '@/types/api'
 import { MarkIcon } from './OptionList'
-import { markStyles, type Mark } from './question-utils'
+import { badge, badgeStyles, markStyles, type Mark } from './question-utils'
 
 interface OrderStepsProps {
   steps: Option[]
@@ -15,7 +15,7 @@ interface OrderStepsProps {
   onAnswer: (orderedIds: string[]) => void
 }
 
-const row = 'flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ring-2 ring-inset'
+const row = 'flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ring-inset'
 
 // Up and down buttons instead of drag and drop: they work the same with a thumb, a mouse and a keyboard.
 export function OrderSteps({ steps, mine, correct, locked, onAnswer }: OrderStepsProps) {
@@ -31,7 +31,9 @@ export function OrderSteps({ steps, mine, correct, locked, onAnswer }: OrderStep
           const mark: Mark = !correct ? 'idle' : correct[index] === id ? 'correct' : 'wrong'
           return (
             <li key={id} className={cn(row, markStyles[mark])}>
-              <span className="w-5 shrink-0 font-mono text-xs opacity-70">{index + 1}</span>
+              <span aria-hidden="true" className={cn(badge, badgeStyles[mark])}>
+                {index + 1}
+              </span>
               <span className="min-w-0 flex-1 break-words">{text(id)}</span>
               {mark === 'wrong' && <span className="shrink-0 font-mono text-xs">→ {correct!.indexOf(id) + 1}</span>}
               <MarkIcon mark={mark} />
@@ -56,8 +58,10 @@ export function OrderSteps({ steps, mine, correct, locked, onAnswer }: OrderStep
       <p className="text-sm text-muted-foreground">{t.match.hints.order}</p>
       <ol className="grid gap-2">
         {order.map((id, index) => (
-          <li key={id} className={cn(row, 'bg-secondary py-1 pr-1 ring-primary/50')}>
-            <span className="w-5 shrink-0 font-mono text-xs text-muted-foreground">{index + 1}</span>
+          <li key={id} className={cn(row, markStyles.idle, 'py-1 pr-1')}>
+            <span aria-hidden="true" className={cn(badge, badgeStyles.idle)}>
+              {index + 1}
+            </span>
             <span className="min-w-0 flex-1 break-words">{text(id)}</span>
             <button type="button" aria-label={t.match.moveUp(text(id))} disabled={index === 0} onClick={() => move(index, index - 1)} className={arrow}>
               <ArrowUp aria-hidden="true" className="size-4" />
