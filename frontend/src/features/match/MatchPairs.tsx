@@ -19,7 +19,7 @@ interface MatchPairsProps {
 }
 
 const tile =
-  'flex min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none'
+  'flex h-full min-h-12 w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none'
 
 // Tap a left item, then its match on the right; a number ties the two together. Locked, it lists the pairs.
 export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: MatchPairsProps) {
@@ -77,8 +77,9 @@ export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: Mat
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted-foreground">{t.match.hints.pairs}</p>
+      {/* Both columns stretch to the taller one and split it into equal rows, so the tiles line up across. */}
       <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
-        <ul className="grid content-start gap-2">
+        <ul className="grid auto-rows-fr gap-2">
           {left.map((item) => (
             <li key={item.id}>
               <button
@@ -97,7 +98,7 @@ export function MatchPairs({ left, right, mine, correct, locked, onAnswer }: Mat
             </li>
           ))}
         </ul>
-        <ul className="grid content-start gap-2">
+        <ul className="grid auto-rows-fr gap-2">
           {right.map((item) => {
             const owner = Object.keys(pairs).find((leftId) => pairs[leftId] === item.id)
             return (
