@@ -54,4 +54,13 @@ public record ResetPasswordRequest
     public required string NewPassword { get; init; }
 }
 
+public record GoogleLoginRequest
+{
+    [Required]
+    public required string IdToken { get; init; } // the credential Google's sign-in button hands the page
+}
+
+// What the login page needs before anyone signs in: the Google client id, or null to hide the Google button.
+public record AuthConfigDto(string? GoogleClientId);
+
 public record AuthResponse(string AccessToken, DateTimeOffset AccessTokenExpiresAt, string RefreshToken, MeDto User);

@@ -14,6 +14,7 @@ interface AuthFormProps {
     switchLink: string
   }
   switchTo: string
+  beforeForm?: ReactNode // other ways in, such as Google sign-in
   formError?: string
   submitting: boolean
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void
@@ -21,12 +22,13 @@ interface AuthFormProps {
   children: ReactNode
 }
 
-// Heading, form error, fields, submit button and the link to the other auth page.
-export function AuthForm({ copy, switchTo, formError, submitting, onSubmit, onChange, children }: AuthFormProps) {
+// Heading, other sign-in options, form error, fields, submit button and the link to the other auth page.
+export function AuthForm({ copy, switchTo, beforeForm, formError, submitting, onSubmit, onChange, children }: AuthFormProps) {
   return (
     <AuthLayout title={copy.documentTitle}>
       <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{copy.title}</h1>
       <p className="mt-2 text-pretty text-muted-foreground short:hidden">{copy.subtitle}</p>
+      {beforeForm}
 
       <form
         noValidate

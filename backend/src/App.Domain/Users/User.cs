@@ -6,7 +6,8 @@ public class User
     public required string Email { get; set; } // stored lowercased
     public required string Username { get; set; }
     public required string UsernameNormalized { get; set; } // lower(username): unique, used for login and URLs
-    public required string PasswordHash { get; set; }
+    public string? PasswordHash { get; set; } // null for an account that only signs in with Google
+    public string? GoogleSubject { get; set; } // Google's stable account id ("sub"), set on the first Google sign-in
     public string Avatar { get; set; } = "default";
     public string Locale { get; set; } = "en";
     public ProfileVisibility ProfileVisibility { get; set; } = ProfileVisibility.Public;

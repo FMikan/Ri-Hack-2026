@@ -151,7 +151,7 @@ create table users (
   profile_visibility    text not null default 'public' check (profile_visibility in ('public','friends')),
   notifications         jsonb not null default '{"dailyChallenge":true,"streakReminder":true,"rematch":true}',
   rating                integer not null default 1000,
-  ranked_matches        integer not null default 0,           -- Elo K=32 do 30, '?' do 10, profil za ciljanje od 5 (§9, §8 ideje)
+  ranked_matches        integer not null default 0,           -- Elo K=32 do 30, 'Placement' do 10, profil za ciljanje od 5 (§9, §8 ideje)
   tier                  text not null default 'bronze' check (tier in ('bronze','silver','gold','platinum','diamond','master')),  -- s histerezom
   is_grandmaster        boolean not null default false,       -- globalni top 100, osvježava Housekeeping; DTO prikazuje 'grandmaster'
   coins                 integer not null default 0 check (coins >= 0),   -- keš ledgera, mijenja se samo ExecuteUpdate-om
@@ -927,6 +927,8 @@ interface ExplanationDto { whyCorrect: string; whyDistractor: string; remember: 
 ```ts
 POST /api/auth/register   { email; username; password }  → 201 AuthResponse      // password 8–128 znakova; rate limit 5/min po IP-u
 POST /api/auth/login      { email; password }            → 200 AuthResponse      // 401 invalid-credentials; rate limit 10/min po IP-u
+GET  /api/auth/config                                    → { googleClientId: string | null }   // null = Google prijava isključena, gumb se ne prikazuje
+POST /api/auth/google     { idToken }                    → 200 AuthResponse      // ID token s Googleovog gumba; 401 google-invalid (neispravan token ili neprovjeren e-mail); 409 email-taken; rate limit 10/min po IP-u
 POST /api/auth/refresh    { refreshToken }               → 200 AuthResponse      // rotira; stari se opoziva; opozvani token ponovno → 401 i opoziv cijele obitelji
 POST /api/auth/logout     { refreshToken }               → 204
 POST /api/auth/forgot-password { email }                 → 202 uvijek (ne otkriva postoji li e-mail); šalje link `{Frontend:BaseUrl}/reset-password?token=...`; rate limit 10/min po IP-u
@@ -1166,6 +1168,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 **F0b: reset lozinke i rate limit**
 - `/forgot-password` uvijek vraća 202: ekran uvijek kaže "ako račun postoji, poslali smo link", bez obzira na e-mail.
 - Link iz e-maila je `{Frontend:BaseUrl}/reset-password?token=...`; ruta `/reset-password` čita `token` iz querya i šalje `POST /api/auth/reset-password`. `204` → login (sve sesije su odjavljene); `409 urn:app:auth/reset-token-invalid` → ponudi novi link. Lokalno nema maila: link je u logu API-ja.
+- Prijava Googleom: `GET /api/auth/config` daje `googleClientId` (iz `Auth:GoogleClientId`; `null` = bez gumba). Googleov gumb (Google Identity Services) vraća ID token, `POST /api/auth/google { idToken }` ga provjerava (Googleov potpis, naš client id, rok) i vraća isti `AuthResponse` kao login. Isti Google račun (`sub`) uvijek otvara istog korisnika; provjeren e-mail koji već ima račun bez Googlea se povezuje s njim (lozinka i dalje radi); inače nastaje novi korisnik bez lozinke s imenom iz e-maila (`ana.k+x@gmail.com` → `anak`, zauzeto → `anak_1234`), koje se kasnije može promijeniti. Račun bez lozinke dobiva lozinku preko "zaboravljena lozinka".
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
 
 **F4b: dnevni zadaci, dnevni izazov, shop, oprema**
@@ -1414,6 +1417,9 @@ F0 Auth i profil (minimum)
   Register_with_taken_email_is_409 / Register_with_taken_username_case_insensitive_is_409
   Register_with_short_password_is_400_validation / Register_with_blank_body_is_400 / Malformed_json_is_400_not_500
   Login_with_wrong_password_is_401_problem
+  Google_sign_in_creates_a_user_with_a_free_username_and_no_password / Google_sign_in_again_opens_the_same_user_even_after_the_email_changed
+  Google_sign_in_links_the_account_with_the_same_verified_email / Google_sign_in_rejects_unknown_tokens_and_unverified_emails / Google_sign_in_with_another_google_account_on_a_linked_email_is_409
+  Auth_config_names_the_google_client
   Protected_endpoint_without_token_is_401 / Expired_access_token_is_401_problem
   Me_returns_defaults                                                   rating 1000, provisional, bronze, 0 coins, level 1
   Set_topics_requires_3_to_5

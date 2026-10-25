@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { useAuth } from './auth-context'
 import { AuthForm } from './AuthForm'
+import { GoogleSignIn } from './GoogleSignIn'
 import { TextField } from './TextField'
 import { useAuthForm } from './use-auth-form'
 import { validateLogin } from './validation'
@@ -20,7 +21,7 @@ export function LoginPage() {
   const passwordReset = (location.state as { notice?: string } | null)?.notice === 'password-reset'
 
   return (
-    <AuthForm copy={t.auth.login} switchTo="/register" {...form}>
+    <AuthForm copy={t.auth.login} switchTo="/register" beforeForm={<GoogleSignIn remember={remember} />} {...form}>
       {passwordReset && (
         <p role="status" className="rounded-lg bg-success/10 px-3 py-2.5 text-sm text-success">
           {t.auth.reset.done}

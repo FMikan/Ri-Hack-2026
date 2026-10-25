@@ -59,7 +59,7 @@ export function ResultView({ match, me, opponent, opponentName }: ResultViewProp
       <p className="font-heading text-4xl font-semibold tabular-nums sm:text-5xl">{score}</p>
       {correct !== undefined && <p className="text-xs text-muted-foreground">{copy.correct(correct, match.question?.total ?? QUESTIONS_PER_MATCH)}</p>}
       {opponent && player && (
-        <p className="font-mono text-xs text-muted-foreground">{ratingText(player.displayRating, player.user?.isProvisional)}</p>
+        <p className="font-mono text-xs text-muted-foreground">{ratingText(player.displayRating, player.user?.isProvisional, t)}</p>
       )}
     </div>
   )

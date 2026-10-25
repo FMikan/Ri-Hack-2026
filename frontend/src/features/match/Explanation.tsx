@@ -1,4 +1,4 @@
-import { LoaderCircle } from 'lucide-react'
+import { Lightbulb, LoaderCircle } from 'lucide-react'
 import { useCallback } from 'react'
 import { useAsync } from '@/hooks/use-async'
 import { api } from '@/lib/api-client'
@@ -42,6 +42,20 @@ export function Explanation({ questionId, initial, showUnavailable }: Explanatio
           <span className="font-medium text-destructive">{t.match.whyDistractor}:</span> {data.whyDistractor}
         </p>
       )}
+    </div>
+  )
+}
+
+// The line to remember after a question: a calm tile, sky only in its label.
+export function Remember({ text }: { text: string }) {
+  const { t } = useLocale()
+  return (
+    <div className="grid gap-1 rounded-lg bg-secondary px-4 py-3">
+      <p className="flex items-center gap-1.5 font-mono text-xs font-medium tracking-wide text-primary uppercase">
+        <Lightbulb aria-hidden="true" className="size-3.5" />
+        {t.match.remember}
+      </p>
+      <p className="text-base leading-snug text-pretty">{text}</p>
     </div>
   )
 }

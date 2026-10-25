@@ -42,6 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const auth = await api.login(body, remember)
         setSession({ status: 'authenticated', user: auth.user })
       },
+      googleLogin: async (idToken, remember) => {
+        const auth = await api.googleLogin({ idToken }, remember)
+        setSession({ status: 'authenticated', user: auth.user })
+      },
       register: async (body) => {
         const auth = await api.register(body)
         setSession({ status: 'authenticated', user: auth.user })
