@@ -1,10 +1,19 @@
-import { useCallback, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { createElement, useCallback, useState } from 'react'
 import { Link } from 'react-router'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/auth-context'
 import { useAsync } from '@/hooks/use-async'
@@ -12,10 +21,11 @@ import { api } from '@/lib/api-client'
 import { nameClass } from '@/lib/cosmetics'
 import { relativeTime } from '@/lib/format'
 import { useLocale } from '@/lib/i18n/locale-context'
+import { topicIcon } from '@/lib/topic-icons'
 import { cn } from '@/lib/utils'
 import type { Board, LeaderboardDto, LeaderboardEntryDto } from '@/types/api'
 
-const BOARDS: Board[] = ['global', 'season', 'weekly', 'topic', 'friends']
+const BOARDS: Board[] = ['global', 'season', 'weekly', 'friends', 'topic']
 const MEDALS = ['bg-medal-gold', 'bg-medal-silver', 'bg-medal-bronze']
 
 // The five leaderboards from the game idea (§14): top 100 plus my own row with the players around it.
@@ -27,7 +37,8 @@ export function LeaderboardsPage() {
   const season = useAsync(api.season)
   const [board, setBoard] = useState<Board>('global')
   const [topicSlug, setTopicSlug] = useState<string>()
-  const slug = board === 'topic' ? (topicSlug ?? topics.data?.[0]?.slug) : undefined
+  const pickedSlug = topicSlug ?? topics.data?.[0]?.slug
+  const slug = board === 'topic' ? pickedSlug : undefined
   const load = useCallback(
     // The topic board waits for the topic list, so it never asks without ?topic=.
     (signal: AbortSignal) => (board === 'topic' && !slug ? new Promise<never>(() => {}) : api.leaderboard(board, slug, signal)),
@@ -48,25 +59,58 @@ export function LeaderboardsPage() {
       </header>
 
       <div className="grid gap-3">
-        <SegmentedControl
-          label={copy.board}
-          name="board"
-          value={board}
-          onChange={setBoard}
-          // No topic board on phones: five tabs wrap into two rows there.
-          options={BOARDS.map((value) => ({ value, label: copy.boards[value], className: value === 'topic' ? 'max-sm:hidden' : undefined }))}
-          className="justify-self-start"
-        />
-        {board === 'topic' && topics.data && slug && (
+        {/* One pill: the board tabs, and on "By topic" the pill widens to the right with the topic picker joined to
+            that tab (same tint, square seam, thin divider). Neither shows on phones: five tabs would wrap there. */}
+        <div className="flex max-w-full items-stretch justify-self-start rounded-lg bg-secondary">
           <SegmentedControl
-            label={copy.topic}
-            name="board-topic"
-            value={slug}
-            onChange={setTopicSlug}
-            options={topics.data.map((topic) => ({ value: topic.slug, label: topic.name }))}
-            className="justify-self-start"
+            label={copy.board}
+            name="board"
+            value={board}
+            onChange={setBoard}
+            options={BOARDS.map((value) => ({
+              value,
+              label: copy.boards[value],
+              className: value === 'topic' ? 'max-sm:hidden has-checked:rounded-r-none' : undefined,
+            }))}
+            className={cn('bg-transparent', board === 'topic' && 'sm:pr-0')}
           />
-        )}
+          {topics.data && pickedSlug && (
+            <div
+              inert={board !== 'topic'}
+              className={cn(
+                'grid transition-[grid-template-columns,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] max-sm:hidden motion-reduce:transition-none',
+                board === 'topic' ? 'grid-cols-[1fr] opacity-100' : 'grid-cols-[0fr] opacity-0',
+              )}
+            >
+              <div className="min-w-0 overflow-hidden py-1 pr-1">
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className={cn(
+                      'flex h-full items-center gap-2 rounded-r-md border-l border-primary/25 bg-primary/15 px-3.5 text-sm font-medium whitespace-nowrap text-primary transition-colors outline-none hover:bg-primary/20',
+                      'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
+                    )}
+                  >
+                    {createElement(topicIcon(pickedSlug), { 'aria-hidden': true, className: 'size-4' })}
+                    <span className="sr-only">{copy.topic}: </span>
+                    {topics.data.find((topic) => topic.slug === pickedSlug)?.name}
+                    <ChevronDown aria-hidden="true" className="size-4 opacity-70" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-auto min-w-(--radix-dropdown-menu-trigger-width)">
+                    <DropdownMenuLabel className="font-normal text-muted-foreground">{copy.topic}</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup value={pickedSlug} onValueChange={setTopicSlug}>
+                      {topics.data.map((topic) => (
+                        <DropdownMenuRadioItem key={topic.id} value={topic.slug}>
+                          {createElement(topicIcon(topic.slug), { 'aria-hidden': true, className: 'text-primary' })}
+                          {topic.name}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          )}
+        </div>
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
           {copy.hints[board]}
           {board === 'season' && season.data && <span>· {copy.season(season.data.number)}</span>}

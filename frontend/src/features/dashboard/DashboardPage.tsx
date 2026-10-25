@@ -13,7 +13,6 @@ import { PlayCard } from './PlayCard'
 import { LevelTile, TierTile } from './ProgressTiles'
 import { RatingCard } from './RatingCard'
 import { SkillGraphCard } from './SkillGraphCard'
-import { Suggestion } from './Suggestion'
 import { TodayNotice } from './TodayNotice'
 import { TopicsCard } from './TopicsCard'
 
@@ -73,7 +72,6 @@ function DashboardView({ data, reload }: { data: DashboardDto; reload: () => voi
       <h1 className="sr-only">{t.dashboard.documentTitle}</h1>
       <Inbox inbox={data.inbox} />
       {!needsTopics && <TodayNotice data={data} />}
-      <Suggestion data={data} />
       <div className={GRID}>
         <PlayCard me={me} locked={needsTopics} className="col-span-2 xl:col-start-1 xl:row-start-1" />
         {/* A new player picks topics right after the play card; everyone else sees them further down. */}

@@ -27,6 +27,14 @@ import type {
   MatchSummaryDto,
   MeDto,
   ProblemDetails,
+  ProfessorChatDto,
+  ProfessorChatSummaryDto,
+  ProfessorDeltaDto,
+  ProfessorLessonDto,
+  ProfessorQuizAnswerRequest,
+  ProfessorQuizDto,
+  ProfessorQuizResultDto,
+  ProfessorTurnDto,
   PublicProfileDto,
   PurchaseRequest,
   QuestionDetailDto,
@@ -39,7 +47,9 @@ import type {
   RematchDto,
   SetEquipmentRequest,
   SetTopicsRequest,
+  SendProfessorMessageRequest,
   ShopDto,
+  ShopItemDto,
   StatsDto,
   StartBotMatchRequest,
   StartCalibrationRequest,
@@ -180,6 +190,74 @@ async function request<T>(path: string, init: RequestInit = {}, { auth = true } 
   }
 }
 
+// Server-sent events over a POST (EventSource can send neither a body nor the bearer token). Problems before the
+// stream opens (400, 404, 429, 503) throw like request(), and a 401 refreshes the session once. Then each 'delta'
+// goes to onDelta; 'done' resolves with the saved turn and 'error' throws its Problem Details (docs §6.12).
+async function streamTurn(body: SendProfessorMessageRequest, onDelta: (text: string) => void, signal?: AbortSignal) {
+  const open = async (token?: string) => {
+    try {
+      return await fetch(`${API_BASE_URL}/api/professor/messages`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+        signal,
+        headers: {
+          // Without problem+json the API cannot answer an error before the stream with Problem Details.
+          Accept: 'text/event-stream, application/problem+json',
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+    } catch (error) {
+      if (signal?.aborted) throw error
+      throw new ApiError(0)
+    }
+  }
+
+  let response = await open(accessToken)
+  if (response.status === 401) {
+    const session = await refreshSession()
+    if (!session) {
+      accessToken = undefined
+      onUnauthenticated()
+      throw new ApiError(401)
+    }
+    response = await open(session.accessToken)
+  }
+  if (!response.ok || !response.body)
+    throw new ApiError(response.status, (await response.json().catch(() => undefined)) as ProblemDetails | undefined)
+
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = ''
+  for (;;) {
+    let chunk: ReadableStreamReadResult<string>
+    try {
+      chunk = await reader.read()
+    } catch (error) {
+      if (signal?.aborted) throw error
+      throw new ApiError(0)
+    }
+    if (chunk.done) throw new ApiError(0) // the connection closed before the answer was saved
+    buffer += chunk.value
+    for (let end = buffer.indexOf('\n\n'); end >= 0; end = buffer.indexOf('\n\n')) {
+      const lines = buffer.slice(0, end).split('\n')
+      buffer = buffer.slice(end + 2)
+      const type = lines.find((line) => line.startsWith('event:'))?.slice(6).trim()
+      const data = lines
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).replace(/^ /, ''))
+        .join('\n')
+      if (type === 'delta') onDelta((JSON.parse(data) as ProfessorDeltaDto).text)
+      else if (type === 'done') {
+        void reader.cancel()
+        return JSON.parse(data) as ProfessorTurnDto
+      } else if (type === 'error') {
+        const problem = JSON.parse(data) as ProblemDetails
+        throw new ApiError(problem.status ?? 503, problem)
+      }
+    }
+  }
+}
+
 export const api = {
   health: (signal?: AbortSignal) => request<HealthResponse>('/health', { signal }, { auth: false }),
   // Responds 503 (thrown as ApiError) when the API is up but PostgreSQL is not reachable.
@@ -246,6 +324,7 @@ export const api = {
   // Economy (F4): purchases and equipment answer with the updated MeDto.
   shop: (signal?: AbortSignal) => request<ShopDto>('/api/shop', { signal }),
   purchase: (body: PurchaseRequest) => request<MeDto>('/api/shop/purchase', post(body)),
+  myItems: (signal?: AbortSignal) => request<ShopItemDto[]>('/api/me/items', { signal }),
   equip: (body: SetEquipmentRequest) => request<MeDto>('/api/me/equipment', { method: 'PUT', body: JSON.stringify(body) }),
   rewards: (signal?: AbortSignal) => request<RewardEventDto[]>('/api/me/rewards?limit=50', { signal }),
   // Opens today's attempt: the 60 s run from the first call. The archive (by day) never opens one.
@@ -277,4 +356,16 @@ export const api = {
   myMatches: (signal?: AbortSignal) => request<MatchSummaryDto[]>('/api/me/matches?limit=50', { signal }),
   dueConcepts: (signal?: AbortSignal) => request<DueConceptsDto>('/api/me/progress/due', { signal }),
   knowledgeMap: (signal?: AbortSignal) => request<KnowledgeMapDto>('/api/me/knowledge-map', { signal }),
+
+  // AI Professor (docs §6.12). Lessons and quizzes are for learning only: no coins, XP or mastery.
+  professorChats: (signal?: AbortSignal) => request<ProfessorChatSummaryDto[]>('/api/professor/chats', { signal }),
+  professorChat: (id: string, signal?: AbortSignal) => request<ProfessorChatDto>(`/api/professor/chats/${id}`, { signal }),
+  askProfessor: streamTurn,
+  // Writing one takes 10-30 s; the same answer always gets the same lesson or quiz back.
+  createProfessorLesson: (messageId: string) => request<ProfessorLessonDto>('/api/professor/lessons', post({ messageId })),
+  professorLesson: (id: string, signal?: AbortSignal) => request<ProfessorLessonDto>(`/api/professor/lessons/${id}`, { signal }),
+  createProfessorQuiz: (messageId: string) => request<ProfessorQuizDto>('/api/professor/quizzes', post({ messageId })),
+  professorQuiz: (id: string, signal?: AbortSignal) => request<ProfessorQuizDto>(`/api/professor/quizzes/${id}`, { signal }),
+  answerProfessorQuiz: (id: string, body: ProfessorQuizAnswerRequest) =>
+    request<ProfessorQuizResultDto>(`/api/professor/quizzes/${id}/answers`, post(body)),
 }

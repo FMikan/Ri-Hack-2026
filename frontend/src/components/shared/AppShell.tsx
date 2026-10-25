@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -11,7 +12,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import { useState, type MouseEvent } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import coin from '@/assets/brand/stackoff-coin-on-dark.svg'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
@@ -32,15 +33,18 @@ import {
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
 import { AvatarDialog } from '@/features/profile/AvatarDialog'
+import { usePoll } from '@/hooks/use-poll'
+import { api } from '@/lib/api-client'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'friends' | 'shop' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'professor' | 'leaderboards' | 'friends' | 'shop' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
   { key: 'practice', icon: Target, to: '/practice' },
+  { key: 'professor', icon: GraduationCap, to: '/professor' },
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
   { key: 'friends', icon: Users, to: '/friends' },
   { key: 'shop', icon: Store, to: '/shop' },
@@ -48,6 +52,10 @@ const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
 ]
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+const keepPolling = () => false
+
+// An item stays lit on its sub-pages too (the professor's lessons and quizzes sit under /professor).
+const isActive = (to: string, pathname: string) => (to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`))
 
 // A mouse click leaves focus on the link, which would keep the rail wide (focus-within) until a click elsewhere.
 // Keyboard activation has detail 0 and keeps focus, so tabbing through the rail still works.
@@ -60,7 +68,8 @@ export function AppShell() {
   return (
     <div className="min-h-svh lg:grid lg:grid-cols-[5rem_minmax(0,1fr)]">
       <SideRail />
-      <div className="flex min-w-0 flex-col">
+      {/* A page marked data-fit-screen (the professor's chat) gets exactly the screen and scrolls inside itself. */}
+      <div className="flex min-w-0 flex-col has-[[data-fit-screen]]:h-dvh">
         <TopBar />
         <Outlet />
       </div>
@@ -74,6 +83,14 @@ function SideRail() {
   const { t } = useLocale()
   const { pathname } = useLocation()
   const reveal = 'opacity-0 transition-opacity group-focus-within/rail:opacity-100 group-hover/rail:opacity-100'
+  const friends = usePoll(api.friends, 10_000, keepPolling)
+  const { refresh } = friends
+  // Refetch on navigation, so a request answered on Friends clears the dot as soon as you leave.
+  useEffect(() => {
+    refresh()
+  }, [pathname, refresh])
+  // Hidden on Friends itself: that page lists the requests.
+  const requests = pathname === '/friends' ? 0 : (friends.data?.filter((friend) => friend.status === 'pending_in').length ?? 0)
 
   return (
     <aside className="group/rail sticky top-0 z-40 hidden h-svh lg:block">
@@ -98,8 +115,14 @@ function SideRail() {
               const base = 'flex h-11 min-w-0 items-center gap-3 overflow-hidden rounded-lg px-4.5 text-sm font-medium whitespace-nowrap'
               const inner = (
                 <>
-                  <item.icon aria-hidden="true" className="size-5 shrink-0" />
+                  <span className="relative shrink-0">
+                    <item.icon aria-hidden="true" className="size-5" />
+                    {item.key === 'friends' && requests > 0 && (
+                      <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-sidebar" />
+                    )}
+                  </span>
                   <span className={reveal}>{label}</span>
+                  {item.key === 'friends' && requests > 0 && <span className="sr-only">{t.shell.friendRequests(requests)}</span>}
                   {!item.to && <span className={cn('ml-auto font-mono text-xs', reveal)}>{t.shell.soon}</span>}
                 </>
               )
@@ -108,12 +131,12 @@ function SideRail() {
                   {item.to ? (
                     <NavLink
                       to={item.to}
-                      end
+                      end={item.to === '/'}
                       onClick={releaseFocus}
                       className={cn(
                         base,
                         'transition-colors',
-                        pathname === item.to
+                        isActive(item.to, pathname)
                           ? 'bg-primary/15 text-primary'
                           : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
                         focusRing,
@@ -152,7 +175,7 @@ function TopBar() {
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (
-    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:py-5">
+    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:py-5 cramped:py-1">
       <NavLink to="/" className={cn('rounded-sm lg:hidden', focusRing)}>
         <Wordmark className="h-6" />
       </NavLink>
@@ -191,8 +214,8 @@ function TopBar() {
               {NAV.map((item) => {
                 const label = t.shell.nav[item.key]
                 return item.to ? (
-                  <DropdownMenuItem key={item.key} asChild className={cn(touch, pathname === item.to && 'text-primary')}>
-                    <NavLink to={item.to} end>
+                  <DropdownMenuItem key={item.key} asChild className={cn(touch, isActive(item.to, pathname) && 'text-primary')}>
+                    <NavLink to={item.to} end={item.to === '/'}>
                       <item.icon aria-hidden="true" />
                       {label}
                     </NavLink>

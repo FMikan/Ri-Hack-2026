@@ -8,12 +8,15 @@ public static class DailyTasks
     public const string PlayRanked = "play_2_ranked", PatchConcept = "patch_1_concept", Challenge = "daily_challenge",
         PracticeWeakest = "practice_weakest", Brilliant = "3_brilliant", ReviewAllDue = "review_all_due";
     public const int Count = 3, Reward = 20, Bonus = 30;
+    // Retired: a lesson starts only from a duel review, so the task had no direct way in. Tasks generated with it before
+    // are skipped when read (DailyService).
+    public static readonly string[] Retired = [PatchConcept];
 
     // The same three for a player all day (seeded by day and player). "Review all due" only when something is due
     // (its target is that number), "practice the weakest topic" only when some topic has answers.
     public static List<DailyTaskRule> ForDay(DateOnly day, Guid userId, int dueCount, Guid? weakestTopicId)
     {
-        List<DailyTaskRule> options = [new(PlayRanked, 2), new(PatchConcept, 1), new(Challenge, 1), new(Brilliant, 3)];
+        List<DailyTaskRule> options = [new(PlayRanked, 2), new(Challenge, 1), new(Brilliant, 3)];
         if (weakestTopicId is not null) options.Add(new(PracticeWeakest, 1));
         if (dueCount > 0) options.Add(new(ReviewAllDue, dueCount));
         var pool = options.ToArray();

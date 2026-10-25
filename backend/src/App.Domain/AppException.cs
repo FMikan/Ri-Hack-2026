@@ -57,4 +57,13 @@ public static class ErrorCodes
     public const string ChallengeExpired = "urn:app:challenge/expired";
     public const string ChallengeOwn = "urn:app:challenge/own";
     public const string LeaderboardNotFound = "urn:app:leaderboards/not-found";
+    public const string ProfessorUnavailable = "urn:app:professor/unavailable";
+    public const string ProfessorFailed = "urn:app:professor/failed";
+    public const string ProfessorDeclined = "urn:app:professor/declined";
+    public const string ProfessorChatNotFound = "urn:app:professor/chat-not-found";
+    public const string ProfessorMessageNotFound = "urn:app:professor/message-not-found";
+    public const string ProfessorNoTopic = "urn:app:professor/no-topic";
+    public const string ProfessorLessonNotFound = "urn:app:professor/lesson-not-found";
+    public const string ProfessorQuizNotFound = "urn:app:professor/quiz-not-found";
+    public const string ProfessorWrongIndex = "urn:app:professor/wrong-index";
 }

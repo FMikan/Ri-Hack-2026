@@ -4,6 +4,7 @@ using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Matchmaking;
+using App.Domain.Professor;
 using App.Domain.Progress;
 using App.Domain.Seasons;
 using App.Domain.Social;
@@ -50,6 +51,10 @@ public interface IAppDbContext
     DbSet<UserTitle> UserTitles { get; }
     DbSet<UserAchievement> UserAchievements { get; }
     DbSet<WeeklyResult> WeeklyResults { get; }
+    DbSet<ProfessorChat> ProfessorChats { get; }
+    DbSet<ProfessorMessage> ProfessorMessages { get; }
+    DbSet<ProfessorLesson> ProfessorLessons { get; }
+    DbSet<ProfessorQuiz> ProfessorQuizzes { get; }
 
     DatabaseFacade Database { get; } // transactions and row locks (SELECT ... FOR UPDATE)
 

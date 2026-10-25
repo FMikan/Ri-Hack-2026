@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 import type { KnowledgeMapDto, MatchSummaryDto, MeDto, ProfileVisibility, StatsDto } from '@/types/api'
 import { HonorsCard } from './HonorsCard'
 import { KnowledgeMapCard } from './KnowledgeMapCard'
+import { LockerCard } from './LockerCard'
 import { MatchHistoryCard } from './MatchHistoryCard'
 import { StatsCard } from './StatsCard'
 
@@ -26,8 +27,8 @@ const loadProfile = (signal: AbortSignal) =>
 // Same three-column grid as the dashboard.
 const GRID = 'grid gap-4 lg:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)]'
 
-// The player's own profile: who they are, the skill graph, the knowledge map per concept, the match history, stats
-// per question type, titles and achievements.
+// The player's own profile: who they are, the skill graph, the match history, the locker of owned cosmetics, the
+// knowledge map per concept, stats per question type, titles and achievements.
 export function ProfilePage() {
   const { t } = useLocale()
   const profile = useAsync(loadProfile)
@@ -69,11 +70,17 @@ interface ProfileViewProps {
 }
 
 function ProfileView({ me, map, history, stats }: ProfileViewProps) {
+  // The fresh MeDto goes into the session, and the card reads it from there, so equipping in the locker shows at once.
+  const { session, setUser } = useAuth()
+  useEffect(() => setUser(me), [me, setUser])
+  const current = session.status === 'authenticated' ? session.user : me
+
   return (
     <div className={GRID}>
-      <ProfileCard me={me} stats={stats} className="xl:col-span-2" />
+      <ProfileCard me={current} stats={stats} className="xl:col-span-2" />
       <SkillGraphCard topics={map.topics} className="xl:col-span-2 xl:row-start-2" />
       <MatchHistoryCard history={history} className="xl:col-start-3 xl:row-span-2 xl:row-start-1" />
+      <LockerCard className="xl:col-span-3" />
       <KnowledgeMapCard map={map} className="xl:col-span-3" />
       <StatsCard stats={stats} className="xl:col-span-3" />
       <HonorsCard className="xl:col-span-3" />

@@ -1,11 +1,43 @@
 [
   {
+    "key": "frame.exit-zero",
+    "kind": "avatar_frame",
+    "name": "Exit code 0",
+    "price": 150,
+    "rarity": "common",
+    "assetKey": "frame-exit-zero"
+  },
+  {
+    "key": "frame.draft-pr",
+    "kind": "avatar_frame",
+    "name": "Draft PR",
+    "price": 200,
+    "rarity": "common",
+    "assetKey": "frame-draft-pr"
+  },
+  {
     "key": "frame.bronze-ring",
     "kind": "avatar_frame",
     "name": "Bronze ring",
     "price": 300,
     "rarity": "common",
     "assetKey": "frame-bronze-ring"
+  },
+  {
+    "key": "frame.double-buffer",
+    "kind": "avatar_frame",
+    "name": "Double buffer",
+    "price": 400,
+    "rarity": "common",
+    "assetKey": "frame-double-buffer"
+  },
+  {
+    "key": "frame.merge-conflict",
+    "kind": "avatar_frame",
+    "name": "Merge conflict",
+    "price": 650,
+    "rarity": "rare",
+    "assetKey": "frame-merge-conflict"
   },
   {
     "key": "frame.circuit",
@@ -16,44 +48,44 @@
     "assetKey": "frame-circuit"
   },
   {
-    "key": "banner.terminal",
-    "kind": "banner",
-    "name": "Terminal",
-    "price": 500,
-    "rarity": "common",
-    "assetKey": "banner-terminal"
-  },
-  {
-    "key": "name-color.amber",
-    "kind": "name_color",
-    "name": "Amber name",
-    "price": 400,
-    "rarity": "common",
-    "assetKey": "name-amber"
-  },
-  {
-    "key": "card.blueprint",
-    "kind": "card_background",
-    "name": "Blueprint cards",
-    "price": 300,
-    "rarity": "common",
-    "assetKey": "card-blueprint"
-  },
-  {
-    "key": "board.midnight",
-    "kind": "board_theme",
-    "name": "Midnight board",
-    "price": 800,
+    "key": "frame.still-compiling",
+    "kind": "avatar_frame",
+    "name": "Still compiling",
+    "price": 1000,
     "rarity": "rare",
-    "assetKey": "board-midnight"
+    "assetKey": "frame-still-compiling"
   },
   {
-    "key": "streak-freeze",
-    "kind": "streak_freeze",
-    "name": "Streak freeze",
-    "price": 100,
-    "rarity": "common",
-    "assetKey": "streak-freeze"
+    "key": "frame.syntax-highlight",
+    "kind": "avatar_frame",
+    "name": "Syntax highlight",
+    "price": 1200,
+    "rarity": "rare",
+    "assetKey": "frame-syntax-highlight"
+  },
+  {
+    "key": "frame.phosphor",
+    "kind": "avatar_frame",
+    "name": "Phosphor",
+    "price": 2000,
+    "rarity": "epic",
+    "assetKey": "frame-phosphor"
+  },
+  {
+    "key": "frame.kernel-panic",
+    "kind": "avatar_frame",
+    "name": "Kernel panic",
+    "price": 2800,
+    "rarity": "epic",
+    "assetKey": "frame-kernel-panic"
+  },
+  {
+    "key": "frame.event-loop",
+    "kind": "avatar_frame",
+    "name": "Event loop",
+    "price": 6000,
+    "rarity": "legendary",
+    "assetKey": "frame-event-loop"
   },
   {
     "key": "frame.season-bronze",
@@ -65,13 +97,13 @@
     "seasonDropTier": "bronze"
   },
   {
-    "key": "frame.season-silver",
+    "key": "frame.season-diamond",
     "kind": "avatar_frame",
-    "name": "Season silver frame",
+    "name": "Season diamond frame",
     "price": 1000,
-    "rarity": "common",
-    "assetKey": "frame-season-silver",
-    "seasonDropTier": "silver"
+    "rarity": "epic",
+    "assetKey": "frame-season-diamond",
+    "seasonDropTier": "diamond"
   },
   {
     "key": "frame.season-gold",
@@ -83,6 +115,15 @@
     "seasonDropTier": "gold"
   },
   {
+    "key": "frame.season-master",
+    "kind": "avatar_frame",
+    "name": "Season master frame",
+    "price": 1000,
+    "rarity": "epic",
+    "assetKey": "frame-season-master",
+    "seasonDropTier": "master"
+  },
+  {
     "key": "frame.season-platinum",
     "kind": "avatar_frame",
     "name": "Season platinum frame",
@@ -92,21 +133,428 @@
     "seasonDropTier": "platinum"
   },
   {
-    "key": "frame.season-diamond",
+    "key": "frame.season-silver",
     "kind": "avatar_frame",
-    "name": "Season diamond frame",
+    "name": "Season silver frame",
     "price": 1000,
-    "rarity": "epic",
-    "assetKey": "frame-season-diamond",
-    "seasonDropTier": "diamond"
+    "rarity": "common",
+    "assetKey": "frame-season-silver",
+    "seasonDropTier": "silver"
   },
   {
-    "key": "frame.season-master",
-    "kind": "avatar_frame",
-    "name": "Season master frame",
+    "key": "name-color.green-build",
+    "kind": "name_color",
+    "name": "Green build",
+    "price": 150,
+    "rarity": "common",
+    "assetKey": "name-green-build"
+  },
+  {
+    "key": "name-color.blue-screen",
+    "kind": "name_color",
+    "name": "Blue screen",
+    "price": 200,
+    "rarity": "common",
+    "assetKey": "name-blue-screen"
+  },
+  {
+    "key": "name-color.hotfix",
+    "kind": "name_color",
+    "name": "Hotfix",
+    "price": 250,
+    "rarity": "common",
+    "assetKey": "name-hotfix"
+  },
+  {
+    "key": "name-color.keyword",
+    "kind": "name_color",
+    "name": "Keyword",
+    "price": 300,
+    "rarity": "common",
+    "assetKey": "name-keyword"
+  },
+  {
+    "key": "name-color.amber",
+    "kind": "name_color",
+    "name": "Amber name",
+    "price": 400,
+    "rarity": "common",
+    "assetKey": "name-amber"
+  },
+  {
+    "key": "name-color.copper-trace",
+    "kind": "name_color",
+    "name": "Copper trace",
+    "price": 700,
+    "rarity": "rare",
+    "assetKey": "name-copper-trace"
+  },
+  {
+    "key": "name-color.coolant",
+    "kind": "name_color",
+    "name": "Coolant",
     "price": 1000,
+    "rarity": "rare",
+    "assetKey": "name-coolant"
+  },
+  {
+    "key": "name-color.sudo",
+    "kind": "name_color",
+    "name": "Sudo",
+    "price": 1300,
+    "rarity": "rare",
+    "assetKey": "name-sudo"
+  },
+  {
+    "key": "name-color.phosphor",
+    "kind": "name_color",
+    "name": "Phosphor",
+    "price": 2000,
     "rarity": "epic",
-    "assetKey": "frame-season-master",
-    "seasonDropTier": "master"
+    "assetKey": "name-phosphor"
+  },
+  {
+    "key": "name-color.hot-reload",
+    "kind": "name_color",
+    "name": "Hot reload",
+    "price": 2600,
+    "rarity": "epic",
+    "assetKey": "name-hot-reload"
+  },
+  {
+    "key": "name-color.screen-tear",
+    "kind": "name_color",
+    "name": "Screen tear",
+    "price": 3200,
+    "rarity": "epic",
+    "assetKey": "name-screen-tear"
+  },
+  {
+    "key": "name-color.gold-master",
+    "kind": "name_color",
+    "name": "Gold master",
+    "price": 6000,
+    "rarity": "legendary",
+    "assetKey": "name-gold-master"
+  },
+  {
+    "key": "name-color.rainbow-table",
+    "kind": "name_color",
+    "name": "Rainbow table",
+    "price": 8500,
+    "rarity": "legendary",
+    "assetKey": "name-rainbow-table"
+  },
+  {
+    "key": "banner.bitstream",
+    "kind": "banner",
+    "name": "Bitstream",
+    "price": 200,
+    "rarity": "common",
+    "assetKey": "banner-bitstream"
+  },
+  {
+    "key": "banner.breadboard",
+    "kind": "banner",
+    "name": "Breadboard",
+    "price": 250,
+    "rarity": "common",
+    "assetKey": "banner-breadboard"
+  },
+  {
+    "key": "banner.punch-card",
+    "kind": "banner",
+    "name": "Punch card",
+    "price": 300,
+    "rarity": "common",
+    "assetKey": "banner-punch-card"
+  },
+  {
+    "key": "banner.terminal",
+    "kind": "banner",
+    "name": "Terminal",
+    "price": 400,
+    "rarity": "common",
+    "assetKey": "banner-terminal"
+  },
+  {
+    "key": "banner.hex-dump",
+    "kind": "banner",
+    "name": "Hex dump",
+    "price": 700,
+    "rarity": "rare",
+    "assetKey": "banner-hex-dump"
+  },
+  {
+    "key": "banner.gold-traces",
+    "kind": "banner",
+    "name": "Gold traces",
+    "price": 900,
+    "rarity": "rare",
+    "assetKey": "banner-gold-traces"
+  },
+  {
+    "key": "banner.kernel-panic",
+    "kind": "banner",
+    "name": "Kernel panic",
+    "price": 1100,
+    "rarity": "rare",
+    "assetKey": "banner-kernel-panic"
+  },
+  {
+    "key": "banner.oscilloscope",
+    "kind": "banner",
+    "name": "Oscilloscope",
+    "price": 1300,
+    "rarity": "rare",
+    "assetKey": "banner-oscilloscope"
+  },
+  {
+    "key": "banner.git-graph",
+    "kind": "banner",
+    "name": "Git graph",
+    "price": 2000,
+    "rarity": "epic",
+    "assetKey": "banner-git-graph"
+  },
+  {
+    "key": "banner.server-rack",
+    "kind": "banner",
+    "name": "Server rack",
+    "price": 2600,
+    "rarity": "epic",
+    "assetKey": "banner-server-rack"
+  },
+  {
+    "key": "banner.night-shift",
+    "kind": "banner",
+    "name": "Night shift",
+    "price": 3200,
+    "rarity": "epic",
+    "assetKey": "banner-night-shift"
+  },
+  {
+    "key": "banner.backbone",
+    "kind": "banner",
+    "name": "Backbone",
+    "price": 6000,
+    "rarity": "legendary",
+    "assetKey": "banner-backbone"
+  },
+  {
+    "key": "banner.falling-code",
+    "kind": "banner",
+    "name": "Falling code",
+    "price": 8000,
+    "rarity": "legendary",
+    "assetKey": "banner-falling-code"
+  },
+  {
+    "key": "card.dot-grid",
+    "kind": "card_background",
+    "name": "Dot grid",
+    "price": 150,
+    "rarity": "common",
+    "assetKey": "card-dot-grid"
+  },
+  {
+    "key": "card.deprecated",
+    "kind": "card_background",
+    "name": "Deprecated",
+    "price": 200,
+    "rarity": "common",
+    "assetKey": "card-deprecated"
+  },
+  {
+    "key": "card.blueprint",
+    "kind": "card_background",
+    "name": "Blueprint",
+    "price": 300,
+    "rarity": "common",
+    "assetKey": "card-blueprint"
+  },
+  {
+    "key": "card.tabs-vs-spaces",
+    "kind": "card_background",
+    "name": "Tabs vs spaces",
+    "price": 350,
+    "rarity": "common",
+    "assetKey": "card-tabs-vs-spaces"
+  },
+  {
+    "key": "card.punch-card",
+    "kind": "card_background",
+    "name": "Punch card",
+    "price": 450,
+    "rarity": "common",
+    "assetKey": "card-punch-card"
+  },
+  {
+    "key": "card.hex-grid",
+    "kind": "card_background",
+    "name": "Hex grid",
+    "price": 650,
+    "rarity": "rare",
+    "assetKey": "card-hex-grid"
+  },
+  {
+    "key": "card.isometric",
+    "kind": "card_background",
+    "name": "Isometric",
+    "price": 900,
+    "rarity": "rare",
+    "assetKey": "card-isometric"
+  },
+  {
+    "key": "card.motherboard",
+    "kind": "card_background",
+    "name": "Motherboard",
+    "price": 1300,
+    "rarity": "rare",
+    "assetKey": "card-motherboard"
+  },
+  {
+    "key": "card.minimap",
+    "kind": "card_background",
+    "name": "Minimap",
+    "price": 2000,
+    "rarity": "epic",
+    "assetKey": "card-minimap"
+  },
+  {
+    "key": "card.server-rack",
+    "kind": "card_background",
+    "name": "Server rack",
+    "price": 2600,
+    "rarity": "epic",
+    "assetKey": "card-server-rack"
+  },
+  {
+    "key": "card.hex-dump",
+    "kind": "card_background",
+    "name": "Hex dump",
+    "price": 3200,
+    "rarity": "epic",
+    "assetKey": "card-hex-dump"
+  },
+  {
+    "key": "card.backbone",
+    "kind": "card_background",
+    "name": "Backbone",
+    "price": 6500,
+    "rarity": "legendary",
+    "assetKey": "card-backbone"
+  },
+  {
+    "key": "board.devnull",
+    "kind": "board_theme",
+    "name": "/dev/null",
+    "price": 150,
+    "rarity": "common",
+    "assetKey": "board-devnull"
+  },
+  {
+    "key": "board.solarized",
+    "kind": "board_theme",
+    "name": "Solarized dark",
+    "price": 250,
+    "rarity": "common",
+    "assetKey": "board-solarized"
+  },
+  {
+    "key": "board.nord",
+    "kind": "board_theme",
+    "name": "Nord",
+    "price": 300,
+    "rarity": "common",
+    "assetKey": "board-nord"
+  },
+  {
+    "key": "board.gruvbox",
+    "kind": "board_theme",
+    "name": "Gruvbox",
+    "price": 350,
+    "rarity": "common",
+    "assetKey": "board-gruvbox"
+  },
+  {
+    "key": "board.midnight",
+    "kind": "board_theme",
+    "name": "Midnight board",
+    "price": 450,
+    "rarity": "common",
+    "assetKey": "board-midnight"
+  },
+  {
+    "key": "board.dracula",
+    "kind": "board_theme",
+    "name": "Dracula",
+    "price": 650,
+    "rarity": "rare",
+    "assetKey": "board-dracula"
+  },
+  {
+    "key": "board.tokyo-night",
+    "kind": "board_theme",
+    "name": "Tokyo Night",
+    "price": 850,
+    "rarity": "rare",
+    "assetKey": "board-tokyo-night"
+  },
+  {
+    "key": "board.monokai",
+    "kind": "board_theme",
+    "name": "Monokai minimap",
+    "price": 1000,
+    "rarity": "rare",
+    "assetKey": "board-monokai"
+  },
+  {
+    "key": "board.catppuccin",
+    "kind": "board_theme",
+    "name": "Catppuccin Mocha",
+    "price": 1200,
+    "rarity": "rare",
+    "assetKey": "board-catppuccin"
+  },
+  {
+    "key": "board.blueprint",
+    "kind": "board_theme",
+    "name": "System design",
+    "price": 2000,
+    "rarity": "epic",
+    "assetKey": "board-blueprint"
+  },
+  {
+    "key": "board.chalkboard",
+    "kind": "board_theme",
+    "name": "CS 101",
+    "price": 2800,
+    "rarity": "epic",
+    "assetKey": "board-chalkboard"
+  },
+  {
+    "key": "board.phosphor",
+    "kind": "board_theme",
+    "name": "Green phosphor",
+    "price": 6000,
+    "rarity": "legendary",
+    "assetKey": "board-phosphor"
+  },
+  {
+    "key": "board.deep-space",
+    "kind": "board_theme",
+    "name": "Deep space",
+    "price": 8500,
+    "rarity": "legendary",
+    "assetKey": "board-deep-space"
+  },
+  {
+    "key": "streak-freeze",
+    "kind": "streak_freeze",
+    "name": "Streak freeze",
+    "price": 100,
+    "rarity": "common",
+    "assetKey": "streak-freeze"
   }
 ]

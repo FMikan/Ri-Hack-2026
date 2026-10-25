@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, CircleAlert, X } from 'lucide-react'
+import { ArrowLeft, Check, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { Rewards } from '@/components/shared/Rewards'
@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CodeBlock } from '@/features/match/CodeBlock'
+import { StudyCard } from '@/features/lesson/StudyCard'
 import { QuestionBody } from '@/features/match/QuestionBody'
 import { useAsync } from '@/hooks/use-async'
 import { api, ApiError } from '@/lib/api-client'
@@ -83,26 +83,19 @@ function Cards({ lesson, onStart }: { lesson: LessonDto; onStart: () => void }) 
 
   return (
     <section className="grid gap-4">
-      <Card>
-        <CardContent className="grid gap-4">
-          <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <StudyCard
+        meta={
+          <>
             <span className="font-mono">{copy.cardOf(index + 1, lesson.cards.length)}</span>
             {concept && <Badge variant="secondary">{concept.name}</Badge>}
-          </p>
-          <h2 className="font-heading text-xl font-semibold text-balance sm:text-2xl">{card.title}</h2>
-          <p className="text-pretty">{card.why}</p>
-          {card.code && <CodeBlock code={card.code} language={card.language} />}
-          {card.misconception && (
-            <div className="grid gap-1 rounded-lg bg-warning/10 p-3 ring-1 ring-warning/40 ring-inset">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
-                <CircleAlert aria-hidden="true" className="size-3.5" />
-                {copy.misconception}
-              </p>
-              <p className="text-sm text-pretty">{card.misconception}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        }
+        title={card.title}
+        body={card.why}
+        code={card.code}
+        language={card.language}
+        misconception={card.misconception}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="outline" className={cn(index === 0 && 'invisible')} onClick={() => setIndex(index - 1)}>
           <ArrowLeft aria-hidden="true" />

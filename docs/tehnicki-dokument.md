@@ -35,6 +35,7 @@ Ovaj dokument je ugovor između backenda i frontenda. Backend se gradi test-firs
 | **F3 Rangirano 1v1** | red čekanja, prihvat para, veto, živi duel, Elo, tierovi, SP, odustajanje, prekid veze, revanš, ghost duel | Dva laptopa igraju jedno protiv drugog | gotovo, u `development` (F3a red, veto, živi duel, Elo, tierovi; F3b revanš, ghost duel) |
 | **F4 Ekonomija i dnevni ciklus** | ledger, coins/XP/level, streak, dnevni zadaci, dnevni izazov, shop, oprema | Loop zaradi → potroši | gotovo, PR `feature/f4a-ledger` (F4a ledger, nagrade partija i poduka, level-up, tjedni XP cilj, streak; F4b dnevni zadaci, dnevni izazov, shop, oprema) |
 | **F5 Društveno i rang-liste** | leaderboardi (5), Grandmaster, sezone, titule, achievementi, prijatelji, izazov prijatelja, javni profil, statistika, auto-kalibracija težine, povlačenje pitanja | Sve iz §14 ideje | gotovo, PR `feature/f5-social` (F5a prijatelji, izazov prijatelja, javni profil, statistika, rang-liste, Grandmaster; F5b sezone, titule, achievementi, tjedni i sezonski snapshot, povlačenje i auto-kalibracija pitanja) |
+| **F6 AI Profesor** | chat s AI profesorom o IT-u (odgovor se streama), poduka i kviz za vježbu napravljeni iz jednog odgovora, spremljena povijest razgovora | Pitanje → odgovor uživo → "Napravi poduku" / "Napravi kviz" → kartice i kviz s objašnjenjima | gotovo, PR `feature/ai-professor` (bez nagrada, mastery i poola: samo za učenje) |
 | Roadmap | OAuth, verifikacija e-maila, push obavijesti, emoti, premium (tutor, još pitanja, dublji uvid, objasni svojim riječima, napredna statistika), hrvatski pool pitanja, offline batch generator, SignalR, Android | — | — |
 
 Stupac "Stanje backenda" se ažurira u PR-u svake faze; što frontend može spojiti po fazama je u §6.11.
@@ -560,7 +561,7 @@ create index on daily_challenge_attempts (day, is_correct desc, elapsed_ms);   -
 create table user_daily_tasks (
   user_id      uuid not null references users(id) on delete cascade,
   day          date not null,
-  task_key     text not null,              -- 'play_2_ranked','patch_1_concept','daily_challenge','practice_weakest','3_brilliant','review_all_due'
+  task_key     text not null,              -- 'play_2_ranked','daily_challenge','practice_weakest','3_brilliant','review_all_due'
   target       integer not null,           -- review_all_due: broj dospjelih pri generiranju; ostali: konstanta
   topic_id     uuid references topics(id), -- practice_weakest: najslabija tema u trenutku generiranja
   completed_at timestamptz,
@@ -676,6 +677,56 @@ create table weekly_results (               -- snapshot ponedjeljkom 00:00
 - Složeni ključevi: `HasKey(x => new { x.MatchId, x.Seat })`.
 - `IAppDbContext` dobiva `DbSet` po tablici i `Task<T> InTransactionAsync(Func<Task<T>>)`; use caseovi rade direktno nad njim (bez repozitorija).
 - Migracija F0 briše `Notes`; nakon svake promjene entiteta `dotnet ef migrations add`.
+
+### 3.13 AI Profesor (F6)
+
+```sql
+create table professor_chats (
+  id         uuid primary key,
+  user_id    uuid not null references users(id) on delete cascade,
+  title      varchar(60) not null,            -- tema prvog odgovora, inače početak prvog pitanja
+  created_at timestamptz not null,
+  updated_at timestamptz not null             -- lista razgovora: najnoviji prvi
+);
+create index on professor_chats (user_id, updated_at desc);
+
+create table professor_messages (
+  id         uuid primary key,
+  chat_id    uuid not null references professor_chats(id) on delete cascade,
+  role       text not null check (role in ('user','professor')),
+  text       text not null,                   -- odgovor bez zaglavlja (vidi ispod)
+  topic      varchar(80),                     -- odgovor o IT-u: što poduka/kviz iz njega pokriva; null = ništa se ne nudi
+  scope      text check (scope is null or scope in ('specific','general')),
+  created_at timestamptz not null
+);
+create index on professor_messages (chat_id, created_at);
+
+create table professor_lessons (              -- jedna po odgovoru
+  id uuid primary key, user_id uuid not null references users(id) on delete cascade,
+  chat_id uuid not null references professor_chats(id) on delete cascade,
+  message_id uuid not null unique references professor_messages(id) on delete cascade,
+  topic text not null, title text not null, summary text not null,
+  cards jsonb not null,                       -- [{"title","body","code","language","misconception"}] ×2–6
+  created_at timestamptz not null
+);
+
+create table professor_quizzes (              -- jedan po odgovoru
+  id uuid primary key, user_id uuid not null references users(id) on delete cascade,
+  chat_id uuid not null references professor_chats(id) on delete cascade,
+  message_id uuid not null unique references professor_messages(id) on delete cascade,
+  topic text not null, title text not null,
+  questions jsonb not null,                   -- [{"type","language","content" (oblik §3.2.1, ključ u "answer"),"explanation"}] ×3–5
+  answers jsonb not null,                     -- [{"index","payload","isCorrect"}], prvi odgovor po pitanju ostaje
+  created_at timestamptz not null
+);
+```
+
+Pravila (`ProfessorRules`, `ProfessorService`):
+
+- Sprema se samo dovršen potez: pitanje i odgovor zajedno, kad je cijeli odgovor stigao. Pad AI-ja, istek (2 min) ili prekinut stream ne ostavljaju ništa; novi razgovor nastaje tek s prvim spremljenim odgovorom.
+- Svaki odgovor počinje skrivenim zaglavljem `TOPIC: specific | <tema>`, `TOPIC: general | <tema>` ili `TOPIC: none` (`ProfessorHeaderReader` ga skida iz streama, i kad stiže u više komada). Odgovor bez zaglavlja ostaje cijeli, bez teme. Modelu se šalje zadnjih 20 poruka kao čisti tekst, odgovori s ponovno dodanim zaglavljem; thinking blokovi se nikad ne spremaju ni ne ponavljaju.
+- Poduka i kviz se pišu iz odgovora s temom (inače 409 `professor/no-topic`) i pitanja na koje odgovara, za band igrača (`DeckBuilder.DifficultyOf(rating)`); isti odgovor uvijek vraća istu poduku/kviz (jedinstven `message_id`, dvoklik vraća onu koja je upisana). Limit 90 s; neupotrebljiv rezultat (< 2 kartice, < 3 ispravna pitanja) je 503 `professor/failed` i ništa se ne sprema.
+- Kviz: samo `multiple_choice` (točno 4 različite opcije, ključ a–d) i `true_false` (bez koda); neispravna pitanja se izbacuju, opcije se miješaju na serveru (model voli ključ na prvom mjestu). Ocjenjuje `Grader` iz spremljenog ključa; ključ i objašnjenje vidi se tek nakon odgovora. Ne pišu se `answers`, mastery, ledger ni red ponavljanja (ideja §16: generirano ne ulazi u pool).
 
 ## 4. Pravila igre kao čiste funkcije (App.Domain)
 
@@ -802,6 +853,7 @@ Finish(now)                                       §17: human s disconnected_at 
 | `IPasswordHasher` | `PasswordHasherAdapter` nad `PasswordHasher<User>` (u `App.Api/Auth.cs`) | PBKDF2; nepoznati e-mail se provjerava protiv lažnog hasha da odgovor traje jednako |
 | `IEmailSender` | `EmailSender`: SMTP (`System.Net.Mail`, `Email:Smtp:Host/Port/Username/Password/From/EnableSsl` iz env) kad je `Email:Smtp:Host` postavljen, inače link ide u log (lokalni razvoj) | reset lozinke; link je `{Frontend:BaseUrl}/reset-password?token=...`; SMTP slanje je fire-and-forget (`Task.Run` + log greške) da odgovor ne otkriva postoji li e-mail; testovi koriste `FakeEmailSender` |
 | `IExplanationGenerator`, `ILessonGenerator` | `ClaudeAi` (jedna klasa za oba); bez `ANTHROPIC_API_KEY` baca `NotSupportedException`. Fallback radi pozivatelj kroz `AiOptions.TryAsync`: objašnjenje → `remember` (`source: 'static'`), kartica → `concepts.description` | `Ai:TimeoutMs` (8000) ograničava svaki poziv; objašnjenje se kešira u `questions.explanation`, kartica u `concept_lesson_cards`; nikad se ne zove iz `GET /api/matches/{id}` ni iz `SubmitAnswer` |
+| `IProfessorAi` | `ClaudeAi`; bez ključa `Available = false` i endpointi profesora vraćaju 503 `professor/unavailable` (za otvoreno pitanje nema fallbacka) | chat se streama (`Beta.Messages.CreateStreaming`, effort `low`, `MaxTokens` 8192), poduka i kviz su JSON shema (effort `medium`, 16000); limite postavlja `ProfessorService` (chat 2 min, poduka/kviz 90 s); odbijanje cijelog fallback lanca je 409 `professor/declined` |
 | `TimeProvider` | `TimeProvider.System`; testovi `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) inicijaliziran na `DateTimeOffset.UtcNow` | |
 
 AI pozivi (`Anthropic` NuGet): `client.Beta.Messages.Create` s `Model = "claude-opus-5-5"`, effort `low` (kratak odgovor unutar 8 s), `OutputConfig.Format` JSON shema za `{whyCorrect, whyDistractor, remember}` odnosno `{title, why, code, language, misconception}` (jedna kartica po pozivu), `MaxTokens` 2048, server-side fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) za odbijene zahtjeve, `CancellationToken` s `Ai:TimeoutMs`. Ključ `ANTHROPIC_API_KEY` iz `.env`; bez ključa igra radi na fallbacku.
@@ -827,6 +879,9 @@ urn:app:friends/already         urn:app:challenge/expired            urn:app:dai
 urn:app:friends/self            urn:app:friends/not-friends          urn:app:challenge/own
 urn:app:users/not-found (404)   urn:app:users/profile-private (403)  urn:app:friends/request-not-found (404)
 urn:app:challenge/not-found (404)  urn:app:leaderboards/not-found (404)
+urn:app:professor/unavailable (503)  urn:app:professor/failed (503)  urn:app:professor/declined  urn:app:professor/no-topic
+urn:app:professor/chat-not-found (404)  urn:app:professor/message-not-found (404)  urn:app:professor/lesson-not-found (404)
+urn:app:professor/quiz-not-found (404)  urn:app:professor/wrong-index
 ```
 
 Za `409 match/already-answered|wrong-phase|wrong-index` klijent ne prikazuje grešku: refetcha stanje i nastavlja (zakašnjeli klik ili dupli zahtjev).
@@ -1022,6 +1077,7 @@ interface KnowledgeMapDto {
 GET  /api/shop                              → { items: (ShopItemDto & { owned: boolean })[] }
 POST /api/shop/purchase   { itemId }        → MeDto   (409 insufficient-coins / already-owned / freeze-limit)
 PUT  /api/me/equipment    { avatarFrame?; banner?; boardTheme?; nameColor?; cardBackground?; titleId? }  → MeDto  (null = skini; 409 shop/not-owned)
+GET  /api/me/items                          → ShopItemDto[]          // ormarić: sve moje kozmetike (i sezonski okviri), owned = true
 GET  /api/me/rewards?limit=50               → RewardEventDto[]
 GET  /api/daily-challenge                   → DailyChallengeDto     // prvi poziv dana otvara pokušaj (startedAt)
 GET  /api/daily-challenge/{day}             → DailyChallengeDto     // arhiva; key/explanation samo ako sam pokušao
@@ -1069,6 +1125,12 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 Što backend već poslužuje (u `development`) i što ekrani trebaju znati, a ne piše u tipovima. Svaka faza dodaje svoj odlomak.
 
+**F6: AI Profesor**
+- Ekran `/professor` (`?chat=<id>` bira razgovor). Pitanje: `POST /api/professor/messages { chatId?, text }` odgovara server-sent eventsima kroz `fetch` (EventSource ne može poslati tijelo ni token): `delta` dijelovi odgovora, zatim `done` sa spremljenim potezom (novi razgovor dobiva `chat.id`) ili `error` (Problem Details) i ništa nije spremljeno. Greške prije streama (400, 404, 429, 503) dolaze kao obični Problem Details. Do prve `delta` prikaži "AI Profesor razmišlja…".
+- Ispod odgovora s `topic` dva gumba, "Napravi poduku" i "Napravi kviz" (prvi je onaj koji paše: `scope: 'general'` poduka, `specific` kviz). Pisanje traje 10–30 s: prikaži status "AI Profesor piše…" na mjestu gumba. Odgovor s `lessonId`/`quizId` nudi "Otvori".
+- Kviz: pitanje po pitanje, `POST /api/professor/quizzes/{id}/answers { index, payload }` vraća točnost, ključ i objašnjenje; isti odgovor ponovno vraća prvi. Sve je samo za vježbu: nema coina, XP-a, SP-a ni mastery-ja.
+- Produkcija: web Caddy ne komprimira `/api/professor/messages` (`encode` bi zadržavao dijelove streama).
+
 **F5b: sezone, titule, achievementi**
 - Sezona: `GET /api/seasons/current` (`number`, `startsAt`, `endsAt`, `doubleLearningSp` prva dva tjedna). `me.seasonPoints` su SP tekuće sezone; nova sezona kreće od 0, Elo ostaje. U prva dva tjedna zakrpani koncept nosi 4 SP (dnevni cap učenja 20). Sezonska lista: `GET /api/leaderboards/season` (igrači s SP > 0, `resetsAt` = kraj sezone).
 - Kraj sezone (Housekeeping, ≤ 1 min nakon `endsAt`): konačni rang, titule `S1 Top 5` / `Top 50` / `Top 100` (najbolja koja vrijedi) i `S1 <najviši tier sezone>` za sve koji su u sezoni igrali rangirano ili skupili SP, i kozmetički drop tog tiera (okvir avatara `frame-season-<tier>` u `user_items`, ne prodaje se u shopu).
@@ -1107,9 +1169,9 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - `429` (login, register, forgot-password, prebrzo slanje odgovora): prikaži `detail`, header `Retry-After` je u sekundama; ne ponavljaj zahtjev automatski.
 
 **F4b: dnevni zadaci, dnevni izazov, shop, oprema**
-- Dnevni zadaci: `GET /api/me/daily-tasks` (i `dashboard.dailyTasks`): tri zadatka dana, isti cijeli dan, s `progress/target`; `practice_weakest` nosi `topic` (gumb "Trening" na tu temu). Dovršen zadatak se isplaćuje (20 coina) kad se zadaci sljedeći put učitaju, sva tri još 30 (`bonusAwarded`). Ključevi: `play_2_ranked`, `patch_1_concept`, `daily_challenge`, `practice_weakest`, `3_brilliant`, `review_all_due`.
+- Dnevni zadaci: `GET /api/me/daily-tasks` (i `dashboard.dailyTasks`): tri zadatka dana, isti cijeli dan, s `progress/target`; `practice_weakest` nosi `topic` (gumb "Trening" na tu temu). Dovršen zadatak se isplaćuje (20 coina) kad se zadaci sljedeći put učitaju, sva tri još 30 (`bonusAwarded`). Ključevi: `play_2_ranked`, `daily_challenge`, `practice_weakest`, `3_brilliant`, `review_all_due`. `patch_1_concept` se više ne dodjeljuje (lekcija kreće samo iz pregleda duela), a ranije generirani se preskaču.
 - Dnevni izazov: `GET /api/daily-challenge` otvara pokušaj (`startedAt`); odbrojavanje 60 s od `startedAt` preko `serverTime`. Isto `find_bug` pitanje za sve; `POST /api/daily-challenge/attempt { payload, clientElapsedMs }` vraća rezultat, ključ i rang. 30 coina za točno, 5 za pokušaj, 30 XP uvijek; jedan pokušaj (`409 daily/already-attempted`), nakon 60 s `409 daily/too-late` (pokušaj se bilježi kao istek). `leaderboard` top 20: točni prvi, pa brži. Arhiva `GET /api/daily-challenge/{yyyy-mm-dd}`.
-- Shop: `GET /api/shop` (najjeftinije prvo, `owned`), `POST /api/shop/purchase { itemId }` vraća `MeDto` s novim stanjem coina. Zamrzavanje streaka: najviše 2 (`me.streak.freezes`). Oprema: `PUT /api/me/equipment { avatarFrame: itemId | null, ... }`; `UserRefDto.equipment` (svugdje uz ime) daje `assetKey` po slotu. Seed artikli: `frame-bronze-ring`, `frame-circuit`, `banner-terminal`, `name-amber`, `card-blueprint`, `board-midnight`, `streak-freeze` (frontend ih crta po `assetKey`).
+- Shop: `GET /api/shop` (najjeftinije prvo, `owned`), `POST /api/shop/purchase { itemId }` vraća `MeDto` s novim stanjem coina. Zamrzavanje streaka: najviše 2 (`me.streak.freezes`). Oprema: `PUT /api/me/equipment { avatarFrame: itemId | null, ... }`; `UserRefDto.equipment` (svugdje uz ime) daje `assetKey` po slotu. Ormarić na profilu: `GET /api/me/items` vraća sve moje kozmetike, i sezonske okvire koji se ne prodaju, najjeftinije prvo. Seed (`Seed/shop.json`): 10–13 artikala po slotu u četiri rariteta (`common` 150–450, `rare` 600–1400, `epic` 1800–3500, `legendary` 5000–9000 coina; samo legendarni se animiraju) i zamrzavanje streaka. Frontend crta `assetKey` kao istoimenu CSS klasu iz `src/cosmetics.css`; nepoznat ključ ne crta ništa. `SeedTests.Shop_seed_is_well_formed` traži 8–15 artikala za prodaju po slotu, jedinstvene ključeve i poznate raritete.
 - `dashboard.dailyChallengeAttempted` je sada pravi.
 
 **F4a: nagrade i streak**
@@ -1137,6 +1199,30 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 - Red ponavljanja: `dashboard.dueReviews` i `suggestion` (`review_due` s `topicId` i `conceptIds`, spremno za `POST /api/matches/practice`). Popis: `GET /api/me/progress/due`.
 - Mapa znanja: `GET /api/me/knowledge-map`, boja po `state`; `completion` je postotak (0–100) graduiranih; klik na čvor: `lastAnswers` + `GET /api/questions/{questionId}` (s ključem jer je odgovoreno) + "Vježbaj ovo" (`practice` s `conceptIds: [id]`). Gumb "Kalibriraj" kad je `calibrationAvailable`: `POST /api/matches/calibration { topicId }` je obična partija za jednog igrača (do 5 pitanja, s vremenom).
 - Dashboard `topics[].mastery` i `completion` sada imaju prave vrijednosti.
+
+### 6.12 AI Profesor (F6)
+
+```ts
+GET  /api/professor/chats                                     → ProfessorChatSummaryDto[]   (najnoviji prvi, do 50)
+GET  /api/professor/chats/{id}                                → ProfessorChatDto            (404 professor/chat-not-found)
+POST /api/professor/messages     { chatId?: Uuid; text }      → text/event-stream           (400; 404; 429; 503 professor/unavailable)
+     event: delta { text }  ...  event: done ProfessorTurnDto | event: error ProblemDetails (professor/failed 503, professor/declined 409)
+POST /api/professor/lessons      { messageId: Uuid }          → ProfessorLessonDto          (404 message-not-found; 409 no-topic; 503 unavailable/failed)
+GET  /api/professor/lessons/{id}                              → ProfessorLessonDto
+POST /api/professor/quizzes      { messageId: Uuid }          → ProfessorQuizDto            (kao lessons)
+GET  /api/professor/quizzes/{id}                              → ProfessorQuizDto
+POST /api/professor/quizzes/{id}/answers { index; payload }   → ProfessorQuizResultDto      (409 professor/wrong-index)
+
+interface ProfessorChatSummaryDto { id: Uuid; title: string; updatedAt: Iso }
+interface ProfessorMessageDto { id: Uuid; role: 'user'|'professor'; text: string; topic?: string; scope?: 'specific'|'general'; lessonId?: Uuid; quizId?: Uuid; createdAt: Iso }
+interface ProfessorChatDto { id: Uuid; title: string; messages: ProfessorMessageDto[] }
+interface ProfessorTurnDto { chat: ProfessorChatSummaryDto; question: ProfessorMessageDto; answer: ProfessorMessageDto }
+interface ProfessorLessonDto { id: Uuid; chatId: Uuid; messageId: Uuid; topic: string; title: string; summary: string; cards: { title: string; body: string; code?: string; language?: string; misconception?: string }[]; quizId?: Uuid; createdAt: Iso }
+interface ProfessorQuizDto { id: Uuid; chatId: Uuid; messageId: Uuid; topic: string; title: string; questions: { index: number; type: 'multiple_choice'|'true_false'; language?: string; content: QuestionContent; result?: ProfessorQuizResultDto }[]; lessonId?: Uuid; createdAt: Iso }
+interface ProfessorQuizResultDto { index: number; payload: AnswerPayload; isCorrect: boolean; answer: AnswerPayload; explanation: string }
+```
+
+Tekst odgovora koristi mali podskup Markdowna (odlomci, `- ` i `1. ` liste, `**bold**`, `*kurziv*`, `` `kod` ``, ``` blokovi s jezikom); frontend ga prikazuje kao tekst, nikad kao HTML.
 
 ## 7. Seed sadržaja
 
@@ -1314,6 +1400,10 @@ Seasons
   Season_rank_titles_go_to_top_5_50_100 / Season_tier_title_names_the_best_tier
   All_topics_achievement_needs_every_active_topic_above_50
   Question_difficulty_moves_a_band_after_enough_answers
+Professor
+  Header_gives_the_topic_and_scope / Header_without_a_topic_offers_nothing / A_line_without_the_prefix_is_not_a_header
+  Reader_hides_the_header_split_across_chunks_and_the_blank_line_after_it / Reader_keeps_an_answer_that_has_no_header
+  Multiple_choice_is_shuffled_and_the_key_follows_the_correct_text / Malformed_questions_are_dropped / True_false_about_code_is_dropped
 ```
 
 ### 9.3 API testovi po fazama
@@ -1421,7 +1511,7 @@ F4 Ekonomija (F4a: ledger, partije, poduke, level, tjedni cilj, streak; F4b: zad
   Streak_milestone_7_days_gives_100_coins_once
   Buy_streak_freeze_max_2 / Freeze_consumed_on_missed_day
   Purchase_deducts_coins_and_adds_item / Insufficient_coins_is_409 / Concurrent_purchases_cannot_overspend
-  Equip_requires_ownership
+  Equip_requires_ownership / Inventory_lists_owned_cosmetics_with_season_drops / Shop_seed_is_well_formed
   Daily_challenge_first_get_starts_attempt / Daily_challenge_rejects_answer_after_60s / Daily_challenge_leaderboard_orders_correct_then_time
   Daily_challenge_rewards_30_correct_5_attempt / Daily_challenge_archive_shows_key_only_after_attempt
   Level_up_rewards_50_times_level
@@ -1442,6 +1532,14 @@ F5 Društveno i rang-liste
   Retiring_question_reverts_its_mastery_deltas_and_keeps_match_result
   Question_moves_down_a_band_when_too_easy
   Achievements_record_first_win_and_show_progress
+F6 AI Profesor (ProfessorTests, FakeAi stoji umjesto Claudea)
+  Answer_streams_without_its_header_and_the_turn_is_saved / Next_message_sends_the_history_with_the_headers_and_moves_the_chat_up
+  Answer_without_a_header_is_kept_whole_and_offers_nothing / Off_topic_answer_has_no_topic_so_no_lesson_or_quiz
+  Failed_answer_ends_with_an_error_and_saves_nothing / Declined_answer_says_so / Empty_answer_is_an_error
+  Without_the_ai_the_professor_is_503_before_any_stream / Blank_or_too_long_message_is_400 / Another_players_chat_lesson_and_quiz_are_404
+  Lesson_is_written_once_per_answer_from_the_question_and_answer / Lesson_with_too_few_cards_or_a_failed_call_is_503_and_can_be_retried
+  Quiz_hides_the_keys_and_grades_each_question_once / Quiz_and_lesson_from_one_answer_link_to_each_other
+  Malformed_quiz_questions_are_dropped_and_too_few_is_503
 ```
 
 ### 9.4 Frontend provjere
@@ -1469,7 +1567,7 @@ F5 Društveno i rang-liste
 
 - Lozinke: `PasswordHasher<User>` (PBKDF2), 8–128 znakova; nikad u logovima.
 - Proxy: API stoji iza host Caddyja i Caddyja u web kontejneru. Host Caddy odbacuje `X-Forwarded-For` koji pošalje klijent i postavlja pravi IP; web Caddy (`trusted_proxies static private_ranges` u `frontend/Caddyfile`) ga čuva i dodaje svoj hop. API (`UseForwardedHeaders`, prvi u pipelineu, `ForwardLimit = null`, `KnownIPNetworks` = privatni rasponi + loopback) ide zdesna dok ne naiđe na prvu javnu adresu, i to je IP igrača. Bez toga rate limit po IP-u vidi jedan IP za sve.
-- Rate limit (`AddRateLimiter`, stdlib): `/api/auth/login` i `/api/auth/forgot-password` 10/min, `/api/auth/register` 5/min po (proslijeđenom) IP-u; `/api/matches/*/answers` 5/s po korisniku; `RejectionStatusCode = 429` + Problem Details + `Retry-After`.
+- Rate limit (`AddRateLimiter`, stdlib): `/api/auth/login` i `/api/auth/forgot-password` 10/min, `/api/auth/register` 5/min po (proslijeđenom) IP-u; `/api/matches/*/answers` 5/s po korisniku; poruke, poduke i kvizovi AI Profesora zajedno 10/min po korisniku (svaki je plaćeni AI poziv); `RejectionStatusCode = 429` + Problem Details + `Retry-After`.
 - Refresh tokeni: rotacija s `family_id`; predočenje već opozvanog tokena opoziva cijelu obitelj (ukradeni token postaje beskoristan).
 - Ključ odgovora nikad ne napušta server prije međuekrana; `MatchStateMapper` je jedino mjesto koje gradi `QuestionPublicDto` i ima test `Match_state_hides_answer_key_until_interstitial`.
 - Vrijeme odgovora: tolerancija 1,5 s prema `delivered_at`, inače serversko; uzorak "stalno < 1 s na D3–D4" je zastavica u `GetStats` (roadmap pregled), bez automatskih kazni.

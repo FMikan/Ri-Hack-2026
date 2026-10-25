@@ -65,6 +65,15 @@ export type AppErrorCode =
   | 'urn:app:challenge/expired' // older than 10 minutes, or someone already joined
   | 'urn:app:challenge/own'
   | 'urn:app:leaderboards/not-found'
+  | 'urn:app:professor/unavailable' // 503: no AI configured
+  | 'urn:app:professor/failed' // 503: the AI did not answer or wrote something unusable; try again
+  | 'urn:app:professor/declined'
+  | 'urn:app:professor/chat-not-found'
+  | 'urn:app:professor/message-not-found'
+  | 'urn:app:professor/no-topic'
+  | 'urn:app:professor/lesson-not-found'
+  | 'urn:app:professor/quiz-not-found'
+  | 'urn:app:professor/wrong-index'
 
 export type Uuid = string
 export type Iso = string
@@ -484,10 +493,12 @@ export interface ShopItemDto {
   kind: ShopItemKind
   name: string
   price: number
-  rarity: string
+  rarity: string // 'common' | 'rare' | 'epic' | 'legendary'
   assetKey: string
   owned: boolean // always false for the streak freeze (see me.streak.freezes, at most 2)
 }
+
+// GET /api/me/items → ShopItemDto[]: the cosmetics I own (owned always true), season drops included, cheapest first.
 
 export interface ShopDto {
   items: ShopItemDto[]
@@ -735,4 +746,105 @@ export interface TitleDto {
   kind: TitleKind
   count: number
   active: boolean
+}
+
+// ---- AI Professor (docs §6.12) ----
+
+export type ProfessorRole = 'user' | 'professor'
+export type ProfessorScope = 'specific' | 'general' // a concrete question, or a broader subject
+
+export interface ProfessorChatSummaryDto {
+  id: Uuid
+  title: string
+  updatedAt: Iso
+}
+
+export interface ProfessorMessageDto {
+  id: Uuid
+  role: ProfessorRole
+  text: string // professor answers use a small Markdown subset: paragraphs, lists, **bold**, `code`, ``` fences
+  topic?: string | null // set on professor answers about IT: a lesson or quiz can be made from them
+  scope?: ProfessorScope | null
+  lessonId?: Uuid | null
+  quizId?: Uuid | null
+  createdAt: Iso
+}
+
+export interface ProfessorChatDto {
+  id: Uuid
+  title: string
+  messages: ProfessorMessageDto[] // oldest first
+}
+
+// POST /api/professor/messages answers with server-sent events: 'delta' (ProfessorDeltaDto) while the answer is
+// written, then 'done' (ProfessorTurnDto) once it is saved, or 'error' (ProblemDetails) and nothing is saved.
+export interface SendProfessorMessageRequest {
+  chatId?: Uuid | null // null starts a new chat
+  text: string // 1–2000 characters
+}
+
+export interface ProfessorDeltaDto {
+  text: string
+}
+
+export interface ProfessorTurnDto {
+  chat: ProfessorChatSummaryDto
+  question: ProfessorMessageDto
+  answer: ProfessorMessageDto
+}
+
+export interface CreateProfessorStudyRequest {
+  messageId: Uuid // a professor answer with a topic; the same answer always returns the same lesson or quiz
+}
+
+export interface ProfessorCardDto {
+  title: string
+  body: string
+  code?: string | null
+  language?: string | null
+  misconception?: string | null
+}
+
+export interface ProfessorLessonDto {
+  id: Uuid
+  chatId: Uuid
+  messageId: Uuid
+  topic: string
+  title: string
+  summary: string
+  cards: ProfessorCardDto[]
+  quizId?: Uuid | null // the quiz from the same answer, when there is one
+  createdAt: Iso
+}
+
+export interface ProfessorQuizResultDto {
+  index: number
+  payload: AnswerPayload
+  isCorrect: boolean
+  answer: AnswerPayload // the key
+  explanation: string
+}
+
+export interface ProfessorQuizQuestionDto {
+  index: number
+  type: 'multiple_choice' | 'true_false'
+  language?: string | null
+  content: QuestionContent
+  result?: ProfessorQuizResultDto | null // null until answered; the first answer stays
+}
+
+export interface ProfessorQuizDto {
+  id: Uuid
+  chatId: Uuid
+  messageId: Uuid
+  topic: string
+  title: string
+  questions: ProfessorQuizQuestionDto[] // 3–5, practice only: nothing is scored
+  lessonId?: Uuid | null
+  createdAt: Iso
+}
+
+export interface ProfessorQuizAnswerRequest {
+  index: number
+  payload: AnswerPayload
 }

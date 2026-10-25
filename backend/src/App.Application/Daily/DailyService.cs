@@ -25,11 +25,11 @@ public class DailyService(IAppDbContext db, Rewarder rewarder, TimeProvider time
     {
         var now = time.GetUtcNow();
         var day = Clock.Today(now);
-        var tasks = await db.UserDailyTasks.Where(t => t.UserId == userId && t.Day == day).ToListAsync(ct);
+        var tasks = await db.UserDailyTasks.Where(t => t.UserId == userId && t.Day == day && !DailyTasks.Retired.Contains(t.TaskKey)).ToListAsync(ct);
         if (tasks.Count == 0)
         {
             await GenerateAsync(userId, day, now, ct);
-            tasks = await db.UserDailyTasks.Where(t => t.UserId == userId && t.Day == day).ToListAsync(ct);
+            tasks = await db.UserDailyTasks.Where(t => t.UserId == userId && t.Day == day && !DailyTasks.Retired.Contains(t.TaskKey)).ToListAsync(ct);
         }
 
         var dayStart = Clock.StartOf(day);
@@ -142,7 +142,6 @@ public class DailyService(IAppDbContext db, Rewarder rewarder, TimeProvider time
     {
         DailyTasks.PlayRanked => await FinishedTodayAsync(userId, dayStart, m => m.Kind == MatchKind.Ranked || m.Kind == MatchKind.Ghost, ct),
         DailyTasks.PracticeWeakest => await FinishedTodayAsync(userId, dayStart, m => m.Kind == MatchKind.Practice && m.TopicId == task.TopicId, ct),
-        DailyTasks.PatchConcept => await db.Lessons.CountAsync(l => l.UserId == userId && l.Status == LessonStatus.Passed && l.FinishedAt >= dayStart, ct),
         DailyTasks.Challenge => await db.DailyChallengeAttempts.CountAsync(a => a.UserId == userId && a.Day == task.Day && a.AnsweredAt != null, ct),
         DailyTasks.Brilliant => await db.Answers.CountAsync(a => a.UserId == userId && a.CreatedAt >= dayStart && a.Label == AnswerLabel.Brilliant, ct),
         DailyTasks.ReviewAllDue => task.Target - await db.ConceptMastery.CountAsync(m => m.UserId == userId && !m.IsGraduated && m.ReviewDueAt <= now, ct),

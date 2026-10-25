@@ -14,12 +14,25 @@ interface SegmentedControlProps<T extends string> {
 export function SegmentedControl<T extends string>({ label, name, value, options, onChange, className, toggle }: SegmentedControlProps<T>) {
   const other = toggle && options.length === 2 ? options.find((option) => option.value !== value) : undefined
   return (
-    <div role="radiogroup" aria-label={label} className={cn('flex max-w-full flex-wrap gap-1 rounded-lg bg-secondary p-1', className)}>
+    <div
+      role="radiogroup"
+      aria-label={label}
+      // A toggle has two equal halves, so its thumb can slide by its own width plus the gap.
+      className={cn('flex max-w-full flex-wrap gap-1 rounded-lg bg-secondary p-1', other && 'relative grid grid-cols-2', className)}
+    >
+      {other && (
+        <span
+          aria-hidden="true"
+          style={{ translate: `calc(${options.findIndex((option) => option.value === value)} * (100% + 0.25rem))` }}
+          className="absolute inset-y-1 left-1 w-[calc((100%-0.75rem)/2)] rounded-md bg-primary/15 ring-1 ring-primary/40 ring-inset transition-[translate] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+        />
+      )}
       {options.map((option) => (
         <label
           key={option.value}
           className={cn(
             'relative flex-1 cursor-pointer rounded-md px-3.5 py-2 text-center text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground has-checked:bg-primary/15 has-checked:text-primary has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-ring max-lg:py-3',
+            other && 'duration-200 has-checked:bg-transparent motion-reduce:transition-none',
             option.className,
           )}
         >

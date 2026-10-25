@@ -1,8 +1,7 @@
-import { Check, Snowflake } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import coinSmall from '@/assets/brand/stackoff-coin-small-on-dark.svg'
 import { Rewards } from '@/components/shared/Rewards'
-import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,15 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/auth-context'
 import { useAsync } from '@/hooks/use-async'
 import { api, ApiError } from '@/lib/api-client'
-import { avatarOf } from '@/lib/avatars'
-import { bannerClass, boardClass, cardClass, nameClass, SLOTS } from '@/lib/cosmetics'
+import { byKind, SLOTS } from '@/lib/cosmetics'
 import { relativeTime } from '@/lib/format'
 import type { Messages } from '@/lib/i18n/en'
 import { useLocale } from '@/lib/i18n/locale-context'
-import { cn } from '@/lib/utils'
-import type { MeDto, ShopItemDto, ShopItemKind, UserRefDto } from '@/types/api'
+import type { MeDto, ShopItemDto } from '@/types/api'
+import { ItemPreview, RarityBadge } from './ItemPreview'
 
-const KIND_ORDER: ShopItemKind[] = ['avatar_frame', 'name_color', 'banner', 'card_background', 'board_theme', 'streak_freeze']
 const MAX_FREEZES = 2 // GameRules: at most two streak freezes held
 
 const errorText = (caught: unknown, t: Messages) => {
@@ -50,6 +47,7 @@ export function ShopPage() {
 
   if (session.status !== 'authenticated') return null
   const me = session.user
+  const sections = shop.data && byKind(shop.data.items)
 
   return (
     <main className="mx-auto grid w-full max-w-7xl content-start gap-5 px-4 pb-10 sm:px-6 lg:px-8">
@@ -65,22 +63,37 @@ export function ShopPage() {
           {me.coins.toLocaleString(locale)}
         </p>
       </header>
-      {shop.data ? (
-        KIND_ORDER.map((kind) => {
-          const items = shop.data!.items.filter((item) => item.kind === kind)
-          return (
-            items.length > 0 && (
-              <section key={kind} className="grid gap-3">
-                <h2 className="font-heading text-lg font-semibold">{t.shop.kinds[kind]}</h2>
-                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {items.map((item) => (
-                    <ShopItem key={item.id} item={item} me={me} onBought={shop.reload} />
-                  ))}
-                </ul>
-              </section>
-            )
-          )
-        })
+      {sections ? (
+        <>
+          <nav aria-label={t.shop.sections} className="flex flex-wrap gap-2">
+            {sections.map(({ kind, items }) => (
+              <a
+                key={kind}
+                href={`#shop-${kind}`}
+                className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-medium ring-1 ring-border hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                {t.shop.kinds[kind]}
+                {kind !== 'streak_freeze' && (
+                  <span className="ml-2 font-mono text-xs text-muted-foreground">
+                    {t.shop.ownedCount(items.filter((item) => item.owned).length, items.length)}
+                  </span>
+                )}
+              </a>
+            ))}
+          </nav>
+          {sections.map(({ kind, items }) => (
+            <section key={kind} id={`shop-${kind}`} aria-labelledby={`shop-${kind}-title`} className="grid scroll-mt-20 gap-3">
+              <h2 id={`shop-${kind}-title`} className="font-heading text-lg font-semibold">
+                {t.shop.kinds[kind]}
+              </h2>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {items.map((item) => (
+                  <ShopItem key={item.id} item={item} me={me} onBought={shop.reload} />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </>
       ) : shop.error ? (
         <Card role="alert">
           <CardContent className="grid justify-items-start gap-3">
@@ -165,11 +178,11 @@ function ShopItem({ item, me, onBought }: { item: ShopItemDto; me: MeDto; onBoug
         <CardContent className="grid h-full content-between gap-4">
           <div className="grid gap-3">
             <div className="grid h-28 place-items-center overflow-hidden rounded-lg bg-secondary ring-1 ring-border ring-inset">
-              <Preview item={item} me={me} />
+              <ItemPreview item={item} me={me} />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-medium">{item.name}</h3>
-              <Badge variant={item.rarity === 'common' ? 'secondary' : 'outline'}>{copy.rarity[item.rarity as keyof typeof copy.rarity] ?? item.rarity}</Badge>
+              <RarityBadge rarity={item.rarity} />
               {equipped && (
                 <Badge variant="success">
                   <Check aria-hidden="true" />
@@ -191,43 +204,6 @@ function ShopItem({ item, me, onBought }: { item: ShopItemDto; me: MeDto; onBoug
       </Card>
     </li>
   )
-}
-
-// The item on me: my portrait in the frame, my name in the color, the pattern itself.
-function Preview({ item, me }: { item: ShopItemDto; me: MeDto }) {
-  const { t } = useLocale()
-  const slot = SLOTS[item.kind]
-  const on: Pick<UserRefDto, 'equipment'> = { equipment: slot ? { [slot]: item.assetKey } : {} }
-
-  switch (item.kind) {
-    case 'avatar_frame':
-      return <UserAvatar user={{ id: `preview-${item.id}`, avatar: avatarOf(me).key, ...on }} className="size-16" />
-    case 'name_color':
-      return <span className={cn('font-heading text-xl font-semibold', nameClass(on))}>{me.username}</span>
-    case 'banner':
-      return (
-        <span className={cn('flex size-full items-end p-3 font-mono text-sm text-success', bannerClass(on))}>
-          ~/{me.username} $<span className="ml-1 inline-block h-4 w-2 bg-success" />
-        </span>
-      )
-    case 'card_background':
-      return <span className={cn('size-full', cardClass(on))} />
-    case 'board_theme':
-      return (
-        <span className={cn('flex size-full items-center justify-center gap-6', boardClass(on))}>
-          <UserAvatar user={me} className="size-10" />
-          <span className="font-mono text-xs text-muted-foreground">vs</span>
-          <span className="size-10 rounded-full bg-secondary ring-1 ring-border" />
-        </span>
-      )
-    default:
-      return (
-        <span className="grid justify-items-center gap-1 text-primary">
-          <Snowflake aria-hidden="true" className="size-10" />
-          <span className="sr-only">{t.shop.kinds.streak_freeze}</span>
-        </span>
-      )
-  }
 }
 
 // Where coins and XP came from: GET /api/me/rewards (newest first, purchases negative).
