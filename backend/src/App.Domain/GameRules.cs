@@ -68,14 +68,14 @@ public static class GameRules
 
     public static readonly IReadOnlyDictionary<QuestionType, QuestionTypeRule> Types = new Dictionary<QuestionType, QuestionTypeRule>
     {
-        [QuestionType.TrueFalse] = new(TimeMs: 8_000, BasePoints: 50, Guessability: 0.5, MinPerDeck: 0, MaxPerDeck: 2),
-        [QuestionType.MultipleChoice] = new(15_000, 100, 0.75, 0, 3),
-        [QuestionType.Cloze] = new(18_000, 120, 0.75, 0, 2),
-        [QuestionType.OddOneOut] = new(12_000, 100, 0.75, 0, 2),
-        [QuestionType.Output] = new(25_000, 150, 0.75, 1, 2),
-        [QuestionType.MatchPairs] = new(30_000, 150, 1.0, 0, 2),
-        [QuestionType.Order] = new(25_000, 150, 1.0, 0, 2),
-        [QuestionType.FindBug] = new(40_000, 200, 1.0, 1, 2),
+        [QuestionType.TrueFalse] = new(TimeMs: 10_000, BasePoints: 50, Guessability: 0.5, MinPerDeck: 0, MaxPerDeck: 2),
+        [QuestionType.MultipleChoice] = new(18_000, 100, 0.75, 0, 3),
+        [QuestionType.Cloze] = new(22_000, 120, 0.75, 0, 2),
+        [QuestionType.OddOneOut] = new(14_000, 100, 0.75, 0, 2),
+        [QuestionType.Output] = new(30_000, 150, 0.75, 1, 2),
+        [QuestionType.MatchPairs] = new(36_000, 150, 1.0, 0, 2),
+        [QuestionType.Order] = new(30_000, 150, 1.0, 0, 2),
+        [QuestionType.FindBug] = new(48_000, 200, 1.0, 1, 2),
     };
 
     // Drag-and-drop types count together: at least 1 and at most 2 per deck.

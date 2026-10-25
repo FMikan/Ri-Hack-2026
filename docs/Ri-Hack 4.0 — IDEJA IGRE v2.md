@@ -200,14 +200,14 @@ Osam tipova, svi deterministički ocjenjivani; tri od njih (cloze, uljez, output
 
 | Tip | Mehanika | Vrijeme | Bazni bodovi | Djelomični bodovi | Ograničenja u decku |
 | --- | --- | --- | --- | --- | --- |
-| Točno/netočno | jedna tvrdnja, dva gumba | 8 s | 50 | ne | uvijek 1. pitanje (D1); još najviše 1 |
-| Odabir | pitanje + 4 opcije | 15 s | 100 | ne | najviše 3 |
-| Cloze u kodu | kod s jednim `____`, 4 tokena | 18 s | 120 | ne | najviše 2 |
-| Koji ne pripada | 4 stavke, jedna uljez | 12 s | 100 | ne | najviše 2 |
-| Što ispisuje kod | snippet + 4 moguća izlaza | 25 s | 150 | ne | najmanje 1, najviše 2 |
-| Povezivanje | 4 para, drag-and-drop, *Potvrdi* | 30 s | 150 | 25 % po točnom paru | povezivanje + redoslijed: najmanje 1, najviše 2 |
-| Redoslijed | 4–5 koraka, drag-and-drop, *Potvrdi* | 25 s | 150 | ne (sve ili ništa) | vidi gore |
-| Nađi bug | klik na liniju, zatim 3 fixa | 40 s | 200 | linija 40 %, fix 60 %; kriva linija = 0 | najmanje 1, najviše 2 |
+| Točno/netočno | jedna tvrdnja, dva gumba | 10 s | 50 | ne | uvijek 1. pitanje (D1); još najviše 1 |
+| Odabir | pitanje + 4 opcije | 18 s | 100 | ne | najviše 3 |
+| Cloze u kodu | kod s jednim `____`, 4 tokena | 22 s | 120 | ne | najviše 2 |
+| Koji ne pripada | 4 stavke, jedna uljez | 14 s | 100 | ne | najviše 2 |
+| Što ispisuje kod | snippet + 4 moguća izlaza | 30 s | 150 | ne | najmanje 1, najviše 2 |
+| Povezivanje | 4 para, drag-and-drop, *Potvrdi* | 36 s | 150 | 25 % po točnom paru | povezivanje + redoslijed: najmanje 1, najviše 2 |
+| Redoslijed | 4–5 koraka, drag-and-drop, *Potvrdi* | 30 s | 150 | ne (sve ili ništa) | vidi gore |
+| Nađi bug | klik na liniju, zatim 3 fixa | 48 s | 200 | linija 40 %, fix 60 %; kriva linija = 0 | najmanje 1, najviše 2 |
 
 **Primjeri dodatnih tipova**
 
@@ -606,7 +606,7 @@ Isti deck, neovisni timeri i deterministički ključ čine partiju fer; varanje 
 
 **Varanje**
 
-- Timeri od 8 do 40 s i kod koji se mora pročitati čine vanjsko traženje odgovora sporim; sporo točan odgovor vrijedi 50 % baznih bodova.
+- Timeri od 10 do 48 s i kod koji se mora pročitati čine vanjsko traženje odgovora sporim; sporo točan odgovor vrijedi 50 % baznih bodova.
 - Rangirani mod nagrađuje brzinu upravo zato što je brzina dokaz vlastitog znanja.
 - Uzorak *stalno ispod 1 s na D3–D4* zastavicom ide na pregled; nema automatskih kazni.
 - U prezentaciji se to kaže otvoreno: igra ne može spriječiti da netko pita AI, ali ga čini gubitnikom na vrijeme.

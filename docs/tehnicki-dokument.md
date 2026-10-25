@@ -756,14 +756,14 @@ public static class GameRules
     public static readonly (int days, int coins)[] StreakMilestones = [(7, 100), (30, 500), (100, 2000)];
     public static readonly IReadOnlyDictionary<QuestionType, QuestionTypeRule> Types = new Dictionary<QuestionType, QuestionTypeRule>
     {
-        [TrueFalse]      = new(TimeMs: 8_000,  BasePoints: 50,  Guessability: 0.5,  MaxPerDeck: 2, MinPerDeck: 0, Partial: false),
-        [MultipleChoice] = new(15_000, 100, 0.75, MaxPerDeck: 3, MinPerDeck: 0, false),
-        [Cloze]          = new(18_000, 120, 0.75, 2, 0, false),
-        [OddOneOut]      = new(12_000, 100, 0.75, 2, 0, false),
-        [Output]         = new(25_000, 150, 0.75, 2, 1, false),
-        [MatchPairs]     = new(30_000, 150, 1.0,  2, 0, true),
-        [Order]          = new(25_000, 150, 1.0,  2, 0, false),
-        [FindBug]        = new(40_000, 200, 1.0,  2, 1, true),
+        [TrueFalse]      = new(TimeMs: 10_000, BasePoints: 50,  Guessability: 0.5,  MaxPerDeck: 2, MinPerDeck: 0, Partial: false),
+        [MultipleChoice] = new(18_000, 100, 0.75, MaxPerDeck: 3, MinPerDeck: 0, false),
+        [Cloze]          = new(22_000, 120, 0.75, 2, 0, false),
+        [OddOneOut]      = new(14_000, 100, 0.75, 2, 0, false),
+        [Output]         = new(30_000, 150, 0.75, 2, 1, false),
+        [MatchPairs]     = new(36_000, 150, 1.0,  2, 0, true),
+        [Order]          = new(30_000, 150, 1.0,  2, 0, false),
+        [FindBug]        = new(48_000, 200, 1.0,  2, 1, true),
     };
     public static readonly TypeGroupRule[] TypeGroups = [ new(Types: [MatchPairs, Order], Min: 1, Max: 2) ];   // drag-and-drop zajedno
     public static readonly double[] DifficultyWeight = [0, 0.7, 0.9, 1.1, 1.3];   // index = D
