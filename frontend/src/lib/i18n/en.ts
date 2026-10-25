@@ -72,6 +72,12 @@ export const en = {
       switchPrompt: 'Already have an account?',
       switchLink: 'Log in',
     },
+    google: {
+      or: 'or',
+      busy: 'Signing in with Google…',
+      continue: 'Continue with Google',
+      soon: 'Google sign-in is coming soon. Use your e-mail for now.',
+    },
     errors: {
       emailRequired: 'Enter your email.',
       emailInvalid: 'Enter a valid email, like name@example.com.',
@@ -86,6 +92,8 @@ export const en = {
       tooManyAttempts: 'Too many attempts. Wait a minute and try again.',
       generic: 'Something went wrong. Try again.',
       resetTokenInvalid: 'This link is invalid or older than an hour. Get a new one.',
+      googleInvalid: 'Google could not confirm this account. Try again, or use your email and password.',
+      googleEmailTaken: 'An account with this email is already linked to a different Google account.',
     },
   },
   shell: {

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
 namespace App.Api;
@@ -28,6 +30,7 @@ public static class Auth
 
         services.AddSingleton<ITokenService>(sp => new JwtTokenService(key, sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IPasswordHasher, PasswordHasherAdapter>();
+        services.AddSingleton<IGoogleTokenVerifier>(new GoogleTokenVerifier(configuration["Auth:GoogleClientId"] is { Length: > 0 } id ? id : null));
         services.AddAuthorization();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         // Lifetime is checked against the injected TimeProvider, so tests that move the clock also expire tokens.
@@ -86,6 +89,33 @@ public static class Auth
                 SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256),
             });
             return (token, expiresAt);
+        }
+    }
+
+    // "Sign in with Google" ID tokens, checked against Google's published keys (fetched and cached by the
+    // ConfigurationManager) with the same JWT handler as our own tokens. Without Auth:GoogleClientId every token is refused.
+    private sealed class GoogleTokenVerifier(string? clientId) : IGoogleTokenVerifier
+    {
+        private readonly ConfigurationManager<OpenIdConnectConfiguration> _google = new(
+            "https://accounts.google.com/.well-known/openid-configuration", new OpenIdConnectConfigurationRetriever(), new HttpDocumentRetriever());
+        private readonly JsonWebTokenHandler _handler = new();
+
+        public string? ClientId => clientId;
+
+        public async Task<GoogleIdentity?> VerifyAsync(string idToken, CancellationToken cancellationToken)
+        {
+            if (clientId is null) return null;
+            var google = await _google.GetConfigurationAsync(cancellationToken);
+            var result = await _handler.ValidateTokenAsync(idToken, new TokenValidationParameters
+            {
+                ValidIssuers = ["https://accounts.google.com", "accounts.google.com"],
+                ValidAudience = clientId,
+                IssuerSigningKeys = google.SigningKeys,
+            });
+            object? Claim(string name) => result.IsValid && result.Claims.TryGetValue(name, out var value) ? value : null;
+            return Claim("sub") is string subject && Claim("email") is string email
+                ? new GoogleIdentity(subject, email, Claim("email_verified") is true or "true")
+                : null;
         }
     }
 

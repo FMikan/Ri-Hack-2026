@@ -76,6 +76,12 @@ export const hr: Messages = {
       switchPrompt: 'Već imaš račun?',
       switchLink: 'Prijavi se',
     },
+    google: {
+      or: 'ili',
+      busy: 'Prijava preko Googlea…',
+      continue: 'Nastavi s Googleom',
+      soon: 'Prijava Googleom stiže uskoro. Zasad se prijavi e-mailom.',
+    },
     errors: {
       emailRequired: 'Upiši e-mail.',
       emailInvalid: 'Upiši ispravan e-mail, npr. ime@primjer.hr.',
@@ -90,6 +96,8 @@ export const hr: Messages = {
       tooManyAttempts: 'Previše pokušaja. Pričekaj minutu pa pokušaj ponovno.',
       generic: 'Nešto je pošlo po zlu. Pokušaj ponovno.',
       resetTokenInvalid: 'Link nije valjan ili je stariji od sat vremena. Zatraži novi.',
+      googleInvalid: 'Google nije potvrdio ovaj račun. Pokušaj ponovno ili se prijavi e-mailom i lozinkom.',
+      googleEmailTaken: 'Račun s ovim e-mailom već je povezan s drugim Google računom.',
     },
   },
   shell: {

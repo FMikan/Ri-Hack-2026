@@ -22,6 +22,18 @@ public static class AuthEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
+        // The Google client id for the sign-in button, or null when Google sign-in is off (Auth:GoogleClientId unset).
+        group.MapGet("/config", (AuthService auth) => auth.Config());
+
+        // The ID token from Google's button: signs in, links a verified e-mail or creates the account (401 google-invalid).
+        group.MapPost("/google", async (GoogleLoginRequest request, AuthService auth, CancellationToken ct) =>
+            TypedResults.Ok(await auth.GoogleLoginAsync(request.IdToken, ct)))
+            .RequireRateLimiting(RateLimits.Login)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
         group.MapPost("/refresh", async (RefreshRequest request, AuthService auth, CancellationToken ct) =>
             TypedResults.Ok(await auth.RefreshAsync(request.RefreshToken, ct)))
             .ProducesProblem(StatusCodes.Status401Unauthorized);

@@ -39,6 +39,8 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeEmailSender Emails { get; } = new();
 
+    public FakeGoogleTokens Google { get; } = new();
+
     public FakeAi Ai { get; } = new();
 
     public JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web)
@@ -78,6 +80,7 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         {
             services.AddSingleton<TimeProvider>(Clock);
             services.AddSingleton<IEmailSender>(Emails);
+            services.AddSingleton<IGoogleTokenVerifier>(Google);
             services.AddSingleton<IExplanationGenerator>(Ai);
             services.AddSingleton<ILessonGenerator>(Ai);
             services.AddSingleton<IProfessorAi>(Ai);
@@ -87,6 +90,7 @@ public sealed class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
     public async Task ResetAsync()
     {
         Emails.Sent.Clear();
+        Google.Tokens.Clear();
         Ai.Reset();
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -153,6 +157,16 @@ public sealed class FakeEmailSender : IEmailSender
         Sent.Add((to, token));
         return Task.CompletedTask;
     }
+}
+
+// Stands in for Google: an ID token is valid only if a test put it in Tokens.
+public sealed class FakeGoogleTokens : IGoogleTokenVerifier
+{
+    public Dictionary<string, GoogleIdentity> Tokens { get; } = [];
+
+    public string? ClientId => "test-client.apps.googleusercontent.com";
+
+    public Task<GoogleIdentity?> VerifyAsync(string idToken, CancellationToken cancellationToken) => Task.FromResult(Tokens.GetValueOrDefault(idToken));
 }
 
 // Stands in for Claude: counts calls and can be slowed down past Ai:TimeoutMs (50 ms in tests) to force the fallback.

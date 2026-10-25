@@ -11,6 +11,7 @@ export interface AuthState {
   session: Session
   retry: () => void
   login: (body: LoginRequest, remember: boolean) => Promise<void>
+  googleLogin: (idToken: string, remember: boolean) => Promise<void> // also creates the account on first use
   register: (body: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
   updateMe: (body: UpdateMeRequest) => Promise<void>

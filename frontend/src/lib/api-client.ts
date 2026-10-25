@@ -1,6 +1,7 @@
 import type {
   AchievementDto,
   AppErrorCode,
+  AuthConfigDto,
   AuthResponse,
   BanTopicRequest,
   Board,
@@ -16,6 +17,7 @@ import type {
   FriendChallengeDto,
   FriendDto,
   FriendRequest,
+  GoogleLoginRequest,
   KnowledgeMapDto,
   LeaderboardDto,
   LessonDto,
@@ -268,6 +270,11 @@ export const api = {
     startSession(await request<AuthResponse>('/api/auth/register', post(body), { auth: false }), true),
   login: async (body: LoginRequest, remember: boolean) =>
     startSession(await request<AuthResponse>('/api/auth/login', post(body), { auth: false }), remember),
+  // The ID token from Google's button; the first Google sign-in creates the account.
+  googleLogin: async (body: GoogleLoginRequest, remember: boolean) =>
+    startSession(await request<AuthResponse>('/api/auth/google', post(body), { auth: false }), remember),
+  // googleClientId is null when Google sign-in is off.
+  authConfig: (signal?: AbortSignal) => request<AuthConfigDto>('/api/auth/config', { signal }, { auth: false }),
   logout: async () => {
     const refreshToken = await tokenStore.get()
     await endSession()
