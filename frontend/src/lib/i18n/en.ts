@@ -114,14 +114,15 @@ export const en = {
     logOut: 'Log out',
     greeting: (name: string) => `Welcome back, ${name}!`,
     friendRequests: (n: number) => `Friend requests: ${n}`,
+    invites: (n: number) => `Invitations waiting: ${n}`,
   },
   avatar: {
-    menu: 'Profile picture',
+    change: 'Change profile picture',
     title: 'Profile picture',
     subtitle: 'Pick the portrait other players see next to your name.',
     option: (n: number) => `Portrait ${n}`,
-    cancel: 'Cancel',
-    save: 'Save',
+    cancel: 'Discard',
+    save: 'Save changes',
     saving: 'Saving…',
   },
   dashboard: {

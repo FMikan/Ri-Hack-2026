@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { UserAvatar } from '@/components/shared/UserAvatar'
@@ -15,6 +16,7 @@ import { PLACEMENT_MATCHES } from '@/lib/game'
 import { useLocale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 import type { KnowledgeMapDto, MatchSummaryDto, MeDto, ProfileVisibility, StatsDto } from '@/types/api'
+import { AvatarDialog } from './AvatarDialog'
 import { HonorsCard } from './HonorsCard'
 import { KnowledgeMapCard } from './KnowledgeMapCard'
 import { LockerCard } from './LockerCard'
@@ -91,6 +93,7 @@ function ProfileView({ me, map, history, stats }: ProfileViewProps) {
 function ProfileCard({ me, stats: totals, className }: { me: MeDto; stats: StatsDto; className?: string }) {
   const { t, locale } = useLocale()
   const copy = t.profile
+  const [avatarOpen, setAvatarOpen] = useState(false)
   const stats: [string, string | number][] = [
     [copy.stats.duels, totals.matches],
     [copy.stats.wins, totals.wins],
@@ -103,7 +106,22 @@ function ProfileCard({ me, stats: totals, className }: { me: MeDto; stats: Stats
       <CardContent className="grid gap-6">
         {bannerClass(me) && <div aria-hidden="true" className={cn('-mb-2 h-14 rounded-lg', bannerClass(me))} />}
         <div className="flex flex-wrap items-center gap-4">
-          <UserAvatar user={me} className="size-16" />
+          {/* The portrait is the way in: a tap opens the 30 to pick from, and the pencil says it can change. */}
+          <button
+            type="button"
+            onClick={() => setAvatarOpen(true)}
+            className="group/avatar relative shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <span className="sr-only">{t.avatar.change}</span>
+            <UserAvatar user={me} className="size-16 transition-opacity group-hover/avatar:opacity-80 motion-reduce:transition-none" />
+            <span
+              aria-hidden="true"
+              className="absolute -right-1 -bottom-1 grid size-7 place-items-center rounded-full bg-secondary text-foreground ring-2 ring-card transition-colors group-hover/avatar:bg-primary group-hover/avatar:text-primary-foreground motion-reduce:transition-none"
+            >
+              <Pencil className="size-3.5" />
+            </span>
+          </button>
+          <AvatarDialog user={me} open={avatarOpen} onOpenChange={setAvatarOpen} />
           <div className="grid min-w-0 gap-1">
             <h1 className={cn('truncate font-heading text-2xl font-semibold tracking-tight sm:text-3xl', nameClass(me))}>{me.username}</h1>
             {me.title && <p className="text-sm font-medium text-primary">{me.title}</p>}
@@ -145,18 +163,25 @@ function Visibility() {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    // Laid out like the mode switch on Practice: a mono label, the sliding two-way toggle, then what it means.
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span aria-hidden="true" className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
+        {copy.label}
+      </span>
       <SegmentedControl
         label={copy.label}
         name="profile-visibility"
         value={session.user.profileVisibility}
         onChange={change}
+        toggle
         options={[
           { value: 'public', label: copy.public },
           { value: 'friends', label: copy.friends },
         ]}
       />
-      <p className="text-sm text-muted-foreground">{copy.hint[session.user.profileVisibility]}</p>
+      <p aria-live="polite" className="text-xs text-pretty text-muted-foreground">
+        {copy.hint[session.user.profileVisibility]}
+      </p>
       {error && (
         <p role="alert" className="basis-full text-sm text-destructive">
           {error}

@@ -32,7 +32,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/features/auth/auth-context'
 import { PlayDialog } from '@/features/play/PlayDialog'
-import { AvatarDialog } from '@/features/profile/AvatarDialog'
 import { usePoll } from '@/hooks/use-poll'
 import { api } from '@/lib/api-client'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
@@ -169,7 +168,6 @@ function TopBar() {
   const { t, locale, setLocale } = useLocale()
   const { pathname } = useLocation()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [avatarOpen, setAvatarOpen] = useState(false)
   if (session.status !== 'authenticated') return null
   const user = session.user
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
@@ -248,10 +246,6 @@ function TopBar() {
             </DropdownMenuItem>
             {settingsOpen && (
               <>
-                <DropdownMenuItem inset className={touch} onSelect={() => setAvatarOpen(true)}>
-                  {t.avatar.menu}
-                  <UserAvatar user={user} className="ml-auto size-5" />
-                </DropdownMenuItem>
                 {/* Language is a row like the others with a small EN | HR switch (the auth pages' look). Still radio
                     items, so arrow keys reach them; the menu stays open to show the switch. */}
                 <div className="flex items-center gap-1.5 py-0.5 pr-1.5 pl-7 text-sm max-lg:py-1.5">
@@ -294,7 +288,6 @@ function TopBar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <AvatarDialog user={user} open={avatarOpen} onOpenChange={setAvatarOpen} />
       </div>
     </header>
   )

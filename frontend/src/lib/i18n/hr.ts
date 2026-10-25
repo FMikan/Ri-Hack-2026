@@ -118,14 +118,15 @@ export const hr: Messages = {
     logOut: 'Odjava',
     greeting: (name: string) => `Bok, ${name}!`,
     friendRequests: (n: number) => `Zahtjevi za prijateljstvo: ${n}`,
+    invites: (n: number) => `Pozivi na čekanju: ${n}`,
   },
   avatar: {
-    menu: 'Profilna slika',
+    change: 'Promijeni profilnu sliku',
     title: 'Profilna slika',
     subtitle: 'Odaberi portret koji drugi igrači vide uz tvoje ime.',
     option: (n: number) => `Portret ${n}`,
-    cancel: 'Odustani',
-    save: 'Spremi',
+    cancel: 'Odbaci',
+    save: 'Spremi promjene',
     saving: 'Spremam…',
   },
   dashboard: {
