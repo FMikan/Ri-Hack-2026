@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using App.Application.Daily;
+using App.Application.Economy;
 using App.Application.Me;
 
 namespace App.Api.Endpoints;
@@ -33,6 +34,9 @@ public static class MeEndpoints
             me.GetRewardsAsync(user.UserId(), limit, ct));
 
         group.MapGet("/daily-tasks", (ClaimsPrincipal user, DailyService daily, CancellationToken ct) => daily.TasksAsync(user.UserId(), ct));
+
+        // The cosmetics I own (season drops included), to equip below.
+        group.MapGet("/items", (ClaimsPrincipal user, ShopService shop, CancellationToken ct) => shop.InventoryAsync(user.UserId(), ct));
 
         // { avatarFrame?, banner?, boardTheme?, nameColor?, cardBackground?, titleId? }: an owned item (earned title) id, or null to take it off.
         group.MapPut("/equipment", (Dictionary<string, Guid?> slots, ClaimsPrincipal user, MeService me, CancellationToken ct) =>

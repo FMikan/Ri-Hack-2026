@@ -25,6 +25,14 @@ public class ShopService(IAppDbContext db, Rewarder rewarder, MeService me, Time
         return new ShopDto(items.Select(i => new ShopItemDto(i.Id, i.Key, i.Kind, i.Name, i.Price, i.Rarity, i.AssetKey, owned.Contains(i.Id))).ToArray());
     }
 
+    // My locker: every cosmetic I own, season drops (never sold) included, cheapest first like the shop.
+    public async Task<ShopItemDto[]> InventoryAsync(Guid userId, CancellationToken ct) =>
+        await db.ShopItems
+            .Where(i => db.UserItems.Any(o => o.UserId == userId && o.ItemId == i.Id))
+            .OrderBy(i => i.Price).ThenBy(i => i.Key)
+            .Select(i => new ShopItemDto(i.Id, i.Key, i.Kind, i.Name, i.Price, i.Rarity, i.AssetKey, true))
+            .ToArrayAsync(ct);
+
     public async Task<MeDto> PurchaseAsync(Guid userId, Guid itemId, CancellationToken ct)
     {
         var item = await db.ShopItems.AsNoTracking().FirstOrDefaultAsync(i => i.Id == itemId && i.IsActive, ct)

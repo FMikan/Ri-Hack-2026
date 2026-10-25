@@ -1022,6 +1022,7 @@ interface KnowledgeMapDto {
 GET  /api/shop                              → { items: (ShopItemDto & { owned: boolean })[] }
 POST /api/shop/purchase   { itemId }        → MeDto   (409 insufficient-coins / already-owned / freeze-limit)
 PUT  /api/me/equipment    { avatarFrame?; banner?; boardTheme?; nameColor?; cardBackground?; titleId? }  → MeDto  (null = skini; 409 shop/not-owned)
+GET  /api/me/items                          → ShopItemDto[]          // ormarić: sve moje kozmetike (i sezonski okviri), owned = true
 GET  /api/me/rewards?limit=50               → RewardEventDto[]
 GET  /api/daily-challenge                   → DailyChallengeDto     // prvi poziv dana otvara pokušaj (startedAt)
 GET  /api/daily-challenge/{day}             → DailyChallengeDto     // arhiva; key/explanation samo ako sam pokušao
@@ -1109,7 +1110,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 **F4b: dnevni zadaci, dnevni izazov, shop, oprema**
 - Dnevni zadaci: `GET /api/me/daily-tasks` (i `dashboard.dailyTasks`): tri zadatka dana, isti cijeli dan, s `progress/target`; `practice_weakest` nosi `topic` (gumb "Trening" na tu temu). Dovršen zadatak se isplaćuje (20 coina) kad se zadaci sljedeći put učitaju, sva tri još 30 (`bonusAwarded`). Ključevi: `play_2_ranked`, `patch_1_concept`, `daily_challenge`, `practice_weakest`, `3_brilliant`, `review_all_due`.
 - Dnevni izazov: `GET /api/daily-challenge` otvara pokušaj (`startedAt`); odbrojavanje 60 s od `startedAt` preko `serverTime`. Isto `find_bug` pitanje za sve; `POST /api/daily-challenge/attempt { payload, clientElapsedMs }` vraća rezultat, ključ i rang. 30 coina za točno, 5 za pokušaj, 30 XP uvijek; jedan pokušaj (`409 daily/already-attempted`), nakon 60 s `409 daily/too-late` (pokušaj se bilježi kao istek). `leaderboard` top 20: točni prvi, pa brži. Arhiva `GET /api/daily-challenge/{yyyy-mm-dd}`.
-- Shop: `GET /api/shop` (najjeftinije prvo, `owned`), `POST /api/shop/purchase { itemId }` vraća `MeDto` s novim stanjem coina. Zamrzavanje streaka: najviše 2 (`me.streak.freezes`). Oprema: `PUT /api/me/equipment { avatarFrame: itemId | null, ... }`; `UserRefDto.equipment` (svugdje uz ime) daje `assetKey` po slotu. Seed artikli: `frame-bronze-ring`, `frame-circuit`, `banner-terminal`, `name-amber`, `card-blueprint`, `board-midnight`, `streak-freeze` (frontend ih crta po `assetKey`).
+- Shop: `GET /api/shop` (najjeftinije prvo, `owned`), `POST /api/shop/purchase { itemId }` vraća `MeDto` s novim stanjem coina. Zamrzavanje streaka: najviše 2 (`me.streak.freezes`). Oprema: `PUT /api/me/equipment { avatarFrame: itemId | null, ... }`; `UserRefDto.equipment` (svugdje uz ime) daje `assetKey` po slotu. Ormarić na profilu: `GET /api/me/items` vraća sve moje kozmetike, i sezonske okvire koji se ne prodaju, najjeftinije prvo. Seed (`Seed/shop.json`): 10–13 artikala po slotu u četiri rariteta (`common` 150–450, `rare` 600–1400, `epic` 1800–3500, `legendary` 5000–9000 coina; samo legendarni se animiraju) i zamrzavanje streaka. Frontend crta `assetKey` kao istoimenu CSS klasu iz `src/cosmetics.css`; nepoznat ključ ne crta ništa. `SeedTests.Shop_seed_is_well_formed` traži 8–15 artikala za prodaju po slotu, jedinstvene ključeve i poznate raritete.
 - `dashboard.dailyChallengeAttempted` je sada pravi.
 
 **F4a: nagrade i streak**
@@ -1421,7 +1422,7 @@ F4 Ekonomija (F4a: ledger, partije, poduke, level, tjedni cilj, streak; F4b: zad
   Streak_milestone_7_days_gives_100_coins_once
   Buy_streak_freeze_max_2 / Freeze_consumed_on_missed_day
   Purchase_deducts_coins_and_adds_item / Insufficient_coins_is_409 / Concurrent_purchases_cannot_overspend
-  Equip_requires_ownership
+  Equip_requires_ownership / Inventory_lists_owned_cosmetics_with_season_drops / Shop_seed_is_well_formed
   Daily_challenge_first_get_starts_attempt / Daily_challenge_rejects_answer_after_60s / Daily_challenge_leaderboard_orders_correct_then_time
   Daily_challenge_rewards_30_correct_5_attempt / Daily_challenge_archive_shows_key_only_after_attempt
   Level_up_rewards_50_times_level

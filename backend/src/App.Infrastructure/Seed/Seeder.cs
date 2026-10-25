@@ -97,7 +97,7 @@ public class Seeder(AppDbContext db, TimeProvider time)
 
         // The shop, upserted by key; prices and names follow the file.
         var items = await db.ShopItems.ToDictionaryAsync(i => i.Key, ct);
-        foreach (var seed in Read<List<ShopSeed>>("App.Infrastructure.Seed.shop.json"))
+        foreach (var seed in ReadShop())
         {
             if (!items.TryGetValue(seed.Key, out var item))
             {
@@ -112,6 +112,8 @@ public class Seeder(AppDbContext db, TimeProvider time)
     }
 
     public static List<TopicSeed> ReadTopics() => Read<List<TopicSeed>>("App.Infrastructure.Seed.topics.json");
+
+    public static List<ShopSeed> ReadShop() => Read<List<ShopSeed>>("App.Infrastructure.Seed.shop.json");
 
     public static List<QuestionSeed> ReadQuestions() =>
         typeof(Seeder).Assembly.GetManifestResourceNames()
