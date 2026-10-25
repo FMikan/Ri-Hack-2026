@@ -133,6 +133,12 @@ export const en = {
       challenge: 'Daily challenge',
       challengeOpen: 'One bug, 60 seconds',
       challengeDone: 'Done today. See the ranking',
+      notice: {
+        title: "Today's tasks are ready",
+        text: (done: number, total: number, challengeOpen: boolean) =>
+          `${done} of ${total} done${challengeOpen ? ' and the daily challenge is open' : ''}. You will find them under Practice.`,
+        open: 'Open Practice',
+      },
     },
     suggestion: {
       text: {
@@ -333,6 +339,7 @@ export const en = {
     documentTitle: 'Practice',
     title: 'Practice',
     subtitle: 'No opponent and no rating. Questions come from your weakest concepts, due reviews first.',
+    todayFailed: "Could not load today's tasks.",
     mode: 'Mode',
     modes: { untimed: 'Untimed', timed: 'Timed' },
     modeHints: {
@@ -450,7 +457,7 @@ export const en = {
     elapsed: 'Searching for',
     range: (min: number, max: number) => `Rating ${min}–${max}`,
     topics: 'Your topics',
-    noOpponent: 'Nobody found yet. Play a bot instead, or keep waiting.',
+    noOpponent: 'Not enough players right now. Try a bot.',
     playBot: 'Play a bot',
     keepWaiting: 'Keep waiting',
     cancel: 'Leave the queue',
@@ -463,6 +470,7 @@ export const en = {
     opening: 'Opening the duel…',
     left: 'You are no longer in the queue. The offer ran out or was declined.',
     searchAgain: 'Search again',
+    opponentSeat: 'Searching…',
     ghost: {
       title: 'Play a recorded duel',
       body: (name: string, topic: string, when: string) =>

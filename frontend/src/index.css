@@ -83,6 +83,95 @@
             transform: rotateY(1080deg);
         }
     }
+
+    /* Ranked queue, while searching: every 2.9 s the swords lift apart, swing in and hit (21%), then rest crossed for 2 s.
+       Sparks and a shockwave ring run on the same cycle, so the three stay in step. */
+    --animate-clash-front: clash-front 2900ms 150ms infinite;
+    --animate-clash-back: clash-back 2900ms 150ms infinite;
+    --animate-clash-spark: clash-spark 2900ms 150ms infinite;
+    --animate-clash-wave: clash-wave 2900ms 150ms infinite;
+    @keyframes clash-front {
+        from {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        9% {
+            transform: translate(5px, 1px) rotate(35deg);
+            animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); /* accelerates into the hit */
+        }
+        21% {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        25% {
+            transform: translate(0.6px, 0) rotate(5deg);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        31%,
+        to {
+            transform: translate(0, 0) rotate(0);
+        }
+    }
+    @keyframes clash-back {
+        from {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        9% {
+            transform: translate(-5px, 1px) rotate(-35deg);
+            animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+        }
+        21% {
+            transform: translate(0, 0) rotate(0);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        25% {
+            transform: translate(-0.6px, 0) rotate(-5deg);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        31%,
+        to {
+            transform: translate(0, 0) rotate(0);
+        }
+    }
+    @keyframes clash-spark {
+        from,
+        21% {
+            opacity: 0;
+            transform: scale(0.5);
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+        24% {
+            opacity: 1;
+        }
+        37%,
+        to {
+            opacity: 0;
+            transform: scale(1.25);
+        }
+    }
+    /* The opponent's seat: the found player's portrait resolving in. */
+    --animate-seat-reveal: seat-reveal 300ms cubic-bezier(0.2, 0, 0, 1) both;
+    @keyframes seat-reveal {
+        from {
+            opacity: 0;
+            transform: scale(0.25);
+            filter: blur(4px);
+        }
+    }
+    @keyframes clash-wave {
+        from,
+        21% {
+            opacity: 1;
+            transform: scale(1);
+            animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+        }
+        47%,
+        to {
+            opacity: 0;
+            transform: scale(2);
+        }
+    }
 }
 
 /* Palette (PRAVILA.md §3): charcoal surfaces, sky accent, green and red for change. Dark UI only. */

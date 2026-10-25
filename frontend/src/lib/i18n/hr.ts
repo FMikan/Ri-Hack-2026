@@ -137,6 +137,12 @@ export const hr: Messages = {
       challenge: 'Dnevni izazov',
       challengeOpen: 'Jedan bug, 60 sekundi',
       challengeDone: 'Odrađeno danas. Pogledaj poredak',
+      notice: {
+        title: 'Današnji zadaci su spremni',
+        text: (done: number, total: number, challengeOpen: boolean) =>
+          `Riješeno ${done} od ${total}${challengeOpen ? ', a dnevni izazov čeka' : ''}. Naći ćeš ih pod Treningom.`,
+        open: 'Otvori Trening',
+      },
     },
     suggestion: {
       text: {
@@ -337,6 +343,7 @@ export const hr: Messages = {
     documentTitle: 'Trening',
     title: 'Trening',
     subtitle: 'Bez protivnika i bez ratinga. Pitanja dolaze iz tvojih najslabijih koncepata, prvo ono što treba ponoviti.',
+    todayFailed: 'Današnji zadaci se nisu učitali.',
     mode: 'Način',
     modes: { untimed: 'Bez vremena', timed: 'Pod vremenom' },
     modeHints: {
@@ -454,7 +461,7 @@ export const hr: Messages = {
     elapsed: 'Tražimo već',
     range: (min: number, max: number) => `Rating ${min}–${max}`,
     topics: 'Tvoje teme',
-    noOpponent: 'Još nikoga. Igraj protiv bota ili nastavi čekati.',
+    noOpponent: 'Trenutno nema dovoljno igrača. Probaj s botom.',
     playBot: 'Igraj protiv bota',
     keepWaiting: 'Nastavi čekati',
     cancel: 'Izađi iz reda',
@@ -467,6 +474,7 @@ export const hr: Messages = {
     opening: 'Otvaramo duel…',
     left: 'Više nisi u redu. Ponuda je istekla ili je odbijena.',
     searchAgain: 'Traži ponovno',
+    opponentSeat: 'Tražimo…',
     ghost: {
       title: 'Igraj snimljeni duel',
       body: (name: string, topic: string, when: string) =>

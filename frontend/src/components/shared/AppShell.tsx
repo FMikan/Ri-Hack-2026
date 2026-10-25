@@ -228,16 +228,39 @@ function TopBar() {
                   {t.avatar.menu}
                   <UserAvatar user={user} className="ml-auto size-5" />
                 </DropdownMenuItem>
-                <DropdownMenuLabel inset className="font-normal">
-                  {t.common.language}
-                </DropdownMenuLabel>
-                <DropdownMenuRadioGroup value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-                  {(Object.keys(LOCALE_NAMES) as Locale[]).map((option) => (
-                    <DropdownMenuRadioItem key={option} value={option} lang={option} inset className={touch}>
-                      {LOCALE_NAMES[option]}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
+                {/* Language is a row like the others with a small EN | HR switch (the auth pages' look). Still radio
+                    items, so arrow keys reach them; the menu stays open to show the switch. */}
+                <div className="flex items-center gap-1.5 py-0.5 pr-1.5 pl-7 text-sm max-lg:py-1.5">
+                  <span id="menu-language">{t.common.language}</span>
+                  <DropdownMenuRadioGroup
+                    aria-labelledby="menu-language"
+                    value={locale}
+                    // Radix reports a click on the checked item too: that one flips to the other language (a toggle).
+                    onValueChange={(value) =>
+                      setLocale(value === locale ? (Object.keys(LOCALE_NAMES) as Locale[]).find((option) => option !== locale)! : (value as Locale))
+                    }
+                    className="relative ml-auto flex gap-0.5 rounded-lg bg-secondary p-0.5"
+                  >
+                    {/* The thumb behind the picked language slides over (segments are equal, 2.5rem plus the gap). */}
+                    <span
+                      aria-hidden="true"
+                      style={{ translate: `calc(${(Object.keys(LOCALE_NAMES) as Locale[]).indexOf(locale)} * (100% + 0.125rem))` }}
+                      className="absolute inset-y-0.5 left-0.5 w-10 rounded-md bg-primary/15 ring-1 ring-primary/40 ring-inset transition-[translate] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+                    />
+                    {(Object.keys(LOCALE_NAMES) as Locale[]).map((option) => (
+                      <DropdownMenuRadioItem
+                        key={option}
+                        value={option}
+                        lang={option}
+                        aria-label={LOCALE_NAMES[option]}
+                        onSelect={(event) => event.preventDefault()}
+                        className="relative h-7 w-10 justify-center px-0 font-mono text-xs font-medium text-muted-foreground uppercase transition-colors duration-200 focus:bg-foreground/5 focus:text-foreground data-[state=checked]:text-primary focus:data-[state=checked]:text-primary motion-reduce:transition-none *:data-[slot=dropdown-menu-radio-item-indicator]:hidden"
+                      >
+                        {option}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </div>
               </>
             )}
             <DropdownMenuSeparator />
