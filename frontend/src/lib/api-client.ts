@@ -302,7 +302,7 @@ export const api = {
   resign: (id: string) => request<MatchStateDto>(`/api/matches/${id}/resign`, { method: 'POST' }),
   startPractice: (body: StartPracticeRequest) => request<MatchStateDto>('/api/matches/practice', post(body)),
   startCalibration: (body: StartCalibrationRequest) => request<MatchStateDto>('/api/matches/calibration', post(body)),
-  // Untimed practice waits in the interstitial until the player moves on.
+  // Untimed practice waits in the interstitial until the player moves on; a bot duel takes it too (and moves on by itself after 30 s).
   next: (id: string) => request<MatchStateDto>(`/api/matches/${id}/next`, { method: 'POST' }),
   // Only after answering; the first request may take up to 8 s while the AI writes it.
   explanation: (questionId: string, signal?: AbortSignal) =>

@@ -745,7 +745,7 @@ public static class GameRules
     public const string DayTimeZone = "Europe/Zagreb";
     public const int StartRating = 1000, ProvisionalMatches = 10, ProfileAfterRankedMatches = 5, HighKMatches = 30, KHigh = 32, KLow = 16;
     public const int MaxRatingGap = 400, QueueInitialRange = 100, QueueRangeStep = 50, QueueStepSeconds = 10, GhostOfferAfterSeconds = 30, GhostRecordingMaxDays = 30;
-    public const int ProposalAcceptSeconds = 10, VetoBanSeconds = 8, VetoAnimationSeconds = 3, LobbySeconds = 5, InterstitialSeconds = 2, RematchSeconds = 20, FriendChallengeMinutes = 10, FriendInviteSeconds = 60;
+    public const int ProposalAcceptSeconds = 10, VetoBanSeconds = 8, VetoAnimationSeconds = 3, LobbySeconds = 5, InterstitialSeconds = 4, BotInterstitialSeconds = 30, RematchSeconds = 20, FriendChallengeMinutes = 10, FriendInviteSeconds = 60;
     public const int ReconnectGraceSeconds = 20, ClientTimeToleranceMs = 1500, BotMinSlackMs = 500, QuestionsPerMatch = 10, CalibrationQuestions = 5, VetoPoolMax = 6;
     public const int MinTopics = 3, MaxTopics = 5, SeenQuestionDays = 30, SameOpponentMaxStreak = 3, TargetedRotationMatches = 2;
     public const int TierHysteresis = 25, GrandmasterTop = 100;
@@ -762,13 +762,13 @@ public static class GameRules
     public static readonly IReadOnlyDictionary<QuestionType, QuestionTypeRule> Types = new Dictionary<QuestionType, QuestionTypeRule>
     {
         [TrueFalse]      = new(TimeMs: 10_000, BasePoints: 50,  Guessability: 0.5,  MaxPerDeck: 2, MinPerDeck: 0, Partial: false),
-        [MultipleChoice] = new(18_000, 100, 0.75, MaxPerDeck: 3, MinPerDeck: 0, false),
-        [Cloze]          = new(22_000, 120, 0.75, 2, 0, false),
-        [OddOneOut]      = new(14_000, 100, 0.75, 2, 0, false),
-        [Output]         = new(30_000, 150, 0.75, 2, 1, false),
-        [MatchPairs]     = new(36_000, 150, 1.0,  2, 0, true),
-        [Order]          = new(30_000, 150, 1.0,  2, 0, false),
-        [FindBug]        = new(48_000, 200, 1.0,  2, 1, true),
+        [MultipleChoice] = new(27_000, 100, 0.75, MaxPerDeck: 3, MinPerDeck: 0, false),
+        [Cloze]          = new(33_000, 120, 0.75, 2, 0, false),
+        [OddOneOut]      = new(21_000, 100, 0.75, 2, 0, false),
+        [Output]         = new(45_000, 150, 0.75, 2, 1, false),
+        [MatchPairs]     = new(54_000, 150, 1.0,  2, 0, true),
+        [Order]          = new(45_000, 150, 1.0,  2, 0, false),
+        [FindBug]        = new(72_000, 200, 1.0,  2, 1, true),
     };
     public static readonly TypeGroupRule[] TypeGroups = [ new(Types: [MatchPairs, Order], Min: 1, Max: 2) ];   // drag-and-drop zajedno
     public static readonly double[] DifficultyWeight = [0, 0.7, 0.9, 1.1, 1.3];   // index = D
@@ -825,13 +825,13 @@ Advance(now)                                      (tick) veto_coin istek → vet
                                                   veto_ban istek → AutoBan → sljedeći turn (+8 s) ili veto_pick (chosenTopicId odmah, deadline +3 s)
                                                   veto_pick istek → topic + deck → lobby (+5 s)
                                                   lobby istek → pitanje 0 (question_started_at = now, deadline + limit + 1,5 s; bot/ghost odgovor unaprijed)
-                                                  question: oba odgovorila (answered_at <= now) ili istek → timeouti po §2.4 → interstitial (+2 s)
+                                                  question: oba odgovorila (answered_at <= now) ili istek → timeouti po §2.4 → interstitial (+4 s; bot duel +30 s)
                                                   interstitial istek (timed) → sljedeće pitanje ili Finish
                                                   u in_progress: human s last_seen_at < now - 20 s → disconnected_at; vraćeni → null
 Ban(seat, topicId, now)                           faza veto_ban, moj turn, tema u poolu i nije banirana; 2 preostale → veto_pick
 SubmitAnswer(seat, index, payload, clientMs, now) faza question, index == current, još nije odgovoreno; tolerancija (§2.4); grade; points; label;
                                                   oba → interstitial odmah; protivnik bot/ghost s answered_at > now → phase_deadline = answered_at
-Next(seat, now)                                   samo untimed practice u interstitial → sljedeće pitanje ili Finish
+Next(seat, now)                                   untimed practice ili bot duel u interstitial → sljedeće pitanje ili Finish
 Resign(seat, now)                                 finished, result resign, protivnik pobjeđuje
 Finish(now)                                       §17: human s disconnected_at ≠ null na kraju = resign; oba = aborted; tiebreak; winner; phase done
 ```
@@ -997,7 +997,7 @@ POST /api/matches/calibration  { topicId: Uuid }                                
 GET  /api/matches/{id}                                                                        → MatchStateDto  (poll 1 s; samo sudionik)
 POST /api/matches/{id}/veto/ban   { topicId }                                                 → MatchStateDto
 POST /api/matches/{id}/answers    { questionIndex; payload; clientElapsedMs }                 → MatchStateDto  (409 already-answered / wrong-index / wrong-phase)
-POST /api/matches/{id}/next                                                                   → MatchStateDto  (samo trening bez vremena u interstitial)
+POST /api/matches/{id}/next                                                                   → MatchStateDto  (trening bez vremena ili bot duel u interstitial)
 POST /api/matches/{id}/resign                                                                 → MatchStateDto  (frontend traži potvrdu u 3 s)
 GET  /api/matches/{id}/review                                                                 → MatchReviewDto (F2; 409 match/not-finished)
 POST /api/matches/{id}/rematch                                                                → RematchDto     (F3; 20 s)
@@ -1040,7 +1040,7 @@ interface ReviewQuestionDto { index: number; question: QuestionPublicDto; key: A
 interface RematchDto { status: 'none'|'pending'|'accepted'|'declined'|'expired'; requestedBySeat?: 0|1; expiresAt?: Iso; matchId?: Uuid }
 ```
 
-Tok na frontendu: `useMatch(id)` polla `GET /api/matches/{id}` svake 1 s dok `status` nije `finished|aborted`; svaka komanda vraća isti DTO pa se state odmah zamijeni. Timer pitanja klijent mjeri `performance.now()`-om od prvog rendera (nakon reloada kreće od `serverTime - deliveredAt`) i šalje `clientElapsedMs`; vizualno odbrojavanje koristi `timeLimitMs`, rezano na `phaseDeadline - serverTime - 500 ms`. `rematchAvailable` = ranked/friend, protivnik čovjek, viđen u zadnje 2 min. Trening bez vremena: nakon međuekrana klijent zove `GET /api/questions/{id}/explanation` pa `POST .../next`.
+Tok na frontendu: `useMatch(id)` polla `GET /api/matches/{id}` svake 1 s dok `status` nije `finished|aborted`; svaka komanda vraća isti DTO pa se state odmah zamijeni. Timer pitanja klijent mjeri `performance.now()`-om od prvog rendera (nakon reloada kreće od `serverTime - deliveredAt`) i šalje `clientElapsedMs`; vizualno odbrojavanje koristi `timeLimitMs`, rezano na `phaseDeadline - serverTime - 500 ms`. `rematchAvailable` = ranked/friend, protivnik čovjek, viđen u zadnje 2 min. Trening bez vremena: nakon međuekrana klijent zove `GET /api/questions/{id}/explanation` pa `POST .../next`. Bot duel: međuekran traje 30 s, gumb *Dalje* zove `POST .../next` ranije.
 
 ### 6.6 Red čekanja (F3)
 
@@ -1171,7 +1171,7 @@ interface PublicProfileDto { user: UserRefDto; topics: { topic: TopicDto; master
 
 **F1: bot duel, trening, povijest**
 - `GET /api/bots` (persona s `recommended`), `POST /api/matches/bot`, `POST /api/matches/practice`, `GET /api/matches/{id}`, `POST .../answers`, `POST .../next`, `POST .../resign`, `GET /api/me/matches`.
-- Bot partija: `lobby` 5 s → 10 × (`question` → `interstitial` 2 s) → `done`. Poll svake 1 s; odbrojavanje iz `phaseDeadline - serverTime`, ne iz sata klijenta.
+- Bot partija: `lobby` 5 s → 10 × (`question` → `interstitial` do 30 s ili `POST .../next`) → `done`. Ostali dueli s vremenom: međuekran 4 s. Poll svake 1 s; odbrojavanje iz `phaseDeadline - serverTime`, ne iz sata klijenta.
 - Ključ odgovora (`interstitial.key`) postoji tek u međuekranu; `question.question.content` ga nikad nema.
 - Kad odgovoriš prije bota, faza se zatvara čim bot "odgovori"; kad su svi odgovorili, međuekran dolazi odmah.
 - `find_bug`: linije koda broje se od 1 (`split('\n')`); ključ može imati `acceptLines` (druge linije iste naredbe) za isticanje.
@@ -1416,6 +1416,7 @@ MatchEngine
   Second_answer_for_same_index_is_rejected
   Answer_in_interstitial_is_rejected
   Untimed_practice_waits_for_next
+  Bot_duel_interstitial_lasts_30_s_or_until_next / Next_is_rejected_in_timed_duels
   Tenth_interstitial_finishes_match
   Resign_finishes_with_opponent_as_winner
   Disconnected_player_at_finish_counts_as_resign
@@ -1471,6 +1472,7 @@ F1 Sadržaj i bot duel
   Tick_after_bot_time_reveals_interstitial_with_both_results            čovjek u 3 s, bot u 5 s → međuekran na ticku nakon 5 s, ne nakon limita
   Interstitial_includes_question_and_key
   Tick_after_interstitial_advances_index
+  Next_in_the_bot_interstitial_opens_the_next_question
   Answer_after_deadline_is_409_wrong_phase
   Full_bot_match_finishes_with_result_cards_and_no_rating_change
   Each_answer_writes_answers_row_and_updates_concept_mastery

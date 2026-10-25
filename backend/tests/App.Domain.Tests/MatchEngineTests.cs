@@ -93,7 +93,7 @@ public class MatchEngineTests
         var recorded = MatchEngine.SubmitAnswer(match, 0, 0, KeyOf(match), (int)(late - start).TotalMilliseconds, late);
 
         Assert.Equal(MatchPhase.Interstitial, match.Phase);
-        Assert.Equal(late.AddSeconds(GameRules.InterstitialSeconds), match.PhaseDeadline);
+        Assert.Equal(late.AddSeconds(GameRules.BotInterstitialSeconds), match.PhaseDeadline);
         Assert.True(recorded.Answer.IsCorrect);
         Assert.True(recorded.CountsForLearning);
     }
@@ -185,13 +185,39 @@ public class MatchEngineTests
     }
 
     [Fact]
-    public void Next_is_rejected_in_timed_matches() =>
-        Assert.Equal(ErrorCodes.MatchWrongPhase, Assert.Throws<AppException>(() => MatchEngine.Next(BotMatch(), Now)).Code);
+    public void Bot_duel_interstitial_lasts_30_s_or_until_next()
+    {
+        var match = BotMatch();
+        var start = ToQuestion(match);
+        var late = match.AnswerOf(1, 0)!.AnsweredAt.AddMilliseconds(100);
+        MatchEngine.SubmitAnswer(match, 0, 0, KeyOf(match), (int)(late - start).TotalMilliseconds, late);
+        Assert.Equal(late.AddSeconds(GameRules.BotInterstitialSeconds), match.PhaseDeadline);
+
+        MatchEngine.Next(match, late.AddSeconds(3));
+
+        Assert.Equal(1, match.CurrentIndex);
+        Assert.Equal(MatchPhase.Question, match.Phase);
+        Assert.Equal(late.AddSeconds(3), match.QuestionStartedAt);
+    }
+
+    [Fact]
+    public void Next_is_rejected_in_timed_duels()
+    {
+        var match = HumanMatch();
+        var start = ToQuestion(match);
+        MatchEngine.SubmitAnswer(match, 0, 0, KeyOf(match), 500, start.AddMilliseconds(500));
+        MatchEngine.SubmitAnswer(match, 1, 0, KeyOf(match), 600, start.AddMilliseconds(600));
+        Assert.Equal(MatchPhase.Interstitial, match.Phase);
+        Assert.Equal(start.AddMilliseconds(600).AddSeconds(GameRules.InterstitialSeconds), match.PhaseDeadline);
+
+        Assert.Equal(ErrorCodes.MatchWrongPhase, Assert.Throws<AppException>(() => MatchEngine.Next(match, start.AddSeconds(1))).Code);
+    }
 
     [Fact]
     public void Answering_every_question_finishes_with_totals_and_a_winner()
     {
         var match = BotMatch(BotPersona.VibeCoder);
+        var human = match.Players[0];
         var now = ToQuestion(match);
         while (match.Phase != MatchPhase.Done)
         {
@@ -200,10 +226,10 @@ public class MatchEngineTests
             now = match.PhaseDeadline!.Value;
             MatchEngine.Advance(match, now);
             now = match.PhaseDeadline ?? now;
+            human.LastSeenAt = now; // the client keeps polling through the 30 s interstitial
             MatchEngine.Advance(match, now);
         }
 
-        var human = match.Players[0];
         Assert.Equal(10, human.CorrectCount);
         Assert.Equal(match.Answers.Where(a => a.Seat == 0).Sum(a => a.Points), human.Score);
         Assert.Equal(0, match.WinnerSeat);

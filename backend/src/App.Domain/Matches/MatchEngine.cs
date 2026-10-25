@@ -160,11 +160,11 @@ public static class MatchEngine
         return new RecordedAnswer(player, question, answer, CountsForLearning: true);
     }
 
-    // Untimed practice: the player moves on when ready.
+    // Untimed practice and bot duels: the player moves on when ready (a bot duel also moves on by itself after 30 s).
     public static void Next(Match match, DateTimeOffset now)
     {
-        if (match.Phase != MatchPhase.Interstitial || match.Timed)
-            throw new AppException(ErrorCodes.MatchWrongPhase, "Next is only for untimed practice between questions.");
+        if (match.Phase != MatchPhase.Interstitial || (match.Timed && match.Kind != MatchKind.Bot))
+            throw new AppException(ErrorCodes.MatchWrongPhase, "Next is only for untimed practice and bot duels between questions.");
         NextQuestionOrFinish(match, now);
     }
 
@@ -224,7 +224,8 @@ public static class MatchEngine
                 recorded.Add(new RecordedAnswer(player, question, timeout, CountsForLearning: player.IsConnected(at)));
         }
         match.Phase = MatchPhase.Interstitial;
-        match.PhaseDeadline = match.Timed ? at.AddSeconds(GameRules.InterstitialSeconds) : null;
+        var seconds = match.Kind == MatchKind.Bot ? GameRules.BotInterstitialSeconds : GameRules.InterstitialSeconds;
+        match.PhaseDeadline = match.Timed ? at.AddSeconds(seconds) : null;
     }
 
     private static void NextQuestionOrFinish(Match match, DateTimeOffset at)

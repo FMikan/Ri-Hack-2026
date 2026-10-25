@@ -419,7 +419,8 @@ export interface MatchResultDto {
 
 // Poll GET /api/matches/{id} about once a second until status is finished or aborted.
 // question: present in the question and interstitial phases; interstitial: only in interstitial; result: only when over.
-// Countdowns use phaseDeadline - serverTime, never the device clock. phaseDeadline is null while untimed practice waits for "next".
+// Countdowns use phaseDeadline - serverTime, never the device clock. phaseDeadline is null while untimed practice waits for "next";
+// a bot duel's interstitial lasts 30 s and takes "next" too.
 export interface MatchStateDto {
   id: Uuid
   kind: MatchKind

@@ -27,9 +27,11 @@ public abstract class MatchTestBase(TestApp app) : ApiTestBase(app)
     protected static JsonNode Right(MatchStateDto state) => QuestionFixtures.RightAnswer(state.Question!.Question.Type);
 
     // Moves the clock exactly to the phase deadline the client was given, runs the tick, and returns the new state.
+    // A waiting client polls once a second, so one poll right before the tick keeps it connected through a 30 s bot interstitial.
     protected async Task<MatchStateDto> ToDeadlineAsync(Session session, MatchStateDto state)
     {
         App.Clock.SetUtcNow(state.PhaseDeadline!.Value);
+        await StateAsync(session, state.Id);
         await App.TickAsync();
         return await StateAsync(session, state.Id);
     }
@@ -42,7 +44,7 @@ public abstract class MatchTestBase(TestApp app) : ApiTestBase(app)
     }
 
     // Answers every open question (right where `right(index)` says so, by default on even indexes) and follows the
-    // deadlines to the end of the match.
+    // deadlines to the end of the match; in a bot duel it taps "next" instead of sitting out the 30 s interstitial.
     protected async Task<MatchStateDto> PlayToEndAsync(Session session, MatchStateDto state, Func<int, bool>? right = null)
     {
         right ??= index => index % 2 == 0;
@@ -52,6 +54,11 @@ public abstract class MatchTestBase(TestApp app) : ApiTestBase(app)
             {
                 var payload = right(state.Question.Index) ? Right(state) : QuestionFixtures.WrongAnswer;
                 state = (await ReadAsync<MatchStateDto>(await AnswerAsync(session, state, payload)))!;
+                continue;
+            }
+            if (state.Phase == MatchPhase.Interstitial && state.Kind == MatchKind.Bot)
+            {
+                state = (await ReadAsync<MatchStateDto>(await session.Client.PostAsync($"/api/matches/{state.Id}/next", null)))!;
                 continue;
             }
             state = await ToDeadlineAsync(session, state);

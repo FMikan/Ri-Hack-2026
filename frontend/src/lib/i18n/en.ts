@@ -265,6 +265,7 @@ export const en = {
     end: 'End',
     endConfirm: 'Tap again to end',
     next: 'Next',
+    nextIn: (seconds: number) => `Next question in ${seconds} s`,
     explaining: 'AI Professor is explaining this answer…',
     explanationUnavailable: 'The AI explanation is not available right now; the line to remember is above.',
     whyCorrect: 'Why it is right',

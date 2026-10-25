@@ -269,6 +269,7 @@ export const hr: Messages = {
     end: 'Završi',
     endConfirm: 'Dodirni opet za kraj',
     next: 'Dalje',
+    nextIn: (seconds: number) => `Sljedeće pitanje za ${seconds} s`,
     explaining: 'AI Profesor objašnjava ovaj odgovor…',
     explanationUnavailable: 'AI objašnjenje trenutno nije dostupno; ono što treba zapamtiti piše iznad.',
     whyCorrect: 'Zašto je ovo točno',

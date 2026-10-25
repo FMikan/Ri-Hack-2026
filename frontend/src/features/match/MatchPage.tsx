@@ -388,15 +388,18 @@ function QuestionStage({ snapshot, command, me, opponent, opponentName }: Questi
   )
   const [pending, setPending] = useState<AnswerPayload>()
   const [moving, setMoving] = useState(false)
-  const now = useTicker(!interstitial && match.timed)
+  // Untimed practice waits for the player; a bot duel takes the button too, but moves on by itself at the deadline.
+  const canNext = !!interstitial && (!match.phaseDeadline || match.kind === 'bot')
+  const now = useTicker(match.timed && (!interstitial || canNext))
   const limit = turn.question.timeLimitMs
   const left = interstitial
     ? 0
     : match.timed
       ? Math.max(0, Math.min(limit - (now - startedAt), msToDeadline(snapshot, now) - 500))
       : Infinity
-  // Untimed practice: no deadline in the interstitial, it waits until the player moves on.
-  const waitsForNext = !!interstitial && !match.phaseDeadline
+  // Untimed practice: no deadline in the interstitial, so the explanation has all the time it needs.
+  const waitsForNext = canNext && !match.phaseDeadline
+  const nextIn = canNext && match.phaseDeadline ? Math.ceil(Math.max(0, msToDeadline(snapshot, now)) / 1000) : undefined
 
   async function next() {
     setMoving(true)
@@ -442,10 +445,17 @@ function QuestionStage({ snapshot, command, me, opponent, opponentName }: Questi
             <RoundResult me={me} opponent={opponent} opponentName={opponentName} mine={interstitial.mine} theirs={interstitial.opponent} />
             <Remember text={interstitial.key.remember} />
             {waitsForNext && <Explanation questionId={turn.question.id} />}
-            {waitsForNext && (
-              <Button size="lg" className="w-full sm:w-auto sm:justify-self-end" aria-disabled={moving} onClick={() => !moving && next()}>
-                {t.match.next}
-              </Button>
+            {canNext && (
+              <div className="grid gap-2 sm:flex sm:items-center sm:justify-end sm:gap-4">
+                {nextIn !== undefined && (
+                  <p role="timer" className="text-center font-mono text-xs text-muted-foreground tabular-nums">
+                    {t.match.nextIn(nextIn)}
+                  </p>
+                )}
+                <Button size="lg" className="w-full sm:w-auto" aria-disabled={moving} onClick={() => !moving && next()}>
+                  {t.match.next}
+                </Button>
+              </div>
             )}
           </CardFooter>
         )}
