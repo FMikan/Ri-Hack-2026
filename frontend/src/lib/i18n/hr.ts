@@ -777,6 +777,7 @@ export const hr: Messages = {
     title: 'Senior developer',
     subtitle: 'Brže penjanje i učenje bez ograničenja. Junior developer ostaje besplatan, zauvijek.',
     loadFailed: 'Plan se ne može učitati.',
+    backToDashboard: 'Natrag na početnu',
     billing: 'Naplata',
     monthly: 'Mjesečno',
     yearly: 'Godišnje',

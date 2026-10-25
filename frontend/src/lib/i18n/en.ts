@@ -773,6 +773,7 @@ export const en = {
     title: 'Senior developer',
     subtitle: 'Climb faster and learn without limits. Junior developer stays free, forever.',
     loadFailed: 'Could not load your plan.',
+    backToDashboard: 'Back to the dashboard',
     billing: 'Billing',
     monthly: 'Monthly',
     yearly: 'Yearly',

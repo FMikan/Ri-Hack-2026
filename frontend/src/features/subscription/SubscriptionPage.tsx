@@ -1,5 +1,6 @@
-import { Check, Crown, CreditCard, Minus } from 'lucide-react'
+import { ArrowLeft, Check, Crown, CreditCard, Minus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -48,7 +49,14 @@ export function SubscriptionPage() {
   return (
     <main className="mx-auto grid w-full max-w-5xl content-start gap-6 px-4 pb-10 sm:px-6 lg:px-8">
       <title>{`${copy.documentTitle} · StackOff`}</title>
-      <header className="grid gap-1">
+      <header className="grid justify-items-start gap-2">
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          {copy.backToDashboard}
+        </Link>
         <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{copy.title}</h1>
         <p className="max-w-prose text-sm text-pretty text-muted-foreground">{copy.subtitle}</p>
       </header>
