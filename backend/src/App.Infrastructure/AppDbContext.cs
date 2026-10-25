@@ -5,6 +5,7 @@ using App.Domain.Economy;
 using App.Domain.Lessons;
 using App.Domain.Matches;
 using App.Domain.Matchmaking;
+using App.Domain.Professor;
 using App.Domain.Progress;
 using App.Domain.Seasons;
 using App.Domain.Social;
@@ -49,6 +50,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UserTitle> UserTitles => Set<UserTitle>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<WeeklyResult> WeeklyResults => Set<WeeklyResult>();
+    public DbSet<ProfessorChat> ProfessorChats => Set<ProfessorChat>();
+    public DbSet<ProfessorMessage> ProfessorMessages => Set<ProfessorMessage>();
+    public DbSet<ProfessorLesson> ProfessorLessons => Set<ProfessorLesson>();
+    public DbSet<ProfessorQuiz> ProfessorQuizzes => Set<ProfessorQuiz>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
@@ -77,5 +82,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<LessonCardsSource>().HaveConversion<SnakeCaseEnumConverter<LessonCardsSource>>();
         builder.Properties<FriendshipStatus>().HaveConversion<SnakeCaseEnumConverter<FriendshipStatus>>();
         builder.Properties<TitleKind>().HaveConversion<SnakeCaseEnumConverter<TitleKind>>();
+        builder.Properties<ProfessorRole>().HaveConversion<SnakeCaseEnumConverter<ProfessorRole>>();
+        builder.Properties<ProfessorScope>().HaveConversion<SnakeCaseEnumConverter<ProfessorScope>>();
     }
 }

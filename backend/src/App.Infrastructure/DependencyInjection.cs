@@ -2,6 +2,7 @@ using App.Application;
 using App.Application.Auth;
 using App.Application.Content;
 using App.Application.Lessons;
+using App.Application.Professor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddSingleton<ClaudeAi>();
         services.AddSingleton<IExplanationGenerator>(sp => sp.GetRequiredService<ClaudeAi>());
         services.AddSingleton<ILessonGenerator>(sp => sp.GetRequiredService<ClaudeAi>());
+        services.AddSingleton<IProfessorAi>(sp => sp.GetRequiredService<ClaudeAi>());
 
         // Tagged "ready" so only the readiness endpoint runs it; liveness never touches the database.
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database", tags: ["ready"]);

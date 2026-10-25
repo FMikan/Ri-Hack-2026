@@ -14,6 +14,9 @@ import { LeaderboardsPage } from '@/features/leaderboards/LeaderboardsPage'
 import { LessonPage } from '@/features/lesson/LessonPage'
 import { MatchPage } from '@/features/match/MatchPage'
 import { PracticePage } from '@/features/practice/PracticePage'
+import { ProfessorLessonPage } from '@/features/professor/ProfessorLessonPage'
+import { ProfessorPage } from '@/features/professor/ProfessorPage'
+import { ProfessorQuizPage } from '@/features/professor/ProfessorQuizPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { PublicProfilePage } from '@/features/profile/PublicProfilePage'
 import { ReviewPage } from '@/features/review/ReviewPage'
@@ -37,6 +40,10 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/practice" element={<PracticePage />} />
+                {/* ?chat=<id> picks the chat, so a new chat's first answer does not remount the page. */}
+                <Route path="/professor" element={<ProfessorPage />} />
+                <Route path="/professor/lessons/:id" element={<ProfessorLessonPage />} />
+                <Route path="/professor/quizzes/:id" element={<ProfessorQuizPage />} />
                 <Route path="/leaderboards" element={<LeaderboardsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/match/:id/review" element={<ReviewPage />} />

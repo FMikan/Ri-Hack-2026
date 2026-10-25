@@ -8,6 +8,8 @@
 @custom-variant dark (&:is(.dark *));
 /* Phones with browser bars and 1366x768 laptops: tighten spacing so single-screen pages fit without scrolling. */
 @custom-variant short (@media (max-height: 700px));
+/* Browser zoom of 200 % and more, or a phone held sideways: the professor's chat drops its extra chrome. */
+@custom-variant cramped (@media (max-height: 32rem));
 
 @theme inline {
     --font-heading: var(--font-sans);

@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -37,12 +38,13 @@ import { api } from '@/lib/api-client'
 import { LOCALE_NAMES, useLocale, type Locale } from '@/lib/i18n/locale-context'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'practice' | 'leaderboards' | 'friends' | 'shop' | 'profile'
+type NavKey = 'dashboard' | 'practice' | 'professor' | 'leaderboards' | 'friends' | 'shop' | 'profile'
 
 // Screens without a route yet show as "Soon"; give an item a `to` when its page lands.
 const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
   { key: 'dashboard', icon: LayoutDashboard, to: '/' },
   { key: 'practice', icon: Target, to: '/practice' },
+  { key: 'professor', icon: GraduationCap, to: '/professor' },
   { key: 'leaderboards', icon: Trophy, to: '/leaderboards' },
   { key: 'friends', icon: Users, to: '/friends' },
   { key: 'shop', icon: Store, to: '/shop' },
@@ -51,6 +53,9 @@ const NAV: { key: NavKey; icon: LucideIcon; to?: string }[] = [
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
 const keepPolling = () => false
+
+// An item stays lit on its sub-pages too (the professor's lessons and quizzes sit under /professor).
+const isActive = (to: string, pathname: string) => (to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`))
 
 // A mouse click leaves focus on the link, which would keep the rail wide (focus-within) until a click elsewhere.
 // Keyboard activation has detail 0 and keeps focus, so tabbing through the rail still works.
@@ -63,7 +68,8 @@ export function AppShell() {
   return (
     <div className="min-h-svh lg:grid lg:grid-cols-[5rem_minmax(0,1fr)]">
       <SideRail />
-      <div className="flex min-w-0 flex-col">
+      {/* A page marked data-fit-screen (the professor's chat) gets exactly the screen and scrolls inside itself. */}
+      <div className="flex min-w-0 flex-col has-[[data-fit-screen]]:h-dvh">
         <TopBar />
         <Outlet />
       </div>
@@ -125,12 +131,12 @@ function SideRail() {
                   {item.to ? (
                     <NavLink
                       to={item.to}
-                      end
+                      end={item.to === '/'}
                       onClick={releaseFocus}
                       className={cn(
                         base,
                         'transition-colors',
-                        pathname === item.to
+                        isActive(item.to, pathname)
                           ? 'bg-primary/15 text-primary'
                           : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
                         focusRing,
@@ -169,7 +175,7 @@ function TopBar() {
   const touch = 'max-lg:py-3' // 44px rows on phones, where this menu is the navigation
 
   return (
-    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:py-5">
+    <header className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:py-5 cramped:py-1">
       <NavLink to="/" className={cn('rounded-sm lg:hidden', focusRing)}>
         <Wordmark className="h-6" />
       </NavLink>
@@ -208,8 +214,8 @@ function TopBar() {
               {NAV.map((item) => {
                 const label = t.shell.nav[item.key]
                 return item.to ? (
-                  <DropdownMenuItem key={item.key} asChild className={cn(touch, pathname === item.to && 'text-primary')}>
-                    <NavLink to={item.to} end>
+                  <DropdownMenuItem key={item.key} asChild className={cn(touch, isActive(item.to, pathname) && 'text-primary')}>
+                    <NavLink to={item.to} end={item.to === '/'}>
                       <item.icon aria-hidden="true" />
                       {label}
                     </NavLink>
