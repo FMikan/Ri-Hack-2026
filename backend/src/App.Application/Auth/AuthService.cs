@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Auth;
 
-public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService tokens, IEmailSender emails, MeService me, TimeProvider time)
+public class AuthService(
+    IAppDbContext db, IPasswordHasher hasher, ITokenService tokens, IGoogleTokenVerifier google, IEmailSender emails, MeService me, TimeProvider time)
 {
     // Verified against when the e-mail is unknown, so a wrong e-mail takes as long as a wrong password.
     private static string? _dummyHash;
@@ -51,6 +52,50 @@ public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService
         if (user is null || !valid)
             throw new AppException(ErrorCodes.AuthInvalidCredentials, "E-mail or password is incorrect.", 401);
 
+        return await IssueAsync(user, Guid.CreateVersion7(), cancellationToken);
+    }
+
+    public AuthConfigDto Config() => new(google.ClientId);
+
+    // Sign in with Google. The same Google account always opens the same user; otherwise a verified e-mail that has an
+    // account without Google yet is linked to it; anyone else gets a new user with a free username and no password.
+    public async Task<AuthResponse> GoogleLoginAsync(string idToken, CancellationToken cancellationToken)
+    {
+        var identity = await google.VerifyAsync(idToken, cancellationToken);
+        // An unverified address may belong to someone else's account, so it never signs in.
+        if (identity is not { EmailVerified: true })
+            throw new AppException(ErrorCodes.AuthGoogleInvalid, "Google sign-in did not work. Try again.", 401);
+
+        var email = identity.Email.Trim().ToLowerInvariant();
+        var user = await db.Users.Include(u => u.Topics).FirstOrDefaultAsync(u => u.GoogleSubject == identity.Subject, cancellationToken)
+            ?? await db.Users.Include(u => u.Topics).FirstOrDefaultAsync(u => u.Email == email && u.GoogleSubject == null, cancellationToken);
+        if (user is not null)
+        {
+            user.GoogleSubject = identity.Subject; // saved with the refresh token in IssueAsync
+            return await IssueAsync(user, Guid.CreateVersion7(), cancellationToken);
+        }
+
+        var username = await FreeUsernameAsync(email, cancellationToken);
+        // The e-mail can still be taken by an account that is linked to another Google account: the same 409 as register.
+        await EnsureAvailableAsync(email, username, cancellationToken);
+        user = new User
+        {
+            Email = email,
+            Username = username,
+            UsernameNormalized = User.Normalize(username),
+            GoogleSubject = identity.Subject,
+            CreatedAt = time.GetUtcNow(),
+        };
+        db.Users.Add(user);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            await EnsureAvailableAsync(email, username, cancellationToken);
+            throw;
+        }
         return await IssueAsync(user, Guid.CreateVersion7(), cancellationToken);
     }
 
@@ -164,6 +209,19 @@ public class AuthService(IAppDbContext db, IPasswordHasher hasher, ITokenService
         var normalized = User.Normalize(username);
         if (await db.Users.AnyAsync(u => u.UsernameNormalized == normalized, cancellationToken))
             throw new AppException(ErrorCodes.AuthUsernameTaken, "This username is taken.");
+    }
+
+    // From the e-mail: "Ana.K+games@gmail.com" → "anak". Too short becomes "player"; a taken name gets "_1234".
+    private async Task<string> FreeUsernameAsync(string email, CancellationToken cancellationToken)
+    {
+        var local = email.Split('@')[0].Split('+')[0];
+        var stem = new string([.. local.Where(c => char.IsAsciiLetterOrDigit(c) || c == '_')]).ToLowerInvariant();
+        if (stem.Length < GameRules.UsernameMinLength) stem = "player";
+        stem = stem[..Math.Min(stem.Length, GameRules.UsernameMaxLength - 5)]; // room for "_1234"
+        var username = stem;
+        while (await db.Users.AnyAsync(u => u.UsernameNormalized == username, cancellationToken))
+            username = $"{stem}_{Random.Shared.Next(1000, 10000)}";
+        return username;
     }
 
     private static AppException RefreshInvalid() =>

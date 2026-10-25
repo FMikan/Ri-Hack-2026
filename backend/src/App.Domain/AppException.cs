@@ -18,6 +18,7 @@ public static class ErrorCodes
     public const string AuthUsernameTaken = "urn:app:auth/username-taken";
     public const string AuthRefreshInvalid = "urn:app:auth/refresh-invalid";
     public const string AuthResetTokenInvalid = "urn:app:auth/reset-token-invalid";
+    public const string AuthGoogleInvalid = "urn:app:auth/google-invalid";
     public const string MatchNotFound = "urn:app:match/not-found";
     public const string MatchNotParticipant = "urn:app:match/not-participant";
     public const string MatchAlreadyInMatch = "urn:app:match/already-in-match";

@@ -58,6 +58,8 @@ export function toAuthErrors(error: unknown, t: Messages): { fields: FieldErrors
       return { fields: { username: m.usernameTaken } }
     case 'urn:app:auth/reset-token-invalid':
       return { fields: {}, form: m.resetTokenInvalid }
+    case 'urn:app:auth/google-invalid':
+      return { fields: {}, form: m.googleInvalid }
   }
 
   // Validation keys are C# property names ("Password") and the messages are English only; the checks above

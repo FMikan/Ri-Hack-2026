@@ -26,6 +26,7 @@ export type AppErrorCode =
   | 'urn:app:auth/username-taken'
   | 'urn:app:auth/refresh-invalid'
   | 'urn:app:auth/reset-token-invalid'
+  | 'urn:app:auth/google-invalid' // Google rejected the ID token, or the Google e-mail is not verified
   | 'urn:app:topics/not-playable'
   | 'urn:app:match/not-found'
   | 'urn:app:match/not-participant'
@@ -148,6 +149,17 @@ export interface ForgotPasswordRequest {
 export interface ResetPasswordRequest {
   token: string
   newPassword: string
+}
+
+// POST /api/auth/google → AuthResponse, like login. The first Google sign-in creates the account with a generated
+// username. 401 urn:app:auth/google-invalid; 409 urn:app:auth/email-taken (the e-mail is linked to another Google account).
+export interface GoogleLoginRequest {
+  idToken: string // the credential Google's sign-in button hands the page
+}
+
+// GET /api/auth/config (no auth). googleClientId is null when Google sign-in is off: show no Google button.
+export interface AuthConfigDto {
+  googleClientId: string | null
 }
 
 export interface AuthResponse {

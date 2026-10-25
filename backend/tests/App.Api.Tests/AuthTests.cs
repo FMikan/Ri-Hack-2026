@@ -4,6 +4,7 @@ using App.Domain;
 using App.Application.Auth;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Api.Tests;
 
@@ -253,5 +254,88 @@ public class AuthTests(TestApp app) : ApiTestBase(app)
         var response = await ResetAsync(token, "another-secret-789");
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal(ErrorCodes.AuthResetTokenInvalid, (await ReadAsync<ProblemDetails>(response))!.Type);
+    }
+
+    // Sign in with Google: the token is checked by IGoogleTokenVerifier (FakeGoogleTokens here).
+    private Task<HttpResponseMessage> GoogleAsync(string idToken) => PostAsync(Client, "/api/auth/google", new { idToken });
+
+    [Fact]
+    public async Task Google_sign_in_creates_a_user_with_a_free_username_and_no_password()
+    {
+        await RegisterAsync("anak");
+        App.Google.Tokens["t1"] = new GoogleIdentity("g-1", "Ana.K+games@gmail.com", true);
+
+        var response = await GoogleAsync("t1");
+        var auth = (await ReadAsync<AuthResponse>(response))!;
+        var password = await PostAsync(Client, "/api/auth/login", new { email = "ana.k+games@gmail.com", password = "secret-123" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("ana.k+games@gmail.com", auth.User.Email);
+        Assert.Matches("^anak_[0-9]{4}$", auth.User.Username); // "Ana.K+games" → "anak", which is taken
+        Assert.NotEmpty(auth.RefreshToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, password.StatusCode);
+    }
+
+    [Fact]
+    public async Task Google_sign_in_again_opens_the_same_user_even_after_the_email_changed()
+    {
+        App.Google.Tokens["t1"] = new GoogleIdentity("g-1", "ana@gmail.com", true);
+        App.Google.Tokens["t2"] = new GoogleIdentity("g-1", "ana.new@gmail.com", true);
+
+        var first = (await ReadAsync<AuthResponse>(await GoogleAsync("t1")))!;
+        var second = (await ReadAsync<AuthResponse>(await GoogleAsync("t2")))!;
+
+        Assert.Equal(first.User.Id, second.User.Id);
+        Assert.Equal(1, await App.InDbAsync(db => db.Users.CountAsync()));
+    }
+
+    [Fact]
+    public async Task Google_sign_in_links_the_account_with_the_same_verified_email()
+    {
+        var ana = await RegisterAsync("ana");
+        App.Google.Tokens["t1"] = new GoogleIdentity("g-1", "ANA@example.com", true);
+
+        var google = (await ReadAsync<AuthResponse>(await GoogleAsync("t1")))!;
+        var password = await PostAsync(Client, "/api/auth/login", new { email = "ana@example.com", password = "secret-123" });
+
+        Assert.Equal(ana.Auth.User.Id, google.User.Id);
+        Assert.Equal("ana", google.User.Username);
+        Assert.Equal(HttpStatusCode.OK, password.StatusCode); // the password keeps working next to Google
+    }
+
+    [Fact]
+    public async Task Google_sign_in_rejects_unknown_tokens_and_unverified_emails()
+    {
+        var ana = await RegisterAsync("ana");
+        App.Google.Tokens["unverified"] = new GoogleIdentity("g-1", "ana@example.com", false);
+
+        var unknown = await GoogleAsync("forged");
+        var unverified = await GoogleAsync("unverified");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, unknown.StatusCode);
+        Assert.Equal(ErrorCodes.AuthGoogleInvalid, (await ReadAsync<ProblemDetails>(unknown))!.Type);
+        Assert.Equal(HttpStatusCode.Unauthorized, unverified.StatusCode); // an unverified e-mail must not take over ana's account
+        Assert.Equal(1, await App.InDbAsync(db => db.Users.CountAsync(u => u.GoogleSubject == null && u.Id == ana.Auth.User.Id)));
+    }
+
+    [Fact]
+    public async Task Google_sign_in_with_another_google_account_on_a_linked_email_is_409()
+    {
+        App.Google.Tokens["first"] = new GoogleIdentity("g-1", "ana@gmail.com", true);
+        App.Google.Tokens["second"] = new GoogleIdentity("g-2", "ana@gmail.com", true);
+        await GoogleAsync("first");
+
+        var response = await GoogleAsync("second");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(ErrorCodes.AuthEmailTaken, (await ReadAsync<ProblemDetails>(response))!.Type);
+    }
+
+    [Fact]
+    public async Task Auth_config_names_the_google_client()
+    {
+        var config = await Client.GetFromJsonAsync<AuthConfigDto>("/api/auth/config", App.Json);
+
+        Assert.Equal("test-client.apps.googleusercontent.com", config!.GoogleClientId);
     }
 }

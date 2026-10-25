@@ -11,6 +11,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasIndex(u => u.Email).IsUnique();
         builder.HasIndex(u => u.UsernameNormalized).IsUnique();
+        builder.HasIndex(u => u.GoogleSubject).IsUnique(); // one account per Google account
+        builder.Property(u => u.GoogleSubject).HasMaxLength(255);
         builder.Property(u => u.Email).HasMaxLength(254);
         builder.Property(u => u.Username).HasMaxLength(GameRules.UsernameMaxLength);
         builder.Property(u => u.UsernameNormalized).HasMaxLength(GameRules.UsernameMaxLength);

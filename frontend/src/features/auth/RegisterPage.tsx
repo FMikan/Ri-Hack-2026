@@ -1,6 +1,7 @@
 import { useLocale } from '@/lib/i18n/locale-context'
 import { useAuth } from './auth-context'
 import { AuthForm } from './AuthForm'
+import { GoogleSignIn } from './GoogleSignIn'
 import { TextField } from './TextField'
 import { useAuthForm } from './use-auth-form'
 import { validateRegister } from './validation'
@@ -12,7 +13,7 @@ export function RegisterPage() {
 
   // E-mail sits right before the password so password managers save it as the login name, not the username.
   return (
-    <AuthForm copy={t.auth.register} switchTo="/login" {...form}>
+    <AuthForm copy={t.auth.register} switchTo="/login" beforeForm={<GoogleSignIn remember />} {...form}>
       <TextField
         name="username"
         label={t.auth.fields.username}

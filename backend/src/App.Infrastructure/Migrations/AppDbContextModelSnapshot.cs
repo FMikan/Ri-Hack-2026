@@ -1705,6 +1705,11 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("equipped_title_id");
 
+                    b.Property<string>("GoogleSubject")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("google_subject");
+
                     b.Property<bool>("IsGrandmaster")
                         .HasColumnType("boolean")
                         .HasColumnName("is_grandmaster");
@@ -1725,7 +1730,6 @@ namespace App.Infrastructure.Migrations
                         .HasColumnName("notifications");
 
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
 
@@ -1787,6 +1791,10 @@ namespace App.Infrastructure.Migrations
 
                     b.HasIndex("EquippedTitleId")
                         .HasDatabaseName("ix_users_equipped_title_id");
+
+                    b.HasIndex("GoogleSubject")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_google_subject");
 
                     b.HasIndex("UsernameNormalized")
                         .IsUnique()
