@@ -4,14 +4,14 @@ Starter for a hackathon app: React + TypeScript (Vite) frontend, ASP.NET Core (.
 PostgreSQL runs in Docker; the frontend and backend run on your machine so they are easy to debug.
 
 The product is a ranked 1v1 IT-knowledge quiz game. The design (database, rules, API contract, test plan) is in
-[docs/tehnicki-dokument.md](docs/tehnicki-dokument.md); the game idea is in `docs/Ri-Hack 4.0 — IDEJA IGRE v2.md`.
+[docs/tehnicki-dokument.md](tehnicki-dokument.md); the game idea is in `docs/Ri-Hack 4.0 — IDEJA IGRE v2.md`.
 
 ## Branches and deployment
 
 Work on **`development`**: every push there runs the tests in GitHub Actions. **`main`** is production:
 every push to it is tested, built into Docker images, smoke-tested and deployed to the VPS. Release by
 merging a pull request `development -> main`. Server setup, secrets and operations are in
-[deploy/README.md](deploy/README.md).
+[deploy/README.md](../deploy/README.md).
 
 ## Stack
 
